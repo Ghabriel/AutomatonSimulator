@@ -1,0 +1,21 @@
+body {
+	display: table;
+	height: 100%;
+	margin: 0;
+	width: 100%;
+}
+
+#wrapper {
+	display: table-row;
+}
+
+#sidebar {
+	border-right: 1px solid black;
+	display: table-cell;
+	width: 15%;
+}
+
+#sidebar, #mainbar {
+	padding: 5px;
+	vertical-align: top;
+}
