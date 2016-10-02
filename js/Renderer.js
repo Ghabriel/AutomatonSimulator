@@ -5,6 +5,7 @@ define(["require", "exports"], function (require, exports) {
         }
         Renderer.prototype.bind = function (node) {
             this.node = node;
+            this.onBind();
         };
         Renderer.prototype.render = function () {
             if (this.node) {
@@ -12,6 +13,7 @@ define(["require", "exports"], function (require, exports) {
                 this.onRender();
             }
         };
+        Renderer.prototype.onBind = function () { };
         return Renderer;
     }());
     exports.Renderer = Renderer;

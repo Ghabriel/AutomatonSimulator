@@ -1,6 +1,7 @@
 export abstract class Renderer {
 	bind(node: Element): void {
 		this.node = node;
+		this.onBind();
 	}
 
 	render(): void {
@@ -10,6 +11,7 @@ export abstract class Renderer {
 		}
 	}
 
+	protected onBind(): void {}
 	protected abstract onRender(): void;
 
 	protected node: Element;

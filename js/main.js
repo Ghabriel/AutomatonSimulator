@@ -1,8 +1,8 @@
 /// <reference path="jQuery.d.ts" />
-define(["require", "exports", "./Settings", "./UI"], function (require, exports, Settings_1, UI_1) {
+define(["require", "exports", "./Mainbar", "./Sidebar", "./UI"], function (require, exports, Mainbar_1, Sidebar_1, UI_1) {
     "use strict";
     $(document).ready(function () {
-        var ui = new UI_1.UI(Settings_1.Settings.sidebarRenderer, Settings_1.Settings.mainbarRenderer);
+        var ui = new UI_1.UI(new Sidebar_1.Sidebar(), new Mainbar_1.Mainbar());
         ui.render();
     });
 });
