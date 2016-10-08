@@ -23,20 +23,6 @@ define("Renderer", ["require", "exports"], function (require, exports) {
     }());
     exports.Renderer = Renderer;
 });
-define("Mainbar", ["require", "exports", "Renderer"], function (require, exports, Renderer_1) {
-    "use strict";
-    var Mainbar = (function (_super) {
-        __extends(Mainbar, _super);
-        function Mainbar() {
-            _super.apply(this, arguments);
-        }
-        Mainbar.prototype.onRender = function () {
-            this.node.innerHTML = "main";
-        };
-        return Mainbar;
-    }(Renderer_1.Renderer));
-    exports.Mainbar = Mainbar;
-});
 define("languages/English", ["require", "exports"], function (require, exports) {
     "use strict";
     var english;
@@ -56,43 +42,6 @@ define("Settings", ["require", "exports", "languages/English"], function (requir
     })(Settings = exports.Settings || (exports.Settings = {}));
     exports.Strings = Settings.language.strings;
 });
-define("Menu", ["require", "exports", "Renderer"], function (require, exports, Renderer_2) {
-    "use strict";
-    var Menu = (function (_super) {
-        __extends(Menu, _super);
-        function Menu(title) {
-            _super.call(this);
-            this.title = title;
-        }
-        Menu.prototype.add = function (elem) {
-            this.children.push(elem);
-        };
-        Menu.prototype.onRender = function () {
-            var node = this.node;
-            node.innerHTML = this.title;
-        };
-        return Menu;
-    }(Renderer_2.Renderer));
-    exports.Menu = Menu;
-});
-define("Sidebar", ["require", "exports", "Menu", "Renderer", "Settings"], function (require, exports, Menu_1, Renderer_3, Settings_1) {
-    "use strict";
-    var Sidebar = (function (_super) {
-        __extends(Sidebar, _super);
-        function Sidebar() {
-            _super.call(this);
-            this.machineSelection = new Menu_1.Menu(Settings_1.Strings.SELECT_MACHINE);
-        }
-        Sidebar.prototype.onBind = function () {
-            this.machineSelection.bind(this.node);
-        };
-        Sidebar.prototype.onRender = function () {
-            this.machineSelection.render();
-        };
-        return Sidebar;
-    }(Renderer_3.Renderer));
-    exports.Sidebar = Sidebar;
-});
 define("Utils", ["require", "exports"], function (require, exports) {
     "use strict";
     var utils;
@@ -107,7 +56,7 @@ define("Utils", ["require", "exports"], function (require, exports) {
         utils.id = id;
     })(utils = exports.utils || (exports.utils = {}));
 });
-define("UI", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_2, Utils_1) {
+define("UI", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_1, Utils_1) {
     "use strict";
     var UI = (function () {
         function UI() {
@@ -125,19 +74,70 @@ define("UI", ["require", "exports", "Settings", "Utils"], function (require, exp
         };
         UI.prototype.bindSidebar = function (renderer) {
             if (renderer) {
-                renderer.bind(Utils_1.utils.id(Settings_2.Settings.sidebarID));
+                renderer.bind(Utils_1.utils.id(Settings_1.Settings.sidebarID));
             }
             this.sidebarRenderer = renderer;
         };
         UI.prototype.bindMain = function (renderer) {
             if (renderer) {
-                renderer.bind(Utils_1.utils.id(Settings_2.Settings.mainbarID));
+                renderer.bind(Utils_1.utils.id(Settings_1.Settings.mainbarID));
             }
             this.mainRenderer = renderer;
         };
         return UI;
     }());
     exports.UI = UI;
+});
+define("Menu", ["require", "exports", "Renderer"], function (require, exports, Renderer_1) {
+    "use strict";
+    var Menu = (function (_super) {
+        __extends(Menu, _super);
+        function Menu(title) {
+            _super.call(this);
+            this.title = title;
+        }
+        Menu.prototype.add = function (elem) {
+            this.children.push(elem);
+        };
+        Menu.prototype.onRender = function () {
+            var node = this.node;
+            node.innerHTML = this.title;
+        };
+        return Menu;
+    }(Renderer_1.Renderer));
+    exports.Menu = Menu;
+});
+define("Sidebar", ["require", "exports", "Menu", "Renderer", "Settings"], function (require, exports, Menu_1, Renderer_2, Settings_2) {
+    "use strict";
+    var Sidebar = (function (_super) {
+        __extends(Sidebar, _super);
+        function Sidebar() {
+            _super.call(this);
+            this.machineSelection = new Menu_1.Menu(Settings_2.Strings.SELECT_MACHINE);
+        }
+        Sidebar.prototype.onBind = function () {
+            this.machineSelection.bind(this.node);
+        };
+        Sidebar.prototype.onRender = function () {
+            this.machineSelection.render();
+        };
+        return Sidebar;
+    }(Renderer_2.Renderer));
+    exports.Sidebar = Sidebar;
+});
+define("Mainbar", ["require", "exports", "Renderer"], function (require, exports, Renderer_3) {
+    "use strict";
+    var Mainbar = (function (_super) {
+        __extends(Mainbar, _super);
+        function Mainbar() {
+            _super.apply(this, arguments);
+        }
+        Mainbar.prototype.onRender = function () {
+            this.node.innerHTML = "main";
+        };
+        return Mainbar;
+    }(Renderer_3.Renderer));
+    exports.Mainbar = Mainbar;
 });
 /// <reference path="jQuery.d.ts" />
 define("main", ["require", "exports", "Mainbar", "Sidebar", "UI"], function (require, exports, Mainbar_1, Sidebar_1, UI_1) {
