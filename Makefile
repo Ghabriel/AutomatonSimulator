@@ -1,14 +1,16 @@
+# Copyright 2016 Ghabriel Nunes <ghabriel.nunes@gmail.com>
+
 CSS          :=css
 JS           :=js
 LIB          :=lib
 TS           :=scripts
 INDEX        :=index.html
+LIBSFILE     :=libs.txt
 JSBASE       :=base.js
 JSCOMPRESSED :=main.js
 
-REQJS        :=require.js
-JQUERY       :=jQuery.js
-
+ORIGNAMES    :=$(shell cat $(LIBSFILE) | sed "s/^\([^:]\+\): \(.*\)/\1/")
+LIBNAMES     :=$(patsubst %, $(LIB)/%, $(ORIGNAMES))
 TSFILES      :=$(wildcard $(TS)/*.ts)
 
 all: dirs libs
@@ -24,18 +26,7 @@ endif
 
 dirs: | $(CSS) $(JS) $(LIB) $(TS) $(INDEX)
 
-libs:
-ifeq ("$(wildcard $(LIB)/$(REQJS))","")
-	@echo "[   lib   ] $(REQJS)"
-	@touch $(LIB)/$(REQJS)
-	@wget -O $(LIB)/$(REQJS) -q http://requirejs.org/docs/release/2.3.2/minified/require.js
-endif
-
-ifeq ("$(wildcard $(LIB)/$(JQUERY))","")
-	@echo "[   lib   ] $(JQUERY)"
-	@touch $(LIB)/$(JQUERY)
-	@wget -O $(LIB)/$(JQUERY) -q https://code.jquery.com/jquery-3.1.1.min.js
-endif
+libs: | $(LIBNAMES)
 
 $(CSS) $(JS) $(LIB) $(TS):
 	@echo "[  mkdir  ] $@"
@@ -43,4 +34,11 @@ $(CSS) $(JS) $(LIB) $(TS):
 
 $(INDEX):
 	@echo "[  index  ] $@"
-	@touch index.html
+	@touch $(INDEX)
+
+$(LIBNAMES):
+	$(eval PURENAME=$(patsubst $(LIB)/%, %, $@))
+	$(eval URL=$(shell cat $(LIBSFILE) | grep "^$(PURENAME):" | sed "s/^\([^:]\+\): \(.*\)/\2/"))
+	@echo "[   lib   ] $(PURENAME)"
+	@touch $@
+	@wget -O $@ -q $(URL)
