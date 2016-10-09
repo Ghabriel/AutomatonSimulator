@@ -50,6 +50,7 @@ define("Settings", ["require", "exports", "languages/English"], function (requir
         })(Settings.Machine || (Settings.Machine = {}));
         var Machine = Settings.Machine;
         Settings.language = English_1.english;
+        Settings.currentMachine = Machine.DFA;
         Settings.machines = {};
         Settings.machines[Machine.DFA] = {
             name: Settings.language.strings.DFA
@@ -137,6 +138,9 @@ define("Menu", ["require", "exports", "Renderer", "Utils"], function (require, e
         Menu.prototype.add = function (elem) {
             this.children.push(elem);
         };
+        Menu.prototype.clear = function () {
+            this.children = [];
+        };
         Menu.prototype.onRender = function () {
             var node = this.node;
             var wrapper = Utils_2.utils.create("div");
@@ -203,18 +207,6 @@ define("Sidebar", ["require", "exports", "Menu", "Renderer", "Settings", "Settin
         function Sidebar() {
             _super.call(this);
             this.machineSelection = new Menu_1.Menu(Settings_3.Strings.SELECT_MACHINE);
-            // TODO: make this more generic
-            var table = new Table_1.Table(2, 2);
-            Utils_4.utils.foreach(Settings_2.Settings.machines, function (type, props) {
-                var button = Utils_4.utils.create("input");
-                button.type = "button";
-                button.value = props.name;
-                button.addEventListener("click", function () {
-                    alert("Not yet implemented.");
-                });
-                table.add(button);
-            });
-            this.machineSelection.add(table.html());
             this.temp = new Menu_1.Menu("TEMPORARY");
             var span = Utils_4.utils.create("span");
             span.innerHTML = "Lorem ipsum dolor sit amet";
@@ -225,8 +217,31 @@ define("Sidebar", ["require", "exports", "Menu", "Renderer", "Settings", "Settin
             this.temp.bind(this.node);
         };
         Sidebar.prototype.onRender = function () {
+            this.node.innerHTML = "";
+            this.build();
             this.machineSelection.render();
-            this.temp.render();
+            if (Settings_2.Settings.currentMachine == Settings_2.Settings.Machine.DFA) {
+                this.temp.render();
+            }
+        };
+        Sidebar.prototype.build = function () {
+            // TODO: make this more generic
+            var table = new Table_1.Table(2, 2);
+            var self = this;
+            Utils_4.utils.foreach(Settings_2.Settings.machines, function (type, props) {
+                var button = Utils_4.utils.create("input");
+                button.type = "button";
+                button.value = props.name;
+                button.disabled = (type == Settings_2.Settings.currentMachine);
+                button.addEventListener("click", function () {
+                    Settings_2.Settings.currentMachine = type;
+                    self.render();
+                    // alert("Not yet implemented.");
+                });
+                table.add(button);
+            });
+            this.machineSelection.clear();
+            this.machineSelection.add(table.html());
         };
         return Sidebar;
     }(Renderer_3.Renderer));

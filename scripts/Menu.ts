@@ -14,6 +14,10 @@ export class Menu extends Renderer {
 		this.children.push(elem);
 	}
 
+	clear(): void {
+		this.children = [];
+	}
+
 	onRender(): void {
 		let node = this.node;
 		let wrapper = utils.create("div");

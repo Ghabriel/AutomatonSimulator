@@ -1,12 +1,20 @@
 body {
-	display: table;
 	font-family: sans-serif;
 	height: 100%;
 	margin: 0;
-	width: 100%;
+}
+
+#container {
+	min-height: 100%;
+	position: relative;
 }
 
 #wrapper {
+	display: table;
+	height: 100%;
+}
+
+#wrapper > .row {
 	display: table-row;
 }
 
@@ -22,6 +30,16 @@ body {
 
 #sidebar, #mainbar {
 	vertical-align: top;
+}
+
+#footer {
+	background-color: white;
+	border-top: 1px solid black;
+	bottom: 0;
+	height: 2em;
+	position: absolute;
+	text-align: center;
+	width: 100%;
 }
 
 .menu .title {

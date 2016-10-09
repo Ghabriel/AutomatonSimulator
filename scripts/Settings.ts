@@ -10,6 +10,7 @@ export namespace Settings {
 	}
 
 	export var language = english;
+	export var currentMachine = Machine.DFA;
 
 	export var machines = {};
 	machines[Machine.DFA] = {

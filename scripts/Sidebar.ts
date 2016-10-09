@@ -10,19 +10,6 @@ export class Sidebar extends Renderer {
 		super();
 		this.machineSelection = new Menu(Strings.SELECT_MACHINE);
 
-		// TODO: make this more generic
-		var table = new Table(2, 2);
-		utils.foreach(Settings.machines, function(type, props) {
-			var button = <HTMLInputElement> utils.create("input");
-			button.type = "button";
-			button.value = props.name;
-			button.addEventListener("click", function() {
-				alert("Not yet implemented.");
-			});
-			table.add(button);
-		});
-		this.machineSelection.add(table.html());
-
 		this.temp = new Menu("TEMPORARY");
 		var span = utils.create("span");
 		span.innerHTML = "Lorem ipsum dolor sit amet";
@@ -35,8 +22,33 @@ export class Sidebar extends Renderer {
 	}
 
 	protected onRender(): void {
+		this.node.innerHTML = "";
+		this.build();
 		this.machineSelection.render();
-		this.temp.render();
+		if (Settings.currentMachine == Settings.Machine.DFA) {
+			this.temp.render();
+		}
+	}
+
+	private build(): void {
+		// TODO: make this more generic
+		var table = new Table(2, 2);
+		var self = this;
+		utils.foreach(Settings.machines, function(type, props) {
+			var button = <HTMLInputElement> utils.create("input");
+			button.type = "button";
+			button.value = props.name;
+			button.disabled = (type == Settings.currentMachine);
+			button.addEventListener("click", function() {
+				Settings.currentMachine = type;
+				self.render();
+				// alert("Not yet implemented.");
+			});
+			table.add(button);
+		});
+
+		this.machineSelection.clear();
+		this.machineSelection.add(table.html());
 	}
 
 	private machineSelection: Menu;
