@@ -1,5 +1,6 @@
 body {
 	display: table;
+	font-family: sans-serif;
 	height: 100%;
 	margin: 0;
 	width: 100%;
@@ -15,7 +16,30 @@ body {
 	width: 15%;
 }
 
-#sidebar, #mainbar {
+#mainbar {
 	padding: 5px;
+}
+
+#sidebar, #mainbar {
 	vertical-align: top;
+}
+
+.menu .title {
+	background-color: #428bca;
+	border-bottom: 1px solid #2070a0;
+	color: white;
+	padding: 5px;
+}
+
+.menu .content {
+	padding: 5px;
+	text-align: center;
+}
+
+.menu .content table {
+	margin: 0 auto;
+}
+
+.menu .content table td {
+	text-align: center;
 }

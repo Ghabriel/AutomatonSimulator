@@ -14,7 +14,7 @@ define("Renderer", ["require", "exports"], function (require, exports) {
         };
         Renderer.prototype.render = function () {
             if (this.node) {
-                this.node.innerHTML = "";
+                // this.node.innerHTML = "";
                 this.onRender();
             }
         };
@@ -28,7 +28,11 @@ define("languages/English", ["require", "exports"], function (require, exports) 
     var english;
     (function (english) {
         english.strings = {
-            SELECT_MACHINE: "Machine Selection"
+            SELECT_MACHINE: "Machine Selection",
+            DFA: "DFA",
+            NFA: "NFA",
+            PDA: "PDA",
+            LBA: "LBA" // linear bounded automaton
         };
     })(english = exports.english || (exports.english = {}));
 });
@@ -38,7 +42,27 @@ define("Settings", ["require", "exports", "languages/English"], function (requir
     (function (Settings) {
         Settings.sidebarID = "sidebar";
         Settings.mainbarID = "mainbar";
+        (function (Machine) {
+            Machine[Machine["DFA"] = 0] = "DFA";
+            Machine[Machine["NFA"] = 1] = "NFA";
+            Machine[Machine["PDA"] = 2] = "PDA";
+            Machine[Machine["LBA"] = 3] = "LBA";
+        })(Settings.Machine || (Settings.Machine = {}));
+        var Machine = Settings.Machine;
         Settings.language = English_1.english;
+        Settings.machines = {};
+        Settings.machines[Machine.DFA] = {
+            name: Settings.language.strings.DFA
+        };
+        Settings.machines[Machine.NFA] = {
+            name: Settings.language.strings.NFA
+        };
+        Settings.machines[Machine.PDA] = {
+            name: Settings.language.strings.PDA
+        };
+        Settings.machines[Machine.LBA] = {
+            name: Settings.language.strings.LBA
+        };
     })(Settings = exports.Settings || (exports.Settings = {}));
     exports.Strings = Settings.language.strings;
 });
@@ -54,6 +78,18 @@ define("Utils", ["require", "exports"], function (require, exports) {
             return select("#" + selector);
         }
         utils.id = id;
+        function create(tag) {
+            return document.createElement(tag);
+        }
+        utils.create = create;
+        function foreach(obj, callback) {
+            for (var i in obj) {
+                if (obj.hasOwnProperty(i)) {
+                    callback(i, obj[i]);
+                }
+            }
+        }
+        utils.foreach = foreach;
     })(utils = exports.utils || (exports.utils = {}));
 });
 define("UI", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_1, Utils_1) {
@@ -88,44 +124,115 @@ define("UI", ["require", "exports", "Settings", "Utils"], function (require, exp
     }());
     exports.UI = UI;
 });
-define("Menu", ["require", "exports", "Renderer"], function (require, exports, Renderer_1) {
+/// <reference path="jQuery.d.ts" />
+define("Menu", ["require", "exports", "Renderer", "Utils"], function (require, exports, Renderer_1, Utils_2) {
     "use strict";
     var Menu = (function (_super) {
         __extends(Menu, _super);
         function Menu(title) {
             _super.call(this);
             this.title = title;
+            this.children = [];
         }
         Menu.prototype.add = function (elem) {
             this.children.push(elem);
         };
         Menu.prototype.onRender = function () {
             var node = this.node;
-            node.innerHTML = this.title;
+            var wrapper = Utils_2.utils.create("div");
+            wrapper.classList.add("menu");
+            var title = Utils_2.utils.create("div");
+            title.classList.add("title");
+            title.innerHTML = this.title;
+            wrapper.appendChild(title);
+            var content = Utils_2.utils.create("div");
+            content.classList.add("content");
+            for (var _i = 0, _a = this.children; _i < _a.length; _i++) {
+                var child = _a[_i];
+                content.appendChild(child);
+            }
+            wrapper.appendChild(content);
+            node.appendChild(wrapper);
+            title.addEventListener("click", function () {
+                $(content).slideToggle(300);
+            });
         };
         return Menu;
     }(Renderer_1.Renderer));
     exports.Menu = Menu;
 });
-define("Sidebar", ["require", "exports", "Menu", "Renderer", "Settings"], function (require, exports, Menu_1, Renderer_2, Settings_2) {
+define("Table", ["require", "exports", "Renderer", "Utils"], function (require, exports, Renderer_2, Utils_3) {
+    "use strict";
+    var Table = (function (_super) {
+        __extends(Table, _super);
+        function Table(numRows, numColumns) {
+            _super.call(this);
+            this.numRows = numRows;
+            this.numColumns = numColumns;
+            this.children = [];
+        }
+        Table.prototype.add = function (elem) {
+            this.children.push(elem);
+        };
+        Table.prototype.html = function () {
+            var wrapper = Utils_3.utils.create("table");
+            var index = 0;
+            for (var i = 0; i < this.numRows; i++) {
+                var tr = Utils_3.utils.create("tr");
+                for (var j = 0; j < this.numColumns; j++) {
+                    var td = Utils_3.utils.create("td");
+                    td.appendChild(this.children[index]);
+                    tr.appendChild(td);
+                    index++;
+                }
+                wrapper.appendChild(tr);
+            }
+            return wrapper;
+        };
+        Table.prototype.onRender = function () {
+            this.node.appendChild(this.html());
+        };
+        return Table;
+    }(Renderer_2.Renderer));
+    exports.Table = Table;
+});
+define("Sidebar", ["require", "exports", "Menu", "Renderer", "Settings", "Settings", "Table", "Utils"], function (require, exports, Menu_1, Renderer_3, Settings_2, Settings_3, Table_1, Utils_4) {
     "use strict";
     var Sidebar = (function (_super) {
         __extends(Sidebar, _super);
         function Sidebar() {
             _super.call(this);
-            this.machineSelection = new Menu_1.Menu(Settings_2.Strings.SELECT_MACHINE);
+            this.machineSelection = new Menu_1.Menu(Settings_3.Strings.SELECT_MACHINE);
+            // TODO: make this more generic
+            var table = new Table_1.Table(2, 2);
+            Utils_4.utils.foreach(Settings_2.Settings.machines, function (type, props) {
+                var button = Utils_4.utils.create("input");
+                button.type = "button";
+                button.value = props.name;
+                button.addEventListener("click", function () {
+                    alert("Not yet implemented.");
+                });
+                table.add(button);
+            });
+            this.machineSelection.add(table.html());
+            this.temp = new Menu_1.Menu("TEMPORARY");
+            var span = Utils_4.utils.create("span");
+            span.innerHTML = "Lorem ipsum dolor sit amet";
+            this.temp.add(span);
         }
         Sidebar.prototype.onBind = function () {
             this.machineSelection.bind(this.node);
+            this.temp.bind(this.node);
         };
         Sidebar.prototype.onRender = function () {
             this.machineSelection.render();
+            this.temp.render();
         };
         return Sidebar;
-    }(Renderer_2.Renderer));
+    }(Renderer_3.Renderer));
     exports.Sidebar = Sidebar;
 });
-define("Mainbar", ["require", "exports", "Renderer"], function (require, exports, Renderer_3) {
+define("Mainbar", ["require", "exports", "Renderer"], function (require, exports, Renderer_4) {
     "use strict";
     var Mainbar = (function (_super) {
         __extends(Mainbar, _super);
@@ -136,7 +243,7 @@ define("Mainbar", ["require", "exports", "Renderer"], function (require, exports
             this.node.innerHTML = "main";
         };
         return Mainbar;
-    }(Renderer_3.Renderer));
+    }(Renderer_4.Renderer));
     exports.Mainbar = Mainbar;
 });
 /// <reference path="jQuery.d.ts" />

@@ -6,7 +6,7 @@ export abstract class Renderer {
 
 	render(): void {
 		if (this.node) {
-			this.node.innerHTML = "";
+			// this.node.innerHTML = "";
 			this.onRender();
 		}
 	}
