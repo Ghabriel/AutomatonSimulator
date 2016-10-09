@@ -1,6 +1,6 @@
 import {Renderer} from "./Renderer"
-import {Settings} from "./Settings"
-import {utils} from "./Utils"
+import {Settings} from "../Settings"
+import {utils} from "../Utils"
 
 export class UI {
 	constructor(...renderers: Renderer[]) {

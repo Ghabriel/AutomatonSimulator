@@ -1,9 +1,13 @@
 import {english} from "./languages/English"
-import {Renderer} from "./Renderer"
+import {Renderer} from "./interface/Renderer"
 
 export namespace Settings {
 	export var sidebarID = "sidebar";
 	export var mainbarID = "mainbar";
+
+	export var slideInterval = 300;
+	export var machineSelRows = 2;
+	export var machineSelColumns = 2;
 
 	export enum Machine {
 		DFA, NFA, PDA, LBA

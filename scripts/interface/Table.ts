@@ -1,5 +1,5 @@
 import {Renderer} from "./Renderer"
-import {utils} from "./Utils"
+import {utils} from "../Utils"
 
 export class Table extends Renderer {
 	constructor(numRows: number, numColumns: number) {
@@ -20,7 +20,9 @@ export class Table extends Renderer {
 			let tr = utils.create("tr");
 			for (let j = 0; j < this.numColumns; j++) {
 				let td = utils.create("td");
-				td.appendChild(this.children[index]);
+				if (index < this.children.length) {
+					td.appendChild(this.children[index]);
+				}
 				tr.appendChild(td);
 				index++;
 			}

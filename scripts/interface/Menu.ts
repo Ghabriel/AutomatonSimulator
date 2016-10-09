@@ -1,7 +1,8 @@
-/// <reference path="jQuery.d.ts" />
+/// <reference path="../jQuery.d.ts" />
 
 import {Renderer} from "./Renderer"
-import {utils} from "./Utils"
+import {Settings} from "../Settings"
+import {utils} from "../Utils"
 
 export class Menu extends Renderer {
 	constructor(title: string) {
@@ -37,7 +38,9 @@ export class Menu extends Renderer {
 		node.appendChild(wrapper);
 
 		title.addEventListener("click", function() {
-			$(content).slideToggle(300);
+			if (!$(content).is(":animated")) {
+				$(content).slideToggle(Settings.slideInterval);
+			}
 		});
 	}
 

@@ -12,6 +12,7 @@ body {
 #wrapper {
 	display: table;
 	height: 100%;
+	width: 100%;
 }
 
 #wrapper > .row {
@@ -60,4 +61,8 @@ body {
 
 .menu .content table td {
 	text-align: center;
+}
+
+#sidebar > :last-child {
+	padding-bottom: 2em;
 }

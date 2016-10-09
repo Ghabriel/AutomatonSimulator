@@ -1,9 +1,9 @@
 import {Menu} from "./Menu"
 import {Renderer} from "./Renderer"
-import {Settings} from "./Settings"
-import {Strings} from "./Settings"
+import {Settings} from "../Settings"
+import {Strings} from "../Settings"
 import {Table} from "./Table"
-import {utils} from "./Utils"
+import {utils} from "../Utils"
 
 export class Sidebar extends Renderer {
 	constructor() {
@@ -31,8 +31,7 @@ export class Sidebar extends Renderer {
 	}
 
 	private build(): void {
-		// TODO: make this more generic
-		var table = new Table(2, 2);
+		var table = new Table(Settings.machineSelRows, Settings.machineSelColumns);
 		var self = this;
 		utils.foreach(Settings.machines, function(type, props) {
 			var button = <HTMLInputElement> utils.create("input");

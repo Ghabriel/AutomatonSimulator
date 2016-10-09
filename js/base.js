@@ -3,7 +3,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-define("Renderer", ["require", "exports"], function (require, exports) {
+define("interface/Renderer", ["require", "exports"], function (require, exports) {
     "use strict";
     var Renderer = (function () {
         function Renderer() {
@@ -22,6 +22,20 @@ define("Renderer", ["require", "exports"], function (require, exports) {
         return Renderer;
     }());
     exports.Renderer = Renderer;
+});
+define("interface/Mainbar", ["require", "exports", "interface/Renderer"], function (require, exports, Renderer_1) {
+    "use strict";
+    var Mainbar = (function (_super) {
+        __extends(Mainbar, _super);
+        function Mainbar() {
+            _super.apply(this, arguments);
+        }
+        Mainbar.prototype.onRender = function () {
+            this.node.innerHTML = "main";
+        };
+        return Mainbar;
+    }(Renderer_1.Renderer));
+    exports.Mainbar = Mainbar;
 });
 define("languages/English", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -42,6 +56,9 @@ define("Settings", ["require", "exports", "languages/English"], function (requir
     (function (Settings) {
         Settings.sidebarID = "sidebar";
         Settings.mainbarID = "mainbar";
+        Settings.slideInterval = 300;
+        Settings.machineSelRows = 2;
+        Settings.machineSelColumns = 2;
         (function (Machine) {
             Machine[Machine["DFA"] = 0] = "DFA";
             Machine[Machine["NFA"] = 1] = "NFA";
@@ -93,7 +110,132 @@ define("Utils", ["require", "exports"], function (require, exports) {
         utils.foreach = foreach;
     })(utils = exports.utils || (exports.utils = {}));
 });
-define("UI", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_1, Utils_1) {
+/// <reference path="../jQuery.d.ts" />
+define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_2, Settings_1, Utils_1) {
+    "use strict";
+    var Menu = (function (_super) {
+        __extends(Menu, _super);
+        function Menu(title) {
+            _super.call(this);
+            this.title = title;
+            this.children = [];
+        }
+        Menu.prototype.add = function (elem) {
+            this.children.push(elem);
+        };
+        Menu.prototype.clear = function () {
+            this.children = [];
+        };
+        Menu.prototype.onRender = function () {
+            var node = this.node;
+            var wrapper = Utils_1.utils.create("div");
+            wrapper.classList.add("menu");
+            var title = Utils_1.utils.create("div");
+            title.classList.add("title");
+            title.innerHTML = this.title;
+            wrapper.appendChild(title);
+            var content = Utils_1.utils.create("div");
+            content.classList.add("content");
+            for (var _i = 0, _a = this.children; _i < _a.length; _i++) {
+                var child = _a[_i];
+                content.appendChild(child);
+            }
+            wrapper.appendChild(content);
+            node.appendChild(wrapper);
+            title.addEventListener("click", function () {
+                if (!$(content).is(":animated")) {
+                    $(content).slideToggle(Settings_1.Settings.slideInterval);
+                }
+            });
+        };
+        return Menu;
+    }(Renderer_2.Renderer));
+    exports.Menu = Menu;
+});
+define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"], function (require, exports, Renderer_3, Utils_2) {
+    "use strict";
+    var Table = (function (_super) {
+        __extends(Table, _super);
+        function Table(numRows, numColumns) {
+            _super.call(this);
+            this.numRows = numRows;
+            this.numColumns = numColumns;
+            this.children = [];
+        }
+        Table.prototype.add = function (elem) {
+            this.children.push(elem);
+        };
+        Table.prototype.html = function () {
+            var wrapper = Utils_2.utils.create("table");
+            var index = 0;
+            for (var i = 0; i < this.numRows; i++) {
+                var tr = Utils_2.utils.create("tr");
+                for (var j = 0; j < this.numColumns; j++) {
+                    var td = Utils_2.utils.create("td");
+                    if (index < this.children.length) {
+                        td.appendChild(this.children[index]);
+                    }
+                    tr.appendChild(td);
+                    index++;
+                }
+                wrapper.appendChild(tr);
+            }
+            return wrapper;
+        };
+        Table.prototype.onRender = function () {
+            this.node.appendChild(this.html());
+        };
+        return Table;
+    }(Renderer_3.Renderer));
+    exports.Table = Table;
+});
+define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/Renderer", "Settings", "Settings", "interface/Table", "Utils"], function (require, exports, Menu_1, Renderer_4, Settings_2, Settings_3, Table_1, Utils_3) {
+    "use strict";
+    var Sidebar = (function (_super) {
+        __extends(Sidebar, _super);
+        function Sidebar() {
+            _super.call(this);
+            this.machineSelection = new Menu_1.Menu(Settings_3.Strings.SELECT_MACHINE);
+            this.temp = new Menu_1.Menu("TEMPORARY");
+            var span = Utils_3.utils.create("span");
+            span.innerHTML = "Lorem ipsum dolor sit amet";
+            this.temp.add(span);
+        }
+        Sidebar.prototype.onBind = function () {
+            this.machineSelection.bind(this.node);
+            this.temp.bind(this.node);
+        };
+        Sidebar.prototype.onRender = function () {
+            this.node.innerHTML = "";
+            this.build();
+            this.machineSelection.render();
+            if (Settings_2.Settings.currentMachine == Settings_2.Settings.Machine.DFA) {
+                this.temp.render();
+            }
+        };
+        Sidebar.prototype.build = function () {
+            var table = new Table_1.Table(Settings_2.Settings.machineSelRows, Settings_2.Settings.machineSelColumns);
+            var self = this;
+            Utils_3.utils.foreach(Settings_2.Settings.machines, function (type, props) {
+                var button = Utils_3.utils.create("input");
+                button.type = "button";
+                button.value = props.name;
+                button.disabled = (type == Settings_2.Settings.currentMachine);
+                button.addEventListener("click", function () {
+                    Settings_2.Settings.currentMachine = type;
+                    self.render();
+                    // alert("Not yet implemented.");
+                });
+                table.add(button);
+            });
+            this.machineSelection.clear();
+            this.machineSelection.add(table.html());
+        };
+        return Sidebar;
+    }(Renderer_4.Renderer));
+    exports.Sidebar = Sidebar;
+});
+define("interface/UI", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_4, Utils_4) {
     "use strict";
     var UI = (function () {
         function UI() {
@@ -111,13 +253,13 @@ define("UI", ["require", "exports", "Settings", "Utils"], function (require, exp
         };
         UI.prototype.bindSidebar = function (renderer) {
             if (renderer) {
-                renderer.bind(Utils_1.utils.id(Settings_1.Settings.sidebarID));
+                renderer.bind(Utils_4.utils.id(Settings_4.Settings.sidebarID));
             }
             this.sidebarRenderer = renderer;
         };
         UI.prototype.bindMain = function (renderer) {
             if (renderer) {
-                renderer.bind(Utils_1.utils.id(Settings_1.Settings.mainbarID));
+                renderer.bind(Utils_4.utils.id(Settings_4.Settings.mainbarID));
             }
             this.mainRenderer = renderer;
         };
@@ -126,143 +268,7 @@ define("UI", ["require", "exports", "Settings", "Utils"], function (require, exp
     exports.UI = UI;
 });
 /// <reference path="jQuery.d.ts" />
-define("Menu", ["require", "exports", "Renderer", "Utils"], function (require, exports, Renderer_1, Utils_2) {
-    "use strict";
-    var Menu = (function (_super) {
-        __extends(Menu, _super);
-        function Menu(title) {
-            _super.call(this);
-            this.title = title;
-            this.children = [];
-        }
-        Menu.prototype.add = function (elem) {
-            this.children.push(elem);
-        };
-        Menu.prototype.clear = function () {
-            this.children = [];
-        };
-        Menu.prototype.onRender = function () {
-            var node = this.node;
-            var wrapper = Utils_2.utils.create("div");
-            wrapper.classList.add("menu");
-            var title = Utils_2.utils.create("div");
-            title.classList.add("title");
-            title.innerHTML = this.title;
-            wrapper.appendChild(title);
-            var content = Utils_2.utils.create("div");
-            content.classList.add("content");
-            for (var _i = 0, _a = this.children; _i < _a.length; _i++) {
-                var child = _a[_i];
-                content.appendChild(child);
-            }
-            wrapper.appendChild(content);
-            node.appendChild(wrapper);
-            title.addEventListener("click", function () {
-                $(content).slideToggle(300);
-            });
-        };
-        return Menu;
-    }(Renderer_1.Renderer));
-    exports.Menu = Menu;
-});
-define("Table", ["require", "exports", "Renderer", "Utils"], function (require, exports, Renderer_2, Utils_3) {
-    "use strict";
-    var Table = (function (_super) {
-        __extends(Table, _super);
-        function Table(numRows, numColumns) {
-            _super.call(this);
-            this.numRows = numRows;
-            this.numColumns = numColumns;
-            this.children = [];
-        }
-        Table.prototype.add = function (elem) {
-            this.children.push(elem);
-        };
-        Table.prototype.html = function () {
-            var wrapper = Utils_3.utils.create("table");
-            var index = 0;
-            for (var i = 0; i < this.numRows; i++) {
-                var tr = Utils_3.utils.create("tr");
-                for (var j = 0; j < this.numColumns; j++) {
-                    var td = Utils_3.utils.create("td");
-                    td.appendChild(this.children[index]);
-                    tr.appendChild(td);
-                    index++;
-                }
-                wrapper.appendChild(tr);
-            }
-            return wrapper;
-        };
-        Table.prototype.onRender = function () {
-            this.node.appendChild(this.html());
-        };
-        return Table;
-    }(Renderer_2.Renderer));
-    exports.Table = Table;
-});
-define("Sidebar", ["require", "exports", "Menu", "Renderer", "Settings", "Settings", "Table", "Utils"], function (require, exports, Menu_1, Renderer_3, Settings_2, Settings_3, Table_1, Utils_4) {
-    "use strict";
-    var Sidebar = (function (_super) {
-        __extends(Sidebar, _super);
-        function Sidebar() {
-            _super.call(this);
-            this.machineSelection = new Menu_1.Menu(Settings_3.Strings.SELECT_MACHINE);
-            this.temp = new Menu_1.Menu("TEMPORARY");
-            var span = Utils_4.utils.create("span");
-            span.innerHTML = "Lorem ipsum dolor sit amet";
-            this.temp.add(span);
-        }
-        Sidebar.prototype.onBind = function () {
-            this.machineSelection.bind(this.node);
-            this.temp.bind(this.node);
-        };
-        Sidebar.prototype.onRender = function () {
-            this.node.innerHTML = "";
-            this.build();
-            this.machineSelection.render();
-            if (Settings_2.Settings.currentMachine == Settings_2.Settings.Machine.DFA) {
-                this.temp.render();
-            }
-        };
-        Sidebar.prototype.build = function () {
-            // TODO: make this more generic
-            var table = new Table_1.Table(2, 2);
-            var self = this;
-            Utils_4.utils.foreach(Settings_2.Settings.machines, function (type, props) {
-                var button = Utils_4.utils.create("input");
-                button.type = "button";
-                button.value = props.name;
-                button.disabled = (type == Settings_2.Settings.currentMachine);
-                button.addEventListener("click", function () {
-                    Settings_2.Settings.currentMachine = type;
-                    self.render();
-                    // alert("Not yet implemented.");
-                });
-                table.add(button);
-            });
-            this.machineSelection.clear();
-            this.machineSelection.add(table.html());
-        };
-        return Sidebar;
-    }(Renderer_3.Renderer));
-    exports.Sidebar = Sidebar;
-});
-define("Mainbar", ["require", "exports", "Renderer"], function (require, exports, Renderer_4) {
-    "use strict";
-    var Mainbar = (function (_super) {
-        __extends(Mainbar, _super);
-        function Mainbar() {
-            _super.apply(this, arguments);
-        }
-        Mainbar.prototype.onRender = function () {
-            this.node.innerHTML = "main";
-        };
-        return Mainbar;
-    }(Renderer_4.Renderer));
-    exports.Mainbar = Mainbar;
-});
-/// <reference path="jQuery.d.ts" />
-define("main", ["require", "exports", "Mainbar", "Sidebar", "UI"], function (require, exports, Mainbar_1, Sidebar_1, UI_1) {
+define("main", ["require", "exports", "interface/Mainbar", "interface/Sidebar", "interface/UI"], function (require, exports, Mainbar_1, Sidebar_1, UI_1) {
     "use strict";
     $(document).ready(function () {
         var ui = new UI_1.UI(new Sidebar_1.Sidebar(), new Mainbar_1.Mainbar());
