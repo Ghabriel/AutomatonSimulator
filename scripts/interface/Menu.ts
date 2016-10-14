@@ -1,4 +1,4 @@
-/// <reference path="../jQuery.d.ts" />
+/// <reference path="../defs/jQuery.d.ts" />
 
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"

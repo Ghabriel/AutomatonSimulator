@@ -9,6 +9,13 @@ export namespace Settings {
 	export var machineSelRows = 2;
 	export var machineSelColumns = 2;
 
+	export var stateLabelFontFamily = "sans-serif";
+	export var stateLabelFontSize = 20;
+	export var stateRadius = 32;
+	export var stateRingRadius = 27;
+	export var stateFillColor = "white";
+	export var stateStrokeColor = "black";
+
 	export enum Machine {
 		DFA, NFA, PDA, LBA
 	}

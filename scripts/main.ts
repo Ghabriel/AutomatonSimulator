@@ -1,4 +1,4 @@
-/// <reference path="jQuery.d.ts" />
+/// <reference path="defs/jQuery.d.ts" />
 
 import {Mainbar} from "./interface/Mainbar"
 import {Settings} from "./Settings"
