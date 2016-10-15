@@ -49,6 +49,7 @@ define("Settings", ["require", "exports", "languages/English"], function (requir
         Settings.stateLabelFontSize = 20;
         Settings.stateRadius = 32;
         Settings.stateRingRadius = 27;
+        Settings.stateDragTolerance = 50;
         Settings.stateFillColor = "white";
         Settings.stateStrokeColor = "black";
         (function (Machine) {
@@ -142,12 +143,58 @@ define("interface/State", ["require", "exports", "Settings"], function (require,
             }
             return null;
         };
+        State.prototype.drag = function (callback) {
+            // TODO: find a new home for all these functions
+            var self = this;
+            var setPosition = function (x, y) {
+                self.body.attr({
+                    cx: x,
+                    cy: y
+                });
+                if (self.ring) {
+                    self.ring.attr({
+                        cx: x,
+                        cy: y
+                    });
+                }
+                self.setPosition(x, y);
+            };
+            var maxTravelDistance;
+            var begin = function (x, y, event) {
+                this.ox = this.attr("cx");
+                this.oy = this.attr("cy");
+                maxTravelDistance = 0;
+                return null;
+            };
+            var move = function (dx, dy, x, y, event) {
+                var trueDx = this.attr("cx") - this.ox;
+                var trueDy = this.attr("cy") - this.oy;
+                var distanceSquared = trueDx * trueDx + trueDy * trueDy;
+                if (distanceSquared > maxTravelDistance) {
+                    maxTravelDistance = distanceSquared;
+                }
+                setPosition(this.ox + dx, this.oy + dy);
+                return null;
+            };
+            var end = function (event) {
+                var dx = this.attr("cx") - this.ox;
+                var dy = this.attr("cy") - this.oy;
+                setPosition(this.ox, this.oy);
+                var accepted = callback.call(this, maxTravelDistance);
+                if (accepted) {
+                    setPosition(this.ox + dx, this.oy + dy);
+                }
+                return null;
+            };
+            this.body.drag(move, begin, end);
+        };
         return State;
     }());
     exports.State = State;
 });
 /// <reference path="../defs/raphael.d.ts" />
-define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interface/State"], function (require, exports, Renderer_1, State_1) {
+/// <reference path="../defs/jQuery.d.ts" />
+define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interface/State", "Settings"], function (require, exports, Renderer_1, State_1, Settings_2) {
     "use strict";
     var Mainbar = (function (_super) {
         __extends(Mainbar, _super);
@@ -155,8 +202,12 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
             _super.apply(this, arguments);
         }
         Mainbar.prototype.onRender = function () {
-            var node = this.node;
-            var canvas = Raphael(node, 500, 500);
+            // var node = $(this.node);
+            // var width = node.outerWidth();
+            // var height = node.outerHeight();
+            var width = 800;
+            var height = 600;
+            var canvas = Raphael(this.node, width, height);
             var states = [
                 new State_1.State(),
                 new State_1.State(),
@@ -168,9 +219,18 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
             states[2].setPosition(340, 320);
             var _loop_1 = function(state) {
                 state.render(canvas);
-                state.html().addEventListener("click", function () {
-                    state.setFinal(!state.isFinal());
-                    state.render(canvas);
+                // state.html().addEventListener("click", function() {
+                // 	state.setFinal(!state.isFinal());
+                // 	state.render(canvas);
+                // });
+                // state.elem().drag(move, begin, end);
+                state.drag(function (distanceSquared) {
+                    if (distanceSquared <= Settings_2.Settings.stateDragTolerance) {
+                        state.setFinal(!state.isFinal());
+                        state.render(canvas);
+                        return false;
+                    }
+                    return true;
                 });
             };
             for (var _i = 0, states_1 = states; _i < states_1.length; _i++) {
@@ -209,7 +269,7 @@ define("Utils", ["require", "exports"], function (require, exports) {
     })(utils = exports.utils || (exports.utils = {}));
 });
 /// <reference path="../defs/jQuery.d.ts" />
-define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_2, Settings_2, Utils_1) {
+define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_2, Settings_3, Utils_1) {
     "use strict";
     var Menu = (function (_super) {
         __extends(Menu, _super);
@@ -242,7 +302,7 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
             node.appendChild(wrapper);
             title.addEventListener("click", function () {
                 if (!$(content).is(":animated")) {
-                    $(content).slideToggle(Settings_2.Settings.slideInterval);
+                    $(content).slideToggle(Settings_3.Settings.slideInterval);
                 }
             });
         };
@@ -287,13 +347,13 @@ define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"],
     }(Renderer_3.Renderer));
     exports.Table = Table;
 });
-define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/Renderer", "Settings", "Settings", "interface/Table", "Utils"], function (require, exports, Menu_1, Renderer_4, Settings_3, Settings_4, Table_1, Utils_3) {
+define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/Renderer", "Settings", "Settings", "interface/Table", "Utils"], function (require, exports, Menu_1, Renderer_4, Settings_4, Settings_5, Table_1, Utils_3) {
     "use strict";
     var Sidebar = (function (_super) {
         __extends(Sidebar, _super);
         function Sidebar() {
             _super.call(this);
-            this.machineSelection = new Menu_1.Menu(Settings_4.Strings.SELECT_MACHINE);
+            this.machineSelection = new Menu_1.Menu(Settings_5.Strings.SELECT_MACHINE);
             this.temp = new Menu_1.Menu("TEMPORARY");
             var span = Utils_3.utils.create("span");
             span.innerHTML = "Lorem ipsum dolor sit amet";
@@ -307,20 +367,20 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             this.node.innerHTML = "";
             this.build();
             this.machineSelection.render();
-            if (Settings_3.Settings.currentMachine == Settings_3.Settings.Machine.DFA) {
+            if (Settings_4.Settings.currentMachine == Settings_4.Settings.Machine.DFA) {
                 this.temp.render();
             }
         };
         Sidebar.prototype.build = function () {
-            var table = new Table_1.Table(Settings_3.Settings.machineSelRows, Settings_3.Settings.machineSelColumns);
+            var table = new Table_1.Table(Settings_4.Settings.machineSelRows, Settings_4.Settings.machineSelColumns);
             var self = this;
-            Utils_3.utils.foreach(Settings_3.Settings.machines, function (type, props) {
+            Utils_3.utils.foreach(Settings_4.Settings.machines, function (type, props) {
                 var button = Utils_3.utils.create("input");
                 button.type = "button";
                 button.value = props.name;
-                button.disabled = (type == Settings_3.Settings.currentMachine);
+                button.disabled = (type == Settings_4.Settings.currentMachine);
                 button.addEventListener("click", function () {
-                    Settings_3.Settings.currentMachine = type;
+                    Settings_4.Settings.currentMachine = type;
                     self.render();
                     // alert("Not yet implemented.");
                 });
@@ -333,7 +393,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
     }(Renderer_4.Renderer));
     exports.Sidebar = Sidebar;
 });
-define("interface/UI", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_5, Utils_4) {
+define("interface/UI", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_6, Utils_4) {
     "use strict";
     var UI = (function () {
         function UI() {
@@ -351,13 +411,13 @@ define("interface/UI", ["require", "exports", "Settings", "Utils"], function (re
         };
         UI.prototype.bindSidebar = function (renderer) {
             if (renderer) {
-                renderer.bind(Utils_4.utils.id(Settings_5.Settings.sidebarID));
+                renderer.bind(Utils_4.utils.id(Settings_6.Settings.sidebarID));
             }
             this.sidebarRenderer = renderer;
         };
         UI.prototype.bindMain = function (renderer) {
             if (renderer) {
-                renderer.bind(Utils_4.utils.id(Settings_5.Settings.mainbarID));
+                renderer.bind(Utils_4.utils.id(Settings_6.Settings.mainbarID));
             }
             this.mainRenderer = renderer;
         };

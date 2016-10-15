@@ -21,8 +21,11 @@ body {
 
 #sidebar {
 	border-right: 1px solid black;
-	display: table-cell;
 	width: 15%;
+}
+
+#sidebar > :last-child {
+	padding-bottom: 2em;
 }
 
 #mainbar {
@@ -30,6 +33,7 @@ body {
 }
 
 #sidebar, #mainbar {
+	display: table-cell;
 	vertical-align: top;
 }
 
@@ -61,8 +65,4 @@ body {
 
 .menu .content table td {
 	text-align: center;
-}
-
-#sidebar > :last-child {
-	padding-bottom: 2em;
 }

@@ -80,6 +80,7 @@ interface RaphaelElement {
     touchstart(handler: Function): RaphaelElement;
     transform(): string;
     transform(tstr: string): RaphaelElement;
+    translate(dx: number, dy: number): RaphaelElement;
     unclick(handler: Function): RaphaelElement;
     undblclick(handler: Function): RaphaelElement;
     undrag(): RaphaelElement;

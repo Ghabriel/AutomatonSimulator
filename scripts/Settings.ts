@@ -13,6 +13,7 @@ export namespace Settings {
 	export var stateLabelFontSize = 20;
 	export var stateRadius = 32;
 	export var stateRingRadius = 27;
+	export var stateDragTolerance = 50;
 	export var stateFillColor = "white";
 	export var stateStrokeColor = "black";
 

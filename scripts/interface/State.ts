@@ -65,6 +65,59 @@ export class State {
 		return null;
 	}
 
+	public drag(callback: (distSquared: number) => boolean): void {
+		// TODO: find a new home for all these functions
+		let self = this;
+		let setPosition = function(x, y) {
+			self.body.attr({
+				cx: x,
+				cy: y
+			});
+
+			if (self.ring) {
+				self.ring.attr({
+					cx: x,
+					cy: y
+				});
+			}
+
+			self.setPosition(x, y);
+		};
+
+		let maxTravelDistance;
+		let begin = function(x, y, event) {
+			this.ox = this.attr("cx");
+			this.oy = this.attr("cy");
+			maxTravelDistance = 0;
+			return null;
+		};
+
+		let move = function(dx, dy, x, y, event) {
+			let trueDx = this.attr("cx") - this.ox;
+			let trueDy = this.attr("cy") - this.oy;
+			let distanceSquared = trueDx * trueDx + trueDy * trueDy;
+			if (distanceSquared > maxTravelDistance) {
+				maxTravelDistance = distanceSquared;
+			}
+			setPosition(this.ox + dx, this.oy + dy);
+			return null;
+		};
+
+		let end = function(event) {
+			let dx = this.attr("cx") - this.ox;
+			let dy = this.attr("cy") - this.oy;
+			setPosition(this.ox, this.oy);
+
+			let accepted = callback.call(this, maxTravelDistance);
+			if (accepted) {
+				setPosition(this.ox + dx, this.oy + dy);
+			}
+			return null;
+		};
+
+		this.body.drag(move, begin, end);
+	}
+
 	private body: RaphaelElement = null;
 	private ring: RaphaelElement = null;
 	private x: number;
