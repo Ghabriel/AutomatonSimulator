@@ -6,13 +6,31 @@ import {State} from "./State"
 import {Settings} from "../Settings"
 
 export class Mainbar extends Renderer {
+	constructor() {
+		super();
+		let self = this;
+		$(window).resize(function() {
+			self.resizeCanvas();
+		});
+	}
+
+	private resizeCanvas(): void {
+		let canvas = this.canvas;
+		if (canvas) {
+			let node = $(this.node);
+			// allows the parent node to adjust
+			canvas.setSize(50, 50);
+			let width = node.width();
+			let height = node.height() - 10;
+			canvas.setSize(width, height);
+		}
+	}
+
 	protected onRender(): void {
-		// var node = $(this.node);
-		// var width = node.outerWidth();
-		// var height = node.outerHeight();
-		var width = 800;
-		var height = 600;
-		let canvas = Raphael(<HTMLElement> this.node, width, height);
+		// 50x50 is a placeholder size: resizeCanvas() calculates the true size.
+		this.canvas = Raphael(<HTMLElement> this.node, 50, 50);
+		this.resizeCanvas();
+
 		let states = [
 			new State(),
 			new State(),
@@ -26,14 +44,9 @@ export class Mainbar extends Renderer {
 
 		states[2].setPosition(340, 320);
 
+		let canvas = this.canvas;
 		for (let state of states) {
 			state.render(canvas);
-			// state.html().addEventListener("click", function() {
-			// 	state.setFinal(!state.isFinal());
-			// 	state.render(canvas);
-			// });
-
-			// state.elem().drag(move, begin, end);
 			state.drag(function(distanceSquared) {
 				if (distanceSquared <= Settings.stateDragTolerance) {
 					state.setFinal(!state.isFinal());
@@ -44,4 +57,6 @@ export class Mainbar extends Renderer {
 			});
 		}
 	}
+
+	private canvas: RaphaelPaper = null;
 }

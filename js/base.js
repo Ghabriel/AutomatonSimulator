@@ -29,10 +29,9 @@ define("languages/English", ["require", "exports"], function (require, exports) 
     (function (english) {
         english.strings = {
             SELECT_MACHINE: "Machine Selection",
-            DFA: "DFA",
-            NFA: "NFA",
-            PDA: "PDA",
-            LBA: "LBA" // linear bounded automaton
+            FA: "Finite Automaton",
+            PDA: "Pushdown Automaton",
+            LBA: "Linearly Bounded Automaton"
         };
     })(english = exports.english || (exports.english = {}));
 });
@@ -43,8 +42,8 @@ define("Settings", ["require", "exports", "languages/English"], function (requir
         Settings.sidebarID = "sidebar";
         Settings.mainbarID = "mainbar";
         Settings.slideInterval = 300;
-        Settings.machineSelRows = 2;
-        Settings.machineSelColumns = 2;
+        Settings.machineSelRows = 3;
+        Settings.machineSelColumns = 1;
         Settings.stateLabelFontFamily = "sans-serif";
         Settings.stateLabelFontSize = 20;
         Settings.stateRadius = 32;
@@ -53,20 +52,16 @@ define("Settings", ["require", "exports", "languages/English"], function (requir
         Settings.stateFillColor = "white";
         Settings.stateStrokeColor = "black";
         (function (Machine) {
-            Machine[Machine["DFA"] = 0] = "DFA";
-            Machine[Machine["NFA"] = 1] = "NFA";
-            Machine[Machine["PDA"] = 2] = "PDA";
-            Machine[Machine["LBA"] = 3] = "LBA";
+            Machine[Machine["FA"] = 0] = "FA";
+            Machine[Machine["PDA"] = 1] = "PDA";
+            Machine[Machine["LBA"] = 2] = "LBA";
         })(Settings.Machine || (Settings.Machine = {}));
         var Machine = Settings.Machine;
         Settings.language = English_1.english;
-        Settings.currentMachine = Machine.DFA;
+        Settings.currentMachine = Machine.FA;
         Settings.machines = {};
-        Settings.machines[Machine.DFA] = {
-            name: Settings.language.strings.DFA
-        };
-        Settings.machines[Machine.NFA] = {
-            name: Settings.language.strings.NFA
+        Settings.machines[Machine.FA] = {
+            name: Settings.language.strings.FA
         };
         Settings.machines[Machine.PDA] = {
             name: Settings.language.strings.PDA
@@ -199,15 +194,28 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
     var Mainbar = (function (_super) {
         __extends(Mainbar, _super);
         function Mainbar() {
-            _super.apply(this, arguments);
+            _super.call(this);
+            this.canvas = null;
+            var self = this;
+            $(window).resize(function () {
+                self.resizeCanvas();
+            });
         }
+        Mainbar.prototype.resizeCanvas = function () {
+            var canvas = this.canvas;
+            if (canvas) {
+                var node = $(this.node);
+                // allows the parent node to adjust
+                canvas.setSize(50, 50);
+                var width = node.width();
+                var height = node.height() - 10;
+                canvas.setSize(width, height);
+            }
+        };
         Mainbar.prototype.onRender = function () {
-            // var node = $(this.node);
-            // var width = node.outerWidth();
-            // var height = node.outerHeight();
-            var width = 800;
-            var height = 600;
-            var canvas = Raphael(this.node, width, height);
+            // 50x50 is a placeholder size: resizeCanvas() calculates the true size.
+            this.canvas = Raphael(this.node, 50, 50);
+            this.resizeCanvas();
             var states = [
                 new State_1.State(),
                 new State_1.State(),
@@ -217,13 +225,9 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
             states[0].setFinal(true);
             states[1].setPosition(300, 80);
             states[2].setPosition(340, 320);
+            var canvas = this.canvas;
             var _loop_1 = function(state) {
                 state.render(canvas);
-                // state.html().addEventListener("click", function() {
-                // 	state.setFinal(!state.isFinal());
-                // 	state.render(canvas);
-                // });
-                // state.elem().drag(move, begin, end);
                 state.drag(function (distanceSquared) {
                     if (distanceSquared <= Settings_2.Settings.stateDragTolerance) {
                         state.setFinal(!state.isFinal());
@@ -357,6 +361,10 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             this.temp = new Menu_1.Menu("TEMPORARY");
             var span = Utils_3.utils.create("span");
             span.innerHTML = "Lorem ipsum dolor sit amet";
+            // this.temp = new Menu("Recognition");
+            // var input = <HTMLInputElement> utils.create("input");
+            // input.type = "text";
+            // input.placeholder = "test case";
             this.temp.add(span);
         }
         Sidebar.prototype.onBind = function () {
@@ -367,7 +375,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             this.node.innerHTML = "";
             this.build();
             this.machineSelection.render();
-            if (Settings_4.Settings.currentMachine == Settings_4.Settings.Machine.DFA) {
+            if (Settings_4.Settings.currentMachine == Settings_4.Settings.Machine.FA) {
                 this.temp.render();
             }
         };
@@ -376,6 +384,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             var self = this;
             Utils_3.utils.foreach(Settings_4.Settings.machines, function (type, props) {
                 var button = Utils_3.utils.create("input");
+                button.classList.add("machine_selection_btn");
                 button.type = "button";
                 button.value = props.name;
                 button.disabled = (type == Settings_4.Settings.currentMachine);

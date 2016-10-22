@@ -21,7 +21,7 @@ body {
 
 #sidebar {
 	border-right: 1px solid black;
-	width: 15%;
+	width: 20%;
 }
 
 #sidebar > :last-child {
@@ -44,6 +44,14 @@ body {
 	height: 2em;
 	position: absolute;
 	text-align: center;
+	width: 100%;
+}
+
+svg {
+	margin: -5px;
+}
+
+.machine_selection_btn {
 	width: 100%;
 }
 

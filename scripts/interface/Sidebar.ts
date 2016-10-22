@@ -13,6 +13,10 @@ export class Sidebar extends Renderer {
 		this.temp = new Menu("TEMPORARY");
 		var span = utils.create("span");
 		span.innerHTML = "Lorem ipsum dolor sit amet";
+		// this.temp = new Menu("Recognition");
+		// var input = <HTMLInputElement> utils.create("input");
+		// input.type = "text";
+		// input.placeholder = "test case";
 		this.temp.add(span);
 	}
 
@@ -25,7 +29,7 @@ export class Sidebar extends Renderer {
 		this.node.innerHTML = "";
 		this.build();
 		this.machineSelection.render();
-		if (Settings.currentMachine == Settings.Machine.DFA) {
+		if (Settings.currentMachine == Settings.Machine.FA) {
 			this.temp.render();
 		}
 	}
@@ -35,6 +39,7 @@ export class Sidebar extends Renderer {
 		var self = this;
 		utils.foreach(Settings.machines, function(type, props) {
 			var button = <HTMLInputElement> utils.create("input");
+			button.classList.add("machine_selection_btn");
 			button.type = "button";
 			button.value = props.name;
 			button.disabled = (type == Settings.currentMachine);

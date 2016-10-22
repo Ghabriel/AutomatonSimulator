@@ -6,8 +6,8 @@ export namespace Settings {
 	export var mainbarID = "mainbar";
 
 	export var slideInterval = 300;
-	export var machineSelRows = 2;
-	export var machineSelColumns = 2;
+	export var machineSelRows = 3;
+	export var machineSelColumns = 1;
 
 	export var stateLabelFontFamily = "sans-serif";
 	export var stateLabelFontSize = 20;
@@ -18,19 +18,15 @@ export namespace Settings {
 	export var stateStrokeColor = "black";
 
 	export enum Machine {
-		DFA, NFA, PDA, LBA
+		FA, PDA, LBA
 	}
 
 	export var language = english;
-	export var currentMachine = Machine.DFA;
+	export var currentMachine = Machine.FA;
 
 	export var machines = {};
-	machines[Machine.DFA] = {
-		name: language.strings.DFA
-	};
-
-	machines[Machine.NFA] = {
-		name: language.strings.NFA
+	machines[Machine.FA] = {
+		name: language.strings.FA
 	};
 
 	machines[Machine.PDA] = {
