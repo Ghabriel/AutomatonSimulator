@@ -31,7 +31,10 @@ define("languages/English", ["require", "exports"], function (require, exports) 
             SELECT_MACHINE: "Machine Selection",
             FA: "Finite Automaton",
             PDA: "Pushdown Automaton",
-            LBA: "Linearly Bounded Automaton"
+            LBA: "Linearly Bounded Automaton",
+            FILE_MENUBAR: "File Manipulation",
+            SAVE: "Save",
+            OPEN: "Open"
         };
     })(english = exports.english || (exports.english = {}));
 });
@@ -279,6 +282,7 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
         __extends(Menu, _super);
         function Menu(title) {
             _super.call(this);
+            this.body = null;
             this.title = title;
             this.children = [];
         }
@@ -309,6 +313,10 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
                     $(content).slideToggle(Settings_3.Settings.slideInterval);
                 }
             });
+            this.body = wrapper;
+        };
+        Menu.prototype.html = function () {
+            return this.body;
         };
         return Menu;
     }(Renderer_2.Renderer));
@@ -357,29 +365,53 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
         __extends(Sidebar, _super);
         function Sidebar() {
             _super.call(this);
+            this.fileManipulation = new Menu_1.Menu(Settings_5.Strings.FILE_MENUBAR);
             this.machineSelection = new Menu_1.Menu(Settings_5.Strings.SELECT_MACHINE);
-            this.temp = new Menu_1.Menu("TEMPORARY");
-            var span = Utils_3.utils.create("span");
-            span.innerHTML = "Lorem ipsum dolor sit amet";
-            // this.temp = new Menu("Recognition");
-            // var input = <HTMLInputElement> utils.create("input");
-            // input.type = "text";
-            // input.placeholder = "test case";
-            this.temp.add(span);
+            // this.temp = new Menu("TEMPORARY");
+            // var span = utils.create("span");
+            // span.innerHTML = "Lorem ipsum dolor sit amet";
+            this.temp = new Menu_1.Menu("Recognition");
+            var input = Utils_3.utils.create("input");
+            input.type = "text";
+            input.placeholder = "test case";
+            this.temp.add(input);
         }
         Sidebar.prototype.onBind = function () {
+            this.fileManipulation.bind(this.node);
             this.machineSelection.bind(this.node);
             this.temp.bind(this.node);
         };
         Sidebar.prototype.onRender = function () {
+            // $("> *", this.node).not(this.fileManipulation.html()).remove();
             this.node.innerHTML = "";
             this.build();
+            this.fileManipulation.render();
             this.machineSelection.render();
             if (Settings_4.Settings.currentMachine == Settings_4.Settings.Machine.FA) {
                 this.temp.render();
             }
         };
-        Sidebar.prototype.build = function () {
+        Sidebar.prototype.buildFileManipulation = function () {
+            this.fileManipulation.clear();
+            var save = Utils_3.utils.create("input");
+            save.classList.add("file_manip_btn");
+            save.type = "button";
+            save.value = Settings_5.Strings.SAVE;
+            save.addEventListener("click", function () {
+                alert("Not yet implemented");
+            });
+            this.fileManipulation.add(save);
+            var open = Utils_3.utils.create("input");
+            open.classList.add("file_manip_btn");
+            open.type = "button";
+            open.value = Settings_5.Strings.OPEN;
+            open.addEventListener("click", function () {
+                alert("Not yet implemented");
+            });
+            this.fileManipulation.add(open);
+            // this.fileManipulation.add(document.createElement("input"));
+        };
+        Sidebar.prototype.buildMachineSelection = function () {
             var table = new Table_1.Table(Settings_4.Settings.machineSelRows, Settings_4.Settings.machineSelColumns);
             var self = this;
             Utils_3.utils.foreach(Settings_4.Settings.machines, function (type, props) {
@@ -391,12 +423,15 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 button.addEventListener("click", function () {
                     Settings_4.Settings.currentMachine = type;
                     self.render();
-                    // alert("Not yet implemented.");
                 });
                 table.add(button);
             });
             this.machineSelection.clear();
             this.machineSelection.add(table.html());
+        };
+        Sidebar.prototype.build = function () {
+            this.buildFileManipulation();
+            this.buildMachineSelection();
         };
         return Sidebar;
     }(Renderer_4.Renderer));

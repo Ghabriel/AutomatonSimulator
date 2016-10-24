@@ -51,10 +51,6 @@ svg {
 	margin: -5px;
 }
 
-.machine_selection_btn {
-	width: 100%;
-}
-
 .menu .title {
 	background-color: #428bca;
 	border-bottom: 1px solid #2070a0;
@@ -73,4 +69,12 @@ svg {
 
 .menu .content table td {
 	text-align: center;
+}
+
+.machine_selection_btn {
+	width: 100%;
+}
+
+.file_manip_btn:not(:last-child) {
+	margin-right: 5px;
 }

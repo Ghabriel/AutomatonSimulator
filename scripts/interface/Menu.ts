@@ -42,8 +42,15 @@ export class Menu extends Renderer {
 				$(content).slideToggle(Settings.slideInterval);
 			}
 		});
+
+		this.body = <HTMLDivElement> wrapper;
 	}
 
+	html(): HTMLDivElement {
+		return this.body;
+	}
+
+	private body: HTMLDivElement = null;
 	private title: string;
 	private children: Element[];
 }
