@@ -1,5 +1,11 @@
 import {english} from "./languages/English"
+import {Initializer} from "./Initializer"
 import {Renderer} from "./interface/Renderer"
+
+interface MachineTraits {
+	name: string;
+	sidebar: any[];
+}
 
 export namespace Settings {
 	export var sidebarID = "sidebar";
@@ -24,18 +30,23 @@ export namespace Settings {
 	export var language = english;
 	export var currentMachine = Machine.FA;
 
-	export var machines = {};
+	export var machines: {[m: number]: MachineTraits} = {};
 	machines[Machine.FA] = {
-		name: language.strings.FA
+		name: language.strings.FA,
+		sidebar: []
 	};
 
 	machines[Machine.PDA] = {
-		name: language.strings.PDA
+		name: language.strings.PDA,
+		sidebar: []
 	};
 
 	machines[Machine.LBA] = {
-		name: language.strings.LBA
+		name: language.strings.LBA,
+		sidebar: []
 	};
 }
 
 export const Strings = Settings.language.strings;
+
+Initializer.exec();

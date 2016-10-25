@@ -2,6 +2,7 @@
 
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
+import {utils} from "../Utils"
 
 export class State {
 	public setPosition(x: number, y: number): void {
@@ -15,6 +16,10 @@ export class State {
 
 	public setInitial(flag: boolean): void {
 		this.initial = flag;
+	}
+
+	public isInitial(): boolean {
+		return this.initial;
 	}
 
 	public setFinal(flag: boolean): void {
@@ -58,6 +63,10 @@ export class State {
 		}
 	}
 
+	public node(): RaphaelElement {
+		return this.body;
+	}
+
 	public html(): SVGElement {
 		if (this.body) {
 			return this.body.node;
@@ -65,7 +74,7 @@ export class State {
 		return null;
 	}
 
-	public drag(callback: (distSquared: number) => boolean): void {
+	public drag(callback: (distSquared: number, event: any) => boolean): void {
 		// TODO: find a new home for all these functions
 		let self = this;
 		let setPosition = function(x, y) {
@@ -108,7 +117,7 @@ export class State {
 			let dy = this.attr("cy") - this.oy;
 			setPosition(this.ox, this.oy);
 
-			let accepted = callback.call(this, maxTravelDistance);
+			let accepted = callback.call(this, maxTravelDistance, event);
 			if (accepted) {
 				setPosition(this.ox + dx, this.oy + dy);
 			}

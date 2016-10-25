@@ -4,6 +4,7 @@
 import {Renderer} from "./Renderer"
 import {State} from "./State"
 import {Settings} from "../Settings"
+import {utils} from "../Utils"
 
 export class Mainbar extends Renderer {
 	constructor() {
@@ -44,10 +45,15 @@ export class Mainbar extends Renderer {
 
 		states[2].setPosition(340, 320);
 
+		// TODO: separate left click/right click dragging handlers
 		let canvas = this.canvas;
 		for (let state of states) {
 			state.render(canvas);
-			state.drag(function(distanceSquared) {
+			state.drag(function(distanceSquared, event) {
+				if (utils.isRightClick(event)) {
+					return false;
+				}
+
 				if (distanceSquared <= Settings.stateDragTolerance) {
 					state.setFinal(!state.isFinal());
 					state.render(canvas);
@@ -55,7 +61,21 @@ export class Mainbar extends Renderer {
 				}
 				return true;
 			});
+
+			state.node().mousedown(function(e) {
+				if (utils.isRightClick(e)) {
+					console.log("Initial state changed.");
+					state.setInitial(!state.isInitial());
+					e.preventDefault();
+					return false;
+				}
+			});
 		}
+
+		$(this.node).contextmenu(function(e) {
+			e.preventDefault();
+			return false;
+		});
 	}
 
 	private canvas: RaphaelPaper = null;

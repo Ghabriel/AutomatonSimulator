@@ -1,3 +1,5 @@
+/// <reference path="../defs/filesaver.d.ts" />
+
 import {Menu} from "./Menu"
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
@@ -10,42 +12,53 @@ export class Sidebar extends Renderer {
 		super();
 		this.fileManipulation = new Menu(Strings.FILE_MENUBAR);
 		this.machineSelection = new Menu(Strings.SELECT_MACHINE);
-
-		// this.temp = new Menu("TEMPORARY");
-		// var span = utils.create("span");
-		// span.innerHTML = "Lorem ipsum dolor sit amet";
-		this.temp = new Menu("Recognition");
-		var input = <HTMLInputElement> utils.create("input");
-		input.type = "text";
-		input.placeholder = "test case";
-		this.temp.add(input);
+		this.otherMenus = [];
+		this.build();
 	}
 
 	protected onBind(): void {
 		this.fileManipulation.bind(this.node);
 		this.machineSelection.bind(this.node);
-		this.temp.bind(this.node);
+		for (let menu of this.otherMenus) {
+			menu.bind(this.node);
+		}
 	}
 
 	protected onRender(): void {
-		// $("> *", this.node).not(this.fileManipulation.html()).remove();
-		this.node.innerHTML = "";
-		this.build();
 		this.fileManipulation.render();
 		this.machineSelection.render();
-		if (Settings.currentMachine == Settings.Machine.FA) {
-			this.temp.render();
+		for (let menu of this.otherMenus) {
+			menu.render();
+		}
+	}
+
+	private build(): void {
+		this.buildFileManipulation();
+		this.buildMachineSelection();
+	}
+
+	private loadMachine(machine: Settings.Machine): void {
+		for (let menu of this.otherMenus) {
+			$(menu.html()).remove();
+		}
+
+		this.otherMenus = Settings.machines[machine].sidebar;
+		for (let menu of this.otherMenus) {
+			menu.bind(this.node);
+			menu.render();
 		}
 	}
 
 	private buildFileManipulation(): void {
-		this.fileManipulation.clear();
 		var save = <HTMLInputElement> utils.create("input");
 		save.classList.add("file_manip_btn");
 		save.type = "button";
 		save.value = Strings.SAVE;
 		save.addEventListener("click", function() {
-			alert("Not yet implemented");
+			// TODO
+		    var content = "Hello, world!";
+		    var blob = new Blob([content], {type: "text/plain; charset=utf-8"});
+		    saveAs(blob, "file.txt");
 		});
 		this.fileManipulation.add(save);
 
@@ -54,14 +67,15 @@ export class Sidebar extends Renderer {
 		open.type = "button";
 		open.value = Strings.OPEN;
 		open.addEventListener("click", function() {
+			// TODO
 			alert("Not yet implemented");
 		});
 		this.fileManipulation.add(open);
-		// this.fileManipulation.add(document.createElement("input"));
 	}
 
 	private buildMachineSelection(): void {
 		var table = new Table(Settings.machineSelRows, Settings.machineSelColumns);
+		var machineButtonMapping = {};
 		var self = this;
 		utils.foreach(Settings.machines, function(type, props) {
 			var button = <HTMLInputElement> utils.create("input");
@@ -70,22 +84,20 @@ export class Sidebar extends Renderer {
 			button.value = props.name;
 			button.disabled = (type == Settings.currentMachine);
 			button.addEventListener("click", function() {
+				machineButtonMapping[Settings.currentMachine].disabled = false;
+				machineButtonMapping[type].disabled = true;
 				Settings.currentMachine = type;
-				self.render();
+				self.loadMachine(type);
 			});
 			table.add(button);
+			machineButtonMapping[type] = button;
 		});
 
-		this.machineSelection.clear();
 		this.machineSelection.add(table.html());
-	}
-
-	private build(): void {
-		this.buildFileManipulation();
-		this.buildMachineSelection();
+		this.loadMachine(Settings.currentMachine);
 	}
 
 	private fileManipulation: Menu;
 	private machineSelection: Menu;
-	private temp: Menu;
+	private otherMenus: Menu[];
 }

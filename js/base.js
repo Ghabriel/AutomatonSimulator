@@ -38,7 +38,132 @@ define("languages/English", ["require", "exports"], function (require, exports) 
         };
     })(english = exports.english || (exports.english = {}));
 });
-define("Settings", ["require", "exports", "languages/English"], function (require, exports, English_1) {
+define("Utils", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var utils;
+    (function (utils) {
+        function select(selector) {
+            return document.querySelector(selector);
+        }
+        utils.select = select;
+        function id(selector) {
+            return select("#" + selector);
+        }
+        utils.id = id;
+        function create(tag) {
+            return document.createElement(tag);
+        }
+        utils.create = create;
+        function foreach(obj, callback) {
+            for (var i in obj) {
+                if (obj.hasOwnProperty(i)) {
+                    callback(i, obj[i]);
+                }
+            }
+        }
+        utils.foreach = foreach;
+        function isRightClick(event) {
+            if ("which" in event) {
+                return event.which == 3;
+            }
+            else if ("button" in event) {
+                return event.button == 2;
+            }
+            // Unknown browser
+            console.log("[WARNING] Right click events will not work properly in this browser.");
+            return false;
+        }
+        utils.isRightClick = isRightClick;
+    })(utils = exports.utils || (exports.utils = {}));
+});
+/// <reference path="../defs/jQuery.d.ts" />
+define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_1, Settings_1, Utils_1) {
+    "use strict";
+    var Menu = (function (_super) {
+        __extends(Menu, _super);
+        function Menu(title) {
+            _super.call(this);
+            this.body = null;
+            this.title = title;
+            this.children = [];
+        }
+        Menu.prototype.add = function (elem) {
+            this.children.push(elem);
+        };
+        Menu.prototype.clear = function () {
+            this.children = [];
+        };
+        Menu.prototype.onRender = function () {
+            var node = this.node;
+            var wrapper = Utils_1.utils.create("div");
+            wrapper.classList.add("menu");
+            var title = Utils_1.utils.create("div");
+            title.classList.add("title");
+            title.innerHTML = this.title;
+            wrapper.appendChild(title);
+            var content = Utils_1.utils.create("div");
+            content.classList.add("content");
+            for (var _i = 0, _a = this.children; _i < _a.length; _i++) {
+                var child = _a[_i];
+                content.appendChild(child);
+            }
+            wrapper.appendChild(content);
+            node.appendChild(wrapper);
+            title.addEventListener("click", function () {
+                if (!$(content).is(":animated")) {
+                    $(content).slideToggle(Settings_1.Settings.slideInterval);
+                }
+            });
+            this.body = wrapper;
+        };
+        Menu.prototype.html = function () {
+            return this.body;
+        };
+        return Menu;
+    }(Renderer_1.Renderer));
+    exports.Menu = Menu;
+});
+define("Initializer", ["require", "exports", "interface/Menu", "Settings", "Utils"], function (require, exports, Menu_1, Settings_2, Utils_2) {
+    "use strict";
+    var Initializer = (function () {
+        function Initializer() {
+        }
+        Initializer.exec = function () {
+            if (this.initialized) {
+                return;
+            }
+            this.initialized = true;
+            this.initSidebars();
+        };
+        Initializer.initSidebars = function () {
+            this.initSidebarFA();
+            this.initSidebarPDA();
+            this.initSidebarLBA();
+        };
+        Initializer.initSidebarFA = function () {
+            var menuList = [];
+            var temp = new Menu_1.Menu("Recognition");
+            var input = Utils_2.utils.create("input");
+            input.type = "text";
+            input.placeholder = "test case";
+            temp.add(input);
+            menuList.push(temp);
+            Settings_2.Settings.machines[Settings_2.Settings.Machine.FA].sidebar = menuList;
+        };
+        Initializer.initSidebarPDA = function () {
+            // TODO
+            console.log("[INIT] PDA");
+        };
+        Initializer.initSidebarLBA = function () {
+            // TODO
+            console.log("[INIT] LBA");
+        };
+        Initializer.initialized = false;
+        return Initializer;
+    }());
+    exports.Initializer = Initializer;
+});
+define("Settings", ["require", "exports", "languages/English", "Initializer"], function (require, exports, English_1, Initializer_1) {
     "use strict";
     var Settings;
     (function (Settings) {
@@ -64,19 +189,23 @@ define("Settings", ["require", "exports", "languages/English"], function (requir
         Settings.currentMachine = Machine.FA;
         Settings.machines = {};
         Settings.machines[Machine.FA] = {
-            name: Settings.language.strings.FA
+            name: Settings.language.strings.FA,
+            sidebar: []
         };
         Settings.machines[Machine.PDA] = {
-            name: Settings.language.strings.PDA
+            name: Settings.language.strings.PDA,
+            sidebar: []
         };
         Settings.machines[Machine.LBA] = {
-            name: Settings.language.strings.LBA
+            name: Settings.language.strings.LBA,
+            sidebar: []
         };
     })(Settings = exports.Settings || (exports.Settings = {}));
     exports.Strings = Settings.language.strings;
+    Initializer_1.Initializer.exec();
 });
 /// <reference path="../defs/raphael.d.ts" />
-define("interface/State", ["require", "exports", "Settings"], function (require, exports, Settings_1) {
+define("interface/State", ["require", "exports", "Settings"], function (require, exports, Settings_3) {
     "use strict";
     var State = (function () {
         function State() {
@@ -96,6 +225,9 @@ define("interface/State", ["require", "exports", "Settings"], function (require,
         State.prototype.setInitial = function (flag) {
             this.initial = flag;
         };
+        State.prototype.isInitial = function () {
+            return this.initial;
+        };
         State.prototype.setFinal = function (flag) {
             this.final = flag;
         };
@@ -104,12 +236,12 @@ define("interface/State", ["require", "exports", "Settings"], function (require,
         };
         State.prototype.render = function (canvas) {
             if (!this.body) {
-                this.body = canvas.circle(this.x, this.y, Settings_1.Settings.stateRadius);
-                this.body.attr("fill", Settings_1.Settings.stateFillColor);
-                this.body.attr("stroke", Settings_1.Settings.stateStrokeColor);
+                this.body = canvas.circle(this.x, this.y, Settings_3.Settings.stateRadius);
+                this.body.attr("fill", Settings_3.Settings.stateFillColor);
+                this.body.attr("stroke", Settings_3.Settings.stateStrokeColor);
                 canvas.text(this.x, this.y, this.name).attr({
-                    "font-family": Settings_1.Settings.stateLabelFontFamily,
-                    "font-size": Settings_1.Settings.stateLabelFontSize
+                    "font-family": Settings_3.Settings.stateLabelFontFamily,
+                    "font-size": Settings_3.Settings.stateLabelFontSize
                 });
             }
             else {
@@ -120,8 +252,8 @@ define("interface/State", ["require", "exports", "Settings"], function (require,
             }
             if (this.final) {
                 if (!this.ring) {
-                    this.ring = canvas.circle(this.x, this.y, Settings_1.Settings.stateRingRadius);
-                    this.ring.attr("stroke", Settings_1.Settings.stateStrokeColor);
+                    this.ring = canvas.circle(this.x, this.y, Settings_3.Settings.stateRingRadius);
+                    this.ring.attr("stroke", Settings_3.Settings.stateStrokeColor);
                 }
                 else {
                     this.ring.attr({
@@ -134,6 +266,9 @@ define("interface/State", ["require", "exports", "Settings"], function (require,
                 this.ring.remove();
                 this.ring = null;
             }
+        };
+        State.prototype.node = function () {
+            return this.body;
         };
         State.prototype.html = function () {
             if (this.body) {
@@ -178,7 +313,7 @@ define("interface/State", ["require", "exports", "Settings"], function (require,
                 var dx = this.attr("cx") - this.ox;
                 var dy = this.attr("cy") - this.oy;
                 setPosition(this.ox, this.oy);
-                var accepted = callback.call(this, maxTravelDistance);
+                var accepted = callback.call(this, maxTravelDistance, event);
                 if (accepted) {
                     setPosition(this.ox + dx, this.oy + dy);
                 }
@@ -192,7 +327,7 @@ define("interface/State", ["require", "exports", "Settings"], function (require,
 });
 /// <reference path="../defs/raphael.d.ts" />
 /// <reference path="../defs/jQuery.d.ts" />
-define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interface/State", "Settings"], function (require, exports, Renderer_1, State_1, Settings_2) {
+define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interface/State", "Settings", "Utils"], function (require, exports, Renderer_2, State_1, Settings_4, Utils_3) {
     "use strict";
     var Mainbar = (function (_super) {
         __extends(Mainbar, _super);
@@ -228,101 +363,44 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
             states[0].setFinal(true);
             states[1].setPosition(300, 80);
             states[2].setPosition(340, 320);
+            // TODO: separate left click/right click dragging handlers
             var canvas = this.canvas;
             var _loop_1 = function(state) {
                 state.render(canvas);
-                state.drag(function (distanceSquared) {
-                    if (distanceSquared <= Settings_2.Settings.stateDragTolerance) {
+                state.drag(function (distanceSquared, event) {
+                    if (Utils_3.utils.isRightClick(event)) {
+                        return false;
+                    }
+                    if (distanceSquared <= Settings_4.Settings.stateDragTolerance) {
                         state.setFinal(!state.isFinal());
                         state.render(canvas);
                         return false;
                     }
                     return true;
                 });
+                state.node().mousedown(function (e) {
+                    if (Utils_3.utils.isRightClick(e)) {
+                        console.log("Initial state changed.");
+                        state.setInitial(!state.isInitial());
+                        e.preventDefault();
+                        return false;
+                    }
+                });
             };
             for (var _i = 0, states_1 = states; _i < states_1.length; _i++) {
                 var state = states_1[_i];
                 _loop_1(state);
             }
+            $(this.node).contextmenu(function (e) {
+                e.preventDefault();
+                return false;
+            });
         };
         return Mainbar;
-    }(Renderer_1.Renderer));
+    }(Renderer_2.Renderer));
     exports.Mainbar = Mainbar;
 });
-define("Utils", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var utils;
-    (function (utils) {
-        function select(selector) {
-            return document.querySelector(selector);
-        }
-        utils.select = select;
-        function id(selector) {
-            return select("#" + selector);
-        }
-        utils.id = id;
-        function create(tag) {
-            return document.createElement(tag);
-        }
-        utils.create = create;
-        function foreach(obj, callback) {
-            for (var i in obj) {
-                if (obj.hasOwnProperty(i)) {
-                    callback(i, obj[i]);
-                }
-            }
-        }
-        utils.foreach = foreach;
-    })(utils = exports.utils || (exports.utils = {}));
-});
-/// <reference path="../defs/jQuery.d.ts" />
-define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_2, Settings_3, Utils_1) {
-    "use strict";
-    var Menu = (function (_super) {
-        __extends(Menu, _super);
-        function Menu(title) {
-            _super.call(this);
-            this.body = null;
-            this.title = title;
-            this.children = [];
-        }
-        Menu.prototype.add = function (elem) {
-            this.children.push(elem);
-        };
-        Menu.prototype.clear = function () {
-            this.children = [];
-        };
-        Menu.prototype.onRender = function () {
-            var node = this.node;
-            var wrapper = Utils_1.utils.create("div");
-            wrapper.classList.add("menu");
-            var title = Utils_1.utils.create("div");
-            title.classList.add("title");
-            title.innerHTML = this.title;
-            wrapper.appendChild(title);
-            var content = Utils_1.utils.create("div");
-            content.classList.add("content");
-            for (var _i = 0, _a = this.children; _i < _a.length; _i++) {
-                var child = _a[_i];
-                content.appendChild(child);
-            }
-            wrapper.appendChild(content);
-            node.appendChild(wrapper);
-            title.addEventListener("click", function () {
-                if (!$(content).is(":animated")) {
-                    $(content).slideToggle(Settings_3.Settings.slideInterval);
-                }
-            });
-            this.body = wrapper;
-        };
-        Menu.prototype.html = function () {
-            return this.body;
-        };
-        return Menu;
-    }(Renderer_2.Renderer));
-    exports.Menu = Menu;
-});
-define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"], function (require, exports, Renderer_3, Utils_2) {
+define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"], function (require, exports, Renderer_3, Utils_4) {
     "use strict";
     var Table = (function (_super) {
         __extends(Table, _super);
@@ -336,12 +414,12 @@ define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"],
             this.children.push(elem);
         };
         Table.prototype.html = function () {
-            var wrapper = Utils_2.utils.create("table");
+            var wrapper = Utils_4.utils.create("table");
             var index = 0;
             for (var i = 0; i < this.numRows; i++) {
-                var tr = Utils_2.utils.create("tr");
+                var tr = Utils_4.utils.create("tr");
                 for (var j = 0; j < this.numColumns; j++) {
-                    var td = Utils_2.utils.create("td");
+                    var td = Utils_4.utils.create("td");
                     if (index < this.children.length) {
                         td.appendChild(this.children[index]);
                     }
@@ -359,85 +437,97 @@ define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"],
     }(Renderer_3.Renderer));
     exports.Table = Table;
 });
-define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/Renderer", "Settings", "Settings", "interface/Table", "Utils"], function (require, exports, Menu_1, Renderer_4, Settings_4, Settings_5, Table_1, Utils_3) {
+/// <reference path="../defs/filesaver.d.ts" />
+define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/Renderer", "Settings", "Settings", "interface/Table", "Utils"], function (require, exports, Menu_2, Renderer_4, Settings_5, Settings_6, Table_1, Utils_5) {
     "use strict";
     var Sidebar = (function (_super) {
         __extends(Sidebar, _super);
         function Sidebar() {
             _super.call(this);
-            this.fileManipulation = new Menu_1.Menu(Settings_5.Strings.FILE_MENUBAR);
-            this.machineSelection = new Menu_1.Menu(Settings_5.Strings.SELECT_MACHINE);
-            // this.temp = new Menu("TEMPORARY");
-            // var span = utils.create("span");
-            // span.innerHTML = "Lorem ipsum dolor sit amet";
-            this.temp = new Menu_1.Menu("Recognition");
-            var input = Utils_3.utils.create("input");
-            input.type = "text";
-            input.placeholder = "test case";
-            this.temp.add(input);
+            this.fileManipulation = new Menu_2.Menu(Settings_6.Strings.FILE_MENUBAR);
+            this.machineSelection = new Menu_2.Menu(Settings_6.Strings.SELECT_MACHINE);
+            this.otherMenus = [];
+            this.build();
         }
         Sidebar.prototype.onBind = function () {
             this.fileManipulation.bind(this.node);
             this.machineSelection.bind(this.node);
-            this.temp.bind(this.node);
-        };
-        Sidebar.prototype.onRender = function () {
-            // $("> *", this.node).not(this.fileManipulation.html()).remove();
-            this.node.innerHTML = "";
-            this.build();
-            this.fileManipulation.render();
-            this.machineSelection.render();
-            if (Settings_4.Settings.currentMachine == Settings_4.Settings.Machine.FA) {
-                this.temp.render();
+            for (var _i = 0, _a = this.otherMenus; _i < _a.length; _i++) {
+                var menu = _a[_i];
+                menu.bind(this.node);
             }
         };
-        Sidebar.prototype.buildFileManipulation = function () {
-            this.fileManipulation.clear();
-            var save = Utils_3.utils.create("input");
-            save.classList.add("file_manip_btn");
-            save.type = "button";
-            save.value = Settings_5.Strings.SAVE;
-            save.addEventListener("click", function () {
-                alert("Not yet implemented");
-            });
-            this.fileManipulation.add(save);
-            var open = Utils_3.utils.create("input");
-            open.classList.add("file_manip_btn");
-            open.type = "button";
-            open.value = Settings_5.Strings.OPEN;
-            open.addEventListener("click", function () {
-                alert("Not yet implemented");
-            });
-            this.fileManipulation.add(open);
-            // this.fileManipulation.add(document.createElement("input"));
-        };
-        Sidebar.prototype.buildMachineSelection = function () {
-            var table = new Table_1.Table(Settings_4.Settings.machineSelRows, Settings_4.Settings.machineSelColumns);
-            var self = this;
-            Utils_3.utils.foreach(Settings_4.Settings.machines, function (type, props) {
-                var button = Utils_3.utils.create("input");
-                button.classList.add("machine_selection_btn");
-                button.type = "button";
-                button.value = props.name;
-                button.disabled = (type == Settings_4.Settings.currentMachine);
-                button.addEventListener("click", function () {
-                    Settings_4.Settings.currentMachine = type;
-                    self.render();
-                });
-                table.add(button);
-            });
-            this.machineSelection.clear();
-            this.machineSelection.add(table.html());
+        Sidebar.prototype.onRender = function () {
+            this.fileManipulation.render();
+            this.machineSelection.render();
+            for (var _i = 0, _a = this.otherMenus; _i < _a.length; _i++) {
+                var menu = _a[_i];
+                menu.render();
+            }
         };
         Sidebar.prototype.build = function () {
             this.buildFileManipulation();
             this.buildMachineSelection();
         };
+        Sidebar.prototype.loadMachine = function (machine) {
+            for (var _i = 0, _a = this.otherMenus; _i < _a.length; _i++) {
+                var menu = _a[_i];
+                $(menu.html()).remove();
+            }
+            this.otherMenus = Settings_5.Settings.machines[machine].sidebar;
+            for (var _b = 0, _c = this.otherMenus; _b < _c.length; _b++) {
+                var menu = _c[_b];
+                menu.bind(this.node);
+                menu.render();
+            }
+        };
+        Sidebar.prototype.buildFileManipulation = function () {
+            var save = Utils_5.utils.create("input");
+            save.classList.add("file_manip_btn");
+            save.type = "button";
+            save.value = Settings_6.Strings.SAVE;
+            save.addEventListener("click", function () {
+                var content = "Hello, world!";
+                var blob = new Blob([content], { type: "text/plain; charset=utf-8" });
+                saveAs(blob, "file.txt");
+            });
+            this.fileManipulation.add(save);
+            var open = Utils_5.utils.create("input");
+            open.classList.add("file_manip_btn");
+            open.type = "button";
+            open.value = Settings_6.Strings.OPEN;
+            open.addEventListener("click", function () {
+                alert("Not yet implemented");
+            });
+            this.fileManipulation.add(open);
+        };
+        Sidebar.prototype.buildMachineSelection = function () {
+            var table = new Table_1.Table(Settings_5.Settings.machineSelRows, Settings_5.Settings.machineSelColumns);
+            var machineButtonMapping = {};
+            var self = this;
+            Utils_5.utils.foreach(Settings_5.Settings.machines, function (type, props) {
+                var button = Utils_5.utils.create("input");
+                button.classList.add("machine_selection_btn");
+                button.type = "button";
+                button.value = props.name;
+                button.disabled = (type == Settings_5.Settings.currentMachine);
+                button.addEventListener("click", function () {
+                    machineButtonMapping[Settings_5.Settings.currentMachine].disabled = false;
+                    machineButtonMapping[type].disabled = true;
+                    Settings_5.Settings.currentMachine = type;
+                    self.loadMachine(type);
+                });
+                table.add(button);
+                machineButtonMapping[type] = button;
+            });
+            this.machineSelection.add(table.html());
+            this.loadMachine(Settings_5.Settings.currentMachine);
+        };
         return Sidebar;
     }(Renderer_4.Renderer));
     exports.Sidebar = Sidebar;
 });
-define("interface/UI", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_6, Utils_4) {
+define("interface/UI", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_7, Utils_6) {
     "use strict";
     var UI = (function () {
         function UI() {
@@ -455,13 +545,13 @@ define("interface/UI", ["require", "exports", "Settings", "Utils"], function (re
         };
         UI.prototype.bindSidebar = function (renderer) {
             if (renderer) {
-                renderer.bind(Utils_4.utils.id(Settings_6.Settings.sidebarID));
+                renderer.bind(Utils_6.utils.id(Settings_7.Settings.sidebarID));
             }
             this.sidebarRenderer = renderer;
         };
         UI.prototype.bindMain = function (renderer) {
             if (renderer) {
-                renderer.bind(Utils_4.utils.id(Settings_6.Settings.mainbarID));
+                renderer.bind(Utils_6.utils.id(Settings_7.Settings.mainbarID));
             }
             this.mainRenderer = renderer;
         };
