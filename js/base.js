@@ -3,6 +3,68 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+define("System", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var System = (function () {
+        function System() {
+        }
+        System.reload = function () {
+            // TODO
+        };
+        System.keyEvent = function (event) {
+            var triggered = false;
+            for (var _i = 0, _a = this.keyboardObservers; _i < _a.length; _i++) {
+                var observer = _a[_i];
+                var keys = observer.keys;
+                if (this.shortcutMatches(event, keys)) {
+                    observer.callback();
+                    triggered = true;
+                }
+            }
+            // if (event.ctrlKey && event.keyCode == 83) {
+            if (triggered) {
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        };
+        System.addKeyObserver = function (keys, callback) {
+            this.keyboardObservers.push({
+                keys: keys,
+                callback: callback
+            });
+        };
+        System.shortcutMatches = function (event, keys) {
+            console.log(event, keys);
+            for (var _i = 0, keys_1 = keys; _i < keys_1.length; _i++) {
+                var key = keys_1[_i];
+                console.log("[KEY] " + key);
+                switch (key) {
+                    case "alt":
+                    case "ctrl":
+                    case "shift":
+                        if (!event[key + "Key"]) {
+                            return false;
+                        }
+                        break;
+                    default:
+                        // TODO: remove the usage of event.key
+                        if (event.key != key) {
+                            console.log("[NO]");
+                            return false;
+                        }
+                }
+            }
+            // TODO: check if there are modifiers (alt/ctrl/shift) that shouldn't
+            // be on
+            console.log("[YES]");
+            return true;
+        };
+        System.keyboardObservers = [];
+        return System;
+    }());
+    exports.System = System;
+});
 define("interface/Renderer", ["require", "exports"], function (require, exports) {
     "use strict";
     var Renderer = (function () {
@@ -28,17 +90,18 @@ define("languages/English", ["require", "exports"], function (require, exports) 
     var english;
     (function (english) {
         english.strings = {
+            SELECT_LANGUAGE: "System Language",
+            FILE_MENUBAR: "File Manipulation",
+            SAVE: "Save",
+            OPEN: "Open",
             SELECT_MACHINE: "Machine Selection",
             FA: "Finite Automaton",
             PDA: "Pushdown Automaton",
-            LBA: "Linearly Bounded Automaton",
-            FILE_MENUBAR: "File Manipulation",
-            SAVE: "Save",
-            OPEN: "Open"
+            LBA: "Linearly Bounded Automaton"
         };
     })(english = exports.english || (exports.english = {}));
 });
-define("Utils", ["require", "exports"], function (require, exports) {
+define("Utils", ["require", "exports", "System"], function (require, exports, System_1) {
     "use strict";
     var utils;
     (function (utils) {
@@ -74,6 +137,10 @@ define("Utils", ["require", "exports"], function (require, exports) {
             return false;
         }
         utils.isRightClick = isRightClick;
+        function bindShortcut(keys, callback) {
+            System_1.System.addKeyObserver(keys, callback);
+        }
+        utils.bindShortcut = bindShortcut;
     })(utils = exports.utils || (exports.utils = {}));
 });
 /// <reference path="../defs/jQuery.d.ts" />
@@ -84,6 +151,7 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
         function Menu(title) {
             _super.call(this);
             this.body = null;
+            this.toggled = false;
             this.title = title;
             this.children = [];
         }
@@ -115,9 +183,22 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
                 }
             });
             this.body = wrapper;
+            if (this.toggled) {
+                this.internalToggle();
+            }
+        };
+        Menu.prototype.toggle = function () {
+            this.toggled = !this.toggled;
+            if (this.body) {
+                this.internalToggle();
+            }
         };
         Menu.prototype.html = function () {
             return this.body;
+        };
+        Menu.prototype.internalToggle = function () {
+            var content = this.body.querySelector(".content");
+            $(content).toggle();
         };
         return Menu;
     }(Renderer_1.Renderer));
@@ -444,12 +525,14 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
         __extends(Sidebar, _super);
         function Sidebar() {
             _super.call(this);
+            this.languageSelection = new Menu_2.Menu(Settings_6.Strings.SELECT_LANGUAGE);
             this.fileManipulation = new Menu_2.Menu(Settings_6.Strings.FILE_MENUBAR);
             this.machineSelection = new Menu_2.Menu(Settings_6.Strings.SELECT_MACHINE);
             this.otherMenus = [];
             this.build();
         }
         Sidebar.prototype.onBind = function () {
+            this.languageSelection.bind(this.node);
             this.fileManipulation.bind(this.node);
             this.machineSelection.bind(this.node);
             for (var _i = 0, _a = this.otherMenus; _i < _a.length; _i++) {
@@ -458,6 +541,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             }
         };
         Sidebar.prototype.onRender = function () {
+            this.languageSelection.render();
             this.fileManipulation.render();
             this.machineSelection.render();
             for (var _i = 0, _a = this.otherMenus; _i < _a.length; _i++) {
@@ -466,6 +550,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             }
         };
         Sidebar.prototype.build = function () {
+            this.buildLanguageSelection();
             this.buildFileManipulation();
             this.buildMachineSelection();
         };
@@ -481,15 +566,43 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 menu.render();
             }
         };
+        Sidebar.prototype.buildLanguageSelection = function () {
+            var select = Utils_5.utils.create("select");
+            // TODO: make this more flexible
+            var languages = ["English", "Portuguese"];
+            for (var i = 0; i < languages.length; i++) {
+                var language = languages[i];
+                var option = Utils_5.utils.create("option");
+                option.value = i + "";
+                option.innerHTML = language;
+                select.appendChild(option);
+            }
+            this.languageSelection.add(select);
+            this.languageSelection.toggle();
+            select.addEventListener("change", function (e) {
+                var index = this.options[this.selectedIndex].value;
+                var language = languages[index];
+                var confirmation = confirm("Change the language to " + language + "?");
+                if (confirmation) {
+                    // TODO
+                    alert("Not yet implemented.");
+                }
+            });
+        };
         Sidebar.prototype.buildFileManipulation = function () {
             var save = Utils_5.utils.create("input");
             save.classList.add("file_manip_btn");
             save.type = "button";
             save.value = Settings_6.Strings.SAVE;
             save.addEventListener("click", function () {
+                // TODO
                 var content = "Hello, world!";
                 var blob = new Blob([content], { type: "text/plain; charset=utf-8" });
                 saveAs(blob, "file.txt");
+            });
+            // TODO: make this more flexible
+            Utils_5.utils.bindShortcut(["ctrl", " "], function () {
+                save.click();
             });
             this.fileManipulation.add(save);
             var open = Utils_5.utils.create("input");
@@ -497,6 +610,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             open.type = "button";
             open.value = Settings_6.Strings.OPEN;
             open.addEventListener("click", function () {
+                // TODO
                 alert("Not yet implemented");
             });
             this.fileManipulation.add(open);
@@ -560,10 +674,13 @@ define("interface/UI", ["require", "exports", "Settings", "Utils"], function (re
     exports.UI = UI;
 });
 /// <reference path="defs/jQuery.d.ts" />
-define("main", ["require", "exports", "interface/Mainbar", "interface/Sidebar", "interface/UI"], function (require, exports, Mainbar_1, Sidebar_1, UI_1) {
+define("main", ["require", "exports", "interface/Mainbar", "interface/Sidebar", "System", "interface/UI"], function (require, exports, Mainbar_1, Sidebar_1, System_2, UI_1) {
     "use strict";
     $(document).ready(function () {
         var ui = new UI_1.UI(new Sidebar_1.Sidebar(), new Mainbar_1.Mainbar());
         ui.render();
+        document.body.addEventListener("keyup", function (e) {
+            return System_2.System.keyEvent(e);
+        });
     });
 });

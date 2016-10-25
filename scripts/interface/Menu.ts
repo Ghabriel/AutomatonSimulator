@@ -44,13 +44,30 @@ export class Menu extends Renderer {
 		});
 
 		this.body = <HTMLDivElement> wrapper;
+
+		if (this.toggled) {
+			this.internalToggle();
+		}
+	}
+
+	toggle(): void {
+		this.toggled = !this.toggled;
+		if (this.body) {
+			this.internalToggle();
+		}
 	}
 
 	html(): HTMLDivElement {
 		return this.body;
 	}
 
+	private internalToggle(): void {
+		let content = this.body.querySelector(".content");
+		$(content).toggle();
+	}
+
 	private body: HTMLDivElement = null;
 	private title: string;
 	private children: Element[];
+	private toggled: boolean = false;
 }

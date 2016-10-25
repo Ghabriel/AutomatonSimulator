@@ -10,6 +10,7 @@ import {utils} from "../Utils"
 export class Sidebar extends Renderer {
 	constructor() {
 		super();
+		this.languageSelection = new Menu(Strings.SELECT_LANGUAGE);
 		this.fileManipulation = new Menu(Strings.FILE_MENUBAR);
 		this.machineSelection = new Menu(Strings.SELECT_MACHINE);
 		this.otherMenus = [];
@@ -17,6 +18,7 @@ export class Sidebar extends Renderer {
 	}
 
 	protected onBind(): void {
+		this.languageSelection.bind(this.node);
 		this.fileManipulation.bind(this.node);
 		this.machineSelection.bind(this.node);
 		for (let menu of this.otherMenus) {
@@ -25,6 +27,7 @@ export class Sidebar extends Renderer {
 	}
 
 	protected onRender(): void {
+		this.languageSelection.render();
 		this.fileManipulation.render();
 		this.machineSelection.render();
 		for (let menu of this.otherMenus) {
@@ -33,6 +36,7 @@ export class Sidebar extends Renderer {
 	}
 
 	private build(): void {
+		this.buildLanguageSelection();
 		this.buildFileManipulation();
 		this.buildMachineSelection();
 	}
@@ -49,20 +53,50 @@ export class Sidebar extends Renderer {
 		}
 	}
 
+	private buildLanguageSelection(): void {
+		let select = <HTMLSelectElement> utils.create("select");
+		// TODO: make this more flexible
+		let languages = ["English", "Portuguese"];
+		for (let i = 0; i < languages.length; i++) {
+			let language = languages[i];
+			let option = <HTMLOptionElement> utils.create("option");
+			option.value = i + "";
+			option.innerHTML = language;
+			select.appendChild(option);
+		}
+		this.languageSelection.add(select);
+		this.languageSelection.toggle();
+
+		select.addEventListener("change", function(e) {
+			let index = this.options[this.selectedIndex].value;
+			let language = languages[index];
+			let confirmation = confirm("Change the language to " + language + "?");
+			if (confirmation) {
+				// TODO
+				alert("Not yet implemented.");
+				// System.reload();
+			}
+		});
+	}
+
 	private buildFileManipulation(): void {
-		var save = <HTMLInputElement> utils.create("input");
+		let save = <HTMLInputElement> utils.create("input");
 		save.classList.add("file_manip_btn");
 		save.type = "button";
 		save.value = Strings.SAVE;
 		save.addEventListener("click", function() {
 			// TODO
-		    var content = "Hello, world!";
-		    var blob = new Blob([content], {type: "text/plain; charset=utf-8"});
+		    let content = "Hello, world!";
+		    let blob = new Blob([content], {type: "text/plain; charset=utf-8"});
 		    saveAs(blob, "file.txt");
+		});
+		// TODO: make this more flexible
+		utils.bindShortcut(["ctrl"," "], function() {
+			save.click();
 		});
 		this.fileManipulation.add(save);
 
-		var open = <HTMLInputElement> utils.create("input");
+		let open = <HTMLInputElement> utils.create("input");
 		open.classList.add("file_manip_btn");
 		open.type = "button";
 		open.value = Strings.OPEN;
@@ -74,11 +108,11 @@ export class Sidebar extends Renderer {
 	}
 
 	private buildMachineSelection(): void {
-		var table = new Table(Settings.machineSelRows, Settings.machineSelColumns);
-		var machineButtonMapping = {};
-		var self = this;
+		let table = new Table(Settings.machineSelRows, Settings.machineSelColumns);
+		let machineButtonMapping = {};
+		let self = this;
 		utils.foreach(Settings.machines, function(type, props) {
-			var button = <HTMLInputElement> utils.create("input");
+			let button = <HTMLInputElement> utils.create("input");
 			button.classList.add("machine_selection_btn");
 			button.type = "button";
 			button.value = props.name;
@@ -97,6 +131,7 @@ export class Sidebar extends Renderer {
 		this.loadMachine(Settings.currentMachine);
 	}
 
+	private languageSelection: Menu;
 	private fileManipulation: Menu;
 	private machineSelection: Menu;
 	private otherMenus: Menu[];
