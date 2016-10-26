@@ -1,3 +1,4 @@
+import {Keyboard} from "./Keyboard"
 import {Sidebar} from "./interface/Sidebar"
 import {Settings, Strings} from "./Settings"
 import {utils} from "./Utils"
@@ -58,8 +59,7 @@ export class System {
 					}
 					break;
 				default:
-					// TODO: remove the usage of event.key
-					if (event.key != key) {
+					if (event.keyCode != Keyboard.keys[key]) {
 						return false;
 					}
 			}

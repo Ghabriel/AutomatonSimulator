@@ -27,8 +27,8 @@ export namespace Settings {
 	export const stateStrokeColor = "black";
 
 	export const shortcuts = {
-		save: ["ctrl", "s"],
-		open: ["ctrl", "o"]
+		save: ["ctrl", "S"],
+		open: ["ctrl", "O"]
 	};
 
 	export const languages = {
