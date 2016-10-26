@@ -1,6 +1,7 @@
 export namespace english {
 	export const strings = {
 		SELECT_LANGUAGE: "System Language",
+		CHANGE_LANGUAGE: "Change the language to \"%\"?",
 		FILE_MENUBAR: "File Manipulation",
 		SAVE: "Save",
 		OPEN: "Open",

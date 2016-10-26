@@ -7,10 +7,14 @@ import {System} from "./System"
 import {UI} from "./interface/UI"
 
 $(document).ready(function() {
-	var ui = new UI(new Sidebar(), new Mainbar());
+	let sidebar = new Sidebar();
+	let mainbar = new Mainbar();
+	let ui = new UI(sidebar, mainbar);
 	ui.render();
 
-	document.body.addEventListener("keyup", function(e) {
+	System.bindSidebar(sidebar);
+
+	document.body.addEventListener("keydown", function(e) {
 		return System.keyEvent(e);
 	});
 });

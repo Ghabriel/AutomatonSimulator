@@ -1,6 +1,9 @@
 import {english} from "./languages/English"
+import {portuguese} from "./languages/Portuguese"
+
 import {Initializer} from "./Initializer"
 import {Renderer} from "./interface/Renderer"
+import {utils} from "./Utils"
 
 interface MachineTraits {
 	name: string;
@@ -8,20 +11,30 @@ interface MachineTraits {
 }
 
 export namespace Settings {
-	export var sidebarID = "sidebar";
-	export var mainbarID = "mainbar";
+	export const sidebarID = "sidebar";
+	export const mainbarID = "mainbar";
 
-	export var slideInterval = 300;
-	export var machineSelRows = 3;
-	export var machineSelColumns = 1;
+	export const slideInterval = 300;
+	export const machineSelRows = 3;
+	export const machineSelColumns = 1;
 
-	export var stateLabelFontFamily = "sans-serif";
-	export var stateLabelFontSize = 20;
-	export var stateRadius = 32;
-	export var stateRingRadius = 27;
-	export var stateDragTolerance = 50;
-	export var stateFillColor = "white";
-	export var stateStrokeColor = "black";
+	export const stateLabelFontFamily = "sans-serif";
+	export const stateLabelFontSize = 20;
+	export const stateRadius = 32;
+	export const stateRingRadius = 27;
+	export const stateDragTolerance = 50;
+	export const stateFillColor = "white";
+	export const stateStrokeColor = "black";
+
+	export const shortcuts = {
+		save: ["ctrl", "s"],
+		open: ["ctrl", "o"]
+	};
+
+	export const languages = {
+		"English": english,
+		"Português": portuguese
+	};
 
 	export enum Machine {
 		FA, PDA, LBA
@@ -31,22 +44,44 @@ export namespace Settings {
 	export var currentMachine = Machine.FA;
 
 	export var machines: {[m: number]: MachineTraits} = {};
-	machines[Machine.FA] = {
-		name: language.strings.FA,
-		sidebar: []
-	};
 
-	machines[Machine.PDA] = {
-		name: language.strings.PDA,
-		sidebar: []
-	};
+	let firstUpdate = true;
+	export function update() {
+		let machineList: typeof machines = {};
+		machineList[Machine.FA] = {
+			name: language.strings.FA,
+			sidebar: []
+		};
 
-	machines[Machine.LBA] = {
-		name: language.strings.LBA,
-		sidebar: []
-	};
+		machineList[Machine.PDA] = {
+			name: language.strings.PDA,
+			sidebar: []
+		};
+
+		machineList[Machine.LBA] = {
+			name: language.strings.LBA,
+			sidebar: []
+		};
+
+		utils.foreach(machineList, function(key, value) {
+			if (firstUpdate) {
+				machines[key] = value;
+			} else {
+				machines[key].name = value.name;
+			}
+		});
+
+		firstUpdate = false;
+	}
+
+	export function changeLanguage(newLanguage): void {
+		language = newLanguage;
+		Strings = language.strings;
+		update();
+	}
 }
 
-export const Strings = Settings.language.strings;
+export var Strings = Settings.language.strings;
 
+Settings.update();
 Initializer.exec();

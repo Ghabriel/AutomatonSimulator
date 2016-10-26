@@ -1,11 +1,26 @@
+import {Sidebar} from "./interface/Sidebar"
+import {Settings, Strings} from "./Settings"
+import {utils} from "./Utils"
+
 interface KeyboardObserver {
 	keys: string[];
 	callback: () => void;
 }
 
 export class System {
+	static changeLanguage(language): void {
+		Settings.changeLanguage(language);
+		this.reload();
+	}
+
 	static reload(): void {
-		// TODO
+		utils.id(Settings.sidebarID).innerHTML = "";
+		this.sidebar.build();
+		this.sidebar.render();
+	}
+
+	static bindSidebar(sidebar: Sidebar): void {
+		this.sidebar = sidebar;
 	}
 
 	static keyEvent(event: KeyboardEvent): boolean {
@@ -17,7 +32,6 @@ export class System {
 				triggered = true;
 			}
 		}
-		// if (event.ctrlKey && event.keyCode == 83) {
 
 		if (triggered) {
 			event.preventDefault();
@@ -34,9 +48,7 @@ export class System {
 	}
 
 	private static shortcutMatches(event: KeyboardEvent, keys: string[]): boolean {
-		console.log(event, keys);
 		for (let key of keys) {
-			console.log("[KEY] " + key);
 			switch (key) {
 				case "alt":
 				case "ctrl":
@@ -48,16 +60,15 @@ export class System {
 				default:
 					// TODO: remove the usage of event.key
 					if (event.key != key) {
-						console.log("[NO]");
 						return false;
 					}
 			}
 		}
 		// TODO: check if there are modifiers (alt/ctrl/shift) that shouldn't
 		// be on
-		console.log("[YES]");
 		return true;
 	}
 
 	private static keyboardObservers: KeyboardObserver[] = [];
+	private static sidebar: Sidebar;
 }

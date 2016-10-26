@@ -4,17 +4,29 @@ import {Menu} from "./Menu"
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
 import {Strings} from "../Settings"
+import {System} from "../System"
 import {Table} from "./Table"
 import {utils} from "../Utils"
 
 export class Sidebar extends Renderer {
 	constructor() {
 		super();
+		this.build();
+	}
+
+	public build(): void {
 		this.languageSelection = new Menu(Strings.SELECT_LANGUAGE);
 		this.fileManipulation = new Menu(Strings.FILE_MENUBAR);
 		this.machineSelection = new Menu(Strings.SELECT_MACHINE);
 		this.otherMenus = [];
-		this.build();
+
+		this.buildLanguageSelection();
+		this.buildFileManipulation();
+		this.buildMachineSelection();
+
+		if (this.node) {
+			this.onBind();
+		}
 	}
 
 	protected onBind(): void {
@@ -35,12 +47,6 @@ export class Sidebar extends Renderer {
 		}
 	}
 
-	private build(): void {
-		this.buildLanguageSelection();
-		this.buildFileManipulation();
-		this.buildMachineSelection();
-	}
-
 	private loadMachine(machine: Settings.Machine): void {
 		for (let menu of this.otherMenus) {
 			$(menu.html()).remove();
@@ -49,37 +55,40 @@ export class Sidebar extends Renderer {
 		this.otherMenus = Settings.machines[machine].sidebar;
 		for (let menu of this.otherMenus) {
 			menu.bind(this.node);
-			menu.render();
 		}
 	}
 
 	private buildLanguageSelection(): void {
 		let select = <HTMLSelectElement> utils.create("select");
-		// TODO: make this more flexible
-		let languages = ["English", "Portuguese"];
-		for (let i = 0; i < languages.length; i++) {
-			let language = languages[i];
+		let languages = Settings.languages;
+		let i = 0;
+		let selectedIndex = -1;
+		utils.foreach(languages, function(name, obj) {
 			let option = <HTMLOptionElement> utils.create("option");
-			option.value = i + "";
-			option.innerHTML = language;
+			option.value = name;
+			option.innerHTML = name;
 			select.appendChild(option);
-		}
+			if (obj == Settings.language) {
+				selectedIndex = i;
+			}
+			i++;
+		});
+		select.selectedIndex = selectedIndex;
+		this.languageSelection.clear();
 		this.languageSelection.add(select);
 		this.languageSelection.toggle();
 
 		select.addEventListener("change", function(e) {
-			let index = this.options[this.selectedIndex].value;
-			let language = languages[index];
-			let confirmation = confirm("Change the language to " + language + "?");
+			let name = this.options[this.selectedIndex].value;
+			let confirmation = confirm(Strings.CHANGE_LANGUAGE.replace("%", name));
 			if (confirmation) {
-				// TODO
-				alert("Not yet implemented.");
-				// System.reload();
+				System.changeLanguage(languages[name]);
 			}
 		});
 	}
 
 	private buildFileManipulation(): void {
+		this.fileManipulation.clear();
 		let save = <HTMLInputElement> utils.create("input");
 		save.classList.add("file_manip_btn");
 		save.type = "button";
@@ -90,8 +99,7 @@ export class Sidebar extends Renderer {
 		    let blob = new Blob([content], {type: "text/plain; charset=utf-8"});
 		    saveAs(blob, "file.txt");
 		});
-		// TODO: make this more flexible
-		utils.bindShortcut(["ctrl"," "], function() {
+		utils.bindShortcut(Settings.shortcuts.save, function() {
 			save.click();
 		});
 		this.fileManipulation.add(save);
@@ -103,6 +111,9 @@ export class Sidebar extends Renderer {
 		open.addEventListener("click", function() {
 			// TODO
 			alert("Not yet implemented");
+		});
+		utils.bindShortcut(Settings.shortcuts.open, function() {
+			open.click();
 		});
 		this.fileManipulation.add(open);
 	}
@@ -127,6 +138,7 @@ export class Sidebar extends Renderer {
 			machineButtonMapping[type] = button;
 		});
 
+		this.machineSelection.clear();
 		this.machineSelection.add(table.html());
 		this.loadMachine(Settings.currentMachine);
 	}
