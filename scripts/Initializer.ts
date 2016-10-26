@@ -1,13 +1,13 @@
 import {Menu} from "./interface/Menu"
-import {Settings} from "./Settings"
+import {Settings, Strings} from "./Settings"
 import {utils} from "./Utils"
 
 export class Initializer {
 	static exec(): void {
-		if (this.initialized) {
-			return;
-		}
-		this.initialized = true;
+		// if (this.initialized) {
+		// 	return;
+		// }
+		// this.initialized = true;
 		this.initSidebars();
 	}
 
@@ -20,10 +20,10 @@ export class Initializer {
 	private static initSidebarFA(): void {
 		let menuList: Menu[] = [];
 
-		let temp = new Menu("Recognition");
+		let temp = new Menu(Strings.RECOGNITION);
 		let input = <HTMLInputElement> utils.create("input");
 		input.type = "text";
-		input.placeholder = "test case";
+		input.placeholder = Strings.TEST_CASE;
 		temp.add(input);
 		menuList.push(temp);
 
@@ -40,5 +40,5 @@ export class Initializer {
 		console.log("[INIT] LBA");
 	}
 
-	static initialized: boolean = false;
+	// static initialized: boolean = false;
 }

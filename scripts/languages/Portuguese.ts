@@ -9,5 +9,7 @@ export namespace portuguese {
 		FA: "Autômato Finito",
 		PDA: "Autômato de Pilha",
 		LBA: "Autômato Linearmente Limitado",
+		RECOGNITION: "Reconhecimento",
+		TEST_CASE: "caso de teste",
 	};
 }

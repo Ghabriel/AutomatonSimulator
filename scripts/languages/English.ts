@@ -9,5 +9,7 @@ export namespace english {
 		FA: "Finite Automaton",
 		PDA: "Pushdown Automaton",
 		LBA: "Linearly Bounded Automaton",
+		RECOGNITION: "Recognition",
+		TEST_CASE: "test case",
 	};
 }

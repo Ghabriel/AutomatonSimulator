@@ -36,7 +36,9 @@ define("languages/English", ["require", "exports"], function (require, exports) 
             SELECT_MACHINE: "Machine Selection",
             FA: "Finite Automaton",
             PDA: "Pushdown Automaton",
-            LBA: "Linearly Bounded Automaton"
+            LBA: "Linearly Bounded Automaton",
+            RECOGNITION: "Recognition",
+            TEST_CASE: "test case"
         };
     })(english = exports.english || (exports.english = {}));
 });
@@ -53,7 +55,9 @@ define("languages/Portuguese", ["require", "exports"], function (require, export
             SELECT_MACHINE: "Seleção de Máquina",
             FA: "Autômato Finito",
             PDA: "Autômato de Pilha",
-            LBA: "Autômato Linearmente Limitado"
+            LBA: "Autômato Linearmente Limitado",
+            RECOGNITION: "Reconhecimento",
+            TEST_CASE: "caso de teste"
         };
     })(portuguese = exports.portuguese || (exports.portuguese = {}));
 });
@@ -105,10 +109,10 @@ define("Initializer", ["require", "exports", "interface/Menu", "Settings", "Util
         function Initializer() {
         }
         Initializer.exec = function () {
-            if (this.initialized) {
-                return;
-            }
-            this.initialized = true;
+            // if (this.initialized) {
+            // 	return;
+            // }
+            // this.initialized = true;
             this.initSidebars();
         };
         Initializer.initSidebars = function () {
@@ -118,10 +122,10 @@ define("Initializer", ["require", "exports", "interface/Menu", "Settings", "Util
         };
         Initializer.initSidebarFA = function () {
             var menuList = [];
-            var temp = new Menu_1.Menu("Recognition");
+            var temp = new Menu_1.Menu(Settings_1.Strings.RECOGNITION);
             var input = Utils_1.utils.create("input");
             input.type = "text";
-            input.placeholder = "test case";
+            input.placeholder = Settings_1.Strings.TEST_CASE;
             temp.add(input);
             menuList.push(temp);
             Settings_1.Settings.machines[Settings_1.Settings.Machine.FA].sidebar = menuList;
@@ -134,7 +138,6 @@ define("Initializer", ["require", "exports", "interface/Menu", "Settings", "Util
             // TODO
             console.log("[INIT] LBA");
         };
-        Initializer.initialized = false;
         return Initializer;
     }());
     exports.Initializer = Initializer;
@@ -188,14 +191,15 @@ define("Settings", ["require", "exports", "languages/English", "languages/Portug
                 sidebar: []
             };
             Utils_2.utils.foreach(machineList, function (key, value) {
-                if (firstUpdate) {
-                    Settings.machines[key] = value;
-                }
-                else {
-                    Settings.machines[key].name = value.name;
-                }
+                Settings.machines[key] = value;
+                // if (firstUpdate) {
+                // 	machines[key] = value;
+                // } else {
+                // 	machines[key].name = value.name;
+                // }
             });
             firstUpdate = false;
+            Initializer_1.Initializer.exec();
         }
         Settings.update = update;
         function changeLanguage(newLanguage) {
@@ -207,8 +211,8 @@ define("Settings", ["require", "exports", "languages/English", "languages/Portug
     })(Settings = exports.Settings || (exports.Settings = {}));
     exports.Strings = Settings.language.strings;
     Settings.update();
-    Initializer_1.Initializer.exec();
 });
+// Initializer.exec();
 /// <reference path="../defs/jQuery.d.ts" />
 define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_1, Settings_2, Utils_3) {
     "use strict";

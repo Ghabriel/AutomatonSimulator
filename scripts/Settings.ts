@@ -64,14 +64,16 @@ export namespace Settings {
 		};
 
 		utils.foreach(machineList, function(key, value) {
-			if (firstUpdate) {
-				machines[key] = value;
-			} else {
-				machines[key].name = value.name;
-			}
+			machines[key] = value;
+			// if (firstUpdate) {
+			// 	machines[key] = value;
+			// } else {
+			// 	machines[key].name = value.name;
+			// }
 		});
 
 		firstUpdate = false;
+		Initializer.exec();
 	}
 
 	export function changeLanguage(newLanguage): void {
@@ -84,4 +86,4 @@ export namespace Settings {
 export var Strings = Settings.language.strings;
 
 Settings.update();
-Initializer.exec();
+// Initializer.exec();
