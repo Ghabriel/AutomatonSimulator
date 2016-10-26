@@ -131,11 +131,25 @@ export class Sidebar extends Renderer {
 			button.addEventListener("click", function() {
 				machineButtonMapping[Settings.currentMachine].disabled = false;
 				machineButtonMapping[type].disabled = true;
+				// Firefox ignores keyboard events triggered while focusing
+				// a disabled input, so blur it.
+				machineButtonMapping[type].blur();
 				Settings.currentMachine = type;
 				self.loadMachine(type);
 			});
 			table.add(button);
 			machineButtonMapping[type] = button;
+		});
+
+		utils.bindShortcut(["M"], function() {
+			let buttons = document.querySelectorAll(".machine_selection_btn");
+			for (let i = 0; i < buttons.length; i++) {
+				let button = <HTMLInputElement> buttons[i];
+				if (!button.disabled) {
+					button.focus();
+					break;
+				}
+			}
 		});
 
 		this.machineSelection.clear();

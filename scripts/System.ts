@@ -49,23 +49,32 @@ export class System {
 	}
 
 	private static shortcutMatches(event: KeyboardEvent, keys: string[]): boolean {
+		function propertyName(type) {
+			return type + "Key";
+		}
+
+		const modifiers = ["alt", "ctrl", "shift"];
+		let expectedModifiers = [];
 		for (let key of keys) {
-			switch (key) {
-				case "alt":
-				case "ctrl":
-				case "shift":
-					if (!event[key + "Key"]) {
-						return false;
-					}
-					break;
-				default:
-					if (event.keyCode != Keyboard.keys[key]) {
-						return false;
-					}
+			if (modifiers.indexOf(key) >= 0) {
+				expectedModifiers.push(key);
+				if (!event[propertyName(key)]) {
+					return false;
+				}
+			} else if (event.keyCode != Keyboard.keys[key]) {
+				return false;
 			}
 		}
-		// TODO: check if there are modifiers (alt/ctrl/shift) that shouldn't
-		// be on
+
+		// Ignores the key combination if there are extra modifiers being pressed
+		for (let modifier of modifiers) {
+			if (expectedModifiers.indexOf(modifier) == -1) {
+				if (event[propertyName(modifier)]) {
+					return false;
+				}
+			}
+		}
+
 		return true;
 	}
 

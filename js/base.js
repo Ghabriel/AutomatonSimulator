@@ -150,6 +150,17 @@ define("Utils", ["require", "exports", "System"], function (require, exports, Sy
             return false;
         }
         utils.isRightClick = isRightClick;
+        function linePath(x1, y1, x2, y2) {
+            return "M" + x1 + " " + y1 + " L" + x2 + " " + y2;
+        }
+        utils.linePath = linePath;
+        function line(canvas, x1, y1, x2, y2) {
+            var line = canvas.path(this.linePath(x1, y1, x2, y2));
+            // TODO: make the stroke color flexible
+            line.attr("stroke", "black");
+            return line;
+        }
+        utils.line = line;
         function bindShortcut(keys, callback) {
             System_1.System.addKeyObserver(keys, callback);
         }
@@ -483,11 +494,24 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 button.addEventListener("click", function () {
                     machineButtonMapping[Settings_3.Settings.currentMachine].disabled = false;
                     machineButtonMapping[type].disabled = true;
+                    // Firefox ignores keyboard events triggered while focusing
+                    // a disabled input, so blur it.
+                    machineButtonMapping[type].blur();
                     Settings_3.Settings.currentMachine = type;
                     self.loadMachine(type);
                 });
                 table.add(button);
                 machineButtonMapping[type] = button;
+            });
+            Utils_5.utils.bindShortcut(["M"], function () {
+                var buttons = document.querySelectorAll(".machine_selection_btn");
+                for (var i = 0; i < buttons.length; i++) {
+                    var button = buttons[i];
+                    if (!button.disabled) {
+                        button.focus();
+                        break;
+                    }
+                }
             });
             this.machineSelection.clear();
             this.machineSelection.add(table.html());
@@ -537,24 +561,32 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
             });
         };
         System.shortcutMatches = function (event, keys) {
+            function propertyName(type) {
+                return type + "Key";
+            }
+            var modifiers = ["alt", "ctrl", "shift"];
+            var expectedModifiers = [];
             for (var _i = 0, keys_1 = keys; _i < keys_1.length; _i++) {
                 var key = keys_1[_i];
-                switch (key) {
-                    case "alt":
-                    case "ctrl":
-                    case "shift":
-                        if (!event[key + "Key"]) {
-                            return false;
-                        }
-                        break;
-                    default:
-                        if (event.keyCode != Keyboard_1.Keyboard.keys[key]) {
-                            return false;
-                        }
+                if (modifiers.indexOf(key) >= 0) {
+                    expectedModifiers.push(key);
+                    if (!event[propertyName(key)]) {
+                        return false;
+                    }
+                }
+                else if (event.keyCode != Keyboard_1.Keyboard.keys[key]) {
+                    return false;
                 }
             }
-            // TODO: check if there are modifiers (alt/ctrl/shift) that shouldn't
-            // be on
+            // Ignores the key combination if there are extra modifiers being pressed
+            for (var _a = 0, modifiers_1 = modifiers; _a < modifiers_1.length; _a++) {
+                var modifier = modifiers_1[_a];
+                if (expectedModifiers.indexOf(modifier) == -1) {
+                    if (event[propertyName(modifier)]) {
+                        return false;
+                    }
+                }
+            }
             return true;
         };
         System.keyboardObservers = [];
@@ -576,6 +608,12 @@ define("interface/State", ["require", "exports", "Settings"], function (require,
         State.prototype.setPosition = function (x, y) {
             this.x = x;
             this.y = y;
+        };
+        State.prototype.getPosition = function () {
+            return {
+                x: this.x,
+                y: this.y
+            };
         };
         State.prototype.setName = function (name) {
             this.name = name;
@@ -723,15 +761,38 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
             states[2].setPosition(340, 320);
             // TODO: separate left click/right click dragging handlers
             var canvas = this.canvas;
+            var edgeMode = false;
+            var edge = {
+                origin: null,
+                target: null,
+                body: null
+            };
             var _loop_1 = function(state) {
                 state.render(canvas);
                 state.drag(function (distanceSquared, event) {
-                    if (Utils_7.utils.isRightClick(event)) {
-                        return false;
-                    }
                     if (distanceSquared <= Settings_7.Settings.stateDragTolerance) {
-                        state.setFinal(!state.isFinal());
-                        state.render(canvas);
+                        if (Utils_7.utils.isRightClick(event)) {
+                            if (edgeMode) {
+                                // TODO
+                                console.log("[BUILD EDGE]");
+                                edgeMode = false;
+                                var origin = edge.origin.getPosition();
+                                var target = state.getPosition();
+                                edge.target = state;
+                                edge.body.attr("path", Utils_7.utils.linePath(origin.x, origin.y, target.x, target.y));
+                            }
+                            else {
+                                console.log("[ENTER EDGE MODE]");
+                                edgeMode = true;
+                                var origin = state.getPosition();
+                                edge.origin = state;
+                                edge.body = Utils_7.utils.line(canvas, origin.x, origin.y, 0, 0);
+                            }
+                        }
+                        else {
+                            state.setFinal(!state.isFinal());
+                            state.render(canvas);
+                        }
                         return false;
                     }
                     return true;
@@ -752,6 +813,17 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
             $(this.node).contextmenu(function (e) {
                 e.preventDefault();
                 return false;
+            });
+            $(this.node).mousemove(function (e) {
+                if (edgeMode) {
+                    var origin = edge.origin.getPosition();
+                    // The +1's are necessary to ensure that mouse events are still
+                    // correctly fired, since not using them makes the edge stay
+                    // directly below the cursor.
+                    var x = e.pageX - this.offsetLeft + 1;
+                    var y = e.pageY - this.offsetTop + 1;
+                    edge.body.attr("path", Utils_7.utils.linePath(origin.x, origin.y, x, y));
+                }
             });
         };
         return Mainbar;

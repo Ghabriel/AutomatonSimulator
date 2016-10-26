@@ -32,6 +32,17 @@ export namespace utils {
 		return false;
 	}
 
+	export function linePath(x1, y1, x2, y2) {
+		return "M" + x1 + " " + y1 + " L" + x2 + " " + y2;
+	}
+
+	export function line(canvas, x1, y1, x2, y2) {
+		var line = canvas.path(this.linePath(x1, y1, x2, y2));
+		// TODO: make the stroke color flexible
+		line.attr("stroke", "black");
+		return line;
+	}
+
 	export function bindShortcut(keys: string[], callback: () => void): void {
 		System.addKeyObserver(keys, callback);
 	}

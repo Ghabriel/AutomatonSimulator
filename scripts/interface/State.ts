@@ -10,6 +10,13 @@ export class State {
 		this.y = y;
 	}
 
+	public getPosition(): {x: number, y: number} {
+		return {
+			x: this.x,
+			y: this.y
+		};
+	}
+
 	public setName(name: string): void {
 		this.name = name;
 	}

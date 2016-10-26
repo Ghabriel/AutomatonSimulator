@@ -47,16 +47,41 @@ export class Mainbar extends Renderer {
 
 		// TODO: separate left click/right click dragging handlers
 		let canvas = this.canvas;
+		let edgeMode = false;
+		let edge = {
+			origin: null,
+			target: null,
+			body: null
+		};
 		for (let state of states) {
 			state.render(canvas);
 			state.drag(function(distanceSquared, event) {
-				if (utils.isRightClick(event)) {
-					return false;
-				}
-
 				if (distanceSquared <= Settings.stateDragTolerance) {
-					state.setFinal(!state.isFinal());
-					state.render(canvas);
+					if (utils.isRightClick(event)) {
+						if (edgeMode) {
+							// TODO
+							console.log("[BUILD EDGE]");
+							edgeMode = false;
+
+							let origin = edge.origin.getPosition();
+							let target = state.getPosition();
+							edge.target = state;
+							edge.body.attr("path", utils.linePath(
+								origin.x, origin.y,
+								target.x, target.y
+							));
+						} else {
+							console.log("[ENTER EDGE MODE]");
+							edgeMode = true;
+
+							let origin = state.getPosition();
+							edge.origin = state;
+							edge.body = utils.line(canvas, origin.x, origin.y, 0, 0);
+						}
+					} else {
+						state.setFinal(!state.isFinal());
+						state.render(canvas);
+					}
 					return false;
 				}
 				return true;
@@ -75,6 +100,18 @@ export class Mainbar extends Renderer {
 		$(this.node).contextmenu(function(e) {
 			e.preventDefault();
 			return false;
+		});
+
+		$(this.node).mousemove(function(e) {
+			if (edgeMode) {
+				let origin = edge.origin.getPosition();
+				// The +1's are necessary to ensure that mouse events are still
+				// correctly fired, since not using them makes the edge stay
+				// directly below the cursor.
+				let x = e.pageX - this.offsetLeft + 1;
+				let y = e.pageY - this.offsetTop + 1;
+				edge.body.attr("path", utils.linePath(origin.x, origin.y, x, y));
+			}
 		});
 	}
 
