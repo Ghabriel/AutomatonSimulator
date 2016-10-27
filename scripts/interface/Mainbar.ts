@@ -76,7 +76,9 @@ export class Mainbar extends Renderer {
 
 							let origin = state.getPosition();
 							edge.origin = state;
-							edge.body = utils.line(canvas, origin.x, origin.y, 0, 0);
+							edge.body = utils.line(canvas,
+								origin.x, origin.y,
+								origin.x, origin.y);
 						}
 					} else {
 						state.setFinal(!state.isFinal());
@@ -105,11 +107,17 @@ export class Mainbar extends Renderer {
 		$(this.node).mousemove(function(e) {
 			if (edgeMode) {
 				let origin = edge.origin.getPosition();
-				// The +1's are necessary to ensure that mouse events are still
-				// correctly fired, since not using them makes the edge stay
-				// directly below the cursor.
-				let x = e.pageX - this.offsetLeft + 1;
-				let y = e.pageY - this.offsetTop + 1;
+				let target = {
+					x: e.pageX - this.offsetLeft,
+					y: e.pageY - this.offsetTop
+				}
+				let dx = target.x - origin.x;
+				let dy = target.y - origin.y;
+				// The offsets are necessary to ensure that mouse events are
+				// still correctly fired, since not using them makes the edge
+				// stay directly below the cursor.
+				let x = origin.x + dx * 0.98;
+				let y = origin.y + dy * 0.98;
 				edge.body.attr("path", utils.linePath(origin.x, origin.y, x, y));
 			}
 		});

@@ -786,7 +786,7 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
                                 edgeMode = true;
                                 var origin = state.getPosition();
                                 edge.origin = state;
-                                edge.body = Utils_7.utils.line(canvas, origin.x, origin.y, 0, 0);
+                                edge.body = Utils_7.utils.line(canvas, origin.x, origin.y, origin.x, origin.y);
                             }
                         }
                         else {
@@ -817,11 +817,17 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
             $(this.node).mousemove(function (e) {
                 if (edgeMode) {
                     var origin = edge.origin.getPosition();
-                    // The +1's are necessary to ensure that mouse events are still
-                    // correctly fired, since not using them makes the edge stay
-                    // directly below the cursor.
-                    var x = e.pageX - this.offsetLeft + 1;
-                    var y = e.pageY - this.offsetTop + 1;
+                    var target = {
+                        x: e.pageX - this.offsetLeft,
+                        y: e.pageY - this.offsetTop
+                    };
+                    var dx = target.x - origin.x;
+                    var dy = target.y - origin.y;
+                    // The offsets are necessary to ensure that mouse events are
+                    // still correctly fired, since not using them makes the edge
+                    // stay directly below the cursor.
+                    var x = origin.x + dx * 0.98;
+                    var y = origin.y + dy * 0.98;
                     edge.body.attr("path", Utils_7.utils.linePath(origin.x, origin.y, x, y));
                 }
             });
