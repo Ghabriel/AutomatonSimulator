@@ -725,11 +725,35 @@ define("interface/State", ["require", "exports", "Settings"], function (require,
 /// <reference path="../defs/jQuery.d.ts" />
 define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interface/State", "Settings", "Utils"], function (require, exports, Renderer_4, State_1, Settings_7, Utils_7) {
     "use strict";
+    function rotatePoint(point, center, angle) {
+        var sin = Math.sin(angle);
+        var cos = Math.cos(angle);
+        var copy = {
+            x: point.x,
+            y: point.y
+        };
+        copy.x -= center.x;
+        copy.y -= center.y;
+        var result = {
+            x: copy.x * cos - copy.y * sin,
+            y: copy.x * sin + copy.y * cos
+        };
+        return {
+            x: result.x + center.x,
+            y: result.y + center.y
+        };
+    }
     var Mainbar = (function (_super) {
         __extends(Mainbar, _super);
         function Mainbar() {
             _super.call(this);
             this.canvas = null;
+            this.edgeMode = false;
+            this.currentEdge = {
+                origin: null,
+                target: null,
+                body: null
+            };
             var self = this;
             $(window).resize(function () {
                 self.resizeCanvas();
@@ -746,6 +770,57 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
                 canvas.setSize(width, height);
             }
         };
+        Mainbar.prototype.beginEdge = function (state) {
+            console.log("[ENTER EDGE MODE]");
+            this.edgeMode = true;
+            var origin = state.getPosition();
+            var edge = this.currentEdge;
+            edge.origin = state;
+            edge.body = Utils_7.utils.line(this.canvas, origin.x, origin.y, origin.x, origin.y);
+        };
+        Mainbar.prototype.finishEdge = function (state) {
+            console.log("[BUILD EDGE]");
+            this.edgeMode = false;
+            var edge = this.currentEdge;
+            var origin = edge.origin.getPosition();
+            var target = state.getPosition();
+            edge.target = state;
+            edge.body.attr("path", Utils_7.utils.linePath(origin.x, origin.y, target.x, target.y));
+            // Experimental area
+            var dx = target.x - origin.x;
+            var dy = target.y - origin.y;
+            var l = 30;
+            var alphaDeg = 30;
+            var alpha = alphaDeg * Math.PI / 180;
+            // let cos = Math.cos(alpha);
+            // let sin = Math.sin(alpha);
+            var length = Math.sqrt(dx * dx + dy * dy);
+            var u = 1 - l / length;
+            var ref = {
+                x: origin.x + u * (target.x - origin.x),
+                y: origin.y + u * (target.y - origin.y)
+            };
+            var p1 = rotatePoint(ref, target, alpha);
+            Utils_7.utils.line(this.canvas, p1.x, p1.y, target.x, target.y);
+            var p2 = rotatePoint(ref, target, -alpha);
+            Utils_7.utils.line(this.canvas, p2.x, p2.y, target.x, target.y);
+        };
+        Mainbar.prototype.adjustEdge = function (elem, e) {
+            var edge = this.currentEdge;
+            var origin = edge.origin.getPosition();
+            var target = {
+                x: e.pageX - elem.offsetLeft,
+                y: e.pageY - elem.offsetTop
+            };
+            var dx = target.x - origin.x;
+            var dy = target.y - origin.y;
+            // The offsets are necessary to ensure that mouse events are
+            // still correctly fired, since not using them makes the edge
+            // stay directly below the cursor.
+            var x = origin.x + dx * 0.98;
+            var y = origin.y + dy * 0.98;
+            edge.body.attr("path", Utils_7.utils.linePath(origin.x, origin.y, x, y));
+        };
         Mainbar.prototype.onRender = function () {
             // 50x50 is a placeholder size: resizeCanvas() calculates the true size.
             this.canvas = Raphael(this.node, 50, 50);
@@ -761,32 +836,17 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
             states[2].setPosition(340, 320);
             // TODO: separate left click/right click dragging handlers
             var canvas = this.canvas;
-            var edgeMode = false;
-            var edge = {
-                origin: null,
-                target: null,
-                body: null
-            };
+            var self = this;
             var _loop_1 = function(state) {
                 state.render(canvas);
                 state.drag(function (distanceSquared, event) {
                     if (distanceSquared <= Settings_7.Settings.stateDragTolerance) {
                         if (Utils_7.utils.isRightClick(event)) {
-                            if (edgeMode) {
-                                // TODO
-                                console.log("[BUILD EDGE]");
-                                edgeMode = false;
-                                var origin = edge.origin.getPosition();
-                                var target = state.getPosition();
-                                edge.target = state;
-                                edge.body.attr("path", Utils_7.utils.linePath(origin.x, origin.y, target.x, target.y));
+                            if (self.edgeMode) {
+                                self.finishEdge(state);
                             }
                             else {
-                                console.log("[ENTER EDGE MODE]");
-                                edgeMode = true;
-                                var origin = state.getPosition();
-                                edge.origin = state;
-                                edge.body = Utils_7.utils.line(canvas, origin.x, origin.y, origin.x, origin.y);
+                                self.beginEdge(state);
                             }
                         }
                         else {
@@ -815,20 +875,8 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
                 return false;
             });
             $(this.node).mousemove(function (e) {
-                if (edgeMode) {
-                    var origin = edge.origin.getPosition();
-                    var target = {
-                        x: e.pageX - this.offsetLeft,
-                        y: e.pageY - this.offsetTop
-                    };
-                    var dx = target.x - origin.x;
-                    var dy = target.y - origin.y;
-                    // The offsets are necessary to ensure that mouse events are
-                    // still correctly fired, since not using them makes the edge
-                    // stay directly below the cursor.
-                    var x = origin.x + dx * 0.98;
-                    var y = origin.y + dy * 0.98;
-                    edge.body.attr("path", Utils_7.utils.linePath(origin.x, origin.y, x, y));
+                if (self.edgeMode) {
+                    self.adjustEdge(this, e);
                 }
             });
         };
