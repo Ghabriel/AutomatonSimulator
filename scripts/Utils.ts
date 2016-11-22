@@ -43,6 +43,10 @@ export namespace utils {
 		return line;
 	}
 
+	export function toRadians(angle) {
+		return angle * Math.PI / 180;
+	}
+
 	export function bindShortcut(keys: string[], callback: () => void): void {
 		System.addKeyObserver(keys, callback);
 	}

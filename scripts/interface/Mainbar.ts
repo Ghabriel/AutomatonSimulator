@@ -63,28 +63,42 @@ export class Mainbar extends Renderer {
 		console.log("[BUILD EDGE]");
 		this.edgeMode = false;
 
+		// Arrow body (i.e a straight line)
 		let edge = this.currentEdge;
 		let origin = edge.origin.getPosition();
 		let target = state.getPosition();
 		edge.target = state;
+		// edge.body.attr("path", utils.linePath(
+		// 	origin.x, origin.y,
+		// 	target.x, target.y
+		// ));
+
+		// Adjusts the edge so that it points to the border of the state
+		// rather than its center
+		let dx = target.x - origin.x;
+		let dy = target.y - origin.y;
+		let angle = Math.atan2(dy, dx);
+		let sin = Math.sin(angle);
+		let cos = Math.cos(angle);
+		let offsetX = Settings.stateRadius * cos;
+		let offsetY = Settings.stateRadius * sin;
+		target.x -= offsetX;
+		target.y -= offsetY;
+		dx -= offsetX;
+		dy -= offsetY;
 		edge.body.attr("path", utils.linePath(
 			origin.x, origin.y,
 			target.x, target.y
 		));
 
-		// Experimental area
-		let dx = target.x - origin.x;
-		let dy = target.y - origin.y;
-		let l = 30;
-		let alphaDeg = 30;
-		let alpha = alphaDeg * Math.PI / 180;
-		// let cos = Math.cos(alpha);
-		// let sin = Math.sin(alpha);
+		// Arrow head
+		let arrowLength = Settings.edgeArrowLength;
+		let alpha = utils.toRadians(Settings.edgeArrowAngle);
 		let length = Math.sqrt(dx * dx + dy * dy);
-		let u = 1 - l / length;
+		let u = 1 - arrowLength / length;
 		let ref = {
-			x: origin.x + u * (target.x - origin.x),
-			y: origin.y + u * (target.y - origin.y)
+			x: origin.x + u * dx,
+			y: origin.y + u * dy
 		};
 
 		let p1 = rotatePoint(ref, target, alpha);
@@ -104,7 +118,7 @@ export class Mainbar extends Renderer {
 		let target = {
 			x: e.pageX - elem.offsetLeft,
 			y: e.pageY - elem.offsetTop
-		}
+		};
 		let dx = target.x - origin.x;
 		let dy = target.y - origin.y;
 		// The offsets are necessary to ensure that mouse events are

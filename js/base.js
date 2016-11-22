@@ -161,6 +161,10 @@ define("Utils", ["require", "exports", "System"], function (require, exports, Sy
             return line;
         }
         utils.line = line;
+        function toRadians(angle) {
+            return angle * Math.PI / 180;
+        }
+        utils.toRadians = toRadians;
         function bindShortcut(keys, callback) {
             System_1.System.addKeyObserver(keys, callback);
         }
@@ -222,6 +226,8 @@ define("Settings", ["require", "exports", "languages/English", "languages/Portug
         Settings.stateDragTolerance = 50;
         Settings.stateFillColor = "white";
         Settings.stateStrokeColor = "black";
+        Settings.edgeArrowLength = 30;
+        Settings.edgeArrowAngle = 30;
         Settings.shortcuts = {
             save: ["ctrl", "S"],
             open: ["ctrl", "O"]
@@ -781,24 +787,37 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
         Mainbar.prototype.finishEdge = function (state) {
             console.log("[BUILD EDGE]");
             this.edgeMode = false;
+            // Arrow body (i.e a straight line)
             var edge = this.currentEdge;
             var origin = edge.origin.getPosition();
             var target = state.getPosition();
             edge.target = state;
-            edge.body.attr("path", Utils_7.utils.linePath(origin.x, origin.y, target.x, target.y));
-            // Experimental area
+            // edge.body.attr("path", utils.linePath(
+            // 	origin.x, origin.y,
+            // 	target.x, target.y
+            // ));
+            // Adjusts the edge so that it points to the border of the state
+            // rather than its center
             var dx = target.x - origin.x;
             var dy = target.y - origin.y;
-            var l = 30;
-            var alphaDeg = 30;
-            var alpha = alphaDeg * Math.PI / 180;
-            // let cos = Math.cos(alpha);
-            // let sin = Math.sin(alpha);
+            var angle = Math.atan2(dy, dx);
+            var sin = Math.sin(angle);
+            var cos = Math.cos(angle);
+            var offsetX = Settings_7.Settings.stateRadius * cos;
+            var offsetY = Settings_7.Settings.stateRadius * sin;
+            target.x -= offsetX;
+            target.y -= offsetY;
+            dx -= offsetX;
+            dy -= offsetY;
+            edge.body.attr("path", Utils_7.utils.linePath(origin.x, origin.y, target.x, target.y));
+            // Arrow head
+            var arrowLength = Settings_7.Settings.edgeArrowLength;
+            var alpha = Utils_7.utils.toRadians(Settings_7.Settings.edgeArrowAngle);
             var length = Math.sqrt(dx * dx + dy * dy);
-            var u = 1 - l / length;
+            var u = 1 - arrowLength / length;
             var ref = {
-                x: origin.x + u * (target.x - origin.x),
-                y: origin.y + u * (target.y - origin.y)
+                x: origin.x + u * dx,
+                y: origin.y + u * dy
             };
             var p1 = rotatePoint(ref, target, alpha);
             Utils_7.utils.line(this.canvas, p1.x, p1.y, target.x, target.y);

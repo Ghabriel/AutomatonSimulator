@@ -26,6 +26,9 @@ export namespace Settings {
 	export const stateFillColor = "white";
 	export const stateStrokeColor = "black";
 
+	export const edgeArrowLength = 30;
+	export const edgeArrowAngle = 30;
+
 	export const shortcuts = {
 		save: ["ctrl", "S"],
 		open: ["ctrl", "O"]
