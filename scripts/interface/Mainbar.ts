@@ -154,12 +154,10 @@ export class Mainbar extends Renderer {
 			state.render(canvas);
 			state.drag(function(distanceSquared, event) {
 				if (distanceSquared <= Settings.stateDragTolerance) {
-					if (utils.isRightClick(event)) {
-						if (self.edgeMode) {
-							self.finishEdge(state);
-						} else {
-							self.beginEdge(state);
-						}
+					if (self.edgeMode) {
+						self.finishEdge(state);
+					} else if (utils.isRightClick(event)) {
+						self.beginEdge(state);
 					} else {
 						state.setFinal(!state.isFinal());
 						state.render(canvas);
@@ -173,6 +171,7 @@ export class Mainbar extends Renderer {
 				if (utils.isRightClick(e)) {
 					console.log("Initial state changed.");
 					state.setInitial(!state.isInitial());
+					state.render(canvas);
 					e.preventDefault();
 					return false;
 				}

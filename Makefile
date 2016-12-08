@@ -22,7 +22,7 @@ else
 	@cat /dev/null > $(JS)/$(JSBASE)
 endif
 	@echo "[minifying] $(JS)/$(JSBASE) ⟶ $(JS)/$(JSCOMPRESSED)"
-	@uglifyjs $(JS)/$(JSBASE) --compress --mangle > $(JS)/$(JSCOMPRESSED)
+	@uglifyjs $(JS)/$(JSBASE) --compress --mangle > $(JS)/$(JSCOMPRESSED) 2> /dev/null
 
 dirs: | $(CSS) $(JS) $(LIB) $(TS) $(INDEX)
 

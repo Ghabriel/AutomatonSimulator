@@ -860,13 +860,11 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
                 state.render(canvas);
                 state.drag(function (distanceSquared, event) {
                     if (distanceSquared <= Settings_7.Settings.stateDragTolerance) {
-                        if (Utils_7.utils.isRightClick(event)) {
-                            if (self.edgeMode) {
-                                self.finishEdge(state);
-                            }
-                            else {
-                                self.beginEdge(state);
-                            }
+                        if (self.edgeMode) {
+                            self.finishEdge(state);
+                        }
+                        else if (Utils_7.utils.isRightClick(event)) {
+                            self.beginEdge(state);
                         }
                         else {
                             state.setFinal(!state.isFinal());

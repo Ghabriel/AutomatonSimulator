@@ -54,6 +54,12 @@ export class State {
 			});
 		}
 
+		// if (this.initial) {
+
+		// } else if (this.arrow) {
+			
+		// }
+
 		if (this.final) {
 			if (!this.ring) {
 				this.ring = canvas.circle(this.x, this.y, Settings.stateRingRadius);
