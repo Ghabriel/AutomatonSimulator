@@ -167,14 +167,14 @@ export class Mainbar extends Renderer {
 				return true;
 			});
 
-			state.node().mousedown(function(e) {
-				if (utils.isRightClick(e)) {
+			state.node().dblclick(function(e) {
+				// if (utils.isRightClick(e)) {
 					console.log("Initial state changed.");
 					state.setInitial(!state.isInitial());
 					state.render(canvas);
 					e.preventDefault();
 					return false;
-				}
+				// }
 			});
 		}
 

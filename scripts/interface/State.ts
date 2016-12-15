@@ -5,6 +5,10 @@ import {Settings} from "../Settings"
 import {utils} from "../Utils"
 
 export class State {
+	constructor() {
+		this.radius = Settings.stateRadius;
+	}
+
 	public setPosition(x: number, y: number): void {
 		this.x = x;
 		this.y = y;
@@ -37,9 +41,16 @@ export class State {
 		return this.final;
 	}
 
+	private arrowParams(canvas?: RaphaelPaper): any[] {
+		var result: any[] = (canvas) ? [canvas] : [];
+		let length = 40;
+		return result.concat([this.x - this.radius - length, this.y,
+							  this.x - this.radius, this.y]);
+	}
+
 	public render(canvas: RaphaelPaper): void {
 		if (!this.body) {
-			this.body = canvas.circle(this.x, this.y, Settings.stateRadius);
+			this.body = canvas.circle(this.x, this.y, this.radius);
 			this.body.attr("fill", Settings.stateFillColor);
 			this.body.attr("stroke", Settings.stateStrokeColor);
 
@@ -54,11 +65,16 @@ export class State {
 			});
 		}
 
-		// if (this.initial) {
-
-		// } else if (this.arrow) {
-			
-		// }
+		if (this.initial) {
+			if (!this.arrow) {
+				this.arrow = utils.line.apply(utils, this.arrowParams(canvas));
+			} else {
+				this.arrow.attr("path", utils.linePath.apply(utils, this.arrowParams()));
+			}
+		} else if (this.arrow) {
+			this.arrow.remove();
+			this.arrow = null;
+		}
 
 		if (this.final) {
 			if (!this.ring) {
@@ -142,8 +158,10 @@ export class State {
 
 	private body: RaphaelElement = null;
 	private ring: RaphaelElement = null;
+	private arrow: RaphaelElement = null;
 	private x: number;
 	private y: number;
+	private radius: number;
 	private name: string = "";
 	private initial: boolean = false;
 	private final: boolean = false;

@@ -8,10 +8,13 @@ INDEX        :=index.html
 LIBSFILE     :=libs.txt
 JSBASE       :=base.js
 JSCOMPRESSED :=main.js
+COMPRESS     :=1
 
 ORIGNAMES    :=$(shell cat $(LIBSFILE) | sed "s/^\([^:]\+\): \(.*\)/\1/")
 LIBNAMES     :=$(patsubst %, $(LIB)/%, $(ORIGNAMES))
 TSFILES      :=$(wildcard $(TS)/*.ts)
+
+.PHONY: all dirs libs disable_compress raw
 
 all: dirs libs
 	@echo "[.ts ⟶ .js]"
@@ -21,12 +24,22 @@ else
 	@touch $(JS)/$(JSBASE)
 	@cat /dev/null > $(JS)/$(JSBASE)
 endif
-	@echo "[minifying] $(JS)/$(JSBASE) ⟶ $(JS)/$(JSCOMPRESSED)"
-	@uglifyjs $(JS)/$(JSBASE) --compress --mangle > $(JS)/$(JSCOMPRESSED) 2> /dev/null
+	@if [ "$(COMPRESS)" = "1" ]; then \
+		echo "[minifying] $(JS)/$(JSBASE) ⟶ $(JS)/$(JSCOMPRESSED)";\
+		uglifyjs $(JS)/$(JSBASE) --compress --mangle > $(JS)/$(JSCOMPRESSED) 2> /dev/null;\
+	else\
+		echo "[ copying ] $(JS)/$(JSBASE) ⟶ $(JS)/$(JSCOMPRESSED)";\
+		cp $(JS)/$(JSBASE) $(JS)/$(JSCOMPRESSED);\
+	fi
 
 dirs: | $(CSS) $(JS) $(LIB) $(TS) $(INDEX)
 
 libs: | $(LIBNAMES)
+
+disable_compress:
+	$(eval COMPRESS :=0)
+
+raw: disable_compress all
 
 $(CSS) $(JS) $(LIB) $(TS):
 	@echo "[  mkdir  ] $@"

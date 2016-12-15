@@ -601,15 +601,17 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
     exports.System = System;
 });
 /// <reference path="../defs/raphael.d.ts" />
-define("interface/State", ["require", "exports", "Settings"], function (require, exports, Settings_6) {
+define("interface/State", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_6, Utils_7) {
     "use strict";
     var State = (function () {
         function State() {
             this.body = null;
             this.ring = null;
+            this.arrow = null;
             this.name = "";
             this.initial = false;
             this.final = false;
+            this.radius = Settings_6.Settings.stateRadius;
         }
         State.prototype.setPosition = function (x, y) {
             this.x = x;
@@ -636,9 +638,15 @@ define("interface/State", ["require", "exports", "Settings"], function (require,
         State.prototype.isFinal = function () {
             return this.final;
         };
+        State.prototype.arrowParams = function (canvas) {
+            var result = (canvas) ? [canvas] : [];
+            var length = 40;
+            return result.concat([this.x - this.radius - length, this.y,
+                this.x - this.radius, this.y]);
+        };
         State.prototype.render = function (canvas) {
             if (!this.body) {
-                this.body = canvas.circle(this.x, this.y, Settings_6.Settings.stateRadius);
+                this.body = canvas.circle(this.x, this.y, this.radius);
                 this.body.attr("fill", Settings_6.Settings.stateFillColor);
                 this.body.attr("stroke", Settings_6.Settings.stateStrokeColor);
                 canvas.text(this.x, this.y, this.name).attr({
@@ -651,6 +659,18 @@ define("interface/State", ["require", "exports", "Settings"], function (require,
                     cx: this.x,
                     cy: this.y
                 });
+            }
+            if (this.initial) {
+                if (!this.arrow) {
+                    this.arrow = Utils_7.utils.line.apply(Utils_7.utils, this.arrowParams(canvas));
+                }
+                else {
+                    this.arrow.attr("path", Utils_7.utils.linePath.apply(Utils_7.utils, this.arrowParams()));
+                }
+            }
+            else if (this.arrow) {
+                this.arrow.remove();
+                this.arrow = null;
             }
             if (this.final) {
                 if (!this.ring) {
@@ -729,7 +749,7 @@ define("interface/State", ["require", "exports", "Settings"], function (require,
 });
 /// <reference path="../defs/raphael.d.ts" />
 /// <reference path="../defs/jQuery.d.ts" />
-define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interface/State", "Settings", "Utils"], function (require, exports, Renderer_4, State_1, Settings_7, Utils_7) {
+define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interface/State", "Settings", "Utils"], function (require, exports, Renderer_4, State_1, Settings_7, Utils_8) {
     "use strict";
     function rotatePoint(point, center, angle) {
         var sin = Math.sin(angle);
@@ -782,7 +802,7 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
             var origin = state.getPosition();
             var edge = this.currentEdge;
             edge.origin = state;
-            edge.body = Utils_7.utils.line(this.canvas, origin.x, origin.y, origin.x, origin.y);
+            edge.body = Utils_8.utils.line(this.canvas, origin.x, origin.y, origin.x, origin.y);
         };
         Mainbar.prototype.finishEdge = function (state) {
             console.log("[BUILD EDGE]");
@@ -809,10 +829,10 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
             target.y -= offsetY;
             dx -= offsetX;
             dy -= offsetY;
-            edge.body.attr("path", Utils_7.utils.linePath(origin.x, origin.y, target.x, target.y));
+            edge.body.attr("path", Utils_8.utils.linePath(origin.x, origin.y, target.x, target.y));
             // Arrow head
             var arrowLength = Settings_7.Settings.edgeArrowLength;
-            var alpha = Utils_7.utils.toRadians(Settings_7.Settings.edgeArrowAngle);
+            var alpha = Utils_8.utils.toRadians(Settings_7.Settings.edgeArrowAngle);
             var length = Math.sqrt(dx * dx + dy * dy);
             var u = 1 - arrowLength / length;
             var ref = {
@@ -820,9 +840,9 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
                 y: origin.y + u * dy
             };
             var p1 = rotatePoint(ref, target, alpha);
-            Utils_7.utils.line(this.canvas, p1.x, p1.y, target.x, target.y);
+            Utils_8.utils.line(this.canvas, p1.x, p1.y, target.x, target.y);
             var p2 = rotatePoint(ref, target, -alpha);
-            Utils_7.utils.line(this.canvas, p2.x, p2.y, target.x, target.y);
+            Utils_8.utils.line(this.canvas, p2.x, p2.y, target.x, target.y);
         };
         Mainbar.prototype.adjustEdge = function (elem, e) {
             var edge = this.currentEdge;
@@ -838,7 +858,7 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
             // stay directly below the cursor.
             var x = origin.x + dx * 0.98;
             var y = origin.y + dy * 0.98;
-            edge.body.attr("path", Utils_7.utils.linePath(origin.x, origin.y, x, y));
+            edge.body.attr("path", Utils_8.utils.linePath(origin.x, origin.y, x, y));
         };
         Mainbar.prototype.onRender = function () {
             // 50x50 is a placeholder size: resizeCanvas() calculates the true size.
@@ -863,7 +883,7 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
                         if (self.edgeMode) {
                             self.finishEdge(state);
                         }
-                        else if (Utils_7.utils.isRightClick(event)) {
+                        else if (Utils_8.utils.isRightClick(event)) {
                             self.beginEdge(state);
                         }
                         else {
@@ -874,13 +894,14 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
                     }
                     return true;
                 });
-                state.node().mousedown(function (e) {
-                    if (Utils_7.utils.isRightClick(e)) {
-                        console.log("Initial state changed.");
-                        state.setInitial(!state.isInitial());
-                        e.preventDefault();
-                        return false;
-                    }
+                state.node().dblclick(function (e) {
+                    // if (utils.isRightClick(e)) {
+                    console.log("Initial state changed.");
+                    state.setInitial(!state.isInitial());
+                    state.render(canvas);
+                    e.preventDefault();
+                    return false;
+                    // }
                 });
             };
             for (var _i = 0, states_1 = states; _i < states_1.length; _i++) {
@@ -901,7 +922,7 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
     }(Renderer_4.Renderer));
     exports.Mainbar = Mainbar;
 });
-define("interface/UI", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_8, Utils_8) {
+define("interface/UI", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_8, Utils_9) {
     "use strict";
     var UI = (function () {
         function UI() {
@@ -919,13 +940,13 @@ define("interface/UI", ["require", "exports", "Settings", "Utils"], function (re
         };
         UI.prototype.bindSidebar = function (renderer) {
             if (renderer) {
-                renderer.bind(Utils_8.utils.id(Settings_8.Settings.sidebarID));
+                renderer.bind(Utils_9.utils.id(Settings_8.Settings.sidebarID));
             }
             this.sidebarRenderer = renderer;
         };
         UI.prototype.bindMain = function (renderer) {
             if (renderer) {
-                renderer.bind(Utils_8.utils.id(Settings_8.Settings.mainbarID));
+                renderer.bind(Utils_9.utils.id(Settings_8.Settings.mainbarID));
             }
             this.mainRenderer = renderer;
         };
