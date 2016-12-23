@@ -6,17 +6,21 @@ LIB          :=lib
 TS           :=scripts
 INDEX        :=index.html
 LIBSFILE     :=libs.txt
+LANGFOLDER   :=languages
+LANGLIST     :=$(TS)/LanguageList.ts
 JSBASE       :=base.js
 JSCOMPRESSED :=main.js
-COMPRESS     :=1
+COMPRESS     :=0
 
 ORIGNAMES    :=$(shell cat $(LIBSFILE) | sed "s/^\([^:]\+\): \(.*\)/\1/")
 LIBNAMES     :=$(patsubst %, $(LIB)/%, $(ORIGNAMES))
 TSFILES      :=$(wildcard $(TS)/*.ts)
+LANGFILES    :=$(basename $(notdir $(wildcard $(TS)/$(LANGFOLDER)/*.ts)))
 
-.PHONY: all dirs libs disable_compress raw
 
-all: dirs libs
+.PHONY: all dirs libs languages disable_compress raw
+
+all: dirs libs languages
 	@echo "[.ts ⟶ .js]"
 ifneq ("$(TSFILES)", "")
 	@tsc --module amd --outFile $(JS)/$(JSBASE) $(TSFILES)
@@ -35,6 +39,12 @@ endif
 dirs: | $(CSS) $(JS) $(LIB) $(TS) $(INDEX)
 
 libs: | $(LIBNAMES)
+
+languages:
+	@truncate -s 0 $(LANGLIST)
+	@for file in $(LANGFILES); do \
+		echo "export * from \"./$(LANGFOLDER)/$$file\"" >> $(LANGLIST); \
+	done
 
 disable_compress:
 	$(eval COMPRESS :=0)

@@ -1,5 +1,6 @@
 export namespace portuguese {
 	export const strings = {
+		LANGUAGE_NAME: "Português",
 		SELECT_LANGUAGE: "Idioma do Sistema",
 		CHANGE_LANGUAGE: "Mudar o idioma para \"%\"?",
 		FILE_MENUBAR: "Manipulação de Arquivos",

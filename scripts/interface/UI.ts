@@ -1,30 +1,32 @@
+import {Mainbar} from "./Mainbar"
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
+import {Sidebar} from "./Sidebar"
+import {System} from "../System"
 import {utils} from "../Utils"
 
 export class UI {
-	constructor(...renderers: Renderer[]) {
-		this.bindSidebar(renderers[0]);
-		this.bindMain(renderers[1]);
+	constructor() {
+		let sidebar = new Sidebar();
+		let mainbar = new Mainbar();
+		this.bindSidebar(sidebar);
+		this.bindMain(mainbar);
+		System.bindSidebar(sidebar);
 	}
 
 	render(): void {
-		this.sidebarRenderer && this.sidebarRenderer.render();
-		this.mainRenderer && this.mainRenderer.render();
+		this.sidebarRenderer.render();
+		this.mainRenderer.render();
 		console.log("Interface ready.");
 	}
 
 	bindSidebar(renderer: Renderer): void {
-		if (renderer) {
-			renderer.bind(utils.id(Settings.sidebarID));
-		}
+		renderer.bind(utils.id(Settings.sidebarID));
 		this.sidebarRenderer = renderer;
 	}
 
 	bindMain(renderer: Renderer): void {
-		if (renderer) {
-			renderer.bind(utils.id(Settings.mainbarID));
-		}
+		renderer.bind(utils.id(Settings.mainbarID));
 		this.mainRenderer = renderer;
 	}
 

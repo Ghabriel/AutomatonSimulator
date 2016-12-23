@@ -76,11 +76,32 @@ define("interface/Renderer", ["require", "exports"], function (require, exports)
     }());
     exports.Renderer = Renderer;
 });
+define("languages/Portuguese", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var portuguese;
+    (function (portuguese) {
+        portuguese.strings = {
+            LANGUAGE_NAME: "Português",
+            SELECT_LANGUAGE: "Idioma do Sistema",
+            CHANGE_LANGUAGE: "Mudar o idioma para \"%\"?",
+            FILE_MENUBAR: "Manipulação de Arquivos",
+            SAVE: "Salvar",
+            OPEN: "Abrir",
+            SELECT_MACHINE: "Seleção de Máquina",
+            FA: "Autômato Finito",
+            PDA: "Autômato de Pilha",
+            LBA: "Autômato Linearmente Limitado",
+            RECOGNITION: "Reconhecimento",
+            TEST_CASE: "caso de teste"
+        };
+    })(portuguese = exports.portuguese || (exports.portuguese = {}));
+});
 define("languages/English", ["require", "exports"], function (require, exports) {
     "use strict";
     var english;
     (function (english) {
         english.strings = {
+            LANGUAGE_NAME: "English",
             SELECT_LANGUAGE: "System Language",
             CHANGE_LANGUAGE: "Change the language to \"%\"?",
             FILE_MENUBAR: "File Manipulation",
@@ -95,24 +116,238 @@ define("languages/English", ["require", "exports"], function (require, exports) 
         };
     })(english = exports.english || (exports.english = {}));
 });
-define("languages/Portuguese", ["require", "exports"], function (require, exports) {
+define("LanguageList", ["require", "exports", "languages/Portuguese", "languages/English"], function (require, exports, Portuguese_1, English_1) {
     "use strict";
-    var portuguese;
-    (function (portuguese) {
-        portuguese.strings = {
-            SELECT_LANGUAGE: "Idioma do Sistema",
-            CHANGE_LANGUAGE: "Mudar o idioma para \"%\"?",
-            FILE_MENUBAR: "Manipulação de Arquivos",
-            SAVE: "Salvar",
-            OPEN: "Abrir",
-            SELECT_MACHINE: "Seleção de Máquina",
-            FA: "Autômato Finito",
-            PDA: "Autômato de Pilha",
-            LBA: "Autômato Linearmente Limitado",
-            RECOGNITION: "Reconhecimento",
-            TEST_CASE: "caso de teste"
+    function __export(m) {
+        for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+    }
+    __export(Portuguese_1);
+    __export(English_1);
+});
+define("datastructures/Queue", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var Queue = (function () {
+        function Queue() {
+            this.data = [];
+            this.pointer = 0;
+        }
+        Queue.prototype.push = function (value) {
+            this.data.push(value);
         };
-    })(portuguese = exports.portuguese || (exports.portuguese = {}));
+        Queue.prototype.front = function () {
+            return this.data[this.pointer];
+        };
+        Queue.prototype.pop = function () {
+            var result = this.front();
+            this.pointer++;
+            if (this.pointer >= this.size() / 2) {
+                this.data = this.data.slice(this.pointer);
+                this.pointer = 0;
+            }
+            return result;
+        };
+        Queue.prototype.clear = function () {
+            this.data = [];
+            this.pointer = 0;
+        };
+        Queue.prototype.empty = function () {
+            return this.size() == 0;
+        };
+        Queue.prototype.size = function () {
+            return this.data.length - this.pointer;
+        };
+        return Queue;
+    }());
+    exports.Queue = Queue;
+});
+define("datastructures/UnorderedSet", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var UnorderedSet = (function () {
+        function UnorderedSet() {
+            this.data = {};
+            this.count = 0;
+        }
+        UnorderedSet.prototype.insert = function (value) {
+            if (!this.contains(value)) {
+                this.count++;
+            }
+            this.data[value] = true;
+        };
+        UnorderedSet.prototype.erase = function (value) {
+            if (this.contains(value)) {
+                this.count--;
+            }
+            delete this.data[value];
+        };
+        UnorderedSet.prototype.contains = function (value) {
+            return !!this.data[value];
+        };
+        UnorderedSet.prototype.clear = function () {
+            this.data = {};
+            this.count = 0;
+        };
+        UnorderedSet.prototype.empty = function () {
+            return this.size() == 0;
+        };
+        UnorderedSet.prototype.size = function () {
+            return this.count;
+        };
+        UnorderedSet.prototype.forEach = function (callback) {
+            for (var value in this.data) {
+                if (this.data.hasOwnProperty(value)) {
+                    if (callback(parseFloat(value)) === false) {
+                        break;
+                    }
+                }
+            }
+        };
+        UnorderedSet.prototype.asList = function () {
+            var result = [];
+            this.forEach(function (value) {
+                result.push(value);
+            });
+            return result;
+        };
+        return UnorderedSet;
+    }());
+    exports.UnorderedSet = UnorderedSet;
+});
+define("machines/FA", ["require", "exports", "datastructures/Queue", "datastructures/UnorderedSet"], function (require, exports, Queue_1, UnorderedSet_1) {
+    "use strict";
+    var FA = (function () {
+        function FA() {
+            this.stateList = []; // K
+            this.transitions = {}; // delta (non-epsilon)
+            this.epsilonTransitions = {}; // delta (epsilon)
+            this.initialState = -1; // q0
+            this.finalStates = new UnorderedSet_1.UnorderedSet(); // F
+            this.currentStates = new UnorderedSet_1.UnorderedSet();
+        }
+        FA.prototype.addState = function (name) {
+            this.stateList.push(name);
+            var index = this.numStates() - 1;
+            this.transitions[index] = {};
+            this.epsilonTransitions[index] = new UnorderedSet_1.UnorderedSet();
+            if (this.initialState == -1) {
+                this.initialState = index;
+            }
+            return index;
+        };
+        FA.prototype.removeState = function (index) {
+            // TODO
+        };
+        FA.prototype.addTransition = function (source, target, input) {
+            var transitions = this.transitions[source];
+            if (input == "") {
+                this.epsilonTransitions[source].insert(target);
+            }
+            else {
+                if (!transitions.hasOwnProperty(input)) {
+                    transitions[input] = new UnorderedSet_1.UnorderedSet();
+                }
+                transitions[input].insert(target);
+            }
+        };
+        FA.prototype.removeTransition = function (source, target, input) {
+            var transitions = this.transitions[source];
+            if (input == "") {
+                this.epsilonTransitions[source].erase(target);
+            }
+            else if (transitions.hasOwnProperty(input)) {
+                transitions[input].erase(target);
+            }
+        };
+        FA.prototype.setInitialState = function (index) {
+            if (index < this.numStates()) {
+                this.initialState = index;
+            }
+        };
+        FA.prototype.unsetInitialState = function () {
+            this.initialState = -1;
+        };
+        FA.prototype.getInitialState = function () {
+            return this.initialState;
+        };
+        FA.prototype.addAcceptingState = function (index) {
+            this.finalStates.insert(index);
+        };
+        FA.prototype.removeAcceptingState = function (index) {
+            this.finalStates.erase(index);
+        };
+        FA.prototype.getAcceptingStates = function () {
+            return this.finalStates.asList();
+        };
+        FA.prototype.getStates = function () {
+            var result = [];
+            var self = this;
+            this.currentStates.forEach(function (index) {
+                result.push(self.stateList[index]);
+            });
+            return result;
+        };
+        // Returns the alphabet of this FA.
+        FA.prototype.alphabet = function () {
+            var result = [];
+            // TODO
+            return result;
+        };
+        // Reads a character, triggering state changes to this FA.
+        FA.prototype.read = function (input) {
+            var newStates = new UnorderedSet_1.UnorderedSet();
+            var self = this;
+            this.currentStates.forEach(function (index) {
+                var output = self.transition(index, input);
+                output.forEach(function (state) {
+                    newStates.insert(state);
+                });
+            });
+            this.expandSpontaneous(newStates);
+            this.currentStates = newStates;
+        };
+        // Resets this FA, making it return to its initial state.
+        FA.prototype.reset = function () {
+            this.currentStates.clear();
+            this.currentStates.insert(this.initialState);
+            this.expandSpontaneous(this.currentStates);
+        };
+        // Checks if this FA is in an accepting state.
+        FA.prototype.accepts = function () {
+            this.finalStates.forEach(function (final) {
+                if (this.currentStates.contains(final)) {
+                    return true;
+                }
+            });
+            return false;
+        };
+        // Returns the number of states of this FA.
+        FA.prototype.numStates = function () {
+            return this.stateList.length;
+        };
+        // Returns all states that a given state transitions to
+        // with a given input.
+        FA.prototype.transition = function (state, input) {
+            return this.transitions[state][input];
+        };
+        // Expands all epsilon-transitions into a given state list.
+        FA.prototype.expandSpontaneous = function (stateList) {
+            var queue = new Queue_1.Queue();
+            stateList.forEach(function (state) {
+                queue.push(state);
+            });
+            while (!queue.empty()) {
+                var state = queue.pop();
+                var eps = this.epsilonTransitions[state];
+                eps.forEach(function (index) {
+                    if (!stateList.contains(index)) {
+                        stateList.insert(index);
+                        queue.push(index);
+                    }
+                });
+            }
+        };
+        return FA;
+    }());
+    exports.FA = FA;
 });
 define("Utils", ["require", "exports", "System"], function (require, exports, System_1) {
     "use strict";
@@ -210,8 +445,10 @@ define("Initializer", ["require", "exports", "interface/Menu", "Settings", "Util
     }());
     exports.Initializer = Initializer;
 });
-define("Settings", ["require", "exports", "languages/English", "languages/Portuguese", "Initializer", "Utils"], function (require, exports, English_1, Portuguese_1, Initializer_1, Utils_2) {
+define("Settings", ["require", "exports", "LanguageList", "machines/FA", "Initializer", "Utils"], function (require, exports, lang, FA_1, Initializer_1, Utils_2) {
     "use strict";
+    // TODO: make it more flexible to add/remove machine types. See how
+    // the internationalization was implemented for reference.
     var Settings;
     (function (Settings) {
         Settings.sidebarID = "sidebar";
@@ -232,21 +469,28 @@ define("Settings", ["require", "exports", "languages/English", "languages/Portug
             save: ["ctrl", "S"],
             open: ["ctrl", "O"]
         };
-        Settings.languages = {
-            "English": English_1.english,
-            "Português": Portuguese_1.portuguese
-        };
+        Settings.languages = lang;
         (function (Machine) {
             Machine[Machine["FA"] = 0] = "FA";
             Machine[Machine["PDA"] = 1] = "PDA";
             Machine[Machine["LBA"] = 2] = "LBA";
         })(Settings.Machine || (Settings.Machine = {}));
         var Machine = Settings.Machine;
-        Settings.language = English_1.english;
+        // TODO: maybe using a cookie to get the default language is a good idea
+        Settings.language = lang.english;
         Settings.currentMachine = Machine.FA;
         Settings.machines = {};
         var firstUpdate = true;
         function update() {
+            var fa = new FA_1.FA();
+            fa.addState("Hello");
+            fa.addState("Darkness");
+            fa.addTransition(0, 1, "a");
+            fa.reset();
+            console.log(fa);
+            console.log(fa.getStates());
+            fa.read("a");
+            console.log(fa.getStates());
             var machineList = {};
             machineList[Machine.FA] = {
                 name: Settings.language.strings.FA,
@@ -384,6 +628,9 @@ define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"],
 /// <reference path="../defs/filesaver.d.ts" />
 define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/Renderer", "Settings", "Settings", "System", "interface/Table", "Utils"], function (require, exports, Menu_2, Renderer_3, Settings_3, Settings_4, System_2, Table_1, Utils_5) {
     "use strict";
+    // TODO: remake pretty much this entire class (except the internationalization
+    // part, which works well). It's a very new class which already has some weird
+    // bugs and does not seem efficient at all.
     var Sidebar = (function (_super) {
         __extends(Sidebar, _super);
         function Sidebar() {
@@ -434,27 +681,29 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
         Sidebar.prototype.buildLanguageSelection = function () {
             var select = Utils_5.utils.create("select");
             var languages = Settings_3.Settings.languages;
+            var languageTable = {};
             var i = 0;
-            var selectedIndex = -1;
-            Utils_5.utils.foreach(languages, function (name, obj) {
+            Utils_5.utils.foreach(languages, function (moduleName, obj) {
                 var option = Utils_5.utils.create("option");
-                option.value = name;
-                option.innerHTML = name;
+                option.value = i.toString();
+                option.innerHTML = obj.strings.LANGUAGE_NAME;
                 select.appendChild(option);
+                languageTable[i] = moduleName;
                 if (obj == Settings_3.Settings.language) {
-                    selectedIndex = i;
+                    select.selectedIndex = i;
                 }
                 i++;
             });
-            select.selectedIndex = selectedIndex;
             this.languageSelection.clear();
             this.languageSelection.add(select);
             this.languageSelection.toggle();
             select.addEventListener("change", function (e) {
-                var name = this.options[this.selectedIndex].value;
+                var option = this.options[this.selectedIndex];
+                var index = option.value;
+                var name = option.innerHTML;
                 var confirmation = confirm(Settings_4.Strings.CHANGE_LANGUAGE.replace("%", name));
                 if (confirmation) {
-                    System_2.System.changeLanguage(languages[name]);
+                    System_2.System.changeLanguage(languages[languageTable[index]]);
                 }
             });
         };
@@ -644,7 +893,7 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
             return result.concat([this.x - this.radius - length, this.y,
                 this.x - this.radius, this.y]);
         };
-        State.prototype.render = function (canvas) {
+        State.prototype.renderBody = function (canvas) {
             if (!this.body) {
                 this.body = canvas.circle(this.x, this.y, this.radius);
                 this.body.attr("fill", Settings_6.Settings.stateFillColor);
@@ -660,6 +909,8 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                     cy: this.y
                 });
             }
+        };
+        State.prototype.renderInitialMark = function (canvas) {
             if (this.initial) {
                 if (!this.arrow) {
                     this.arrow = Utils_7.utils.line.apply(Utils_7.utils, this.arrowParams(canvas));
@@ -672,6 +923,8 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 this.arrow.remove();
                 this.arrow = null;
             }
+        };
+        State.prototype.renderFinalMark = function (canvas) {
             if (this.final) {
                 if (!this.ring) {
                     this.ring = canvas.circle(this.x, this.y, Settings_6.Settings.stateRingRadius);
@@ -688,6 +941,11 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 this.ring.remove();
                 this.ring = null;
             }
+        };
+        State.prototype.render = function (canvas) {
+            this.renderBody(canvas);
+            this.renderInitialMark(canvas);
+            this.renderFinalMark(canvas);
         };
         State.prototype.node = function () {
             return this.body;
@@ -749,7 +1007,7 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
 });
 /// <reference path="../defs/raphael.d.ts" />
 /// <reference path="../defs/jQuery.d.ts" />
-define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interface/State", "Settings", "Utils"], function (require, exports, Renderer_4, State_1, Settings_7, Utils_8) {
+define("interface/Mainbar", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_4, Settings_7, Utils_8) {
     "use strict";
     function rotatePoint(point, center, angle) {
         var sin = Math.sin(angle);
@@ -769,6 +1027,7 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
             y: result.y + center.y
         };
     }
+    // TODO: remake pretty much all the rendering part (except the canvas itself).
     var Mainbar = (function (_super) {
         __extends(Mainbar, _super);
         function Mainbar() {
@@ -860,19 +1119,22 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
             var y = origin.y + dy * 0.98;
             edge.body.attr("path", Utils_8.utils.linePath(origin.x, origin.y, x, y));
         };
-        Mainbar.prototype.onRender = function () {
-            // 50x50 is a placeholder size: resizeCanvas() calculates the true size.
-            this.canvas = Raphael(this.node, 50, 50);
+        Mainbar.prototype.onBind = function () {
+            // 0x0 is a placeholder size: resizeCanvas() calculates the true size.
+            this.canvas = Raphael(this.node, 0, 0);
             this.resizeCanvas();
-            var states = [
-                new State_1.State(),
-                new State_1.State(),
-                new State_1.State()
-            ];
-            states[0].setPosition(120, 120);
-            states[0].setFinal(true);
-            states[1].setPosition(300, 80);
-            states[2].setPosition(340, 320);
+        };
+        Mainbar.prototype.onRender = function () {
+            var states = [];
+            // let states = [
+            // 	new State(),
+            // 	new State(),
+            // 	new State()
+            // ];
+            // states[0].setPosition(120, 120);
+            // states[0].setFinal(true);
+            // states[1].setPosition(300, 80);
+            // states[2].setPosition(340, 320);
             // TODO: separate left click/right click dragging handlers
             var canvas = this.canvas;
             var self = this;
@@ -922,32 +1184,27 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
     }(Renderer_4.Renderer));
     exports.Mainbar = Mainbar;
 });
-define("interface/UI", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_8, Utils_9) {
+define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "interface/Sidebar", "System", "Utils"], function (require, exports, Mainbar_1, Settings_8, Sidebar_1, System_3, Utils_9) {
     "use strict";
     var UI = (function () {
         function UI() {
-            var renderers = [];
-            for (var _i = 0; _i < arguments.length; _i++) {
-                renderers[_i - 0] = arguments[_i];
-            }
-            this.bindSidebar(renderers[0]);
-            this.bindMain(renderers[1]);
+            var sidebar = new Sidebar_1.Sidebar();
+            var mainbar = new Mainbar_1.Mainbar();
+            this.bindSidebar(sidebar);
+            this.bindMain(mainbar);
+            System_3.System.bindSidebar(sidebar);
         }
         UI.prototype.render = function () {
-            this.sidebarRenderer && this.sidebarRenderer.render();
-            this.mainRenderer && this.mainRenderer.render();
+            this.sidebarRenderer.render();
+            this.mainRenderer.render();
             console.log("Interface ready.");
         };
         UI.prototype.bindSidebar = function (renderer) {
-            if (renderer) {
-                renderer.bind(Utils_9.utils.id(Settings_8.Settings.sidebarID));
-            }
+            renderer.bind(Utils_9.utils.id(Settings_8.Settings.sidebarID));
             this.sidebarRenderer = renderer;
         };
         UI.prototype.bindMain = function (renderer) {
-            if (renderer) {
-                renderer.bind(Utils_9.utils.id(Settings_8.Settings.mainbarID));
-            }
+            renderer.bind(Utils_9.utils.id(Settings_8.Settings.mainbarID));
             this.mainRenderer = renderer;
         };
         return UI;
@@ -955,16 +1212,13 @@ define("interface/UI", ["require", "exports", "Settings", "Utils"], function (re
     exports.UI = UI;
 });
 /// <reference path="defs/jQuery.d.ts" />
-define("main", ["require", "exports", "interface/Mainbar", "interface/Sidebar", "System", "interface/UI"], function (require, exports, Mainbar_1, Sidebar_1, System_3, UI_1) {
+define("main", ["require", "exports", "System", "interface/UI"], function (require, exports, System_4, UI_1) {
     "use strict";
     $(document).ready(function () {
-        var sidebar = new Sidebar_1.Sidebar();
-        var mainbar = new Mainbar_1.Mainbar();
-        var ui = new UI_1.UI(sidebar, mainbar);
+        var ui = new UI_1.UI();
         ui.render();
-        System_3.System.bindSidebar(sidebar);
         document.body.addEventListener("keydown", function (e) {
-            return System_3.System.keyEvent(e);
+            return System_4.System.keyEvent(e);
         });
     });
 });

@@ -48,7 +48,7 @@ export class State {
 							  this.x - this.radius, this.y]);
 	}
 
-	public render(canvas: RaphaelPaper): void {
+	private renderBody(canvas: RaphaelPaper): void {
 		if (!this.body) {
 			this.body = canvas.circle(this.x, this.y, this.radius);
 			this.body.attr("fill", Settings.stateFillColor);
@@ -64,7 +64,9 @@ export class State {
 				cy: this.y
 			});
 		}
+	}
 
+	private renderInitialMark(canvas: RaphaelPaper): void {
 		if (this.initial) {
 			if (!this.arrow) {
 				this.arrow = utils.line.apply(utils, this.arrowParams(canvas));
@@ -75,7 +77,9 @@ export class State {
 			this.arrow.remove();
 			this.arrow = null;
 		}
+	}
 
+	private renderFinalMark(canvas: RaphaelPaper): void {
 		if (this.final) {
 			if (!this.ring) {
 				this.ring = canvas.circle(this.x, this.y, Settings.stateRingRadius);
@@ -90,6 +94,12 @@ export class State {
 			this.ring.remove();
 			this.ring = null;
 		}
+	}
+
+	public render(canvas: RaphaelPaper): void {
+		this.renderBody(canvas);
+		this.renderInitialMark(canvas);
+		this.renderFinalMark(canvas);
 	}
 
 	public node(): RaphaelElement {

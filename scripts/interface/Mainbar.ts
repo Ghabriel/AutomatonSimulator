@@ -26,6 +26,7 @@ function rotatePoint(point, center, angle) {
 	};
 }
 
+// TODO: remake pretty much all the rendering part (except the canvas itself).
 export class Mainbar extends Renderer {
 	constructor() {
 		super();
@@ -129,23 +130,26 @@ export class Mainbar extends Renderer {
 		edge.body.attr("path", utils.linePath(origin.x, origin.y, x, y));
 	}
 
-	protected onRender(): void {
-		// 50x50 is a placeholder size: resizeCanvas() calculates the true size.
-		this.canvas = Raphael(<HTMLElement> this.node, 50, 50);
+	protected onBind(): void {
+		// 0x0 is a placeholder size: resizeCanvas() calculates the true size.
+		this.canvas = Raphael(<HTMLElement> this.node, 0, 0);
 		this.resizeCanvas();
+	}
 
-		let states = [
-			new State(),
-			new State(),
-			new State()
-		];
+	protected onRender(): void {
+		let states = [];
+		// let states = [
+		// 	new State(),
+		// 	new State(),
+		// 	new State()
+		// ];
 
-		states[0].setPosition(120, 120);
-		states[0].setFinal(true);
+		// states[0].setPosition(120, 120);
+		// states[0].setFinal(true);
 
-		states[1].setPosition(300, 80);
+		// states[1].setPosition(300, 80);
 
-		states[2].setPosition(340, 320);
+		// states[2].setPosition(340, 320);
 
 		// TODO: separate left click/right click dragging handlers
 		let canvas = this.canvas;

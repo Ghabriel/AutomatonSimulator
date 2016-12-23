@@ -1,6 +1,6 @@
-import {english} from "./languages/English"
-import {portuguese} from "./languages/Portuguese"
+import * as lang from "./LanguageList"
 
+import {FA} from "./machines/FA"
 import {Initializer} from "./Initializer"
 import {Renderer} from "./interface/Renderer"
 import {utils} from "./Utils"
@@ -10,6 +10,8 @@ interface MachineTraits {
 	sidebar: any[];
 }
 
+// TODO: make it more flexible to add/remove machine types. See how
+// the internationalization was implemented for reference.
 export namespace Settings {
 	export const sidebarID = "sidebar";
 	export const mainbarID = "mainbar";
@@ -34,22 +36,30 @@ export namespace Settings {
 		open: ["ctrl", "O"]
 	};
 
-	export const languages = {
-		"English": english,
-		"Português": portuguese
-	};
+	export const languages = lang;
 
 	export enum Machine {
 		FA, PDA, LBA
 	}
 
-	export var language = english;
+	// TODO: maybe using a cookie to get the default language is a good idea
+	export var language = lang.english;
 	export var currentMachine = Machine.FA;
 
 	export var machines: {[m: number]: MachineTraits} = {};
 
 	let firstUpdate = true;
 	export function update() {
+		// let fa = new FA();
+		// fa.addState("Hello");
+		// fa.addState("Darkness");
+		// fa.addTransition(0, 1, "a");
+		// fa.reset();
+		// console.log(fa);
+		// console.log(fa.getStates());
+		// fa.read("a");
+		// console.log(fa.getStates());
+
 		let machineList: typeof machines = {};
 		machineList[Machine.FA] = {
 			name: language.strings.FA,

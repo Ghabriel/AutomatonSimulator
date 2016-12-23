@@ -8,6 +8,9 @@ import {System} from "../System"
 import {Table} from "./Table"
 import {utils} from "../Utils"
 
+// TODO: remake pretty much this entire class (except the internationalization
+// part, which works well). It's a very new class which already has some weird
+// bugs and does not seem efficient at all.
 export class Sidebar extends Renderer {
 	constructor() {
 		super();
@@ -61,28 +64,30 @@ export class Sidebar extends Renderer {
 	private buildLanguageSelection(): void {
 		let select = <HTMLSelectElement> utils.create("select");
 		let languages = Settings.languages;
+		let languageTable = {};
 		let i = 0;
-		let selectedIndex = -1;
-		utils.foreach(languages, function(name, obj) {
+		utils.foreach(languages, function(moduleName, obj) {
 			let option = <HTMLOptionElement> utils.create("option");
-			option.value = name;
-			option.innerHTML = name;
+			option.value = i.toString();
+			option.innerHTML = obj.strings.LANGUAGE_NAME;
 			select.appendChild(option);
+			languageTable[i] = moduleName;
 			if (obj == Settings.language) {
-				selectedIndex = i;
+				select.selectedIndex = i;
 			}
 			i++;
 		});
-		select.selectedIndex = selectedIndex;
 		this.languageSelection.clear();
 		this.languageSelection.add(select);
 		this.languageSelection.toggle();
 
 		select.addEventListener("change", function(e) {
-			let name = this.options[this.selectedIndex].value;
+			let option = this.options[this.selectedIndex];
+			let index = option.value;
+			let name = option.innerHTML;
 			let confirmation = confirm(Strings.CHANGE_LANGUAGE.replace("%", name));
 			if (confirmation) {
-				System.changeLanguage(languages[name]);
+				System.changeLanguage(languages[languageTable[index]]);
 			}
 		});
 	}
