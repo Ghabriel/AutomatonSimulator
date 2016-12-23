@@ -216,13 +216,15 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
     "use strict";
     var FA = (function () {
         function FA() {
-            this.stateList = []; // K
-            this.transitions = {}; // delta (non-epsilon)
-            this.epsilonTransitions = {}; // delta (epsilon)
-            this.initialState = -1; // q0
-            this.finalStates = new UnorderedSet_1.UnorderedSet(); // F
+            this.stateList = [];
+            this.transitions = {};
+            this.epsilonTransitions = {};
+            this.initialState = -1;
+            this.finalStates = new UnorderedSet_1.UnorderedSet();
             this.currentStates = new UnorderedSet_1.UnorderedSet();
         }
+        // Adds a state to this FA, marking it as the initial state
+        // if there are no other states in this FA.
         FA.prototype.addState = function (name) {
             this.stateList.push(name);
             var index = this.numStates() - 1;
@@ -233,9 +235,13 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             }
             return index;
         };
+        // Removes a state from this FA.
         FA.prototype.removeState = function (index) {
             // TODO
         };
+        // Adds a transition to this FA. An empty input adds an
+        // epsilon-transition.
+        // TODO: maybe create a different method for adding epsilon-transitions?
         FA.prototype.addTransition = function (source, target, input) {
             var transitions = this.transitions[source];
             if (input == "") {
@@ -248,6 +254,9 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
                 transitions[input].insert(target);
             }
         };
+        // Removes a transition from this FA. An empty input removes an
+        // epsilon-transition.
+        // TODO: maybe create a different method for removing epsilon-transitions?
         FA.prototype.removeTransition = function (source, target, input) {
             var transitions = this.transitions[source];
             if (input == "") {
@@ -257,26 +266,35 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
                 transitions[input].erase(target);
             }
         };
+        // Sets the initial state of this FA.
         FA.prototype.setInitialState = function (index) {
             if (index < this.numStates()) {
                 this.initialState = index;
             }
         };
+        // Unsets the initial state of this FA.
         FA.prototype.unsetInitialState = function () {
             this.initialState = -1;
         };
+        // Returns the index of the initial state.
+        // TODO: maybe this should return a State?
         FA.prototype.getInitialState = function () {
             return this.initialState;
         };
+        // Marks a state as final.
         FA.prototype.addAcceptingState = function (index) {
             this.finalStates.insert(index);
         };
+        // Marks a state as non-final.
         FA.prototype.removeAcceptingState = function (index) {
             this.finalStates.erase(index);
         };
+        // Returns all accepting states
+        // TODO: maybe this should return a State[]?
         FA.prototype.getAcceptingStates = function () {
             return this.finalStates.asList();
         };
+        // Returns a list containing all the states that this FA is in.
         FA.prototype.getStates = function () {
             var result = [];
             var self = this;
@@ -312,12 +330,14 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
         };
         // Checks if this FA is in an accepting state.
         FA.prototype.accepts = function () {
+            var found = false;
             this.finalStates.forEach(function (final) {
                 if (this.currentStates.contains(final)) {
-                    return true;
+                    found = true;
+                    return false;
                 }
             });
-            return false;
+            return found;
         };
         // Returns the number of states of this FA.
         FA.prototype.numStates = function () {
@@ -445,7 +465,7 @@ define("Initializer", ["require", "exports", "interface/Menu", "Settings", "Util
     }());
     exports.Initializer = Initializer;
 });
-define("Settings", ["require", "exports", "LanguageList", "machines/FA", "Initializer", "Utils"], function (require, exports, lang, FA_1, Initializer_1, Utils_2) {
+define("Settings", ["require", "exports", "LanguageList", "Initializer", "Utils"], function (require, exports, lang, Initializer_1, Utils_2) {
     "use strict";
     // TODO: make it more flexible to add/remove machine types. See how
     // the internationalization was implemented for reference.
@@ -482,15 +502,15 @@ define("Settings", ["require", "exports", "LanguageList", "machines/FA", "Initia
         Settings.machines = {};
         var firstUpdate = true;
         function update() {
-            var fa = new FA_1.FA();
-            fa.addState("Hello");
-            fa.addState("Darkness");
-            fa.addTransition(0, 1, "a");
-            fa.reset();
-            console.log(fa);
-            console.log(fa.getStates());
-            fa.read("a");
-            console.log(fa.getStates());
+            // let fa = new FA();
+            // fa.addState("Hello");
+            // fa.addState("Darkness");
+            // fa.addTransition(0, 1, "a");
+            // fa.reset();
+            // console.log(fa);
+            // console.log(fa.getStates());
+            // fa.read("a");
+            // console.log(fa.getStates());
             var machineList = {};
             machineList[Machine.FA] = {
                 name: Settings.language.strings.FA,

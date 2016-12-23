@@ -5,6 +5,8 @@ type State = string;
 type Index = number;
 
 export class FA {
+	// Adds a state to this FA, marking it as the initial state
+	// if there are no other states in this FA.
 	addState(name: State): Index {
 		this.stateList.push(name);
 		let index = this.numStates() - 1;
@@ -16,10 +18,14 @@ export class FA {
 		return index;
 	}
 
+	// Removes a state from this FA.
 	removeState(index: Index): void {
 		// TODO
 	}
 
+	// Adds a transition to this FA. An empty input adds an
+	// epsilon-transition.
+	// TODO: maybe create a different method for adding epsilon-transitions?
 	addTransition(source: Index, target: Index, input: string): void {
 		let transitions = this.transitions[source];
 		if (input == "") {
@@ -32,6 +38,9 @@ export class FA {
 		}
 	}
 
+	// Removes a transition from this FA. An empty input removes an
+	// epsilon-transition.
+	// TODO: maybe create a different method for removing epsilon-transitions?
 	removeTransition(source: Index, target: Index, input: string): void {
 		let transitions = this.transitions[source];
 		if (input == "") {
@@ -41,32 +50,41 @@ export class FA {
 		}
 	}
 
+	// Sets the initial state of this FA.
 	setInitialState(index: Index): void {
 		if (index < this.numStates()) {
 			this.initialState = index;
 		}
 	}
 
+	// Unsets the initial state of this FA.
 	unsetInitialState(): void {
 		this.initialState = -1;
 	}
 
+	// Returns the index of the initial state.
+	// TODO: maybe this should return a State?
 	getInitialState(): Index {
 		return this.initialState;
 	}
 
+	// Marks a state as final.
 	addAcceptingState(index: Index): void {
 		this.finalStates.insert(index);
 	}
 
+	// Marks a state as non-final.
 	removeAcceptingState(index: Index): void {
 		this.finalStates.erase(index);
 	}
 
+	// Returns all accepting states
+	// TODO: maybe this should return a State[]?
 	getAcceptingStates(): Index[] {
 		return this.finalStates.asList();
 	}
 
+	// Returns a list containing all the states that this FA is in.
 	getStates(): State[] {
 		let result: State[] = [];
 		let self = this;
@@ -106,12 +124,14 @@ export class FA {
 
 	// Checks if this FA is in an accepting state.
 	accepts(): boolean {
+		let found = false;
 		this.finalStates.forEach(function(final) {
 			if (this.currentStates.contains(final)) {
-				return true;
+				found = true;
+				return false;
 			}
 		});
-		return false;
+		return found;
 	}
 
 	// Returns the number of states of this FA.
@@ -144,17 +164,17 @@ export class FA {
 		}
 	}
 
-	private stateList: State[] = [];		  // K
+	private stateList: State[] = [];
 	private transitions: {
 		[index: number]: {
 			[input: string]: UnorderedSet
 		}
-	} = {};									  // delta (non-epsilon)
+	} = {};
 	private epsilonTransitions: {
 		[index: number]: UnorderedSet
-	} = {};									  // delta (epsilon)
-	private initialState: Index = -1;		  // q0
-	private finalStates = new UnorderedSet(); // F
+	} = {};
+	private initialState: Index = -1;
+	private finalStates = new UnorderedSet();
 
 	private currentStates = new UnorderedSet();
 }

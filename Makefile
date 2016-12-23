@@ -10,7 +10,7 @@ LANGFOLDER   :=languages
 LANGLIST     :=$(TS)/LanguageList.ts
 JSBASE       :=base.js
 JSCOMPRESSED :=main.js
-COMPRESS     :=0
+COMPRESS     :=1
 
 ORIGNAMES    :=$(shell cat $(LIBSFILE) | sed "s/^\([^:]\+\): \(.*\)/\1/")
 LIBNAMES     :=$(patsubst %, $(LIB)/%, $(ORIGNAMES))
