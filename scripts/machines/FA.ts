@@ -107,9 +107,11 @@ export class FA {
 		let self = this;
 		this.currentStates.forEach(function(index) {
 			let output = self.transition(index, input);
-			output.forEach(function(state) {
-				newStates.insert(state);
-			});
+			if (output) {
+				output.forEach(function(state) {
+					newStates.insert(state);
+				});
+			}
 		});
 		this.expandSpontaneous(newStates);
 		this.currentStates = newStates;
@@ -125,8 +127,9 @@ export class FA {
 	// Checks if this FA is in an accepting state.
 	accepts(): boolean {
 		let found = false;
+		let self = this;
 		this.finalStates.forEach(function(final) {
-			if (this.currentStates.contains(final)) {
+			if (self.currentStates.contains(final)) {
 				found = true;
 				return false;
 			}

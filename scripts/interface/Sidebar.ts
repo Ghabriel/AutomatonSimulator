@@ -1,5 +1,6 @@
 /// <reference path="../defs/filesaver.d.ts" />
 
+import * as automata from "../lists/MachineList"
 import {Menu} from "./Menu"
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
@@ -50,7 +51,7 @@ export class Sidebar extends Renderer {
 		}
 	}
 
-	private loadMachine(machine: Settings.Machine): void {
+	private loadMachine(machine: automata.Machine): void {
 		for (let menu of this.otherMenus) {
 			$(menu.html()).remove();
 		}

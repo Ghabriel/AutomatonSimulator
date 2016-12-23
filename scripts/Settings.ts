@@ -1,4 +1,5 @@
-import * as lang from "./LanguageList"
+import * as lang from "./lists/LanguageList"
+import * as automata from "./lists/MachineList"
 
 import {FA} from "./machines/FA"
 import {Initializer} from "./Initializer"
@@ -38,9 +39,7 @@ export namespace Settings {
 
 	export const languages = lang;
 
-	export enum Machine {
-		FA, PDA, LBA
-	}
+	export const Machine = automata.Machine;
 
 	// TODO: maybe using a cookie to get the default language is a good idea
 	export var language = lang.english;
@@ -50,31 +49,15 @@ export namespace Settings {
 
 	let firstUpdate = true;
 	export function update() {
-		// let fa = new FA();
-		// fa.addState("Hello");
-		// fa.addState("Darkness");
-		// fa.addTransition(0, 1, "a");
-		// fa.reset();
-		// console.log(fa);
-		// console.log(fa.getStates());
-		// fa.read("a");
-		// console.log(fa.getStates());
-
 		let machineList: typeof machines = {};
-		machineList[Machine.FA] = {
-			name: language.strings.FA,
-			sidebar: []
-		};
-
-		machineList[Machine.PDA] = {
-			name: language.strings.PDA,
-			sidebar: []
-		};
-
-		machineList[Machine.LBA] = {
-			name: language.strings.LBA,
-			sidebar: []
-		};
+		for (let index in Machine) {
+			if (Machine.hasOwnProperty(index) && !isNaN(parseInt(index))) {
+				machineList[index] = {
+					name: language.strings[Machine[index]],
+					sidebar: []
+				};
+			}
+		}
 
 		utils.foreach(machineList, function(key, value) {
 			machines[key] = value;

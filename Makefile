@@ -7,7 +7,7 @@ TS           :=scripts
 INDEX        :=index.html
 LIBSFILE     :=libs.txt
 LANGFOLDER   :=languages
-LANGLIST     :=$(TS)/LanguageList.ts
+LANGLIST     :=$(TS)/lists/LanguageList.ts
 JSBASE       :=base.js
 JSCOMPRESSED :=main.js
 COMPRESS     :=1
@@ -43,7 +43,7 @@ libs: | $(LIBNAMES)
 languages:
 	@truncate -s 0 $(LANGLIST)
 	@for file in $(LANGFILES); do \
-		echo "export * from \"./$(LANGFOLDER)/$$file\"" >> $(LANGLIST); \
+		echo "export * from \"../$(LANGFOLDER)/$$file\"" >> $(LANGLIST); \
 	done
 
 disable_compress:

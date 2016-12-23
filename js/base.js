@@ -56,6 +56,15 @@ define("Keyboard", ["require", "exports"], function (require, exports) {
         };
     })(Keyboard = exports.Keyboard || (exports.Keyboard = {}));
 });
+define("lists/MachineList", ["require", "exports"], function (require, exports) {
+    "use strict";
+    (function (Machine) {
+        Machine[Machine["FA"] = 0] = "FA";
+        Machine[Machine["PDA"] = 1] = "PDA";
+        Machine[Machine["LBA"] = 2] = "LBA";
+    })(exports.Machine || (exports.Machine = {}));
+    var Machine = exports.Machine;
+});
 define("interface/Renderer", ["require", "exports"], function (require, exports) {
     "use strict";
     var Renderer = (function () {
@@ -116,7 +125,7 @@ define("languages/English", ["require", "exports"], function (require, exports) 
         };
     })(english = exports.english || (exports.english = {}));
 });
-define("LanguageList", ["require", "exports", "languages/Portuguese", "languages/English"], function (require, exports, Portuguese_1, English_1) {
+define("lists/LanguageList", ["require", "exports", "languages/Portuguese", "languages/English"], function (require, exports, Portuguese_1, English_1) {
     "use strict";
     function __export(m) {
         for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
@@ -315,9 +324,11 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             var self = this;
             this.currentStates.forEach(function (index) {
                 var output = self.transition(index, input);
-                output.forEach(function (state) {
-                    newStates.insert(state);
-                });
+                if (output) {
+                    output.forEach(function (state) {
+                        newStates.insert(state);
+                    });
+                }
             });
             this.expandSpontaneous(newStates);
             this.currentStates = newStates;
@@ -331,8 +342,9 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
         // Checks if this FA is in an accepting state.
         FA.prototype.accepts = function () {
             var found = false;
+            var self = this;
             this.finalStates.forEach(function (final) {
-                if (this.currentStates.contains(final)) {
+                if (self.currentStates.contains(final)) {
                     found = true;
                     return false;
                 }
@@ -426,7 +438,53 @@ define("Utils", ["require", "exports", "System"], function (require, exports, Sy
         utils.bindShortcut = bindShortcut;
     })(utils = exports.utils || (exports.utils = {}));
 });
-define("Initializer", ["require", "exports", "interface/Menu", "Settings", "Utils"], function (require, exports, Menu_1, Settings_1, Utils_1) {
+define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings", "Utils"], function (require, exports, Menu_1, Settings_1, Utils_1) {
+    "use strict";
+    var initFA;
+    (function (initFA) {
+        function init() {
+            var menuList = [];
+            var temp = new Menu_1.Menu(Settings_1.Strings.RECOGNITION);
+            var input = Utils_1.utils.create("input");
+            input.type = "text";
+            input.placeholder = Settings_1.Strings.TEST_CASE;
+            temp.add(input);
+            menuList.push(temp);
+            Settings_1.Settings.machines[Settings_1.Settings.Machine.FA].sidebar = menuList;
+        }
+        initFA.init = init;
+    })(initFA = exports.initFA || (exports.initFA = {}));
+});
+define("initializers/initPDA", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var initPDA;
+    (function (initPDA) {
+        function init() {
+            console.log("[INIT] PDA");
+        }
+        initPDA.init = init;
+    })(initPDA = exports.initPDA || (exports.initPDA = {}));
+});
+define("initializers/initLBA", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var initLBA;
+    (function (initLBA) {
+        function init() {
+            console.log("[INIT] LBA");
+        }
+        initLBA.init = init;
+    })(initLBA = exports.initLBA || (exports.initLBA = {}));
+});
+define("lists/InitializerList", ["require", "exports", "initializers/initFA", "initializers/initPDA", "initializers/initLBA"], function (require, exports, initFA_1, initPDA_1, initLBA_1) {
+    "use strict";
+    function __export(m) {
+        for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+    }
+    __export(initFA_1);
+    __export(initPDA_1);
+    __export(initLBA_1);
+});
+define("Initializer", ["require", "exports", "lists/InitializerList", "Utils"], function (require, exports, init, Utils_2) {
     "use strict";
     var Initializer = (function () {
         function Initializer() {
@@ -439,33 +497,15 @@ define("Initializer", ["require", "exports", "interface/Menu", "Settings", "Util
             this.initSidebars();
         };
         Initializer.initSidebars = function () {
-            this.initSidebarFA();
-            this.initSidebarPDA();
-            this.initSidebarLBA();
-        };
-        Initializer.initSidebarFA = function () {
-            var menuList = [];
-            var temp = new Menu_1.Menu(Settings_1.Strings.RECOGNITION);
-            var input = Utils_1.utils.create("input");
-            input.type = "text";
-            input.placeholder = Settings_1.Strings.TEST_CASE;
-            temp.add(input);
-            menuList.push(temp);
-            Settings_1.Settings.machines[Settings_1.Settings.Machine.FA].sidebar = menuList;
-        };
-        Initializer.initSidebarPDA = function () {
-            // TODO
-            console.log("[INIT] PDA");
-        };
-        Initializer.initSidebarLBA = function () {
-            // TODO
-            console.log("[INIT] LBA");
+            Utils_2.utils.foreach(init, function (moduleName, obj) {
+                obj.init();
+            });
         };
         return Initializer;
     }());
     exports.Initializer = Initializer;
 });
-define("Settings", ["require", "exports", "LanguageList", "Initializer", "Utils"], function (require, exports, lang, Initializer_1, Utils_2) {
+define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineList", "Initializer", "Utils"], function (require, exports, lang, automata, Initializer_1, Utils_3) {
     "use strict";
     // TODO: make it more flexible to add/remove machine types. See how
     // the internationalization was implemented for reference.
@@ -490,41 +530,23 @@ define("Settings", ["require", "exports", "LanguageList", "Initializer", "Utils"
             open: ["ctrl", "O"]
         };
         Settings.languages = lang;
-        (function (Machine) {
-            Machine[Machine["FA"] = 0] = "FA";
-            Machine[Machine["PDA"] = 1] = "PDA";
-            Machine[Machine["LBA"] = 2] = "LBA";
-        })(Settings.Machine || (Settings.Machine = {}));
-        var Machine = Settings.Machine;
+        Settings.Machine = automata.Machine;
         // TODO: maybe using a cookie to get the default language is a good idea
         Settings.language = lang.english;
-        Settings.currentMachine = Machine.FA;
+        Settings.currentMachine = Settings.Machine.FA;
         Settings.machines = {};
         var firstUpdate = true;
         function update() {
-            // let fa = new FA();
-            // fa.addState("Hello");
-            // fa.addState("Darkness");
-            // fa.addTransition(0, 1, "a");
-            // fa.reset();
-            // console.log(fa);
-            // console.log(fa.getStates());
-            // fa.read("a");
-            // console.log(fa.getStates());
             var machineList = {};
-            machineList[Machine.FA] = {
-                name: Settings.language.strings.FA,
-                sidebar: []
-            };
-            machineList[Machine.PDA] = {
-                name: Settings.language.strings.PDA,
-                sidebar: []
-            };
-            machineList[Machine.LBA] = {
-                name: Settings.language.strings.LBA,
-                sidebar: []
-            };
-            Utils_2.utils.foreach(machineList, function (key, value) {
+            for (var index in Settings.Machine) {
+                if (Settings.Machine.hasOwnProperty(index) && !isNaN(parseInt(index))) {
+                    machineList[index] = {
+                        name: Settings.language.strings[Settings.Machine[index]],
+                        sidebar: []
+                    };
+                }
+            }
+            Utils_3.utils.foreach(machineList, function (key, value) {
                 Settings.machines[key] = value;
                 // if (firstUpdate) {
                 // 	machines[key] = value;
@@ -548,7 +570,7 @@ define("Settings", ["require", "exports", "LanguageList", "Initializer", "Utils"
 });
 // Initializer.exec();
 /// <reference path="../defs/jQuery.d.ts" />
-define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_1, Settings_2, Utils_3) {
+define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_1, Settings_2, Utils_4) {
     "use strict";
     var Menu = (function (_super) {
         __extends(Menu, _super);
@@ -567,13 +589,13 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
         };
         Menu.prototype.onRender = function () {
             var node = this.node;
-            var wrapper = Utils_3.utils.create("div");
+            var wrapper = Utils_4.utils.create("div");
             wrapper.classList.add("menu");
-            var title = Utils_3.utils.create("div");
+            var title = Utils_4.utils.create("div");
             title.classList.add("title");
             title.innerHTML = this.title;
             wrapper.appendChild(title);
-            var content = Utils_3.utils.create("div");
+            var content = Utils_4.utils.create("div");
             content.classList.add("content");
             for (var _i = 0, _a = this.children; _i < _a.length; _i++) {
                 var child = _a[_i];
@@ -608,7 +630,7 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
     }(Renderer_1.Renderer));
     exports.Menu = Menu;
 });
-define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"], function (require, exports, Renderer_2, Utils_4) {
+define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"], function (require, exports, Renderer_2, Utils_5) {
     "use strict";
     var Table = (function (_super) {
         __extends(Table, _super);
@@ -622,12 +644,12 @@ define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"],
             this.children.push(elem);
         };
         Table.prototype.html = function () {
-            var wrapper = Utils_4.utils.create("table");
+            var wrapper = Utils_5.utils.create("table");
             var index = 0;
             for (var i = 0; i < this.numRows; i++) {
-                var tr = Utils_4.utils.create("tr");
+                var tr = Utils_5.utils.create("tr");
                 for (var j = 0; j < this.numColumns; j++) {
-                    var td = Utils_4.utils.create("td");
+                    var td = Utils_5.utils.create("td");
                     if (index < this.children.length) {
                         td.appendChild(this.children[index]);
                     }
@@ -646,7 +668,7 @@ define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"],
     exports.Table = Table;
 });
 /// <reference path="../defs/filesaver.d.ts" />
-define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/Renderer", "Settings", "Settings", "System", "interface/Table", "Utils"], function (require, exports, Menu_2, Renderer_3, Settings_3, Settings_4, System_2, Table_1, Utils_5) {
+define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/Renderer", "Settings", "Settings", "System", "interface/Table", "Utils"], function (require, exports, Menu_2, Renderer_3, Settings_3, Settings_4, System_2, Table_1, Utils_6) {
     "use strict";
     // TODO: remake pretty much this entire class (except the internationalization
     // part, which works well). It's a very new class which already has some weird
@@ -699,12 +721,12 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             }
         };
         Sidebar.prototype.buildLanguageSelection = function () {
-            var select = Utils_5.utils.create("select");
+            var select = Utils_6.utils.create("select");
             var languages = Settings_3.Settings.languages;
             var languageTable = {};
             var i = 0;
-            Utils_5.utils.foreach(languages, function (moduleName, obj) {
-                var option = Utils_5.utils.create("option");
+            Utils_6.utils.foreach(languages, function (moduleName, obj) {
+                var option = Utils_6.utils.create("option");
                 option.value = i.toString();
                 option.innerHTML = obj.strings.LANGUAGE_NAME;
                 select.appendChild(option);
@@ -729,7 +751,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
         };
         Sidebar.prototype.buildFileManipulation = function () {
             this.fileManipulation.clear();
-            var save = Utils_5.utils.create("input");
+            var save = Utils_6.utils.create("input");
             save.classList.add("file_manip_btn");
             save.type = "button";
             save.value = Settings_4.Strings.SAVE;
@@ -739,11 +761,11 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 var blob = new Blob([content], { type: "text/plain; charset=utf-8" });
                 saveAs(blob, "file.txt");
             });
-            Utils_5.utils.bindShortcut(Settings_3.Settings.shortcuts.save, function () {
+            Utils_6.utils.bindShortcut(Settings_3.Settings.shortcuts.save, function () {
                 save.click();
             });
             this.fileManipulation.add(save);
-            var open = Utils_5.utils.create("input");
+            var open = Utils_6.utils.create("input");
             open.classList.add("file_manip_btn");
             open.type = "button";
             open.value = Settings_4.Strings.OPEN;
@@ -751,7 +773,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 // TODO
                 alert("Not yet implemented");
             });
-            Utils_5.utils.bindShortcut(Settings_3.Settings.shortcuts.open, function () {
+            Utils_6.utils.bindShortcut(Settings_3.Settings.shortcuts.open, function () {
                 open.click();
             });
             this.fileManipulation.add(open);
@@ -760,8 +782,8 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             var table = new Table_1.Table(Settings_3.Settings.machineSelRows, Settings_3.Settings.machineSelColumns);
             var machineButtonMapping = {};
             var self = this;
-            Utils_5.utils.foreach(Settings_3.Settings.machines, function (type, props) {
-                var button = Utils_5.utils.create("input");
+            Utils_6.utils.foreach(Settings_3.Settings.machines, function (type, props) {
+                var button = Utils_6.utils.create("input");
                 button.classList.add("machine_selection_btn");
                 button.type = "button";
                 button.value = props.name;
@@ -778,7 +800,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 table.add(button);
                 machineButtonMapping[type] = button;
             });
-            Utils_5.utils.bindShortcut(["M"], function () {
+            Utils_6.utils.bindShortcut(["M"], function () {
                 var buttons = document.querySelectorAll(".machine_selection_btn");
                 for (var i = 0; i < buttons.length; i++) {
                     var button = buttons[i];
@@ -796,7 +818,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
     }(Renderer_3.Renderer));
     exports.Sidebar = Sidebar;
 });
-define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], function (require, exports, Keyboard_1, Settings_5, Utils_6) {
+define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], function (require, exports, Keyboard_1, Settings_5, Utils_7) {
     "use strict";
     var System = (function () {
         function System() {
@@ -806,7 +828,7 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
             this.reload();
         };
         System.reload = function () {
-            Utils_6.utils.id(Settings_5.Settings.sidebarID).innerHTML = "";
+            Utils_7.utils.id(Settings_5.Settings.sidebarID).innerHTML = "";
             this.sidebar.build();
             this.sidebar.render();
         };
@@ -870,7 +892,7 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
     exports.System = System;
 });
 /// <reference path="../defs/raphael.d.ts" />
-define("interface/State", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_6, Utils_7) {
+define("interface/State", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_6, Utils_8) {
     "use strict";
     var State = (function () {
         function State() {
@@ -933,10 +955,10 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
         State.prototype.renderInitialMark = function (canvas) {
             if (this.initial) {
                 if (!this.arrow) {
-                    this.arrow = Utils_7.utils.line.apply(Utils_7.utils, this.arrowParams(canvas));
+                    this.arrow = Utils_8.utils.line.apply(Utils_8.utils, this.arrowParams(canvas));
                 }
                 else {
-                    this.arrow.attr("path", Utils_7.utils.linePath.apply(Utils_7.utils, this.arrowParams()));
+                    this.arrow.attr("path", Utils_8.utils.linePath.apply(Utils_8.utils, this.arrowParams()));
                 }
             }
             else if (this.arrow) {
@@ -1027,7 +1049,7 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
 });
 /// <reference path="../defs/raphael.d.ts" />
 /// <reference path="../defs/jQuery.d.ts" />
-define("interface/Mainbar", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_4, Settings_7, Utils_8) {
+define("interface/Mainbar", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_4, Settings_7, Utils_9) {
     "use strict";
     function rotatePoint(point, center, angle) {
         var sin = Math.sin(angle);
@@ -1081,7 +1103,7 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "Settin
             var origin = state.getPosition();
             var edge = this.currentEdge;
             edge.origin = state;
-            edge.body = Utils_8.utils.line(this.canvas, origin.x, origin.y, origin.x, origin.y);
+            edge.body = Utils_9.utils.line(this.canvas, origin.x, origin.y, origin.x, origin.y);
         };
         Mainbar.prototype.finishEdge = function (state) {
             console.log("[BUILD EDGE]");
@@ -1108,10 +1130,10 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "Settin
             target.y -= offsetY;
             dx -= offsetX;
             dy -= offsetY;
-            edge.body.attr("path", Utils_8.utils.linePath(origin.x, origin.y, target.x, target.y));
+            edge.body.attr("path", Utils_9.utils.linePath(origin.x, origin.y, target.x, target.y));
             // Arrow head
             var arrowLength = Settings_7.Settings.edgeArrowLength;
-            var alpha = Utils_8.utils.toRadians(Settings_7.Settings.edgeArrowAngle);
+            var alpha = Utils_9.utils.toRadians(Settings_7.Settings.edgeArrowAngle);
             var length = Math.sqrt(dx * dx + dy * dy);
             var u = 1 - arrowLength / length;
             var ref = {
@@ -1119,9 +1141,9 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "Settin
                 y: origin.y + u * dy
             };
             var p1 = rotatePoint(ref, target, alpha);
-            Utils_8.utils.line(this.canvas, p1.x, p1.y, target.x, target.y);
+            Utils_9.utils.line(this.canvas, p1.x, p1.y, target.x, target.y);
             var p2 = rotatePoint(ref, target, -alpha);
-            Utils_8.utils.line(this.canvas, p2.x, p2.y, target.x, target.y);
+            Utils_9.utils.line(this.canvas, p2.x, p2.y, target.x, target.y);
         };
         Mainbar.prototype.adjustEdge = function (elem, e) {
             var edge = this.currentEdge;
@@ -1137,7 +1159,7 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "Settin
             // stay directly below the cursor.
             var x = origin.x + dx * 0.98;
             var y = origin.y + dy * 0.98;
-            edge.body.attr("path", Utils_8.utils.linePath(origin.x, origin.y, x, y));
+            edge.body.attr("path", Utils_9.utils.linePath(origin.x, origin.y, x, y));
         };
         Mainbar.prototype.onBind = function () {
             // 0x0 is a placeholder size: resizeCanvas() calculates the true size.
@@ -1165,7 +1187,7 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "Settin
                         if (self.edgeMode) {
                             self.finishEdge(state);
                         }
-                        else if (Utils_8.utils.isRightClick(event)) {
+                        else if (Utils_9.utils.isRightClick(event)) {
                             self.beginEdge(state);
                         }
                         else {
@@ -1204,7 +1226,7 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "Settin
     }(Renderer_4.Renderer));
     exports.Mainbar = Mainbar;
 });
-define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "interface/Sidebar", "System", "Utils"], function (require, exports, Mainbar_1, Settings_8, Sidebar_1, System_3, Utils_9) {
+define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "interface/Sidebar", "System", "Utils"], function (require, exports, Mainbar_1, Settings_8, Sidebar_1, System_3, Utils_10) {
     "use strict";
     var UI = (function () {
         function UI() {
@@ -1220,11 +1242,11 @@ define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "
             console.log("Interface ready.");
         };
         UI.prototype.bindSidebar = function (renderer) {
-            renderer.bind(Utils_9.utils.id(Settings_8.Settings.sidebarID));
+            renderer.bind(Utils_10.utils.id(Settings_8.Settings.sidebarID));
             this.sidebarRenderer = renderer;
         };
         UI.prototype.bindMain = function (renderer) {
-            renderer.bind(Utils_9.utils.id(Settings_8.Settings.mainbarID));
+            renderer.bind(Utils_10.utils.id(Settings_8.Settings.mainbarID));
             this.mainRenderer = renderer;
         };
         return UI;
