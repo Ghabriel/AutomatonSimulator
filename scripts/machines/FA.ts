@@ -14,6 +14,7 @@ export class FA {
 		this.epsilonTransitions[index] = new UnorderedSet();
 		if (this.initialState == -1) {
 			this.initialState = index;
+			this.reset();
 		}
 		return index;
 	}
@@ -135,6 +136,11 @@ export class FA {
 			}
 		});
 		return found;
+	}
+
+	// Checks if this FA is in an error state, i.e. isn't in any state.
+	error(): boolean {
+		return this.currentStates.size() == 0;
 	}
 
 	// Returns the number of states of this FA.

@@ -241,6 +241,7 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             this.epsilonTransitions[index] = new UnorderedSet_1.UnorderedSet();
             if (this.initialState == -1) {
                 this.initialState = index;
+                this.reset();
             }
             return index;
         };
@@ -351,6 +352,10 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             });
             return found;
         };
+        // Checks if this FA is in an error state, i.e. isn't in any state.
+        FA.prototype.error = function () {
+            return this.currentStates.size() == 0;
+        };
         // Returns the number of states of this FA.
         FA.prototype.numStates = function () {
             return this.stateList.length;
@@ -381,6 +386,298 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
     }());
     exports.FA = FA;
 });
+define("misc/RegexUtils", ["require", "exports"], function (require, exports) {
+    "use strict";
+    (function (Direction) {
+        Direction[Direction["UP"] = 0] = "UP";
+        Direction[Direction["DOWN"] = 1] = "DOWN";
+    })(exports.Direction || (exports.Direction = {}));
+    var Direction = exports.Direction;
+    (function (VisitingCommand) {
+        VisitingCommand[VisitingCommand["LEFT"] = 0] = "LEFT";
+        VisitingCommand[VisitingCommand["RIGHT"] = 1] = "RIGHT";
+        VisitingCommand[VisitingCommand["NEXT"] = 2] = "NEXT";
+    })(exports.VisitingCommand || (exports.VisitingCommand = {}));
+    var VisitingCommand = exports.VisitingCommand;
+    function info(numOperands, priority, descCmds, ascCmds) {
+        return {
+            numOperands: numOperands,
+            priority: priority,
+            descendingCommands: descCmds,
+            ascendingCommands: ascCmds
+        };
+    }
+    var LEFT = VisitingCommand.LEFT;
+    var RIGHT = VisitingCommand.RIGHT;
+    var NEXT = VisitingCommand.NEXT;
+    var operatorInfo = {
+        "?": info(1, 3, [LEFT, NEXT], [NEXT]),
+        "*": info(1, 3, [LEFT, NEXT], [LEFT, NEXT]),
+        "+": info(1, 3, [LEFT], [LEFT, NEXT]),
+        "|": info(2, 1, [LEFT, RIGHT], [NEXT]),
+        ".": info(2, 2, [LEFT], [RIGHT])
+    };
+    var RegexUtils = (function () {
+        function RegexUtils() {
+        }
+        RegexUtils.numOperands = function (op) {
+            return operatorInfo[op].numOperands;
+        };
+        RegexUtils.priority = function (op) {
+            return operatorInfo[op].priority;
+        };
+        RegexUtils.heuristic = function (op, direction) {
+            var info = operatorInfo[op];
+            return (direction == Direction.DOWN) ? info.descendingCommands
+                : info.ascendingCommands;
+        };
+        return RegexUtils;
+    }());
+    exports.RegexUtils = RegexUtils;
+});
+define("misc/Node", ["require", "exports", "misc/RegexUtils"], function (require, exports, RegexUtils_1) {
+    "use strict";
+    var Node = (function () {
+        function Node() {
+            this.priority = 0;
+            this.data = null;
+            this.left = null;
+            this.right = null;
+            this.parent = null;
+            this.threadingLink = null;
+            this.index = null;
+            this.direction = null;
+        }
+        Node.prototype.override = function (oldTree, newTree) {
+            if (this.parent == oldTree) {
+                this.parent = newTree;
+            }
+            this.overrideSide(oldTree, newTree, "left");
+            this.overrideSide(oldTree, newTree, "right");
+        };
+        // Adds a subtree to this tree.
+        Node.prototype.pushSubtree = function (tree) {
+            this.push(tree, function (tree) {
+                // TODO: should the parent node be overriden?
+                this.isOperator = tree.isOperator;
+                this.priority = tree.priority;
+                this.data = tree.data;
+                this.left = tree.left;
+                this.right = tree.right;
+                this.index = tree.index;
+                this.override(tree, this);
+            }, function (tree) {
+                return tree;
+            }, function (tree) {
+                this.right.pushSubtree(tree);
+            });
+        };
+        Node.prototype.pushTerminal = function (char) {
+            this.push(char, function (char) {
+                this.data = char;
+            }, function (char) {
+                var result = new Node();
+                result.data = char;
+                return result;
+            }, function (char) {
+                this.right.pushTerminal(char);
+            });
+        };
+        Node.prototype.pushOperator = function (op) {
+            var priority = RegexUtils_1.RegexUtils.priority(op);
+            if (this.data === null) {
+                this.isOperator = true;
+                this.priority = priority;
+                this.data = op;
+                return;
+            }
+            if (this.isOperator && !this.right && RegexUtils_1.RegexUtils.numOperands(this.data) == 2) {
+                var node = new Node();
+                node.pushOperator(op);
+                node.parent = this;
+                this.right = node;
+                return;
+            }
+            if (!this.isOperator || this.priority > priority) {
+                var node = new Node();
+                node.pushOperator(op);
+                node.parent = this.parent;
+                node.left = this;
+                if (this.parent !== null) {
+                    if (this.parent.left == this) {
+                        this.parent.left = node;
+                    }
+                    else {
+                        this.parent.right = node;
+                    }
+                }
+                this.parent = node;
+                return;
+            }
+            if (this.priority < priority) {
+                this.right.pushOperator(op);
+                return;
+            }
+            // TODO: is this possible?
+            this.error();
+        };
+        // TODO
+        Node.prototype.pushSymbol = function (symbol) {
+        };
+        // Changes the priority of all the operators in this tree by a given amount.
+        Node.prototype.changePriority = function (delta) {
+            if (this.left) {
+                this.left.changePriority(delta);
+            }
+            if (this.isOperator) {
+                this.priority += delta;
+            }
+            if (this.right) {
+                this.right.changePriority(delta);
+            }
+        };
+        // Checks if this tree is valid.
+        Node.prototype.isValid = function () {
+            if (this.data === null) {
+                return false;
+            }
+            if (this.left && !this.left.isValid())
+                return false;
+            if (this.right && !this.right.isValid())
+                return false;
+            if (this.isOperator) {
+                if (!this.left)
+                    return false;
+                if (!this.right && RegexUtils_1.RegexUtils.numOperands(this.data) == 2) {
+                    return false;
+                }
+            }
+            return true;
+        };
+        // Adds the threading links to all nods in this subtree.
+        // A null threading link represents lambda.
+        Node.prototype.setThreadingLinks = function () {
+            if (this.left) {
+                var leftLink = this.left.setThreadingLinks();
+                leftLink.threadingLink = this;
+            }
+            if (this.right) {
+                return this.right.setThreadingLinks();
+            }
+            return this;
+        };
+        // Calculates and sets the index of all terminal nodes in this tree.
+        Node.prototype.setTerminalIndexes = function (valueContainer) {
+            if (!valueContainer) {
+                valueContainer = { index: 1 };
+            }
+            if (!this.isOperator) {
+                this.index = valueContainer.index++;
+            }
+            if (this.left) {
+                this.left.setTerminalIndexes(valueContainer);
+            }
+            if (this.right) {
+                this.right.setTerminalIndexes(valueContainer);
+            }
+        };
+        // Returns a node of this tree with a given index.
+        Node.prototype.searchByIndex = function (index) {
+            if (this.index == index) {
+                return this;
+            }
+            var node = null;
+            if (this.left)
+                node = this.left.searchByIndex(index);
+            if (this.right)
+                node = node || this.right.searchByIndex(index);
+            return node;
+        };
+        // Returns the root of this tree.
+        Node.prototype.root = function () {
+            var node = this;
+            while (node.parent) {
+                node = node.parent;
+            }
+            return node;
+        };
+        // Returns a list containing the leaf nodes of this tree.
+        Node.prototype.getLeafNodes = function () {
+            var result = [];
+            this.fillLeafList(result);
+            return result;
+        };
+        Node.prototype.debug = function () {
+            this.debugHelper(1);
+        };
+        ;
+        Node.lambdaIndex = function () {
+            return -1;
+        };
+        Node.prototype.debugHelper = function (indent) {
+            var threadingLink = this.threadingLink;
+            if (!threadingLink) {
+                threadingLink = new Node();
+                threadingLink.data = "lambda";
+            }
+            console.log('-' + Array(indent).join('--'), this.data + " (" + threadingLink.data + ")");
+            if (this.left)
+                this.left.debugHelper(indent + 1);
+            if (this.right)
+                this.right.debugHelper(indent + 1);
+        };
+        ;
+        Node.prototype.fillLeafList = function (container) {
+            if (!this.left && !this.right) {
+                container.push(this);
+            }
+            if (this.left) {
+                this.left.fillLeafList(container);
+            }
+            if (this.right) {
+                this.right.fillLeafList(container);
+            }
+        };
+        Node.prototype.push = function (param, nullCallback, rightChild, fallback) {
+            if (this.data === null) {
+                nullCallback.call(this, param);
+                return;
+            }
+            if (!this.isOperator) {
+                this.error();
+            }
+            if (!this.right) {
+                if (RegexUtils_1.RegexUtils.numOperands(this.data) != 2) {
+                    this.error();
+                }
+                this.right = rightChild.call(this, param);
+                this.right.parent = this;
+            }
+            else {
+                fallback.call(this, param);
+            }
+        };
+        // TODO: maybe parameterize this method?
+        Node.prototype.error = function () {
+            throw "Error: invalid regex";
+        };
+        Node.prototype.overrideSide = function (oldTree, newTree, side) {
+            if (this[side]) {
+                if (this[side] == oldTree) {
+                    this[side] = newTree;
+                }
+                else {
+                    this[side].override(oldTree, newTree);
+                }
+                if (this[side].parent == oldTree) {
+                    this[side].parent = newTree;
+                }
+            }
+        };
+        return Node;
+    }());
+    exports.Node = Node;
+});
 define("Utils", ["require", "exports", "System"], function (require, exports, System_1) {
     "use strict";
     var utils;
@@ -393,14 +690,22 @@ define("Utils", ["require", "exports", "System"], function (require, exports, Sy
             return select("#" + selector);
         }
         utils.id = id;
-        function create(tag) {
-            return document.createElement(tag);
+        function create(tag, props) {
+            var result = document.createElement(tag);
+            if (props) {
+                this.foreach(props, function (key, value) {
+                    result[key] = value;
+                });
+            }
+            return result;
         }
         utils.create = create;
         function foreach(obj, callback) {
             for (var i in obj) {
                 if (obj.hasOwnProperty(i)) {
-                    callback(i, obj[i]);
+                    if (callback(i, obj[i]) === false) {
+                        break;
+                    }
                 }
             }
         }
@@ -438,16 +743,229 @@ define("Utils", ["require", "exports", "System"], function (require, exports, Sy
         utils.bindShortcut = bindShortcut;
     })(utils = exports.utils || (exports.utils = {}));
 });
-define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings", "Utils"], function (require, exports, Menu_1, Settings_1, Utils_1) {
+define("misc/Regex", ["require", "exports", "misc/Node", "misc/RegexUtils", "datastructures/UnorderedSet", "Utils"], function (require, exports, Node_1, RegexUtils_2, UnorderedSet_2, Utils_1) {
+    "use strict";
+    var Symbols;
+    (function (Symbols) {
+        Symbols.OR = "|";
+        Symbols.CONCAT = ".";
+        Symbols.OPTIONAL = "?";
+        Symbols.FREE = "*";
+        Symbols.AT_LEAST_ONE = "+";
+        Symbols.modifiers = [Symbols.OPTIONAL, Symbols.FREE, Symbols.AT_LEAST_ONE];
+        Symbols.combiners = [Symbols.OR, Symbols.CONCAT];
+    })(Symbols || (Symbols = {}));
+    // TODO: several arrays used can be replaced by unordered sets.
+    var Regex = (function () {
+        function Regex(expression) {
+            this.expression = expression.replace(/ /g, "");
+        }
+        // TODO
+        Regex.prototype.isValid = function () {
+            return true;
+        };
+        Regex.prototype.toDeSimoneTree = function () {
+            var regex = this.normalize();
+            var treeList = [new Node_1.Node()];
+            for (var i = 0; i < regex.length; i++) {
+                if (regex[i] == "(") {
+                    treeList.push(new Node_1.Node());
+                    continue;
+                }
+                var tree = treeList[treeList.length - 1];
+                if (regex[i] == ")") {
+                    if (treeList.length == 1 || !tree.isValid()) {
+                        this.error();
+                    }
+                    treeList.pop();
+                    tree.changePriority(10);
+                    treeList[treeList.length - 1].pushSubtree(tree);
+                    continue;
+                }
+                tree.pushSymbol(regex[i]);
+                treeList[treeList.length - 1] = tree.root();
+            }
+            treeList[0].setThreadingLinks();
+            treeList[0].setTerminalIndexes();
+            return treeList[0];
+        };
+        // Walks through a De Simone tree starting in a single node, returning a
+        // list of all terminal nodes found in the way.
+        // TODO: maybe this can be private?
+        Regex.prototype.deSimoneCall = function (node, direction, nodeList) {
+            if (node === null) {
+                if (direction == RegexUtils_2.Direction.UP) {
+                    nodeList.insert(Node_1.Node.lambdaIndex());
+                }
+                return;
+            }
+            var left = function () {
+                this.deSimoneCall(node.left, RegexUtils_2.Direction.DOWN, nodeList);
+            };
+            var right = function () {
+                this.deSimoneCall(node.right, RegexUtils_2.Direction.DOWN, nodeList);
+            };
+            var next = function () {
+                this.deSimoneCall(node.threadingLink, RegexUtils_2.Direction.UP, nodeList);
+            };
+            if (!node.isOperator) {
+                if (direction == RegexUtils_2.Direction.DOWN) {
+                    nodeList.insert(node.index);
+                }
+                else {
+                    next.call(this);
+                }
+                return;
+            }
+            var visitHeuristic = RegexUtils_2.RegexUtils.heuristic(node.data, direction);
+            for (var i = 0; i < visitHeuristic.length; i++) {
+                switch (visitHeuristic[i]) {
+                    case RegexUtils_2.VisitingCommand.LEFT:
+                        left.call(this);
+                        break;
+                    case RegexUtils_2.VisitingCommand.RIGHT:
+                        right.call(this);
+                        break;
+                    case RegexUtils_2.VisitingCommand.NEXT:
+                        // Fixes a bug where the | operator erroneously goes to
+                        // lambda when going up
+                        // TODO: is this fix really necessary? next() goes to the
+                        // threading link, not directly to the parent. If it does
+                        // erroneously go to lambda, then maybe the threading link
+                        // isn't being set before reaching this point?
+                        while (node.right) {
+                            node = node.right;
+                        }
+                        next.call(this);
+                        break;
+                }
+            }
+        };
+        ;
+        // Walks through a De Simone tree starting in one node, returning
+        // a set of all terminal nodes found in the way.
+        Regex.prototype.deSimoneStep = function (node, direction) {
+            var result = new UnorderedSet_2.UnorderedSet();
+            this.deSimoneCall(node, direction, result);
+            return result;
+        };
+        ;
+        Regex.prototype.deSimoneStepArray = function (nodes) {
+            var result = new UnorderedSet_2.UnorderedSet();
+            for (var i = 0; i < nodes.length; i++) {
+                if (nodes[i].direction != RegexUtils_2.Direction.UP && nodes[i].direction != RegexUtils_2.Direction.DOWN)
+                    continue;
+                // result = result.concat(this.deSimoneStep(nodes[i], nodes[i].direction));
+                // TODO: find a better name to this variable
+                var otherNodes = this.deSimoneStep(nodes[i], nodes[i].direction);
+                otherNodes.forEach(function (value) {
+                    result.insert(value);
+                });
+            }
+            return result;
+        };
+        // Walks through a De Simone tree, adding new states to a finite automaton
+        // and registering their state compositions to avoid producing equivalent
+        // states.
+        Regex.prototype.produceStates = function (subtrees, dfa, stateCompositions) {
+            if (!(subtrees instanceof Array)) {
+                subtrees.direction = RegexUtils_2.Direction.DOWN;
+                subtrees = [subtrees];
+            }
+            var composition = this.deSimoneStepArray(subtrees);
+            // Utilities.removeDuplicates(composition);
+            var compositionMatches = false;
+            Utils_1.utils.foreach(stateCompositions, function (stateName, comp) {
+                if (Utilities.isSameArray(stateCompositions[i], composition)) {
+                    compositionMatches = true;
+                    return false; // exits the loop
+                }
+            });
+            if (compositionMatches) {
+                return composition;
+            }
+            var stateName = Utilities.generateStateName(dfa.numStates());
+            dfa.addState(stateName);
+            // console.log("=====================");
+            var nodeListByTerminal = {};
+            var lambda = false;
+            composition.forEach(function (value) {
+                if (value == Node_1.Node.lambdaIndex()) {
+                    lambda = true;
+                    return;
+                }
+                var node = subtrees[0].root().searchByIndex(value);
+                if (!nodeListByTerminal.hasOwnProperty(node.data)) {
+                    nodeListByTerminal[node.data] = [];
+                }
+                node.direction = RegexUtils_2.Direction.UP;
+                nodeListByTerminal[node.data].push(node);
+            });
+            // console.log(nodeListByTerminal);
+            if (lambda) {
+                dfa.addAcceptingState(stateName);
+            }
+            stateCompositions[stateName] = composition;
+            var targetCompositions = {};
+            var i = 0;
+            Utils_1.utils.foreach(nodeListByTerminal, function (key, value) {
+                var targetComposition = this.produceStates(value, dfa, stateCompositions);
+                targetCompositions[i] = targetComposition;
+                i++;
+            });
+            stateCompositions[stateName].target = targetCompositions;
+            return composition;
+        };
+        ;
+        // TODO: maybe parameterize this method?
+        Regex.prototype.error = function () {
+            throw "Error: invalid regex";
+        };
+        // Adds concatenation wherever it's implicit. Returns the new regex.
+        Regex.prototype.normalize = function () {
+            var result = "";
+            if (!this.isValid()) {
+                // TODO: maybe throw an exception?
+                return result;
+            }
+            var noConcat = true;
+            var expr = this.expression;
+            for (var i = 0; i < expr.length; i++) {
+                if (expr[i] == Symbols.CONCAT) {
+                    continue;
+                }
+                if (!this.isModifier(expr[i])
+                    && !this.isCombiner(expr[i])
+                    && expr[i] != ")"
+                    && !noConcat) {
+                    result += Symbols.CONCAT;
+                }
+                result += expr[i];
+                noConcat = expr[i] == "(" || this.isCombiner(expr[i]);
+            }
+            return result;
+        };
+        Regex.prototype.isModifier = function (symbol) {
+            return Symbols.modifiers.indexOf(symbol) != -1;
+        };
+        Regex.prototype.isCombiner = function (symbol) {
+            return Symbols.combiners.indexOf(symbol) != -1;
+        };
+        return Regex;
+    }());
+    exports.Regex = Regex;
+});
+define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings", "Utils"], function (require, exports, Menu_1, Settings_1, Utils_2) {
     "use strict";
     var initFA;
     (function (initFA) {
         function init() {
             var menuList = [];
             var temp = new Menu_1.Menu(Settings_1.Strings.RECOGNITION);
-            var input = Utils_1.utils.create("input");
-            input.type = "text";
-            input.placeholder = Settings_1.Strings.TEST_CASE;
+            var input = Utils_2.utils.create("input", {
+                type: "text",
+                placeholder: Settings_1.Strings.TEST_CASE
+            });
             temp.add(input);
             menuList.push(temp);
             Settings_1.Settings.machines[Settings_1.Settings.Machine.FA].sidebar = menuList;
@@ -484,7 +1002,7 @@ define("lists/InitializerList", ["require", "exports", "initializers/initFA", "i
     __export(initPDA_1);
     __export(initLBA_1);
 });
-define("Initializer", ["require", "exports", "lists/InitializerList", "Utils"], function (require, exports, init, Utils_2) {
+define("Initializer", ["require", "exports", "lists/InitializerList", "Utils"], function (require, exports, init, Utils_3) {
     "use strict";
     var Initializer = (function () {
         function Initializer() {
@@ -497,7 +1015,7 @@ define("Initializer", ["require", "exports", "lists/InitializerList", "Utils"], 
             this.initSidebars();
         };
         Initializer.initSidebars = function () {
-            Utils_2.utils.foreach(init, function (moduleName, obj) {
+            Utils_3.utils.foreach(init, function (moduleName, obj) {
                 obj.init();
             });
         };
@@ -505,7 +1023,7 @@ define("Initializer", ["require", "exports", "lists/InitializerList", "Utils"], 
     }());
     exports.Initializer = Initializer;
 });
-define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineList", "Initializer", "Utils"], function (require, exports, lang, automata, Initializer_1, Utils_3) {
+define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineList", "Initializer", "Utils"], function (require, exports, lang, automata, Initializer_1, Utils_4) {
     "use strict";
     // TODO: make it more flexible to add/remove machine types. See how
     // the internationalization was implemented for reference.
@@ -537,6 +1055,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.machines = {};
         var firstUpdate = true;
         function update() {
+            // window.FA = FA;
             var machineList = {};
             for (var index in Settings.Machine) {
                 if (Settings.Machine.hasOwnProperty(index) && !isNaN(parseInt(index))) {
@@ -546,7 +1065,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
                     };
                 }
             }
-            Utils_3.utils.foreach(machineList, function (key, value) {
+            Utils_4.utils.foreach(machineList, function (key, value) {
                 Settings.machines[key] = value;
                 // if (firstUpdate) {
                 // 	machines[key] = value;
@@ -570,7 +1089,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
 });
 // Initializer.exec();
 /// <reference path="../defs/jQuery.d.ts" />
-define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_1, Settings_2, Utils_4) {
+define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_1, Settings_2, Utils_5) {
     "use strict";
     var Menu = (function (_super) {
         __extends(Menu, _super);
@@ -589,13 +1108,13 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
         };
         Menu.prototype.onRender = function () {
             var node = this.node;
-            var wrapper = Utils_4.utils.create("div");
+            var wrapper = Utils_5.utils.create("div");
             wrapper.classList.add("menu");
-            var title = Utils_4.utils.create("div");
+            var title = Utils_5.utils.create("div");
             title.classList.add("title");
             title.innerHTML = this.title;
             wrapper.appendChild(title);
-            var content = Utils_4.utils.create("div");
+            var content = Utils_5.utils.create("div");
             content.classList.add("content");
             for (var _i = 0, _a = this.children; _i < _a.length; _i++) {
                 var child = _a[_i];
@@ -630,7 +1149,7 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
     }(Renderer_1.Renderer));
     exports.Menu = Menu;
 });
-define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"], function (require, exports, Renderer_2, Utils_5) {
+define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"], function (require, exports, Renderer_2, Utils_6) {
     "use strict";
     var Table = (function (_super) {
         __extends(Table, _super);
@@ -644,12 +1163,12 @@ define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"],
             this.children.push(elem);
         };
         Table.prototype.html = function () {
-            var wrapper = Utils_5.utils.create("table");
+            var wrapper = Utils_6.utils.create("table");
             var index = 0;
             for (var i = 0; i < this.numRows; i++) {
-                var tr = Utils_5.utils.create("tr");
+                var tr = Utils_6.utils.create("tr");
                 for (var j = 0; j < this.numColumns; j++) {
-                    var td = Utils_5.utils.create("td");
+                    var td = Utils_6.utils.create("td");
                     if (index < this.children.length) {
                         td.appendChild(this.children[index]);
                     }
@@ -668,7 +1187,7 @@ define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"],
     exports.Table = Table;
 });
 /// <reference path="../defs/filesaver.d.ts" />
-define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/Renderer", "Settings", "Settings", "System", "interface/Table", "Utils"], function (require, exports, Menu_2, Renderer_3, Settings_3, Settings_4, System_2, Table_1, Utils_6) {
+define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/Renderer", "Settings", "Settings", "System", "interface/Table", "Utils"], function (require, exports, Menu_2, Renderer_3, Settings_3, Settings_4, System_2, Table_1, Utils_7) {
     "use strict";
     // TODO: remake pretty much this entire class (except the internationalization
     // part, which works well). It's a very new class which already has some weird
@@ -721,12 +1240,12 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             }
         };
         Sidebar.prototype.buildLanguageSelection = function () {
-            var select = Utils_6.utils.create("select");
+            var select = Utils_7.utils.create("select");
             var languages = Settings_3.Settings.languages;
             var languageTable = {};
             var i = 0;
-            Utils_6.utils.foreach(languages, function (moduleName, obj) {
-                var option = Utils_6.utils.create("option");
+            Utils_7.utils.foreach(languages, function (moduleName, obj) {
+                var option = Utils_7.utils.create("option");
                 option.value = i.toString();
                 option.innerHTML = obj.strings.LANGUAGE_NAME;
                 select.appendChild(option);
@@ -751,7 +1270,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
         };
         Sidebar.prototype.buildFileManipulation = function () {
             this.fileManipulation.clear();
-            var save = Utils_6.utils.create("input");
+            var save = Utils_7.utils.create("input");
             save.classList.add("file_manip_btn");
             save.type = "button";
             save.value = Settings_4.Strings.SAVE;
@@ -761,11 +1280,11 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 var blob = new Blob([content], { type: "text/plain; charset=utf-8" });
                 saveAs(blob, "file.txt");
             });
-            Utils_6.utils.bindShortcut(Settings_3.Settings.shortcuts.save, function () {
+            Utils_7.utils.bindShortcut(Settings_3.Settings.shortcuts.save, function () {
                 save.click();
             });
             this.fileManipulation.add(save);
-            var open = Utils_6.utils.create("input");
+            var open = Utils_7.utils.create("input");
             open.classList.add("file_manip_btn");
             open.type = "button";
             open.value = Settings_4.Strings.OPEN;
@@ -773,7 +1292,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 // TODO
                 alert("Not yet implemented");
             });
-            Utils_6.utils.bindShortcut(Settings_3.Settings.shortcuts.open, function () {
+            Utils_7.utils.bindShortcut(Settings_3.Settings.shortcuts.open, function () {
                 open.click();
             });
             this.fileManipulation.add(open);
@@ -782,8 +1301,8 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             var table = new Table_1.Table(Settings_3.Settings.machineSelRows, Settings_3.Settings.machineSelColumns);
             var machineButtonMapping = {};
             var self = this;
-            Utils_6.utils.foreach(Settings_3.Settings.machines, function (type, props) {
-                var button = Utils_6.utils.create("input");
+            Utils_7.utils.foreach(Settings_3.Settings.machines, function (type, props) {
+                var button = Utils_7.utils.create("input");
                 button.classList.add("machine_selection_btn");
                 button.type = "button";
                 button.value = props.name;
@@ -800,7 +1319,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 table.add(button);
                 machineButtonMapping[type] = button;
             });
-            Utils_6.utils.bindShortcut(["M"], function () {
+            Utils_7.utils.bindShortcut(["M"], function () {
                 var buttons = document.querySelectorAll(".machine_selection_btn");
                 for (var i = 0; i < buttons.length; i++) {
                     var button = buttons[i];
@@ -818,7 +1337,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
     }(Renderer_3.Renderer));
     exports.Sidebar = Sidebar;
 });
-define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], function (require, exports, Keyboard_1, Settings_5, Utils_7) {
+define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], function (require, exports, Keyboard_1, Settings_5, Utils_8) {
     "use strict";
     var System = (function () {
         function System() {
@@ -828,7 +1347,7 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
             this.reload();
         };
         System.reload = function () {
-            Utils_7.utils.id(Settings_5.Settings.sidebarID).innerHTML = "";
+            Utils_8.utils.id(Settings_5.Settings.sidebarID).innerHTML = "";
             this.sidebar.build();
             this.sidebar.render();
         };
@@ -892,7 +1411,7 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
     exports.System = System;
 });
 /// <reference path="../defs/raphael.d.ts" />
-define("interface/State", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_6, Utils_8) {
+define("interface/State", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_6, Utils_9) {
     "use strict";
     var State = (function () {
         function State() {
@@ -955,10 +1474,10 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
         State.prototype.renderInitialMark = function (canvas) {
             if (this.initial) {
                 if (!this.arrow) {
-                    this.arrow = Utils_8.utils.line.apply(Utils_8.utils, this.arrowParams(canvas));
+                    this.arrow = Utils_9.utils.line.apply(Utils_9.utils, this.arrowParams(canvas));
                 }
                 else {
-                    this.arrow.attr("path", Utils_8.utils.linePath.apply(Utils_8.utils, this.arrowParams()));
+                    this.arrow.attr("path", Utils_9.utils.linePath.apply(Utils_9.utils, this.arrowParams()));
                 }
             }
             else if (this.arrow) {
@@ -1049,7 +1568,7 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
 });
 /// <reference path="../defs/raphael.d.ts" />
 /// <reference path="../defs/jQuery.d.ts" />
-define("interface/Mainbar", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_4, Settings_7, Utils_9) {
+define("interface/Mainbar", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_4, Settings_7, Utils_10) {
     "use strict";
     function rotatePoint(point, center, angle) {
         var sin = Math.sin(angle);
@@ -1103,7 +1622,7 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "Settin
             var origin = state.getPosition();
             var edge = this.currentEdge;
             edge.origin = state;
-            edge.body = Utils_9.utils.line(this.canvas, origin.x, origin.y, origin.x, origin.y);
+            edge.body = Utils_10.utils.line(this.canvas, origin.x, origin.y, origin.x, origin.y);
         };
         Mainbar.prototype.finishEdge = function (state) {
             console.log("[BUILD EDGE]");
@@ -1130,10 +1649,10 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "Settin
             target.y -= offsetY;
             dx -= offsetX;
             dy -= offsetY;
-            edge.body.attr("path", Utils_9.utils.linePath(origin.x, origin.y, target.x, target.y));
+            edge.body.attr("path", Utils_10.utils.linePath(origin.x, origin.y, target.x, target.y));
             // Arrow head
             var arrowLength = Settings_7.Settings.edgeArrowLength;
-            var alpha = Utils_9.utils.toRadians(Settings_7.Settings.edgeArrowAngle);
+            var alpha = Utils_10.utils.toRadians(Settings_7.Settings.edgeArrowAngle);
             var length = Math.sqrt(dx * dx + dy * dy);
             var u = 1 - arrowLength / length;
             var ref = {
@@ -1141,9 +1660,9 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "Settin
                 y: origin.y + u * dy
             };
             var p1 = rotatePoint(ref, target, alpha);
-            Utils_9.utils.line(this.canvas, p1.x, p1.y, target.x, target.y);
+            Utils_10.utils.line(this.canvas, p1.x, p1.y, target.x, target.y);
             var p2 = rotatePoint(ref, target, -alpha);
-            Utils_9.utils.line(this.canvas, p2.x, p2.y, target.x, target.y);
+            Utils_10.utils.line(this.canvas, p2.x, p2.y, target.x, target.y);
         };
         Mainbar.prototype.adjustEdge = function (elem, e) {
             var edge = this.currentEdge;
@@ -1159,7 +1678,7 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "Settin
             // stay directly below the cursor.
             var x = origin.x + dx * 0.98;
             var y = origin.y + dy * 0.98;
-            edge.body.attr("path", Utils_9.utils.linePath(origin.x, origin.y, x, y));
+            edge.body.attr("path", Utils_10.utils.linePath(origin.x, origin.y, x, y));
         };
         Mainbar.prototype.onBind = function () {
             // 0x0 is a placeholder size: resizeCanvas() calculates the true size.
@@ -1187,7 +1706,7 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "Settin
                         if (self.edgeMode) {
                             self.finishEdge(state);
                         }
-                        else if (Utils_9.utils.isRightClick(event)) {
+                        else if (Utils_10.utils.isRightClick(event)) {
                             self.beginEdge(state);
                         }
                         else {
@@ -1226,7 +1745,7 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "Settin
     }(Renderer_4.Renderer));
     exports.Mainbar = Mainbar;
 });
-define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "interface/Sidebar", "System", "Utils"], function (require, exports, Mainbar_1, Settings_8, Sidebar_1, System_3, Utils_10) {
+define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "interface/Sidebar", "System", "Utils"], function (require, exports, Mainbar_1, Settings_8, Sidebar_1, System_3, Utils_11) {
     "use strict";
     var UI = (function () {
         function UI() {
@@ -1242,11 +1761,11 @@ define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "
             console.log("Interface ready.");
         };
         UI.prototype.bindSidebar = function (renderer) {
-            renderer.bind(Utils_10.utils.id(Settings_8.Settings.sidebarID));
+            renderer.bind(Utils_11.utils.id(Settings_8.Settings.sidebarID));
             this.sidebarRenderer = renderer;
         };
         UI.prototype.bindMain = function (renderer) {
-            renderer.bind(Utils_10.utils.id(Settings_8.Settings.mainbarID));
+            renderer.bind(Utils_11.utils.id(Settings_8.Settings.mainbarID));
             this.mainRenderer = renderer;
         };
         return UI;

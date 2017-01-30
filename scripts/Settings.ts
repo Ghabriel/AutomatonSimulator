@@ -1,6 +1,7 @@
 import * as lang from "./lists/LanguageList"
 import * as automata from "./lists/MachineList"
 
+import {Regex} from "./misc/Regex"
 import {FA} from "./machines/FA"
 import {Initializer} from "./Initializer"
 import {Renderer} from "./interface/Renderer"
@@ -49,6 +50,7 @@ export namespace Settings {
 
 	let firstUpdate = true;
 	export function update() {
+		// window.FA = FA;
 		let machineList: typeof machines = {};
 		for (let index in Machine) {
 			if (Machine.hasOwnProperty(index) && !isNaN(parseInt(index))) {

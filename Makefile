@@ -18,7 +18,7 @@ TSFILES      :=$(wildcard $(TS)/*.ts)
 LANGFILES    :=$(basename $(notdir $(wildcard $(TS)/$(LANGFOLDER)/*.ts)))
 
 
-.PHONY: all dirs libs languages disable_compress raw
+.PHONY: all dirs libs languages disable_compress raw simple
 
 all: dirs libs languages
 	@echo "[.ts ⟶ .js]"
@@ -50,6 +50,9 @@ disable_compress:
 	$(eval COMPRESS :=0)
 
 raw: disable_compress all
+
+simple:
+	@tsc --module amd --outFile $(JS)/$(JSBASE) $(TSFILES); cp $(JS)/$(JSBASE) $(JS)/$(JSCOMPRESSED)
 
 $(CSS) $(JS) $(LIB) $(TS):
 	@echo "[  mkdir  ] $@"

@@ -9,14 +9,22 @@ export namespace utils {
 		return select("#" + selector);
 	}
 
-	export function create(tag: string): Element {
-		return document.createElement(tag);
+	export function create(tag: string, props?: Object): Element {
+		let result = document.createElement(tag);
+		if (props) {
+			this.foreach(props, function(key, value) {
+				result[key] = value;
+			});
+		}
+		return result;
 	}
 
 	export function foreach(obj: Object, callback): void {
 		for (var i in obj) {
 			if (obj.hasOwnProperty(i)) {
-				callback(i, obj[i]);
+				if (callback(i, obj[i]) === false) {
+					break;
+				}
 			}
 		}
 	}

@@ -7,9 +7,10 @@ export namespace initFA {
 		let menuList: Menu[] = [];
 
 		let temp = new Menu(Strings.RECOGNITION);
-		let input = <HTMLInputElement> utils.create("input");
-		input.type = "text";
-		input.placeholder = Strings.TEST_CASE;
+		let input = <HTMLInputElement> utils.create("input", {
+			type: "text",
+			placeholder: Strings.TEST_CASE
+		});
 		temp.add(input);
 		menuList.push(temp);
 
