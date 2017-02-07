@@ -547,7 +547,9 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.edgeArrowAngle = 30;
         Settings.shortcuts = {
             save: ["ctrl", "S"],
-            open: ["ctrl", "O"]
+            open: ["ctrl", "O"],
+            toggleInitial: ["I"],
+            toggleFinal: ["F"]
         };
         Settings.languages = lang;
         Settings.Machine = automata.Machine;
@@ -1266,6 +1268,18 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
                 var state = states_1[_i];
                 _loop_1(state);
             }
+            Utils_9.utils.bindShortcut(Settings_7.Settings.shortcuts.toggleInitial, function () {
+                if (highlightedState) {
+                    highlightedState.setInitial(!highlightedState.isInitial());
+                    highlightedState.render(canvas);
+                }
+            });
+            Utils_9.utils.bindShortcut(Settings_7.Settings.shortcuts.toggleFinal, function () {
+                if (highlightedState) {
+                    highlightedState.setFinal(!highlightedState.isFinal());
+                    highlightedState.render(canvas);
+                }
+            });
             $(this.node).contextmenu(function (e) {
                 e.preventDefault();
                 return false;

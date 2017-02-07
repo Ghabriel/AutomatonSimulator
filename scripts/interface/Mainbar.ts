@@ -200,6 +200,20 @@ export class Mainbar extends Renderer {
 			// });
 		}
 
+		utils.bindShortcut(Settings.shortcuts.toggleInitial, function() {
+			if (highlightedState) {
+				highlightedState.setInitial(!highlightedState.isInitial());
+				highlightedState.render(canvas);
+			}
+		});
+
+		utils.bindShortcut(Settings.shortcuts.toggleFinal, function() {
+			if (highlightedState) {
+				highlightedState.setFinal(!highlightedState.isFinal());
+				highlightedState.render(canvas);
+			}
+		});
+
 		$(this.node).contextmenu(function(e) {
 			e.preventDefault();
 			return false;

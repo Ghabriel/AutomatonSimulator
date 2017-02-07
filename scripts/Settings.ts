@@ -41,7 +41,9 @@ export namespace Settings {
 
 	export const shortcuts = {
 		save: ["ctrl", "S"],
-		open: ["ctrl", "O"]
+		open: ["ctrl", "O"],
+		toggleInitial: ["I"],
+		toggleFinal: ["F"],
 	};
 
 	export const languages = lang;
