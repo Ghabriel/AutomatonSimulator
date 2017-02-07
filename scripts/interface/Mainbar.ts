@@ -83,6 +83,10 @@ export class Mainbar extends Renderer {
 		let cos = Math.cos(angle);
 		let offsetX = Settings.stateRadius * cos;
 		let offsetY = Settings.stateRadius * sin;
+		// TODO: make the edge start at the edge of the state rather than
+		// its center.
+		// origin.x += offsetX;
+		// origin.y += offsetY;
 		target.x -= offsetX;
 		target.y -= offsetY;
 		dx -= offsetX;
@@ -137,19 +141,24 @@ export class Mainbar extends Renderer {
 	}
 
 	protected onRender(): void {
-		let states = [];
-		// let states = [
-		// 	new State(),
-		// 	new State(),
-		// 	new State()
-		// ];
+		// let states = [];
+		let highlightedState: State = null;
 
-		// states[0].setPosition(120, 120);
-		// states[0].setFinal(true);
+		let states = [
+			new State(),
+			new State(),
+			new State(),
+			new State()
+		];
 
-		// states[1].setPosition(300, 80);
+		states[0].setPosition(120, 120);
+		states[0].setFinal(true);
 
-		// states[2].setPosition(340, 320);
+		states[1].setPosition(300, 80);
+
+		states[2].setPosition(340, 320);
+
+		states[3].setPosition(130, 290);
 
 		// TODO: separate left click/right click dragging handlers
 		let canvas = this.canvas;
@@ -162,8 +171,17 @@ export class Mainbar extends Renderer {
 						self.finishEdge(state);
 					} else if (utils.isRightClick(event)) {
 						self.beginEdge(state);
+					} else if (state == highlightedState) {
+						state.dim();
+						highlightedState = null;
+						state.render(canvas);
 					} else {
-						state.setFinal(!state.isFinal());
+						if (highlightedState) {
+							highlightedState.dim();
+							highlightedState.render(canvas);
+						}
+						state.highlight();
+						highlightedState = state;
 						state.render(canvas);
 					}
 					return false;
@@ -171,15 +189,15 @@ export class Mainbar extends Renderer {
 				return true;
 			});
 
-			state.node().dblclick(function(e) {
-				// if (utils.isRightClick(e)) {
-					console.log("Initial state changed.");
-					state.setInitial(!state.isInitial());
-					state.render(canvas);
-					e.preventDefault();
-					return false;
-				// }
-			});
+			// state.node().dblclick(function(e) {
+			// 	// if (utils.isRightClick(e)) {
+			// 		console.log("Initial state changed.");
+			// 		state.setInitial(!state.isInitial());
+			// 		state.render(canvas);
+			// 		e.preventDefault();
+			// 		return false;
+			// 	// }
+			// });
 		}
 
 		$(this.node).contextmenu(function(e) {

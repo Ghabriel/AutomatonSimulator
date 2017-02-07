@@ -30,7 +30,7 @@ export namespace utils {
 	}
 
 	export function isRightClick(event: any): boolean {
-		if ("which" in event) { // Gecko (Firefox), WebKit (Safari/Chrome) & Opera
+		if ("which" in event) { // Gecko (Firefox), WebKit (Safari/Chrome), Opera
 			return event.which == 3;
 		} else if ("button" in event) { // IE, Opera
 			return event.button == 2;

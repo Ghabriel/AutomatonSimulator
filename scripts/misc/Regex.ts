@@ -150,6 +150,7 @@ export class Regex {
 
 		let compositionMatches = false;
 		utils.foreach(stateCompositions, function(stateName, comp) {
+			// TODO
 			if (Utilities.isSameArray(stateCompositions[i], composition)) {
 				compositionMatches = true;
 				return false; // exits the loop

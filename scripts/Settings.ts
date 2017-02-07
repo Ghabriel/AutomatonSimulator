@@ -1,7 +1,7 @@
 import * as lang from "./lists/LanguageList"
 import * as automata from "./lists/MachineList"
 
-import {Regex} from "./misc/Regex"
+// import {Regex} from "./misc/Regex"
 import {FA} from "./machines/FA"
 import {Initializer} from "./Initializer"
 import {Renderer} from "./interface/Renderer"
@@ -29,6 +29,12 @@ export namespace Settings {
 	export const stateDragTolerance = 50;
 	export const stateFillColor = "white";
 	export const stateStrokeColor = "black";
+	export const stateStrokeWidth = 1;
+	export const stateRingStrokeWidth = 1;
+	export const stateHighlightFillColor = "#FFD574";
+	export const stateHighlightStrokeColor = "red";
+	export const stateHighlightStrokeWidth = 3;
+	export const stateHighlightRingStrokeWidth = 2;
 
 	export const edgeArrowLength = 30;
 	export const edgeArrowAngle = 30;

@@ -41,6 +41,14 @@ export class State {
 		return this.final;
 	}
 
+	public highlight(): void {
+		this.highlighted = true;
+	}
+
+	public dim(): void {
+		this.highlighted = false;
+	}
+
 	private arrowParams(canvas?: RaphaelPaper): any[] {
 		var result: any[] = (canvas) ? [canvas] : [];
 		let length = 40;
@@ -48,12 +56,29 @@ export class State {
 							  this.x - this.radius, this.y]);
 	}
 
+	private fillColor(): string {
+		return this.highlighted ? Settings.stateHighlightFillColor
+								: Settings.stateFillColor;
+	}
+
+	private strokeColor(): string {
+		return this.highlighted ? Settings.stateHighlightStrokeColor
+								: Settings.stateStrokeColor;
+	}
+
+	private strokeWidth(): number {
+		return this.highlighted ? Settings.stateHighlightStrokeWidth
+								: Settings.stateStrokeWidth;
+	}
+
+	private ringStrokeWidth(): number {
+		return this.highlighted ? Settings.stateHighlightRingStrokeWidth
+								: Settings.stateRingStrokeWidth;
+	}
+
 	private renderBody(canvas: RaphaelPaper): void {
 		if (!this.body) {
 			this.body = canvas.circle(this.x, this.y, this.radius);
-			this.body.attr("fill", Settings.stateFillColor);
-			this.body.attr("stroke", Settings.stateStrokeColor);
-
 			canvas.text(this.x, this.y, this.name).attr({
 				"font-family": Settings.stateLabelFontFamily,
 				"font-size": Settings.stateLabelFontSize
@@ -64,6 +89,10 @@ export class State {
 				cy: this.y
 			});
 		}
+
+		this.body.attr("fill", this.fillColor());
+		this.body.attr("stroke", this.strokeColor());
+		this.body.attr("stroke-width", this.strokeWidth());
 	}
 
 	private renderInitialMark(canvas: RaphaelPaper): void {
@@ -83,13 +112,15 @@ export class State {
 		if (this.final) {
 			if (!this.ring) {
 				this.ring = canvas.circle(this.x, this.y, Settings.stateRingRadius);
-				this.ring.attr("stroke", Settings.stateStrokeColor);
 			} else {
 				this.ring.attr({
 					cx: this.x,
 					cy: this.y
 				});
 			}
+
+			this.ring.attr("stroke", this.strokeColor());
+			this.ring.attr("stroke-width", this.ringStrokeWidth());
 		} else if (this.ring) {
 			this.ring.remove();
 			this.ring = null;
@@ -175,4 +206,5 @@ export class State {
 	private name: string = "";
 	private initial: boolean = false;
 	private final: boolean = false;
+	private highlighted: boolean = false;
 }
