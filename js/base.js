@@ -47,6 +47,7 @@ define("Keyboard", ["require", "exports"], function (require, exports) {
             "ENTER": 13,
             "SHIFT": 16,
             "SPACE": 32,
+            "ESC": 27,
             "LEFT": 37,
             "UP": 38,
             "RIGHT": 39,
@@ -549,7 +550,8 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
             save: ["ctrl", "S"],
             open: ["ctrl", "O"],
             toggleInitial: ["I"],
-            toggleFinal: ["F"]
+            toggleFinal: ["F"],
+            dimState: ["ESC"]
         };
         Settings.languages = lang;
         Settings.Machine = automata.Machine;
@@ -1046,7 +1048,7 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
             }
             return null;
         };
-        State.prototype.drag = function (callback) {
+        State.prototype.drag = function (moveCallback, endCallback) {
             // TODO: find a new home for all these functions
             var self = this;
             var setPosition = function (x, y) {
@@ -1062,30 +1064,24 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 }
                 self.setPosition(x, y);
             };
-            var maxTravelDistance;
             var begin = function (x, y, event) {
                 this.ox = this.attr("cx");
                 this.oy = this.attr("cy");
-                maxTravelDistance = 0;
                 return null;
             };
             var move = function (dx, dy, x, y, event) {
-                var trueDx = this.attr("cx") - this.ox;
-                var trueDy = this.attr("cy") - this.oy;
-                var distanceSquared = trueDx * trueDx + trueDy * trueDy;
-                if (distanceSquared > maxTravelDistance) {
-                    maxTravelDistance = distanceSquared;
-                }
                 setPosition(this.ox + dx, this.oy + dy);
+                moveCallback.call(this, event);
                 return null;
             };
             var end = function (event) {
                 var dx = this.attr("cx") - this.ox;
                 var dy = this.attr("cy") - this.oy;
-                setPosition(this.ox, this.oy);
-                var accepted = callback.call(this, maxTravelDistance, event);
-                if (accepted) {
-                    setPosition(this.ox + dx, this.oy + dy);
+                var distanceSquared = dx * dx + dy * dy;
+                var accepted = endCallback.call(this, distanceSquared, event);
+                if (!accepted) {
+                    setPosition(this.ox, this.oy);
+                    moveCallback.call(this, event);
                 }
                 return null;
             };
@@ -1095,9 +1091,7 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
     }());
     exports.State = State;
 });
-/// <reference path="../defs/raphael.d.ts" />
-/// <reference path="../defs/jQuery.d.ts" />
-define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interface/State", "Settings", "Utils"], function (require, exports, Renderer_4, State_1, Settings_7, Utils_9) {
+define("interface/StateRenderer", ["require", "exports", "Settings", "interface/State", "Utils"], function (require, exports, Settings_7, State_1, Utils_9) {
     "use strict";
     function rotatePoint(point, center, angle) {
         var sin = Math.sin(angle);
@@ -1118,42 +1112,92 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
         };
     }
     // TODO: remake pretty much all the rendering part (except the canvas itself).
-    var Mainbar = (function (_super) {
-        __extends(Mainbar, _super);
-        function Mainbar() {
-            _super.call(this);
+    var StateRenderer = (function () {
+        function StateRenderer(canvas, node) {
             this.canvas = null;
+            this.node = null;
+            this.stateList = [];
+            // TODO: find a better data structure than a simple array
+            this.edgeList = [];
+            this.highlightedState = null;
             this.edgeMode = false;
-            this.currentEdge = {
-                origin: null,
-                target: null,
-                body: null
-            };
-            var self = this;
-            $(window).resize(function () {
-                self.resizeCanvas();
-            });
+            this.currentEdge = null;
+            this.canvas = canvas;
+            this.node = node;
         }
-        Mainbar.prototype.resizeCanvas = function () {
+        StateRenderer.prototype.render = function () {
+            this.stateList = [
+                new State_1.State(),
+                new State_1.State(),
+                new State_1.State(),
+                new State_1.State()
+            ];
+            var states = this.stateList;
+            states[0].setPosition(120, 120);
+            states[0].setFinal(true);
+            states[1].setPosition(300, 80);
+            states[2].setPosition(340, 320);
+            states[3].setPosition(130, 290);
+            // TODO: separate left click/right click dragging handlers
             var canvas = this.canvas;
-            if (canvas) {
-                var node = $(this.node);
-                // allows the parent node to adjust
-                canvas.setSize(50, 50);
-                var width = node.width();
-                var height = node.height() - 10;
-                canvas.setSize(width, height);
+            var self = this;
+            var _loop_1 = function(state) {
+                state.render(canvas);
+                state.drag(function () {
+                    self.updateEdges();
+                }, function (distanceSquared, event) {
+                    if (distanceSquared <= Settings_7.Settings.stateDragTolerance) {
+                        if (self.edgeMode) {
+                            self.finishEdge(state);
+                        }
+                        else if (Utils_9.utils.isRightClick(event)) {
+                            self.beginEdge(state);
+                        }
+                        else if (state == self.highlightedState) {
+                            state.dim();
+                            self.highlightedState = null;
+                            state.render(canvas);
+                        }
+                        else {
+                            if (self.highlightedState) {
+                                self.highlightedState.dim();
+                                self.highlightedState.render(canvas);
+                            }
+                            state.highlight();
+                            self.highlightedState = state;
+                            state.render(canvas);
+                        }
+                        return false;
+                    }
+                    return true;
+                });
+            };
+            for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
+                var state = _a[_i];
+                _loop_1(state);
             }
+            this.bindShortcuts();
+            $(this.node).contextmenu(function (e) {
+                e.preventDefault();
+                return false;
+            });
+            $(this.node).mousemove(function (e) {
+                if (self.edgeMode) {
+                    self.adjustEdge(this, e);
+                }
+            });
         };
-        Mainbar.prototype.beginEdge = function (state) {
+        StateRenderer.prototype.beginEdge = function (state) {
             console.log("[ENTER EDGE MODE]");
             this.edgeMode = true;
             var origin = state.getPosition();
-            var edge = this.currentEdge;
-            edge.origin = state;
-            edge.body = Utils_9.utils.line(this.canvas, origin.x, origin.y, origin.x, origin.y);
+            this.currentEdge = {
+                origin: state,
+                target: null,
+                body: Utils_9.utils.line(this.canvas, origin.x, origin.y, origin.x, origin.y)
+            };
         };
-        Mainbar.prototype.finishEdge = function (state) {
+        StateRenderer.prototype.finishEdge = function (state) {
             console.log("[BUILD EDGE]");
             this.edgeMode = false;
             // Arrow body (i.e a straight line)
@@ -1197,7 +1241,7 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
             var p2 = rotatePoint(ref, target, -alpha);
             Utils_9.utils.line(this.canvas, p2.x, p2.y, target.x, target.y);
         };
-        Mainbar.prototype.adjustEdge = function (elem, e) {
+        StateRenderer.prototype.adjustEdge = function (elem, e) {
             var edge = this.currentEdge;
             var origin = edge.origin.getPosition();
             var target = {
@@ -1213,61 +1257,11 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
             var y = origin.y + dy * 0.98;
             edge.body.attr("path", Utils_9.utils.linePath(origin.x, origin.y, x, y));
         };
-        Mainbar.prototype.onBind = function () {
-            // 0x0 is a placeholder size: resizeCanvas() calculates the true size.
-            this.canvas = Raphael(this.node, 0, 0);
-            this.resizeCanvas();
+        StateRenderer.prototype.updateEdges = function () {
         };
-        Mainbar.prototype.onRender = function () {
-            // let states = [];
-            var highlightedState = null;
-            var states = [
-                new State_1.State(),
-                new State_1.State(),
-                new State_1.State(),
-                new State_1.State()
-            ];
-            states[0].setPosition(120, 120);
-            states[0].setFinal(true);
-            states[1].setPosition(300, 80);
-            states[2].setPosition(340, 320);
-            states[3].setPosition(130, 290);
-            // TODO: separate left click/right click dragging handlers
+        StateRenderer.prototype.bindShortcuts = function () {
             var canvas = this.canvas;
-            var self = this;
-            var _loop_1 = function(state) {
-                state.render(canvas);
-                state.drag(function (distanceSquared, event) {
-                    if (distanceSquared <= Settings_7.Settings.stateDragTolerance) {
-                        if (self.edgeMode) {
-                            self.finishEdge(state);
-                        }
-                        else if (Utils_9.utils.isRightClick(event)) {
-                            self.beginEdge(state);
-                        }
-                        else if (state == highlightedState) {
-                            state.dim();
-                            highlightedState = null;
-                            state.render(canvas);
-                        }
-                        else {
-                            if (highlightedState) {
-                                highlightedState.dim();
-                                highlightedState.render(canvas);
-                            }
-                            state.highlight();
-                            highlightedState = state;
-                            state.render(canvas);
-                        }
-                        return false;
-                    }
-                    return true;
-                });
-            };
-            for (var _i = 0, states_1 = states; _i < states_1.length; _i++) {
-                var state = states_1[_i];
-                _loop_1(state);
-            }
+            var highlightedState = this.highlightedState;
             Utils_9.utils.bindShortcut(Settings_7.Settings.shortcuts.toggleInitial, function () {
                 if (highlightedState) {
                     highlightedState.setInitial(!highlightedState.isInitial());
@@ -1280,15 +1274,53 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
                     highlightedState.render(canvas);
                 }
             });
-            $(this.node).contextmenu(function (e) {
-                e.preventDefault();
-                return false;
-            });
-            $(this.node).mousemove(function (e) {
-                if (self.edgeMode) {
-                    self.adjustEdge(this, e);
+            var self = this;
+            Utils_9.utils.bindShortcut(Settings_7.Settings.shortcuts.dimState, function () {
+                if (highlightedState) {
+                    highlightedState.dim();
+                    highlightedState.render(canvas);
+                    self.highlightedState = null;
                 }
             });
+        };
+        return StateRenderer;
+    }());
+    exports.StateRenderer = StateRenderer;
+});
+/// <reference path="../defs/raphael.d.ts" />
+/// <reference path="../defs/jQuery.d.ts" />
+define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interface/StateRenderer"], function (require, exports, Renderer_4, StateRenderer_1) {
+    "use strict";
+    var Mainbar = (function (_super) {
+        __extends(Mainbar, _super);
+        function Mainbar() {
+            _super.call(this);
+            this.canvas = null;
+            this.stateRenderer = null;
+            var self = this;
+            $(window).resize(function () {
+                self.resizeCanvas();
+            });
+        }
+        Mainbar.prototype.resizeCanvas = function () {
+            var canvas = this.canvas;
+            if (canvas) {
+                var node = $(this.node);
+                // allows the parent node to adjust
+                canvas.setSize(50, 50);
+                var width = node.width();
+                var height = node.height() - 10;
+                canvas.setSize(width, height);
+            }
+        };
+        Mainbar.prototype.onBind = function () {
+            // 0x0 is a placeholder size: resizeCanvas() calculates the true size.
+            this.canvas = Raphael(this.node, 0, 0);
+            this.resizeCanvas();
+            this.stateRenderer = new StateRenderer_1.StateRenderer(this.canvas, this.node);
+        };
+        Mainbar.prototype.onRender = function () {
+            this.stateRenderer.render();
         };
         return Mainbar;
     }(Renderer_4.Renderer));

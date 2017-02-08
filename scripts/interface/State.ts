@@ -144,7 +144,8 @@ export class State {
 		return null;
 	}
 
-	public drag(callback: (distSquared: number, event: any) => boolean): void {
+	public drag(moveCallback: (event?: any) => void,
+				endCallback: (distSquared: number, event: any) => boolean): void {
 		// TODO: find a new home for all these functions
 		let self = this;
 		let setPosition = function(x, y) {
@@ -163,33 +164,26 @@ export class State {
 			self.setPosition(x, y);
 		};
 
-		let maxTravelDistance;
 		let begin = function(x, y, event) {
 			this.ox = this.attr("cx");
 			this.oy = this.attr("cy");
-			maxTravelDistance = 0;
 			return null;
 		};
 
 		let move = function(dx, dy, x, y, event) {
-			let trueDx = this.attr("cx") - this.ox;
-			let trueDy = this.attr("cy") - this.oy;
-			let distanceSquared = trueDx * trueDx + trueDy * trueDy;
-			if (distanceSquared > maxTravelDistance) {
-				maxTravelDistance = distanceSquared;
-			}
 			setPosition(this.ox + dx, this.oy + dy);
+			moveCallback.call(this, event);
 			return null;
 		};
 
 		let end = function(event) {
 			let dx = this.attr("cx") - this.ox;
 			let dy = this.attr("cy") - this.oy;
-			setPosition(this.ox, this.oy);
-
-			let accepted = callback.call(this, maxTravelDistance, event);
-			if (accepted) {
-				setPosition(this.ox + dx, this.oy + dy);
+			let distanceSquared = dx * dx + dy * dy;
+			let accepted = endCallback.call(this, distanceSquared, event);
+			if (!accepted) {
+				setPosition(this.ox, this.oy);
+				moveCallback.call(this, event);
 			}
 			return null;
 		};

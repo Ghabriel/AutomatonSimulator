@@ -39,6 +39,7 @@ export namespace Keyboard {
 		"ENTER": 13,
 		"SHIFT": 16,
 		"SPACE": 32,
+		"ESC": 27,
 		"LEFT": 37,
 		"UP": 38,
 		"RIGHT": 39,
