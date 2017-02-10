@@ -66,25 +66,29 @@ export class Edge {
 			}
 		} else {
 			target = this.target.getPosition();
+		}
 
+		let dx = target.x - origin.x;
+		let dy = target.y - origin.y;
+		let angle = Math.atan2(dy, dx);
+		let sin = Math.sin(angle);
+		let cos = Math.cos(angle);
+		let offsetX = Settings.stateRadius * cos;
+		let offsetY = Settings.stateRadius * sin;
+		// Makes the edge start at the border of the state rather than
+		// at its center.
+		origin.x += offsetX;
+		origin.y += offsetY;
+
+		if (this.target) {
 			// Adjusts the edge so that it points to the border of the state
 			// rather than its center.
-			let dx = target.x - origin.x;
-			let dy = target.y - origin.y;
-			let angle = Math.atan2(dy, dx);
-			let sin = Math.sin(angle);
-			let cos = Math.cos(angle);
-			let offsetX = Settings.stateRadius * cos;
-			let offsetY = Settings.stateRadius * sin;
-			// TODO: make the edge start at the border of the state rather than
-			// at its center.
-			// origin.x += offsetX;
-			// origin.y += offsetY;
 			target.x -= offsetX;
 			target.y -= offsetY;
 		}
 
 		// TODO: handle self-edge correctly
+		// TODO: handle cases where two connected states are very close to each other
 		if (!this.body) {
 			this.body = utils.line(canvas,
 					origin.x, origin.y,

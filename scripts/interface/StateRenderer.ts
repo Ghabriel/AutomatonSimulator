@@ -3,11 +3,54 @@ import {Settings} from "../Settings"
 import {State} from "./State"
 import {utils} from "../Utils"
 
-// TODO: remake pretty much all the rendering part (except the canvas itself).
 export class StateRenderer {
 	constructor(canvas:  RaphaelPaper, node: Element) {
 		this.canvas = canvas;
 		this.node = node;
+	}
+
+	public render(): void {
+		// this.stateList = [
+		// 	new State(),
+		// 	new State(),
+		// 	new State(),
+		// 	new State()
+		// ];
+
+		// let states = this.stateList;
+		// states[0].setPosition(120, 120);
+		// states[0].setFinal(true);
+		// states[1].setPosition(300, 80);
+		// states[2].setPosition(340, 320);
+		// states[3].setPosition(130, 290);
+
+		// TODO: separate left click/right click dragging handlers
+		for (let state of this.stateList) {
+			state.render(this.canvas);
+			this.bindStateEvents(state);
+		}
+
+		this.bindShortcuts();
+
+		let self = this;
+		$(this.node).dblclick(function(e) {
+			let state = new State();
+			state.setPosition(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
+			self.stateList.push(state);
+			state.render(self.canvas);
+			self.bindStateEvents(state);
+		});
+
+		$(this.node).contextmenu(function(e) {
+			e.preventDefault();
+			return false;
+		});
+
+		$(this.node).mousemove(function(e) {
+			if (self.edgeMode) {
+				self.adjustEdge(this, e);
+			}
+		});
 	}
 
 	private bindStateEvents(state: State) {
@@ -38,53 +81,6 @@ export class StateRenderer {
 				return false;
 			}
 			return true;
-		});
-	}
-
-	public render(): void {
-		// this.stateList = [
-		// 	new State(),
-		// 	new State(),
-		// 	new State(),
-		// 	new State()
-		// ];
-
-		// let states = this.stateList;
-		// states[0].setPosition(120, 120);
-		// states[0].setFinal(true);
-
-		// states[1].setPosition(300, 80);
-
-		// states[2].setPosition(340, 320);
-
-		// states[3].setPosition(130, 290);
-
-		// TODO: separate left click/right click dragging handlers
-		for (let state of this.stateList) {
-			state.render(this.canvas);
-			this.bindStateEvents(state);
-		}
-
-		this.bindShortcuts();
-
-		let self = this;
-		$(this.node).dblclick(function(e) {
-			let state = new State();
-			state.setPosition(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
-			self.stateList.push(state);
-			state.render(self.canvas);
-			self.bindStateEvents(state);
-		});
-
-		$(this.node).contextmenu(function(e) {
-			e.preventDefault();
-			return false;
-		});
-
-		$(this.node).mousemove(function(e) {
-			if (self.edgeMode) {
-				self.adjustEdge(this, e);
-			}
 		});
 	}
 

@@ -1145,13 +1145,13 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                         x: this.virtualTarget.x,
                         y: this.virtualTarget.y
                     };
-                    var dx = target.x - origin.x;
-                    var dy = target.y - origin.y;
+                    var dx_1 = target.x - origin.x;
+                    var dy_1 = target.y - origin.y;
                     // The offsets are necessary to ensure that mouse events are
                     // still correctly fired, since not using them makes the edge
                     // appear directly below the cursor.
-                    target.x = origin.x + dx * 0.98;
-                    target.y = origin.y + dy * 0.98;
+                    target.x = origin.x + dx_1 * 0.98;
+                    target.y = origin.y + dy_1 * 0.98;
                 }
                 else {
                     target = origin;
@@ -1159,19 +1159,21 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             }
             else {
                 target = this.target.getPosition();
+            }
+            var dx = target.x - origin.x;
+            var dy = target.y - origin.y;
+            var angle = Math.atan2(dy, dx);
+            var sin = Math.sin(angle);
+            var cos = Math.cos(angle);
+            var offsetX = Settings_7.Settings.stateRadius * cos;
+            var offsetY = Settings_7.Settings.stateRadius * sin;
+            // Makes the edge start at the border of the state rather than
+            // at its center.
+            origin.x += offsetX;
+            origin.y += offsetY;
+            if (this.target) {
                 // Adjusts the edge so that it points to the border of the state
                 // rather than its center.
-                var dx = target.x - origin.x;
-                var dy = target.y - origin.y;
-                var angle = Math.atan2(dy, dx);
-                var sin = Math.sin(angle);
-                var cos = Math.cos(angle);
-                var offsetX = Settings_7.Settings.stateRadius * cos;
-                var offsetY = Settings_7.Settings.stateRadius * sin;
-                // TODO: make the edge start at the border of the state rather than
-                // at its center.
-                // origin.x += offsetX;
-                // origin.y += offsetY;
                 target.x -= offsetX;
                 target.y -= offsetY;
             }
@@ -1230,7 +1232,6 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
 });
 define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Settings", "interface/State", "Utils"], function (require, exports, Edge_1, Settings_8, State_1, Utils_10) {
     "use strict";
-    // TODO: remake pretty much all the rendering part (except the canvas itself).
     var StateRenderer = (function () {
         function StateRenderer(canvas, node) {
             this.canvas = null;
@@ -1244,39 +1245,6 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
             this.canvas = canvas;
             this.node = node;
         }
-        StateRenderer.prototype.bindStateEvents = function (state) {
-            // TODO: separate left click/right click dragging handlers
-            var canvas = this.canvas;
-            var self = this;
-            state.drag(function () {
-                self.updateEdges();
-            }, function (distanceSquared, event) {
-                if (distanceSquared <= Settings_8.Settings.stateDragTolerance) {
-                    if (self.edgeMode) {
-                        self.finishEdge(state);
-                    }
-                    else if (Utils_10.utils.isRightClick(event)) {
-                        self.beginEdge(state);
-                    }
-                    else if (state == self.highlightedState) {
-                        state.dim();
-                        self.highlightedState = null;
-                        state.render(canvas);
-                    }
-                    else {
-                        if (self.highlightedState) {
-                            self.highlightedState.dim();
-                            self.highlightedState.render(canvas);
-                        }
-                        state.highlight();
-                        self.highlightedState = state;
-                        state.render(canvas);
-                    }
-                    return false;
-                }
-                return true;
-            });
-        };
         StateRenderer.prototype.render = function () {
             // this.stateList = [
             // 	new State(),
@@ -1313,6 +1281,39 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                 if (self.edgeMode) {
                     self.adjustEdge(this, e);
                 }
+            });
+        };
+        StateRenderer.prototype.bindStateEvents = function (state) {
+            // TODO: separate left click/right click dragging handlers
+            var canvas = this.canvas;
+            var self = this;
+            state.drag(function () {
+                self.updateEdges();
+            }, function (distanceSquared, event) {
+                if (distanceSquared <= Settings_8.Settings.stateDragTolerance) {
+                    if (self.edgeMode) {
+                        self.finishEdge(state);
+                    }
+                    else if (Utils_10.utils.isRightClick(event)) {
+                        self.beginEdge(state);
+                    }
+                    else if (state == self.highlightedState) {
+                        state.dim();
+                        self.highlightedState = null;
+                        state.render(canvas);
+                    }
+                    else {
+                        if (self.highlightedState) {
+                            self.highlightedState.dim();
+                            self.highlightedState.render(canvas);
+                        }
+                        state.highlight();
+                        self.highlightedState = state;
+                        state.render(canvas);
+                    }
+                    return false;
+                }
+                return true;
             });
         };
         StateRenderer.prototype.beginEdge = function (state) {
