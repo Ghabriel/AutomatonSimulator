@@ -107,8 +107,9 @@ export class StateRenderer {
 
 	private bindShortcuts(): void {
 		let canvas = this.canvas;
-		let highlightedState = this.highlightedState;
+		let self = this;
 		utils.bindShortcut(Settings.shortcuts.toggleInitial, function() {
+			let highlightedState = self.highlightedState;
 			if (highlightedState) {
 				highlightedState.setInitial(!highlightedState.isInitial());
 				highlightedState.render(canvas);
@@ -116,14 +117,15 @@ export class StateRenderer {
 		});
 
 		utils.bindShortcut(Settings.shortcuts.toggleFinal, function() {
+			let highlightedState = self.highlightedState;
 			if (highlightedState) {
 				highlightedState.setFinal(!highlightedState.isFinal());
 				highlightedState.render(canvas);
 			}
 		});
 
-		let self = this;
 		utils.bindShortcut(Settings.shortcuts.dimState, function() {
+			let highlightedState = self.highlightedState;
 			if (highlightedState) {
 				highlightedState.dim();
 				highlightedState.render(canvas);

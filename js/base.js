@@ -1336,21 +1336,23 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
         };
         StateRenderer.prototype.bindShortcuts = function () {
             var canvas = this.canvas;
-            var highlightedState = this.highlightedState;
+            var self = this;
             Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.toggleInitial, function () {
+                var highlightedState = self.highlightedState;
                 if (highlightedState) {
                     highlightedState.setInitial(!highlightedState.isInitial());
                     highlightedState.render(canvas);
                 }
             });
             Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.toggleFinal, function () {
+                var highlightedState = self.highlightedState;
                 if (highlightedState) {
                     highlightedState.setFinal(!highlightedState.isFinal());
                     highlightedState.render(canvas);
                 }
             });
-            var self = this;
             Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.dimState, function () {
+                var highlightedState = self.highlightedState;
                 if (highlightedState) {
                     highlightedState.dim();
                     highlightedState.render(canvas);
