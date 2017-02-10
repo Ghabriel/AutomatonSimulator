@@ -1091,7 +1091,7 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
     }());
     exports.State = State;
 });
-define("interface/StateRenderer", ["require", "exports", "Settings", "interface/State", "Utils"], function (require, exports, Settings_7, State_1, Utils_9) {
+define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_7, Utils_9) {
     "use strict";
     function rotatePoint(point, center, angle) {
         var sin = Math.sin(angle);
@@ -1111,6 +1111,125 @@ define("interface/StateRenderer", ["require", "exports", "Settings", "interface/
             y: result.y + center.y
         };
     }
+    var Edge = (function () {
+        function Edge() {
+            // The state that this edge comes from
+            this.origin = null;
+            // The state that this edge points to
+            this.target = null;
+            // If this edge is not yet completed, it might point to
+            // a position in space rather than a state
+            this.virtualTarget = null;
+            this.body = null;
+            this.head = [];
+        }
+        Edge.prototype.setOrigin = function (origin) {
+            this.origin = origin;
+        };
+        Edge.prototype.setTarget = function (target) {
+            this.target = target;
+        };
+        Edge.prototype.setVirtualTarget = function (target) {
+            this.virtualTarget = target;
+        };
+        Edge.prototype.render = function (canvas) {
+            this.renderBody(canvas);
+            this.renderHead(canvas);
+        };
+        Edge.prototype.renderBody = function (canvas) {
+            var origin = this.origin.getPosition();
+            var target;
+            if (!this.target) {
+                if (this.virtualTarget) {
+                    target = {
+                        x: this.virtualTarget.x,
+                        y: this.virtualTarget.y
+                    };
+                    var dx = target.x - origin.x;
+                    var dy = target.y - origin.y;
+                    // The offsets are necessary to ensure that mouse events are
+                    // still correctly fired, since not using them makes the edge
+                    // appear directly below the cursor.
+                    target.x = origin.x + dx * 0.98;
+                    target.y = origin.y + dy * 0.98;
+                }
+                else {
+                    target = origin;
+                }
+            }
+            else {
+                target = this.target.getPosition();
+                // Adjusts the edge so that it points to the border of the state
+                // rather than its center.
+                var dx = target.x - origin.x;
+                var dy = target.y - origin.y;
+                var angle = Math.atan2(dy, dx);
+                var sin = Math.sin(angle);
+                var cos = Math.cos(angle);
+                var offsetX = Settings_7.Settings.stateRadius * cos;
+                var offsetY = Settings_7.Settings.stateRadius * sin;
+                // TODO: make the edge start at the border of the state rather than
+                // at its center.
+                // origin.x += offsetX;
+                // origin.y += offsetY;
+                target.x -= offsetX;
+                target.y -= offsetY;
+            }
+            // TODO: handle self-edge correctly
+            if (!this.body) {
+                this.body = Utils_9.utils.line(canvas, origin.x, origin.y, target.x, target.y);
+            }
+            else {
+                this.body.attr("path", Utils_9.utils.linePath(origin.x, origin.y, target.x, target.y));
+            }
+        };
+        Edge.prototype.renderHead = function (canvas) {
+            if (!this.target) {
+                // Don't render the head of the arrow if there's no target
+                // TODO: change this behavior?
+                return;
+            }
+            var origin = this.origin.getPosition();
+            var target = this.target.getPosition();
+            var dx = target.x - origin.x;
+            var dy = target.y - origin.y;
+            // TODO: don't copy and paste
+            var angle = Math.atan2(dy, dx);
+            var sin = Math.sin(angle);
+            var cos = Math.cos(angle);
+            var offsetX = Settings_7.Settings.stateRadius * cos;
+            var offsetY = Settings_7.Settings.stateRadius * sin;
+            target.x -= offsetX;
+            target.y -= offsetY;
+            dx -= offsetX;
+            dy -= offsetY;
+            // Arrow head
+            var arrowLength = Settings_7.Settings.edgeArrowLength;
+            var alpha = Utils_9.utils.toRadians(Settings_7.Settings.edgeArrowAngle);
+            var edgeLength = Math.sqrt(dx * dx + dy * dy);
+            var u = 1 - arrowLength / edgeLength;
+            var ref = {
+                x: origin.x + u * dx,
+                y: origin.y + u * dy
+            };
+            // The reference points of the arrow head
+            var p1 = rotatePoint(ref, target, alpha);
+            var p2 = rotatePoint(ref, target, -alpha);
+            if (!this.head.length) {
+                this.head.push(Utils_9.utils.line(canvas, p1.x, p1.y, target.x, target.y));
+                this.head.push(Utils_9.utils.line(canvas, p2.x, p2.y, target.x, target.y));
+            }
+            else {
+                this.head[0].attr("path", Utils_9.utils.linePath(p1.x, p1.y, target.x, target.y));
+                this.head[1].attr("path", Utils_9.utils.linePath(p2.x, p2.y, target.x, target.y));
+            }
+        };
+        return Edge;
+    }());
+    exports.Edge = Edge;
+});
+define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Settings", "interface/State", "Utils"], function (require, exports, Edge_1, Settings_8, State_1, Utils_10) {
+    "use strict";
     // TODO: remake pretty much all the rendering part (except the canvas itself).
     var StateRenderer = (function () {
         function StateRenderer(canvas, node) {
@@ -1146,11 +1265,11 @@ define("interface/StateRenderer", ["require", "exports", "Settings", "interface/
                 state.drag(function () {
                     self.updateEdges();
                 }, function (distanceSquared, event) {
-                    if (distanceSquared <= Settings_7.Settings.stateDragTolerance) {
+                    if (distanceSquared <= Settings_8.Settings.stateDragTolerance) {
                         if (self.edgeMode) {
                             self.finishEdge(state);
                         }
-                        else if (Utils_9.utils.isRightClick(event)) {
+                        else if (Utils_10.utils.isRightClick(event)) {
                             self.beginEdge(state);
                         }
                         else if (state == self.highlightedState) {
@@ -1190,92 +1309,48 @@ define("interface/StateRenderer", ["require", "exports", "Settings", "interface/
         StateRenderer.prototype.beginEdge = function (state) {
             console.log("[ENTER EDGE MODE]");
             this.edgeMode = true;
-            var origin = state.getPosition();
-            this.currentEdge = {
-                origin: state,
-                target: null,
-                body: Utils_9.utils.line(this.canvas, origin.x, origin.y, origin.x, origin.y)
-            };
+            this.currentEdge = new Edge_1.Edge();
+            this.currentEdge.setOrigin(state);
         };
         StateRenderer.prototype.finishEdge = function (state) {
             console.log("[BUILD EDGE]");
             this.edgeMode = false;
-            // Arrow body (i.e a straight line)
-            var edge = this.currentEdge;
-            var origin = edge.origin.getPosition();
-            var target = state.getPosition();
-            edge.target = state;
-            // edge.body.attr("path", utils.linePath(
-            // 	origin.x, origin.y,
-            // 	target.x, target.y
-            // ));
-            // Adjusts the edge so that it points to the border of the state
-            // rather than its center
-            var dx = target.x - origin.x;
-            var dy = target.y - origin.y;
-            var angle = Math.atan2(dy, dx);
-            var sin = Math.sin(angle);
-            var cos = Math.cos(angle);
-            var offsetX = Settings_7.Settings.stateRadius * cos;
-            var offsetY = Settings_7.Settings.stateRadius * sin;
-            // TODO: make the edge start at the edge of the state rather than
-            // its center.
-            // origin.x += offsetX;
-            // origin.y += offsetY;
-            target.x -= offsetX;
-            target.y -= offsetY;
-            dx -= offsetX;
-            dy -= offsetY;
-            edge.body.attr("path", Utils_9.utils.linePath(origin.x, origin.y, target.x, target.y));
-            // Arrow head
-            var arrowLength = Settings_7.Settings.edgeArrowLength;
-            var alpha = Utils_9.utils.toRadians(Settings_7.Settings.edgeArrowAngle);
-            var length = Math.sqrt(dx * dx + dy * dy);
-            var u = 1 - arrowLength / length;
-            var ref = {
-                x: origin.x + u * dx,
-                y: origin.y + u * dy
-            };
-            var p1 = rotatePoint(ref, target, alpha);
-            Utils_9.utils.line(this.canvas, p1.x, p1.y, target.x, target.y);
-            var p2 = rotatePoint(ref, target, -alpha);
-            Utils_9.utils.line(this.canvas, p2.x, p2.y, target.x, target.y);
+            this.currentEdge.setTarget(state);
+            this.currentEdge.render(this.canvas);
+            this.edgeList.push(this.currentEdge);
+            this.currentEdge = null;
         };
         StateRenderer.prototype.adjustEdge = function (elem, e) {
-            var edge = this.currentEdge;
-            var origin = edge.origin.getPosition();
             var target = {
                 x: e.pageX - elem.offsetLeft,
                 y: e.pageY - elem.offsetTop
             };
-            var dx = target.x - origin.x;
-            var dy = target.y - origin.y;
-            // The offsets are necessary to ensure that mouse events are
-            // still correctly fired, since not using them makes the edge
-            // stay directly below the cursor.
-            var x = origin.x + dx * 0.98;
-            var y = origin.y + dy * 0.98;
-            edge.body.attr("path", Utils_9.utils.linePath(origin.x, origin.y, x, y));
+            this.currentEdge.setVirtualTarget(target);
+            this.currentEdge.render(this.canvas);
         };
         StateRenderer.prototype.updateEdges = function () {
+            for (var _i = 0, _a = this.edgeList; _i < _a.length; _i++) {
+                var edge = _a[_i];
+                edge.render(this.canvas);
+            }
         };
         StateRenderer.prototype.bindShortcuts = function () {
             var canvas = this.canvas;
             var highlightedState = this.highlightedState;
-            Utils_9.utils.bindShortcut(Settings_7.Settings.shortcuts.toggleInitial, function () {
+            Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.toggleInitial, function () {
                 if (highlightedState) {
                     highlightedState.setInitial(!highlightedState.isInitial());
                     highlightedState.render(canvas);
                 }
             });
-            Utils_9.utils.bindShortcut(Settings_7.Settings.shortcuts.toggleFinal, function () {
+            Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.toggleFinal, function () {
                 if (highlightedState) {
                     highlightedState.setFinal(!highlightedState.isFinal());
                     highlightedState.render(canvas);
                 }
             });
             var self = this;
-            Utils_9.utils.bindShortcut(Settings_7.Settings.shortcuts.dimState, function () {
+            Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.dimState, function () {
                 if (highlightedState) {
                     highlightedState.dim();
                     highlightedState.render(canvas);
@@ -1326,7 +1401,7 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
     }(Renderer_4.Renderer));
     exports.Mainbar = Mainbar;
 });
-define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "interface/Sidebar", "System", "Utils"], function (require, exports, Mainbar_1, Settings_8, Sidebar_1, System_3, Utils_10) {
+define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "interface/Sidebar", "System", "Utils"], function (require, exports, Mainbar_1, Settings_9, Sidebar_1, System_3, Utils_11) {
     "use strict";
     var UI = (function () {
         function UI() {
@@ -1342,11 +1417,11 @@ define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "
             console.log("Interface ready.");
         };
         UI.prototype.bindSidebar = function (renderer) {
-            renderer.bind(Utils_10.utils.id(Settings_8.Settings.sidebarID));
+            renderer.bind(Utils_11.utils.id(Settings_9.Settings.sidebarID));
             this.sidebarRenderer = renderer;
         };
         UI.prototype.bindMain = function (renderer) {
-            renderer.bind(Utils_10.utils.id(Settings_8.Settings.mainbarID));
+            renderer.bind(Utils_11.utils.id(Settings_9.Settings.mainbarID));
             this.mainRenderer = renderer;
         };
         return UI;
