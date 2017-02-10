@@ -1244,58 +1244,67 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
             this.canvas = canvas;
             this.node = node;
         }
-        StateRenderer.prototype.render = function () {
-            this.stateList = [
-                new State_1.State(),
-                new State_1.State(),
-                new State_1.State(),
-                new State_1.State()
-            ];
-            var states = this.stateList;
-            states[0].setPosition(120, 120);
-            states[0].setFinal(true);
-            states[1].setPosition(300, 80);
-            states[2].setPosition(340, 320);
-            states[3].setPosition(130, 290);
+        StateRenderer.prototype.bindStateEvents = function (state) {
             // TODO: separate left click/right click dragging handlers
             var canvas = this.canvas;
             var self = this;
-            var _loop_1 = function(state) {
-                state.render(canvas);
-                state.drag(function () {
-                    self.updateEdges();
-                }, function (distanceSquared, event) {
-                    if (distanceSquared <= Settings_8.Settings.stateDragTolerance) {
-                        if (self.edgeMode) {
-                            self.finishEdge(state);
-                        }
-                        else if (Utils_10.utils.isRightClick(event)) {
-                            self.beginEdge(state);
-                        }
-                        else if (state == self.highlightedState) {
-                            state.dim();
-                            self.highlightedState = null;
-                            state.render(canvas);
-                        }
-                        else {
-                            if (self.highlightedState) {
-                                self.highlightedState.dim();
-                                self.highlightedState.render(canvas);
-                            }
-                            state.highlight();
-                            self.highlightedState = state;
-                            state.render(canvas);
-                        }
-                        return false;
+            state.drag(function () {
+                self.updateEdges();
+            }, function (distanceSquared, event) {
+                if (distanceSquared <= Settings_8.Settings.stateDragTolerance) {
+                    if (self.edgeMode) {
+                        self.finishEdge(state);
                     }
-                    return true;
-                });
-            };
+                    else if (Utils_10.utils.isRightClick(event)) {
+                        self.beginEdge(state);
+                    }
+                    else if (state == self.highlightedState) {
+                        state.dim();
+                        self.highlightedState = null;
+                        state.render(canvas);
+                    }
+                    else {
+                        if (self.highlightedState) {
+                            self.highlightedState.dim();
+                            self.highlightedState.render(canvas);
+                        }
+                        state.highlight();
+                        self.highlightedState = state;
+                        state.render(canvas);
+                    }
+                    return false;
+                }
+                return true;
+            });
+        };
+        StateRenderer.prototype.render = function () {
+            // this.stateList = [
+            // 	new State(),
+            // 	new State(),
+            // 	new State(),
+            // 	new State()
+            // ];
+            // let states = this.stateList;
+            // states[0].setPosition(120, 120);
+            // states[0].setFinal(true);
+            // states[1].setPosition(300, 80);
+            // states[2].setPosition(340, 320);
+            // states[3].setPosition(130, 290);
+            // TODO: separate left click/right click dragging handlers
             for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
                 var state = _a[_i];
-                _loop_1(state);
+                state.render(this.canvas);
+                this.bindStateEvents(state);
             }
             this.bindShortcuts();
+            var self = this;
+            $(this.node).dblclick(function (e) {
+                var state = new State_1.State();
+                state.setPosition(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
+                self.stateList.push(state);
+                state.render(self.canvas);
+                self.bindStateEvents(state);
+            });
             $(this.node).contextmenu(function (e) {
                 e.preventDefault();
                 return false;
