@@ -24,6 +24,11 @@ export class StateRenderer {
 		// states[2].setPosition(340, 320);
 		// states[3].setPosition(130, 290);
 
+		let state = new State();
+		state.setPosition(100, 100);
+		state.setInitial(true);
+		this.stateList.push(state);
+
 		// TODO: separate left click/right click dragging handlers
 		for (let state of this.stateList) {
 			state.render(this.canvas);
@@ -141,6 +146,11 @@ export class StateRenderer {
 				highlightedState.render(canvas);
 				self.highlightedState = null;
 			}
+		});
+
+		utils.bindShortcut(Settings.shortcuts.undo, function() {
+			// TODO
+			alert("TODO: undo");
 		});
 	}
 

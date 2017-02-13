@@ -7,26 +7,6 @@ interface Point {
 	y: number;
 }
 
-function rotatePoint(point, center, angle) {
-	let sin = Math.sin(angle);
-	let cos = Math.cos(angle);
-	let copy = {
-		x: point.x,
-		y: point.y
-	}
-	copy.x -= center.x;
-	copy.y -= center.y;
-	let result = {
-		x: copy.x * cos - copy.y * sin,
-		y: copy.x * sin + copy.y * cos
-	};
-
-	return {
-		x: result.x + center.x,
-		y: result.y + center.y
-	};
-}
-
 export class Edge {
 	public setOrigin(origin: State): void {
 		this.origin = origin;
@@ -136,8 +116,8 @@ export class Edge {
 
 
 		// The reference points of the arrow head
-		let p1 = rotatePoint(ref, target, alpha);
-		let p2 = rotatePoint(ref, target, -alpha);
+		let p1 = utils.rotatePoint(ref, target, alpha);
+		let p2 = utils.rotatePoint(ref, target, -alpha);
 
 		if (!this.head.length) {
 			this.head.push(utils.line(canvas,

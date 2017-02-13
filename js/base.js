@@ -446,6 +446,25 @@ define("Utils", ["require", "exports", "System"], function (require, exports, Sy
             return angle * Math.PI / 180;
         }
         utils.toRadians = toRadians;
+        function rotatePoint(point, center, angle) {
+            var sin = Math.sin(angle);
+            var cos = Math.cos(angle);
+            var copy = {
+                x: point.x,
+                y: point.y
+            };
+            copy.x -= center.x;
+            copy.y -= center.y;
+            var result = {
+                x: copy.x * cos - copy.y * sin,
+                y: copy.x * sin + copy.y * cos
+            };
+            return {
+                x: result.x + center.x,
+                y: result.y + center.y
+            };
+        }
+        utils.rotatePoint = rotatePoint;
         function bindShortcut(keys, callback) {
             System_1.System.addKeyObserver(keys, callback);
         }
@@ -551,7 +570,8 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
             open: ["ctrl", "O"],
             toggleInitial: ["I"],
             toggleFinal: ["F"],
-            dimState: ["ESC"]
+            dimState: ["ESC"],
+            undo: ["ctrl", "Z"]
         };
         Settings.languages = lang;
         Settings.Machine = automata.Machine;
@@ -923,7 +943,7 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
         function State() {
             this.body = null;
             this.ring = null;
-            this.arrow = null;
+            this.arrowParts = [];
             this.name = "";
             this.initial = false;
             this.final = false;
@@ -961,12 +981,6 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
         State.prototype.dim = function () {
             this.highlighted = false;
         };
-        State.prototype.arrowParams = function (canvas) {
-            var result = (canvas) ? [canvas] : [];
-            var length = 40;
-            return result.concat([this.x - this.radius - length, this.y,
-                this.x - this.radius, this.y]);
-        };
         State.prototype.fillColor = function () {
             return this.highlighted ? Settings_6.Settings.stateHighlightFillColor
                 : Settings_6.Settings.stateFillColor;
@@ -1003,16 +1017,40 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
         };
         State.prototype.renderInitialMark = function (canvas) {
             if (this.initial) {
-                if (!this.arrow) {
-                    this.arrow = Utils_8.utils.line.apply(Utils_8.utils, this.arrowParams(canvas));
+                if (this.arrowParts.length) {
                 }
                 else {
-                    this.arrow.attr("path", Utils_8.utils.linePath.apply(Utils_8.utils, this.arrowParams()));
+                    var length_1 = 40;
+                    var x = this.x - this.radius;
+                    var y = this.y;
+                    var body = Utils_8.utils.line(canvas, x - length_1, y, x, y);
+                    // TODO: don't copy and paste
+                    // Arrow head
+                    var arrowLength = 15;
+                    var alpha = Utils_8.utils.toRadians(20);
+                    var u = 1 - arrowLength / length_1;
+                    var ref = {
+                        x: x - length_1 + u * length_1,
+                        y: y
+                    };
+                    // The reference points of the arrow head
+                    var target = { x: x, y: y };
+                    var p1 = Utils_8.utils.rotatePoint(ref, target, alpha);
+                    var p2 = Utils_8.utils.rotatePoint(ref, target, -alpha);
+                    var topLine = Utils_8.utils.line(canvas, p1.x, p1.y, x, y);
+                    var bottomLine = Utils_8.utils.line(canvas, p2.x, p2.y, x, y);
+                    var parts = this.arrowParts;
+                    parts.push(body);
+                    parts.push(topLine);
+                    parts.push(bottomLine);
                 }
             }
-            else if (this.arrow) {
-                this.arrow.remove();
-                this.arrow = null;
+            else {
+                var parts = this.arrowParts;
+                while (parts.length) {
+                    parts[parts.length - 1].remove();
+                    parts.pop();
+                }
             }
         };
         State.prototype.renderFinalMark = function (canvas) {
@@ -1034,6 +1072,22 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 this.ring = null;
             }
         };
+        // TODO: find a better name for this method
+        State.prototype.setVisualPosition = function (x, y) {
+            this.body.attr({
+                cx: x,
+                cy: y
+            });
+            if (this.ring) {
+                this.ring.attr({
+                    cx: x,
+                    cy: y
+                });
+            }
+            if (this.initial) {
+            }
+            this.setPosition(x, y);
+        };
         State.prototype.render = function (canvas) {
             this.renderBody(canvas);
             this.renderInitialMark(canvas);
@@ -1050,27 +1104,14 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
         };
         State.prototype.drag = function (moveCallback, endCallback) {
             // TODO: find a new home for all these functions
-            var self = this;
-            var setPosition = function (x, y) {
-                self.body.attr({
-                    cx: x,
-                    cy: y
-                });
-                if (self.ring) {
-                    self.ring.attr({
-                        cx: x,
-                        cy: y
-                    });
-                }
-                self.setPosition(x, y);
-            };
             var begin = function (x, y, event) {
                 this.ox = this.attr("cx");
                 this.oy = this.attr("cy");
                 return null;
             };
+            var self = this;
             var move = function (dx, dy, x, y, event) {
-                setPosition(this.ox + dx, this.oy + dy);
+                self.setVisualPosition(this.ox + dx, this.oy + dy);
                 moveCallback.call(this, event);
                 return null;
             };
@@ -1080,7 +1121,7 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 var distanceSquared = dx * dx + dy * dy;
                 var accepted = endCallback.call(this, distanceSquared, event);
                 if (!accepted) {
-                    setPosition(this.ox, this.oy);
+                    self.setVisualPosition(this.ox, this.oy);
                     moveCallback.call(this, event);
                 }
                 return null;
@@ -1093,24 +1134,6 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
 });
 define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_7, Utils_9) {
     "use strict";
-    function rotatePoint(point, center, angle) {
-        var sin = Math.sin(angle);
-        var cos = Math.cos(angle);
-        var copy = {
-            x: point.x,
-            y: point.y
-        };
-        copy.x -= center.x;
-        copy.y -= center.y;
-        var result = {
-            x: copy.x * cos - copy.y * sin,
-            y: copy.x * sin + copy.y * cos
-        };
-        return {
-            x: result.x + center.x,
-            y: result.y + center.y
-        };
-    }
     var Edge = (function () {
         function Edge() {
             // The state that this edge comes from
@@ -1178,6 +1201,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 target.y -= offsetY;
             }
             // TODO: handle self-edge correctly
+            // TODO: handle cases where two connected states are very close to each other
             if (!this.body) {
                 this.body = Utils_9.utils.line(canvas, origin.x, origin.y, target.x, target.y);
             }
@@ -1215,8 +1239,8 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 y: origin.y + u * dy
             };
             // The reference points of the arrow head
-            var p1 = rotatePoint(ref, target, alpha);
-            var p2 = rotatePoint(ref, target, -alpha);
+            var p1 = Utils_9.utils.rotatePoint(ref, target, alpha);
+            var p2 = Utils_9.utils.rotatePoint(ref, target, -alpha);
             if (!this.head.length) {
                 this.head.push(Utils_9.utils.line(canvas, p1.x, p1.y, target.x, target.y));
                 this.head.push(Utils_9.utils.line(canvas, p2.x, p2.y, target.x, target.y));
@@ -1258,11 +1282,15 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
             // states[1].setPosition(300, 80);
             // states[2].setPosition(340, 320);
             // states[3].setPosition(130, 290);
+            var state = new State_1.State();
+            state.setPosition(100, 100);
+            state.setInitial(true);
+            this.stateList.push(state);
             // TODO: separate left click/right click dragging handlers
             for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
-                var state = _a[_i];
-                state.render(this.canvas);
-                this.bindStateEvents(state);
+                var state_1 = _a[_i];
+                state_1.render(this.canvas);
+                this.bindStateEvents(state_1);
             }
             this.bindShortcuts();
             var self = this;
@@ -1368,6 +1396,10 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                     highlightedState.render(canvas);
                     self.highlightedState = null;
                 }
+            });
+            Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.undo, function () {
+                // TODO
+                alert("TODO: undo");
             });
         };
         return StateRenderer;

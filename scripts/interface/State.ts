@@ -49,13 +49,6 @@ export class State {
 		this.highlighted = false;
 	}
 
-	private arrowParams(canvas?: RaphaelPaper): any[] {
-		var result: any[] = (canvas) ? [canvas] : [];
-		let length = 40;
-		return result.concat([this.x - this.radius - length, this.y,
-							  this.x - this.radius, this.y]);
-	}
-
 	private fillColor(): string {
 		return this.highlighted ? Settings.stateHighlightFillColor
 								: Settings.stateFillColor;
@@ -97,14 +90,51 @@ export class State {
 
 	private renderInitialMark(canvas: RaphaelPaper): void {
 		if (this.initial) {
-			if (!this.arrow) {
-				this.arrow = utils.line.apply(utils, this.arrowParams(canvas));
+			if (this.arrowParts.length) {
+				// TODO: implement this properly
+				// TODO: is this branch really necessary?
+				// let parts = this.arrowParts;
+				// while (parts.length) {
+				// 	parts[parts.length - 1].remove();
+				// 	parts.pop();
+				// }
+				// this.renderInitialMark(canvas);
 			} else {
-				this.arrow.attr("path", utils.linePath.apply(utils, this.arrowParams()));
+				let length = 40;
+				let x = this.x - this.radius;
+				let y = this.y;
+				let body = utils.line(canvas, x - length, y, x, y);
+
+				// TODO: don't copy and paste
+				// Arrow head
+				let arrowLength = 15;
+				let alpha = utils.toRadians(20);
+				let u = 1 - arrowLength / length;
+				let ref = {
+					x: x - length + u * length,
+					y: y
+				};
+
+				// The reference points of the arrow head
+				let target = {x: x, y: y};
+				let p1 = utils.rotatePoint(ref, target, alpha);
+				let p2 = utils.rotatePoint(ref, target, -alpha);
+				let topLine = utils.line(canvas, p1.x, p1.y, x, y);
+				let bottomLine = utils.line(canvas, p2.x, p2.y, x, y);
+
+				let parts = this.arrowParts;
+				parts.push(body);
+				parts.push(topLine);
+				parts.push(bottomLine);
 			}
-		} else if (this.arrow) {
-			this.arrow.remove();
-			this.arrow = null;
+		} else {
+			let parts = this.arrowParts;
+			while (parts.length) {
+				parts[parts.length - 1].remove();
+				parts.pop();
+			}
+			// this.arrow.remove();
+			// this.arrow = null;
 		}
 	}
 
@@ -127,6 +157,27 @@ export class State {
 		}
 	}
 
+	// TODO: find a better name for this method
+	private setVisualPosition(x: number, y: number): void {
+		this.body.attr({
+			cx: x,
+			cy: y
+		});
+
+		if (this.ring) {
+			this.ring.attr({
+				cx: x,
+				cy: y
+			});
+		}
+
+		if (this.initial) {
+			// TODO: update initial mark
+		}
+
+		this.setPosition(x, y);
+	}
+
 	public render(canvas: RaphaelPaper): void {
 		this.renderBody(canvas);
 		this.renderInitialMark(canvas);
@@ -147,31 +198,15 @@ export class State {
 	public drag(moveCallback: (event?: any) => void,
 				endCallback: (distSquared: number, event: any) => boolean): void {
 		// TODO: find a new home for all these functions
-		let self = this;
-		let setPosition = function(x, y) {
-			self.body.attr({
-				cx: x,
-				cy: y
-			});
-
-			if (self.ring) {
-				self.ring.attr({
-					cx: x,
-					cy: y
-				});
-			}
-
-			self.setPosition(x, y);
-		};
-
 		let begin = function(x, y, event) {
 			this.ox = this.attr("cx");
 			this.oy = this.attr("cy");
 			return null;
 		};
 
+		let self = this;
 		let move = function(dx, dy, x, y, event) {
-			setPosition(this.ox + dx, this.oy + dy);
+			self.setVisualPosition(this.ox + dx, this.oy + dy);
 			moveCallback.call(this, event);
 			return null;
 		};
@@ -182,7 +217,7 @@ export class State {
 			let distanceSquared = dx * dx + dy * dy;
 			let accepted = endCallback.call(this, distanceSquared, event);
 			if (!accepted) {
-				setPosition(this.ox, this.oy);
+				self.setVisualPosition(this.ox, this.oy);
 				moveCallback.call(this, event);
 			}
 			return null;
@@ -193,7 +228,7 @@ export class State {
 
 	private body: RaphaelElement = null;
 	private ring: RaphaelElement = null;
-	private arrow: RaphaelElement = null;
+	private arrowParts: RaphaelElement[] = [];
 	private x: number;
 	private y: number;
 	private radius: number;

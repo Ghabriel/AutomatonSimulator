@@ -45,6 +45,7 @@ export namespace Settings {
 		toggleInitial: ["I"],
 		toggleFinal: ["F"],
 		dimState: ["ESC"],
+		undo: ["ctrl", "Z"],
 	};
 
 	export const languages = lang;
