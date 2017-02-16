@@ -951,6 +951,8 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
             this.initial = false;
             this.final = false;
             this.highlighted = false;
+            // TODO: don't use any
+            this.initialMarkOffsets = [];
             this.radius = Settings_6.Settings.stateRadius;
         }
         State.prototype.setPosition = function (x, y) {
@@ -1018,30 +1020,62 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
             this.body.attr("stroke", this.strokeColor());
             this.body.attr("stroke-width", this.strokeWidth());
         };
+        State.prototype.updateInitialMarkOffsets = function () {
+            if (this.initialMarkOffsets.length) {
+                return this.initialMarkOffsets;
+            }
+            var length = Settings_6.Settings.stateInitialMarkLength;
+            var x = this.x - this.radius;
+            var y = this.y;
+            // TODO: don't copy and paste
+            // Arrow head
+            var arrowLength = Settings_6.Settings.stateInitialMarkHeadLength;
+            var alpha = Settings_6.Settings.stateInitialMarkAngle;
+            var u = 1 - arrowLength / length;
+            var ref = {
+                x: x - length + u * length,
+                y: y
+            };
+            // The reference points of the arrow head
+            var target = { x: x, y: y };
+            var p1 = Utils_8.utils.rotatePoint(ref, target, alpha);
+            var p2 = Utils_8.utils.rotatePoint(ref, target, -alpha);
+            this.initialMarkOffsets = [
+                {
+                    x: p1.x - x,
+                    y: p1.y - y
+                },
+                {
+                    x: p2.x - x,
+                    y: p2.y - y
+                }
+            ];
+        };
         State.prototype.renderInitialMark = function (canvas) {
             if (this.initial) {
+                var length_1 = Settings_6.Settings.stateInitialMarkLength;
+                var x = this.x - this.radius;
+                var y = this.y;
+                // TODO: reduce the copy/pasting of the following branches
                 if (this.arrowParts.length) {
+                    var parts = this.arrowParts;
+                    var body = parts[0];
+                    var topLine = parts[1];
+                    var bottomLine = parts[2];
+                    body.attr("path", Utils_8.utils.linePath(x - length_1, y, x, y));
+                    this.updateInitialMarkOffsets();
+                    var topOffsets = this.initialMarkOffsets[0];
+                    var botOffsets = this.initialMarkOffsets[1];
+                    topLine.attr("path", Utils_8.utils.linePath(topOffsets.x + x, topOffsets.y + y, x, y));
+                    bottomLine.attr("path", Utils_8.utils.linePath(botOffsets.x + x, botOffsets.y + y, x, y));
                 }
                 else {
-                    var length_1 = Settings_6.Settings.stateInitialMarkLength;
-                    var x = this.x - this.radius;
-                    var y = this.y;
                     var body = Utils_8.utils.line(canvas, x - length_1, y, x, y);
-                    // TODO: don't copy and paste
-                    // Arrow head
-                    var arrowLength = Settings_6.Settings.stateInitialMarkHeadLength;
-                    var alpha = Settings_6.Settings.stateInitialMarkAngle;
-                    var u = 1 - arrowLength / length_1;
-                    var ref = {
-                        x: x - length_1 + u * length_1,
-                        y: y
-                    };
-                    // The reference points of the arrow head
-                    var target = { x: x, y: y };
-                    var p1 = Utils_8.utils.rotatePoint(ref, target, alpha);
-                    var p2 = Utils_8.utils.rotatePoint(ref, target, -alpha);
-                    var topLine = Utils_8.utils.line(canvas, p1.x, p1.y, x, y);
-                    var bottomLine = Utils_8.utils.line(canvas, p2.x, p2.y, x, y);
+                    this.updateInitialMarkOffsets();
+                    var topOffsets = this.initialMarkOffsets[0];
+                    var botOffsets = this.initialMarkOffsets[1];
+                    var topLine = Utils_8.utils.line(canvas, topOffsets.x + x, topOffsets.y + y, x, y);
+                    var bottomLine = Utils_8.utils.line(canvas, botOffsets.x + x, botOffsets.y + y, x, y);
                     var parts = this.arrowParts;
                     parts.push(body);
                     parts.push(topLine);
@@ -1088,6 +1122,8 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 });
             }
             if (this.initial) {
+                // TODO: update initial mark
+                this.renderInitialMark();
             }
             this.setPosition(x, y);
         };

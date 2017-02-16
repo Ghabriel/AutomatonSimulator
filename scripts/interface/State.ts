@@ -88,40 +88,76 @@ export class State {
 		this.body.attr("stroke-width", this.strokeWidth());
 	}
 
-	private renderInitialMark(canvas: RaphaelPaper): void {
+	private updateInitialMarkOffsets() {
+		if (this.initialMarkOffsets.length) {
+			return this.initialMarkOffsets;
+		}
+
+		let length = Settings.stateInitialMarkLength;
+		let x = this.x - this.radius;
+		let y = this.y;
+
+		// TODO: don't copy and paste
+		// Arrow head
+		let arrowLength = Settings.stateInitialMarkHeadLength;
+		let alpha = Settings.stateInitialMarkAngle;
+		let u = 1 - arrowLength / length;
+		let ref = {
+			x: x - length + u * length,
+			y: y
+		};
+
+		// The reference points of the arrow head
+		let target = {x: x, y: y};
+		let p1 = utils.rotatePoint(ref, target, alpha);
+		let p2 = utils.rotatePoint(ref, target, -alpha);
+		this.initialMarkOffsets = [
+			{
+				x: p1.x - x,
+				y: p1.y - y
+			},
+			{
+				x: p2.x - x,
+				y: p2.y - y
+			}
+		];
+	}
+
+	private renderInitialMark(canvas?: RaphaelPaper): void {
 		if (this.initial) {
+			let length = Settings.stateInitialMarkLength;
+			let x = this.x - this.radius;
+			let y = this.y;
+			// TODO: reduce the copy/pasting of the following branches
 			if (this.arrowParts.length) {
-				// TODO: implement this properly
-				// TODO: is this branch really necessary?
-				// let parts = this.arrowParts;
-				// while (parts.length) {
-				// 	parts[parts.length - 1].remove();
-				// 	parts.pop();
-				// }
-				// this.renderInitialMark(canvas);
+				let parts = this.arrowParts;
+				let body = parts[0];
+				let topLine = parts[1];
+				let bottomLine = parts[2];
+
+				body.attr("path", utils.linePath(x - length, y, x, y));
+
+				this.updateInitialMarkOffsets();
+
+				let topOffsets = this.initialMarkOffsets[0];
+				let botOffsets = this.initialMarkOffsets[1];
+
+				topLine.attr("path", utils.linePath(topOffsets.x + x, topOffsets.y + y,
+												    x, y));
+				bottomLine.attr("path", utils.linePath(botOffsets.x + x, botOffsets.y + y,
+													   x, y));
 			} else {
-				let length = Settings.stateInitialMarkLength;
-				let x = this.x - this.radius;
-				let y = this.y;
 				let body = utils.line(canvas, x - length, y, x, y);
 
-				// TODO: don't copy and paste
-				// Arrow head
-				let arrowLength = Settings.stateInitialMarkHeadLength;
-				let alpha = Settings.stateInitialMarkAngle;
-				let u = 1 - arrowLength / length;
-				let ref = {
-					x: x - length + u * length,
-					y: y
-				};
+				this.updateInitialMarkOffsets();
 
-				// The reference points of the arrow head
-				let target = {x: x, y: y};
-				let p1 = utils.rotatePoint(ref, target, alpha);
-				let p2 = utils.rotatePoint(ref, target, -alpha);
-				let topLine = utils.line(canvas, p1.x, p1.y, x, y);
-				let bottomLine = utils.line(canvas, p2.x, p2.y, x, y);
+				let topOffsets = this.initialMarkOffsets[0];
+				let botOffsets = this.initialMarkOffsets[1];
 
+				let topLine = utils.line(canvas, topOffsets.x + x, topOffsets.y + y,
+												 x, y);
+				let bottomLine = utils.line(canvas, botOffsets.x + x, botOffsets.y + y,
+													x, y);
 				let parts = this.arrowParts;
 				parts.push(body);
 				parts.push(topLine);
@@ -173,6 +209,7 @@ export class State {
 
 		if (this.initial) {
 			// TODO: update initial mark
+			this.renderInitialMark();
 		}
 
 		this.setPosition(x, y);
@@ -236,4 +273,7 @@ export class State {
 	private initial: boolean = false;
 	private final: boolean = false;
 	private highlighted: boolean = false;
+
+	// TODO: don't use any
+	private initialMarkOffsets: {x: number, y: number}[] = [];
 }
