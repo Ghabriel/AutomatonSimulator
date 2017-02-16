@@ -559,12 +559,15 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.stateStrokeColor = "black";
         Settings.stateStrokeWidth = 1;
         Settings.stateRingStrokeWidth = 1;
+        Settings.stateInitialMarkLength = 40;
+        Settings.stateInitialMarkHeadLength = 15;
+        Settings.stateInitialMarkAngle = Utils_3.utils.toRadians(25);
         Settings.stateHighlightFillColor = "#FFD574";
         Settings.stateHighlightStrokeColor = "red";
         Settings.stateHighlightStrokeWidth = 3;
         Settings.stateHighlightRingStrokeWidth = 2;
         Settings.edgeArrowLength = 30;
-        Settings.edgeArrowAngle = 30;
+        Settings.edgeArrowAngle = Utils_3.utils.toRadians(30);
         Settings.shortcuts = {
             save: ["ctrl", "S"],
             open: ["ctrl", "O"],
@@ -1020,14 +1023,14 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 if (this.arrowParts.length) {
                 }
                 else {
-                    var length_1 = 40;
+                    var length_1 = Settings_6.Settings.stateInitialMarkLength;
                     var x = this.x - this.radius;
                     var y = this.y;
                     var body = Utils_8.utils.line(canvas, x - length_1, y, x, y);
                     // TODO: don't copy and paste
                     // Arrow head
-                    var arrowLength = 15;
-                    var alpha = Utils_8.utils.toRadians(20);
+                    var arrowLength = Settings_6.Settings.stateInitialMarkHeadLength;
+                    var alpha = Settings_6.Settings.stateInitialMarkAngle;
                     var u = 1 - arrowLength / length_1;
                     var ref = {
                         x: x - length_1 + u * length_1,
@@ -1231,7 +1234,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             dy -= offsetY;
             // Arrow head
             var arrowLength = Settings_7.Settings.edgeArrowLength;
-            var alpha = Utils_9.utils.toRadians(Settings_7.Settings.edgeArrowAngle);
+            var alpha = Settings_7.Settings.edgeArrowAngle;
             var edgeLength = Math.sqrt(dx * dx + dy * dy);
             var u = 1 - arrowLength / edgeLength;
             var ref = {
@@ -1345,13 +1348,11 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
             });
         };
         StateRenderer.prototype.beginEdge = function (state) {
-            console.log("[ENTER EDGE MODE]");
             this.edgeMode = true;
             this.currentEdge = new Edge_1.Edge();
             this.currentEdge.setOrigin(state);
         };
         StateRenderer.prototype.finishEdge = function (state) {
-            console.log("[BUILD EDGE]");
             this.edgeMode = false;
             this.currentEdge.setTarget(state);
             this.currentEdge.render(this.canvas);

@@ -90,14 +90,12 @@ export class StateRenderer {
 	}
 
 	private beginEdge(state: State): void {
-		console.log("[ENTER EDGE MODE]");
 		this.edgeMode = true;
 		this.currentEdge = new Edge();
 		this.currentEdge.setOrigin(state);
 	}
 
 	private finishEdge(state: State): void {
-		console.log("[BUILD EDGE]");
 		this.edgeMode = false;
 		this.currentEdge.setTarget(state);
 		this.currentEdge.render(this.canvas);

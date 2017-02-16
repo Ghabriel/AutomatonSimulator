@@ -106,7 +106,7 @@ export class Edge {
 
 		// Arrow head
 		let arrowLength = Settings.edgeArrowLength;
-		let alpha = utils.toRadians(Settings.edgeArrowAngle);
+		let alpha = Settings.edgeArrowAngle;
 		let edgeLength = Math.sqrt(dx * dx + dy * dy);
 		let u = 1 - arrowLength / edgeLength;
 		let ref = {

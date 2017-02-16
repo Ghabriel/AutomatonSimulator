@@ -100,15 +100,15 @@ export class State {
 				// }
 				// this.renderInitialMark(canvas);
 			} else {
-				let length = 40;
+				let length = Settings.stateInitialMarkLength;
 				let x = this.x - this.radius;
 				let y = this.y;
 				let body = utils.line(canvas, x - length, y, x, y);
 
 				// TODO: don't copy and paste
 				// Arrow head
-				let arrowLength = 15;
-				let alpha = utils.toRadians(20);
+				let arrowLength = Settings.stateInitialMarkHeadLength;
+				let alpha = Settings.stateInitialMarkAngle;
 				let u = 1 - arrowLength / length;
 				let ref = {
 					x: x - length + u * length,

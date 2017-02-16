@@ -31,13 +31,18 @@ export namespace Settings {
 	export const stateStrokeColor = "black";
 	export const stateStrokeWidth = 1;
 	export const stateRingStrokeWidth = 1;
+
+	export const stateInitialMarkLength = 40;
+	export const stateInitialMarkHeadLength = 15;
+	export const stateInitialMarkAngle = utils.toRadians(25);
+
 	export const stateHighlightFillColor = "#FFD574";
 	export const stateHighlightStrokeColor = "red";
 	export const stateHighlightStrokeWidth = 3;
 	export const stateHighlightRingStrokeWidth = 2;
 
 	export const edgeArrowLength = 30;
-	export const edgeArrowAngle = 30;
+	export const edgeArrowAngle = utils.toRadians(30);
 
 	export const shortcuts = {
 		save: ["ctrl", "S"],
