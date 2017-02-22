@@ -48,6 +48,7 @@ define("Keyboard", ["require", "exports"], function (require, exports) {
             "SHIFT": 16,
             "SPACE": 32,
             "ESC": 27,
+            "DELETE": 46,
             "LEFT": 37,
             "UP": 38,
             "RIGHT": 39,
@@ -98,6 +99,8 @@ define("languages/Portuguese", ["require", "exports"], function (require, export
             SAVE: "Salvar",
             OPEN: "Abrir",
             SELECT_MACHINE: "Seleção de Máquina",
+            CLEAR_MACHINE: "Limpar",
+            CLEAR_CONFIRMATION: "Deseja realmente limpar o autômato?",
             FA: "Autômato Finito",
             PDA: "Autômato de Pilha",
             LBA: "Autômato Linearmente Limitado",
@@ -118,6 +121,8 @@ define("languages/English", ["require", "exports"], function (require, exports) 
             SAVE: "Save",
             OPEN: "Open",
             SELECT_MACHINE: "Machine Selection",
+            CLEAR_MACHINE: "Clear",
+            CLEAR_CONFIRMATION: "Do you really want to reset this automaton?",
             FA: "Finite Automaton",
             PDA: "Pushdown Automaton",
             LBA: "Linearly Bounded Automaton",
@@ -574,6 +579,8 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
             toggleInitial: ["I"],
             toggleFinal: ["F"],
             dimState: ["ESC"],
+            deleteState: ["DELETE"],
+            clearMachine: ["C"],
             undo: ["ctrl", "Z"]
         };
         Settings.languages = lang;
@@ -992,6 +999,21 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
         State.prototype.dim = function () {
             this.highlighted = false;
         };
+        State.prototype.remove = function () {
+            if (this.body) {
+                this.body.remove();
+                this.body = null;
+            }
+            if (this.ring) {
+                this.ring.remove();
+                this.ring = null;
+            }
+            for (var _i = 0, _a = this.arrowParts; _i < _a.length; _i++) {
+                var part = _a[_i];
+                part.remove();
+            }
+            this.arrowParts = [];
+        };
         State.prototype.fillColor = function () {
             return this.highlighted ? Settings_6.Settings.stateHighlightFillColor
                 : Settings_6.Settings.stateFillColor;
@@ -1194,8 +1216,14 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
         Edge.prototype.setOrigin = function (origin) {
             this.origin = origin;
         };
+        Edge.prototype.getOrigin = function () {
+            return this.origin;
+        };
         Edge.prototype.setTarget = function (target) {
             this.target = target;
+        };
+        Edge.prototype.getTarget = function () {
+            return this.target;
         };
         Edge.prototype.setVirtualTarget = function (target) {
             this.virtualTarget = target;
@@ -1203,6 +1231,17 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
         Edge.prototype.render = function (canvas) {
             this.renderBody(canvas);
             this.renderHead(canvas);
+        };
+        Edge.prototype.remove = function () {
+            if (this.body) {
+                this.body.remove();
+                this.body = null;
+            }
+            for (var _i = 0, _a = this.head; _i < _a.length; _i++) {
+                var elem = _a[_i];
+                elem.remove();
+            }
+            this.head = [];
         };
         Edge.prototype.renderBody = function (canvas) {
             var origin = this.origin.getPosition();
@@ -1315,18 +1354,6 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
             this.node = node;
         }
         StateRenderer.prototype.render = function () {
-            // this.stateList = [
-            // 	new State(),
-            // 	new State(),
-            // 	new State(),
-            // 	new State()
-            // ];
-            // let states = this.stateList;
-            // states[0].setPosition(120, 120);
-            // states[0].setFinal(true);
-            // states[1].setPosition(300, 80);
-            // states[2].setPosition(340, 320);
-            // states[3].setPosition(130, 290);
             var state = new State_1.State();
             state.setPosition(100, 100);
             state.setInitial(true);
@@ -1343,7 +1370,7 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                 var state = new State_1.State();
                 state.setPosition(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
                 self.stateList.push(state);
-                state.render(self.canvas);
+                self.selectState(state);
                 self.bindStateEvents(state);
             });
             $(this.node).contextmenu(function (e) {
@@ -1355,6 +1382,15 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                     self.adjustEdge(this, e);
                 }
             });
+        };
+        StateRenderer.prototype.selectState = function (state) {
+            if (this.highlightedState) {
+                this.highlightedState.dim();
+                this.highlightedState.render(this.canvas);
+            }
+            state.highlight();
+            this.highlightedState = state;
+            state.render(this.canvas);
         };
         StateRenderer.prototype.bindStateEvents = function (state) {
             // TODO: separate left click/right click dragging handlers
@@ -1376,13 +1412,7 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                         state.render(canvas);
                     }
                     else {
-                        if (self.highlightedState) {
-                            self.highlightedState.dim();
-                            self.highlightedState.render(canvas);
-                        }
-                        state.highlight();
-                        self.highlightedState = state;
-                        state.render(canvas);
+                        self.selectState(state);
                     }
                     return false;
                 }
@@ -1415,6 +1445,14 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                 edge.render(this.canvas);
             }
         };
+        StateRenderer.prototype.clearSelection = function () {
+            this.highlightedState = null;
+            if (this.edgeMode) {
+                this.edgeMode = false;
+                this.currentEdge.remove();
+                this.currentEdge = null;
+            }
+        };
         StateRenderer.prototype.bindShortcuts = function () {
             var canvas = this.canvas;
             var self = this;
@@ -1438,6 +1476,46 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                     highlightedState.dim();
                     highlightedState.render(canvas);
                     self.highlightedState = null;
+                }
+            });
+            Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.deleteState, function () {
+                var highlightedState = self.highlightedState;
+                if (highlightedState) {
+                    for (var i = 0; i < self.edgeList.length; i++) {
+                        var edge = self.edgeList[i];
+                        var origin = edge.getOrigin();
+                        var target = edge.getTarget();
+                        if (origin == highlightedState || target == highlightedState) {
+                            edge.remove();
+                            self.edgeList.splice(i, 1);
+                            i--;
+                        }
+                    }
+                    highlightedState.remove();
+                    var states = self.stateList;
+                    for (var i = 0; i < states.length; i++) {
+                        if (states[i] == highlightedState) {
+                            states.splice(i, 1);
+                            break;
+                        }
+                    }
+                    self.clearSelection();
+                }
+            });
+            Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.clearMachine, function () {
+                var confirmation = confirm(Settings_8.Strings.CLEAR_CONFIRMATION);
+                if (confirmation) {
+                    self.clearSelection();
+                    for (var _i = 0, _a = self.edgeList; _i < _a.length; _i++) {
+                        var edge = _a[_i];
+                        edge.remove();
+                    }
+                    self.edgeList = [];
+                    for (var _b = 0, _c = self.stateList; _b < _c.length; _b++) {
+                        var state = _c[_b];
+                        state.remove();
+                    }
+                    self.stateList = [];
                 }
             });
             Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.undo, function () {

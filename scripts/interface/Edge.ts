@@ -12,8 +12,16 @@ export class Edge {
 		this.origin = origin;
 	}
 
+	public getOrigin(): State {
+		return this.origin;
+	}
+
 	public setTarget(target: State): void {
 		this.target = target;
+	}
+
+	public getTarget(): State {
+		return this.target;
 	}
 
 	public setVirtualTarget(target: Point): void {
@@ -23,6 +31,18 @@ export class Edge {
 	public render(canvas: RaphaelPaper): void {
 		this.renderBody(canvas);
 		this.renderHead(canvas);
+	}
+
+	public remove(): void {
+		if (this.body) {
+			this.body.remove();
+			this.body = null;
+		}
+
+		for (let elem of this.head) {
+			elem.remove();
+		}
+		this.head = [];
 	}
 
 	private renderBody(canvas: RaphaelPaper): void {

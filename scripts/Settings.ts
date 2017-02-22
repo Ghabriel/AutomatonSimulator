@@ -50,6 +50,8 @@ export namespace Settings {
 		toggleInitial: ["I"],
 		toggleFinal: ["F"],
 		dimState: ["ESC"],
+		deleteState: ["DELETE"],
+		clearMachine: ["C"],
 		undo: ["ctrl", "Z"],
 	};
 

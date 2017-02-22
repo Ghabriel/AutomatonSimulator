@@ -1,5 +1,5 @@
 import {Edge} from "./Edge"
-import {Settings} from "../Settings"
+import {Settings, Strings} from "../Settings"
 import {State} from "./State"
 import {utils} from "../Utils"
 
@@ -10,20 +10,6 @@ export class StateRenderer {
 	}
 
 	public render(): void {
-		// this.stateList = [
-		// 	new State(),
-		// 	new State(),
-		// 	new State(),
-		// 	new State()
-		// ];
-
-		// let states = this.stateList;
-		// states[0].setPosition(120, 120);
-		// states[0].setFinal(true);
-		// states[1].setPosition(300, 80);
-		// states[2].setPosition(340, 320);
-		// states[3].setPosition(130, 290);
-
 		let state = new State();
 		state.setPosition(100, 100);
 		state.setInitial(true);
@@ -42,7 +28,7 @@ export class StateRenderer {
 			let state = new State();
 			state.setPosition(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
 			self.stateList.push(state);
-			state.render(self.canvas);
+			self.selectState(state);
 			self.bindStateEvents(state);
 		});
 
@@ -56,6 +42,16 @@ export class StateRenderer {
 				self.adjustEdge(this, e);
 			}
 		});
+	}
+
+	private selectState(state: State) {
+		if (this.highlightedState) {
+			this.highlightedState.dim();
+			this.highlightedState.render(this.canvas);
+		}
+		state.highlight();
+		this.highlightedState = state;
+		state.render(this.canvas);
 	}
 
 	private bindStateEvents(state: State) {
@@ -75,13 +71,7 @@ export class StateRenderer {
 					self.highlightedState = null;
 					state.render(canvas);
 				} else {
-					if (self.highlightedState) {
-						self.highlightedState.dim();
-						self.highlightedState.render(canvas);
-					}
-					state.highlight();
-					self.highlightedState = state;
-					state.render(canvas);
+					self.selectState(state);
 				}
 				return false;
 			}
@@ -118,6 +108,15 @@ export class StateRenderer {
 		}
 	}
 
+	private clearSelection(): void {
+		this.highlightedState = null;
+		if (this.edgeMode) {
+			this.edgeMode = false;
+			this.currentEdge.remove();
+			this.currentEdge = null;
+		}
+	}
+
 	private bindShortcuts(): void {
 		let canvas = this.canvas;
 		let self = this;
@@ -143,6 +142,50 @@ export class StateRenderer {
 				highlightedState.dim();
 				highlightedState.render(canvas);
 				self.highlightedState = null;
+			}
+		});
+
+		utils.bindShortcut(Settings.shortcuts.deleteState, function() {
+			let highlightedState = self.highlightedState;
+			if (highlightedState) {
+				for (let i = 0; i < self.edgeList.length; i++) {
+					let edge = self.edgeList[i];
+					let origin = edge.getOrigin();
+					let target = edge.getTarget();
+					if (origin == highlightedState || target == highlightedState) {
+						edge.remove();
+						self.edgeList.splice(i, 1);
+						i--;
+					}
+				}
+				highlightedState.remove();
+
+				let states = self.stateList;
+				for (let i = 0; i < states.length; i++) {
+					if (states[i] == highlightedState) {
+						states.splice(i, 1);
+						break;
+					}
+				}
+
+				self.clearSelection();
+			}
+		});
+
+		utils.bindShortcut(Settings.shortcuts.clearMachine, function() {
+			let confirmation = confirm(Strings.CLEAR_CONFIRMATION);
+			if (confirmation) {
+				self.clearSelection();
+
+				for (let edge of self.edgeList) {
+					edge.remove();
+				}
+				self.edgeList = [];
+
+				for (let state of self.stateList) {
+					state.remove();
+				}
+				self.stateList = [];
 			}
 		});
 

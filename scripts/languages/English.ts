@@ -7,6 +7,8 @@ export namespace english {
 		SAVE: "Save",
 		OPEN: "Open",
 		SELECT_MACHINE: "Machine Selection",
+		CLEAR_MACHINE: "Clear",
+		CLEAR_CONFIRMATION: "Do you really want to reset this automaton?",
 		FA: "Finite Automaton",
 		PDA: "Pushdown Automaton",
 		LBA: "Linearly Bounded Automaton",

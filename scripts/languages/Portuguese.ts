@@ -7,6 +7,8 @@ export namespace portuguese {
 		SAVE: "Salvar",
 		OPEN: "Abrir",
 		SELECT_MACHINE: "Seleção de Máquina",
+		CLEAR_MACHINE: "Limpar",
+		CLEAR_CONFIRMATION: "Deseja realmente limpar o autômato?",
 		FA: "Autômato Finito",
 		PDA: "Autômato de Pilha",
 		LBA: "Autômato Linearmente Limitado",

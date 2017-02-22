@@ -49,6 +49,23 @@ export class State {
 		this.highlighted = false;
 	}
 
+	public remove(): void {
+		if (this.body) {
+			this.body.remove();
+			this.body = null;
+		}
+
+		if (this.ring) {
+			this.ring.remove();
+			this.ring = null;
+		}
+
+		for (let part of this.arrowParts) {
+			part.remove();
+		}
+		this.arrowParts = [];
+	}
+
 	private fillColor(): string {
 		return this.highlighted ? Settings.stateHighlightFillColor
 								: Settings.stateFillColor;

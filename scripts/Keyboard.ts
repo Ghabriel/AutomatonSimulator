@@ -40,6 +40,7 @@ export namespace Keyboard {
 		"SHIFT": 16,
 		"SPACE": 32,
 		"ESC": 27,
+		"DELETE": 46,
 		"LEFT": 37,
 		"UP": 38,
 		"RIGHT": 39,
