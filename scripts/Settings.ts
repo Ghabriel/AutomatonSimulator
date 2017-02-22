@@ -44,6 +44,9 @@ export namespace Settings {
 	export const edgeArrowLength = 30;
 	export const edgeArrowAngle = utils.toRadians(30);
 
+	export const edgeTextFontFamily = "arial";
+	export const edgeTextFontSize = 20;
+
 	export const shortcuts = {
 		save: ["ctrl", "S"],
 		open: ["ctrl", "O"],

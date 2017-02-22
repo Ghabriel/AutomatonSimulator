@@ -15,6 +15,19 @@ export class StateRenderer {
 		state.setInitial(true);
 		this.stateList.push(state);
 
+		// let s = new State();
+		// s.setPosition(300, 100);
+		// s.setFinal(true);
+		// this.stateList.push(s);
+
+		// let edge = new Edge();
+		// edge.setOrigin(state);
+		// edge.setTarget(s);
+		// edge.render(this.canvas);
+		// this.edgeList.push(edge);
+
+		// this.selectState(state);
+
 		// TODO: separate left click/right click dragging handlers
 		for (let state of this.stateList) {
 			state.render(this.canvas);

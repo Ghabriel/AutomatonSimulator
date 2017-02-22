@@ -573,6 +573,8 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.stateHighlightRingStrokeWidth = 2;
         Settings.edgeArrowLength = 30;
         Settings.edgeArrowAngle = Utils_3.utils.toRadians(30);
+        Settings.edgeTextFontFamily = "arial";
+        Settings.edgeTextFontSize = 20;
         Settings.shortcuts = {
             save: ["ctrl", "S"],
             open: ["ctrl", "O"],
@@ -1358,6 +1360,16 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
             state.setPosition(100, 100);
             state.setInitial(true);
             this.stateList.push(state);
+            // let s = new State();
+            // s.setPosition(300, 100);
+            // s.setFinal(true);
+            // this.stateList.push(s);
+            // let edge = new Edge();
+            // edge.setOrigin(state);
+            // edge.setTarget(s);
+            // edge.render(this.canvas);
+            // this.edgeList.push(edge);
+            // this.selectState(state);
             // TODO: separate left click/right click dragging handlers
             for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
                 var state_1 = _a[_i];

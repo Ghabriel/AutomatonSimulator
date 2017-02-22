@@ -93,6 +93,9 @@ export class Edge {
 			this.body = utils.line(canvas,
 					origin.x, origin.y,
 					target.x, target.y);
+			// let text = canvas.text(200, 100, "abc");
+			// text.attr("font-family", Settings.edgeTextFontFamily);
+			// text.attr("font-size", Settings.edgeTextFontSize);
 		} else {
 			this.body.attr("path", utils.linePath(
 				origin.x, origin.y,
