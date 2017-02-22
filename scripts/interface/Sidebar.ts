@@ -12,6 +12,7 @@ import {utils} from "../Utils"
 // TODO: remake pretty much this entire class (except the internationalization
 // part, which works well). It's a very new class which already has some weird
 // bugs and does not seem efficient at all.
+// (pretty sure I already remade this?)
 export class Sidebar extends Renderer {
 	constructor() {
 		super();
@@ -46,6 +47,10 @@ export class Sidebar extends Renderer {
 		this.languageSelection.render();
 		this.fileManipulation.render();
 		this.machineSelection.render();
+		this.renderDynamicMenus();
+	}
+
+	private renderDynamicMenus(): void {
 		for (let menu of this.otherMenus) {
 			menu.render();
 		}
@@ -142,6 +147,7 @@ export class Sidebar extends Renderer {
 				machineButtonMapping[type].blur();
 				Settings.currentMachine = type;
 				self.loadMachine(type);
+				self.renderDynamicMenus();
 			});
 			table.add(button);
 			machineButtonMapping[type] = button;

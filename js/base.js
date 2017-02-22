@@ -580,6 +580,8 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.Machine = automata.Machine;
         // TODO: maybe using a cookie to get the default language is a good idea
         Settings.language = lang.english;
+        // TODO: what if FAs are no longer in the system? Must find a way
+        // to get a valid machine regardless of which ones exist.
         Settings.currentMachine = Settings.Machine.FA;
         Settings.machines = {};
         var firstUpdate = true;
@@ -721,6 +723,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
     // TODO: remake pretty much this entire class (except the internationalization
     // part, which works well). It's a very new class which already has some weird
     // bugs and does not seem efficient at all.
+    // (pretty sure I already remade this?)
     var Sidebar = (function (_super) {
         __extends(Sidebar, _super);
         function Sidebar() {
@@ -752,6 +755,9 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             this.languageSelection.render();
             this.fileManipulation.render();
             this.machineSelection.render();
+            this.renderDynamicMenus();
+        };
+        Sidebar.prototype.renderDynamicMenus = function () {
             for (var _i = 0, _a = this.otherMenus; _i < _a.length; _i++) {
                 var menu = _a[_i];
                 menu.render();
@@ -844,6 +850,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                     machineButtonMapping[type].blur();
                     Settings_3.Settings.currentMachine = type;
                     self.loadMachine(type);
+                    self.renderDynamicMenus();
                 });
                 table.add(button);
                 machineButtonMapping[type] = button;
@@ -951,7 +958,6 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
             this.initial = false;
             this.final = false;
             this.highlighted = false;
-            // TODO: don't use any
             this.initialMarkOffsets = [];
             this.radius = Settings_6.Settings.stateRadius;
         }

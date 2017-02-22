@@ -59,6 +59,9 @@ export namespace Settings {
 
 	// TODO: maybe using a cookie to get the default language is a good idea
 	export var language = lang.english;
+
+	// TODO: what if FAs are no longer in the system? Must find a way
+	// to get a valid machine regardless of which ones exist.
 	export var currentMachine = Machine.FA;
 
 	export var machines: {[m: number]: MachineTraits} = {};

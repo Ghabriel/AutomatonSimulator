@@ -273,7 +273,5 @@ export class State {
 	private initial: boolean = false;
 	private final: boolean = false;
 	private highlighted: boolean = false;
-
-	// TODO: don't use any
 	private initialMarkOffsets: {x: number, y: number}[] = [];
 }
