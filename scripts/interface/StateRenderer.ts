@@ -1,7 +1,7 @@
 import {Edge} from "./Edge"
 import {Settings, Strings} from "../Settings"
 import {State} from "./State"
-import {utils} from "../Utils"
+import {Point, utils} from "../Utils"
 
 export class StateRenderer {
 	constructor(canvas:  RaphaelPaper, node: Element) {
@@ -202,10 +202,131 @@ export class StateRenderer {
 			}
 		});
 
+		// TODO: try to reduce the redundancy
+		utils.bindShortcut(Settings.shortcuts.left, function() {
+			self.moveStateSelection(function(attempt, highlighted) {
+				return attempt.getPosition().x < highlighted.getPosition().x;
+			}, function(attempt, currBest, highlighted) {
+				if (!currBest) {
+					return true;
+				}
+
+				let reference = highlighted.getPosition();
+				let position = attempt.getPosition();
+				let dy = Math.abs(position.y - reference.y);
+				let targetPosition = currBest.getPosition();
+				let targetDy = Math.abs(targetPosition.y - reference.y);
+
+				if (position.x > targetPosition.x) {
+					if (dy < self.selectionThreshold()) {
+						return true;
+					}
+				}
+
+				return dy < targetDy;
+			});
+		});
+
+		utils.bindShortcut(Settings.shortcuts.right, function() {
+			self.moveStateSelection(function(attempt, highlighted) {
+				return attempt.getPosition().x > highlighted.getPosition().x;
+			}, function(attempt, currBest, highlighted) {
+				if (!currBest) {
+					return true;
+				}
+
+				let reference = highlighted.getPosition();
+				let position = attempt.getPosition();
+				let dy = Math.abs(position.y - reference.y);
+				let targetPosition = currBest.getPosition();
+				let targetDy = Math.abs(targetPosition.y - reference.y);
+
+				if (position.x < targetPosition.x) {
+					if (dy < self.selectionThreshold()) {
+						return true;
+					}
+				}
+
+				return dy < targetDy;
+			});
+		});
+
+		utils.bindShortcut(Settings.shortcuts.up, function() {
+			self.moveStateSelection(function(attempt, highlighted) {
+				return attempt.getPosition().y < highlighted.getPosition().y;
+			}, function(attempt, currBest, highlighted) {
+				if (!currBest) {
+					return true;
+				}
+
+				let reference = highlighted.getPosition();
+				let position = attempt.getPosition();
+				let dx = Math.abs(position.x - reference.x);
+				let targetPosition = currBest.getPosition();
+				let targetDx = Math.abs(targetPosition.x - reference.x);
+
+				if (position.y > targetPosition.y) {
+					if (dx < self.selectionThreshold()) {
+						return true;
+					}
+				}
+
+				return dx < targetDx;
+			});
+		});
+
+		utils.bindShortcut(Settings.shortcuts.down, function() {
+			self.moveStateSelection(function(attempt, highlighted) {
+				return attempt.getPosition().y > highlighted.getPosition().y;
+			}, function(attempt, currBest, highlighted) {
+				if (!currBest) {
+					return true;
+				}
+
+				let reference = highlighted.getPosition();
+				let position = attempt.getPosition();
+				let dx = Math.abs(position.x - reference.x);
+				let targetPosition = currBest.getPosition();
+				let targetDx = Math.abs(targetPosition.x - reference.x);
+
+				if (position.y < targetPosition.y) {
+					if (dx < self.selectionThreshold()) {
+						return true;
+					}
+				}
+
+				return dx < targetDx;
+			});
+		});
+
 		utils.bindShortcut(Settings.shortcuts.undo, function() {
 			// TODO
 			alert("TODO: undo");
 		});
+	}
+
+	private selectionThreshold(): number {
+		return 2 * Settings.stateRadius;
+	}
+
+	private moveStateSelection(isViable: (attempt: State, highlighted: State) => boolean,
+				isBetterCandidate: (attempt: State, currBest: State,
+									highlighted: State) => boolean): void {
+		let highlightedState = this.highlightedState;
+		if (highlightedState) {
+			let target: State = null;
+			for (let state of this.stateList) {
+				if (isViable(state, highlightedState)) {
+					if (isBetterCandidate(state, target, highlightedState)) {
+						target = state;
+					}
+				}
+			}
+
+			if (target) {
+				this.selectState(target);
+			}
+		}
 	}
 
 	private canvas: RaphaelPaper = null;

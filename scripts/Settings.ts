@@ -55,6 +55,10 @@ export namespace Settings {
 		dimState: ["ESC"],
 		deleteState: ["DELETE"],
 		clearMachine: ["C"],
+		left: ["LEFT"],
+		right: ["RIGHT"],
+		up: ["UP"],
+		down: ["DOWN"],
 		undo: ["ctrl", "Z"],
 	};
 

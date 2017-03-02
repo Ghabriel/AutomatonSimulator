@@ -1,5 +1,10 @@
 import {System} from "./System"
 
+export interface Point {
+	x: number;
+	y: number;
+}
+
 export namespace utils {
 	export function select(selector: string): Element {
 		return document.querySelector(selector);
@@ -55,8 +60,8 @@ export namespace utils {
 		return angle * Math.PI / 180;
 	}
 
-	export function rotatePoint(point: {x: number, y: number},
-								center: {x: number, y: number},
+	export function rotatePoint(point: Point,
+								center: Point,
 								angle: number) {
 		let sin = Math.sin(angle);
 		let cos = Math.cos(angle);

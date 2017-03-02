@@ -583,6 +583,10 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
             dimState: ["ESC"],
             deleteState: ["DELETE"],
             clearMachine: ["C"],
+            left: ["LEFT"],
+            right: ["RIGHT"],
+            up: ["UP"],
+            down: ["DOWN"],
             undo: ["ctrl", "Z"]
         };
         Settings.languages = lang;
@@ -1530,10 +1534,111 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                     self.stateList = [];
                 }
             });
+            // TODO: try to reduce the redundancy
+            Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.left, function () {
+                self.moveStateSelection(function (attempt, highlighted) {
+                    return attempt.getPosition().x < highlighted.getPosition().x;
+                }, function (attempt, currBest, highlighted) {
+                    if (!currBest) {
+                        return true;
+                    }
+                    var reference = highlighted.getPosition();
+                    var position = attempt.getPosition();
+                    var dy = Math.abs(position.y - reference.y);
+                    var targetPosition = currBest.getPosition();
+                    var targetDy = Math.abs(targetPosition.y - reference.y);
+                    if (position.x > targetPosition.x) {
+                        if (dy < self.selectionThreshold()) {
+                            return true;
+                        }
+                    }
+                    return dy < targetDy;
+                });
+            });
+            Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.right, function () {
+                self.moveStateSelection(function (attempt, highlighted) {
+                    return attempt.getPosition().x > highlighted.getPosition().x;
+                }, function (attempt, currBest, highlighted) {
+                    if (!currBest) {
+                        return true;
+                    }
+                    var reference = highlighted.getPosition();
+                    var position = attempt.getPosition();
+                    var dy = Math.abs(position.y - reference.y);
+                    var targetPosition = currBest.getPosition();
+                    var targetDy = Math.abs(targetPosition.y - reference.y);
+                    if (position.x < targetPosition.x) {
+                        if (dy < self.selectionThreshold()) {
+                            return true;
+                        }
+                    }
+                    return dy < targetDy;
+                });
+            });
+            Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.up, function () {
+                self.moveStateSelection(function (attempt, highlighted) {
+                    return attempt.getPosition().y < highlighted.getPosition().y;
+                }, function (attempt, currBest, highlighted) {
+                    if (!currBest) {
+                        return true;
+                    }
+                    var reference = highlighted.getPosition();
+                    var position = attempt.getPosition();
+                    var dx = Math.abs(position.x - reference.x);
+                    var targetPosition = currBest.getPosition();
+                    var targetDx = Math.abs(targetPosition.x - reference.x);
+                    if (position.y > targetPosition.y) {
+                        if (dx < self.selectionThreshold()) {
+                            return true;
+                        }
+                    }
+                    return dx < targetDx;
+                });
+            });
+            Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.down, function () {
+                self.moveStateSelection(function (attempt, highlighted) {
+                    return attempt.getPosition().y > highlighted.getPosition().y;
+                }, function (attempt, currBest, highlighted) {
+                    if (!currBest) {
+                        return true;
+                    }
+                    var reference = highlighted.getPosition();
+                    var position = attempt.getPosition();
+                    var dx = Math.abs(position.x - reference.x);
+                    var targetPosition = currBest.getPosition();
+                    var targetDx = Math.abs(targetPosition.x - reference.x);
+                    if (position.y < targetPosition.y) {
+                        if (dx < self.selectionThreshold()) {
+                            return true;
+                        }
+                    }
+                    return dx < targetDx;
+                });
+            });
             Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.undo, function () {
                 // TODO
                 alert("TODO: undo");
             });
+        };
+        StateRenderer.prototype.selectionThreshold = function () {
+            return 2 * Settings_8.Settings.stateRadius;
+        };
+        StateRenderer.prototype.moveStateSelection = function (isViable, isBetterCandidate) {
+            var highlightedState = this.highlightedState;
+            if (highlightedState) {
+                var target = null;
+                for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
+                    var state = _a[_i];
+                    if (isViable(state, highlightedState)) {
+                        if (isBetterCandidate(state, target, highlightedState)) {
+                            target = state;
+                        }
+                    }
+                }
+                if (target) {
+                    this.selectState(target);
+                }
+            }
         };
         return StateRenderer;
     }());

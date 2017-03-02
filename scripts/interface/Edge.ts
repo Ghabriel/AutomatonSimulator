@@ -1,11 +1,6 @@
 import {Settings} from "../Settings"
 import {State} from "./State"
-import {utils} from "../Utils"
-
-interface Point {
-	x: number;
-	y: number;
-}
+import {Point, utils} from "../Utils"
 
 export class Edge {
 	public setOrigin(origin: State): void {
