@@ -1364,6 +1364,15 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
             state.setPosition(100, 100);
             state.setInitial(true);
             this.stateList.push(state);
+            // let a = new State();
+            // a.setPosition(215, 83);
+            // this.stateList.push(a);
+            // let b = new State();
+            // b.setPosition(307, 96);
+            // this.stateList.push(b);
+            // let c = new State();
+            // c.setPosition(384, 70);
+            // this.stateList.push(c);
             // let s = new State();
             // s.setPosition(300, 100);
             // s.setFinal(true);
@@ -1547,10 +1556,8 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                     var dy = Math.abs(position.y - reference.y);
                     var targetPosition = currBest.getPosition();
                     var targetDy = Math.abs(targetPosition.y - reference.y);
-                    if (position.x > targetPosition.x) {
-                        if (dy < self.selectionThreshold()) {
-                            return true;
-                        }
+                    if (dy < self.selectionThreshold()) {
+                        return position.x > targetPosition.x;
                     }
                     return dy < targetDy;
                 });
@@ -1567,10 +1574,8 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                     var dy = Math.abs(position.y - reference.y);
                     var targetPosition = currBest.getPosition();
                     var targetDy = Math.abs(targetPosition.y - reference.y);
-                    if (position.x < targetPosition.x) {
-                        if (dy < self.selectionThreshold()) {
-                            return true;
-                        }
+                    if (dy < self.selectionThreshold()) {
+                        return position.x < targetPosition.x;
                     }
                     return dy < targetDy;
                 });
@@ -1587,10 +1592,8 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                     var dx = Math.abs(position.x - reference.x);
                     var targetPosition = currBest.getPosition();
                     var targetDx = Math.abs(targetPosition.x - reference.x);
-                    if (position.y > targetPosition.y) {
-                        if (dx < self.selectionThreshold()) {
-                            return true;
-                        }
+                    if (dx < self.selectionThreshold()) {
+                        return position.y > targetPosition.y;
                     }
                     return dx < targetDx;
                 });
@@ -1607,10 +1610,8 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                     var dx = Math.abs(position.x - reference.x);
                     var targetPosition = currBest.getPosition();
                     var targetDx = Math.abs(targetPosition.x - reference.x);
-                    if (position.y < targetPosition.y) {
-                        if (dx < self.selectionThreshold()) {
-                            return true;
-                        }
+                    if (dx < self.selectionThreshold()) {
+                        return position.y < targetPosition.y;
                     }
                     return dx < targetDx;
                 });
