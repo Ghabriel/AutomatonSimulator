@@ -1365,10 +1365,10 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
             state.setInitial(true);
             this.stateList.push(state);
             // let a = new State();
-            // a.setPosition(215, 83);
+            // a.setPosition(140, 230);
             // this.stateList.push(a);
             // let b = new State();
-            // b.setPosition(307, 96);
+            // b.setPosition(70, 250);
             // this.stateList.push(b);
             // let c = new State();
             // c.setPosition(384, 70);
@@ -1556,8 +1556,9 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                     var dy = Math.abs(position.y - reference.y);
                     var targetPosition = currBest.getPosition();
                     var targetDy = Math.abs(targetPosition.y - reference.y);
-                    if (dy < self.selectionThreshold()) {
-                        return position.x > targetPosition.x;
+                    var threshold = self.selectionThreshold();
+                    if (dy < threshold) {
+                        return targetDy >= threshold || position.x > targetPosition.x;
                     }
                     return dy < targetDy;
                 });
@@ -1574,8 +1575,9 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                     var dy = Math.abs(position.y - reference.y);
                     var targetPosition = currBest.getPosition();
                     var targetDy = Math.abs(targetPosition.y - reference.y);
-                    if (dy < self.selectionThreshold()) {
-                        return position.x < targetPosition.x;
+                    var threshold = self.selectionThreshold();
+                    if (dy < threshold) {
+                        return targetDy >= threshold || position.x < targetPosition.x;
                     }
                     return dy < targetDy;
                 });
@@ -1592,8 +1594,9 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                     var dx = Math.abs(position.x - reference.x);
                     var targetPosition = currBest.getPosition();
                     var targetDx = Math.abs(targetPosition.x - reference.x);
-                    if (dx < self.selectionThreshold()) {
-                        return position.y > targetPosition.y;
+                    var threshold = self.selectionThreshold();
+                    if (dx < threshold) {
+                        return targetDx >= threshold || position.y > targetPosition.y;
                     }
                     return dx < targetDx;
                 });
@@ -1610,8 +1613,9 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                     var dx = Math.abs(position.x - reference.x);
                     var targetPosition = currBest.getPosition();
                     var targetDx = Math.abs(targetPosition.x - reference.x);
+                    var threshold = self.selectionThreshold();
                     if (dx < self.selectionThreshold()) {
-                        return position.y < targetPosition.y;
+                        return targetDx >= threshold || position.y < targetPosition.y;
                     }
                     return dx < targetDx;
                 });

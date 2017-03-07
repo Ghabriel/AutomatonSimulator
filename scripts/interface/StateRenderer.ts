@@ -16,11 +16,11 @@ export class StateRenderer {
 		this.stateList.push(state);
 
 		// let a = new State();
-		// a.setPosition(215, 83);
+		// a.setPosition(140, 230);
 		// this.stateList.push(a);
 
 		// let b = new State();
-		// b.setPosition(307, 96);
+		// b.setPosition(70, 250);
 		// this.stateList.push(b);
 
 		// let c = new State();
@@ -229,8 +229,9 @@ export class StateRenderer {
 				let targetPosition = currBest.getPosition();
 				let targetDy = Math.abs(targetPosition.y - reference.y);
 
-				if (dy < self.selectionThreshold()) {
-					return position.x > targetPosition.x;
+				let threshold = self.selectionThreshold();
+				if (dy < threshold) {
+					return targetDy >= threshold || position.x > targetPosition.x;
 				}
 
 				return dy < targetDy;
@@ -251,8 +252,9 @@ export class StateRenderer {
 				let targetPosition = currBest.getPosition();
 				let targetDy = Math.abs(targetPosition.y - reference.y);
 
-				if (dy < self.selectionThreshold()) {
-					return position.x < targetPosition.x;
+				let threshold = self.selectionThreshold();
+				if (dy < threshold) {
+					return targetDy >= threshold || position.x < targetPosition.x;
 				}
 
 				return dy < targetDy;
@@ -273,8 +275,9 @@ export class StateRenderer {
 				let targetPosition = currBest.getPosition();
 				let targetDx = Math.abs(targetPosition.x - reference.x);
 
-				if (dx < self.selectionThreshold()) {
-					return position.y > targetPosition.y;
+				let threshold = self.selectionThreshold();
+				if (dx < threshold) {
+					return targetDx >= threshold || position.y > targetPosition.y;
 				}
 
 				return dx < targetDx;
@@ -295,8 +298,9 @@ export class StateRenderer {
 				let targetPosition = currBest.getPosition();
 				let targetDx = Math.abs(targetPosition.x - reference.x);
 
+				let threshold = self.selectionThreshold();
 				if (dx < self.selectionThreshold()) {
-					return position.y < targetPosition.y;
+					return targetDx >= threshold || position.y < targetPosition.y;
 				}
 
 				return dx < targetDx;
