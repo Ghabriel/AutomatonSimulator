@@ -18,7 +18,12 @@ export namespace utils {
 		let result = document.createElement(tag);
 		if (props) {
 			this.foreach(props, function(key, value) {
-				result[key] = value;
+				// TODO: handle other events
+				if (key == "click") {
+					result.addEventListener("click", value);
+				} else {
+					result[key] = value;
+				}
 			});
 		}
 		return result;

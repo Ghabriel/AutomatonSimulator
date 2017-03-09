@@ -78,7 +78,6 @@ define("interface/Renderer", ["require", "exports"], function (require, exports)
         };
         Renderer.prototype.render = function () {
             if (this.node) {
-                // this.node.innerHTML = "";
                 this.onRender();
             }
         };
@@ -105,7 +104,10 @@ define("languages/Portuguese", ["require", "exports"], function (require, export
             PDA: "Autômato de Pilha",
             LBA: "Autômato Linearmente Limitado",
             RECOGNITION: "Reconhecimento",
-            TEST_CASE: "caso de teste"
+            TEST_CASE: "caso de teste",
+            STEP_RECOGNITION: "Reconhecimento passo-a-passo",
+            FAST_RECOGNITION: "Reconhecimento rápido",
+            RESTART_RECOGNITION: "Reiniciar reconhecimento"
         };
     })(portuguese = exports.portuguese || (exports.portuguese = {}));
 });
@@ -127,7 +129,10 @@ define("languages/English", ["require", "exports"], function (require, exports) 
             PDA: "Pushdown Automaton",
             LBA: "Linearly Bounded Automaton",
             RECOGNITION: "Recognition",
-            TEST_CASE: "test case"
+            TEST_CASE: "test case",
+            STEP_RECOGNITION: "Step-by-step recognition",
+            FAST_RECOGNITION: "Fast recognition",
+            RESTART_RECOGNITION: "Restart recognition"
         };
     })(english = exports.english || (exports.english = {}));
 });
@@ -238,8 +243,6 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             this.finalStates = new UnorderedSet_1.UnorderedSet();
             this.currentStates = new UnorderedSet_1.UnorderedSet();
         }
-        // Adds a state to this FA, marking it as the initial state
-        // if there are no other states in this FA.
         FA.prototype.addState = function (name) {
             this.stateList.push(name);
             var index = this.numStates() - 1;
@@ -251,13 +254,8 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             }
             return index;
         };
-        // Removes a state from this FA.
         FA.prototype.removeState = function (index) {
-            // TODO
         };
-        // Adds a transition to this FA. An empty input adds an
-        // epsilon-transition.
-        // TODO: maybe create a different method for adding epsilon-transitions?
         FA.prototype.addTransition = function (source, target, input) {
             var transitions = this.transitions[source];
             if (input == "") {
@@ -270,9 +268,6 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
                 transitions[input].insert(target);
             }
         };
-        // Removes a transition from this FA. An empty input removes an
-        // epsilon-transition.
-        // TODO: maybe create a different method for removing epsilon-transitions?
         FA.prototype.removeTransition = function (source, target, input) {
             var transitions = this.transitions[source];
             if (input == "") {
@@ -282,35 +277,26 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
                 transitions[input].erase(target);
             }
         };
-        // Sets the initial state of this FA.
         FA.prototype.setInitialState = function (index) {
             if (index < this.numStates()) {
                 this.initialState = index;
             }
         };
-        // Unsets the initial state of this FA.
         FA.prototype.unsetInitialState = function () {
             this.initialState = -1;
         };
-        // Returns the index of the initial state.
-        // TODO: maybe this should return a State?
         FA.prototype.getInitialState = function () {
             return this.initialState;
         };
-        // Marks a state as final.
         FA.prototype.addAcceptingState = function (index) {
             this.finalStates.insert(index);
         };
-        // Marks a state as non-final.
         FA.prototype.removeAcceptingState = function (index) {
             this.finalStates.erase(index);
         };
-        // Returns all accepting states
-        // TODO: maybe this should return a State[]?
         FA.prototype.getAcceptingStates = function () {
             return this.finalStates.asList();
         };
-        // Returns a list containing all the states that this FA is in.
         FA.prototype.getStates = function () {
             var result = [];
             var self = this;
@@ -319,13 +305,10 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             });
             return result;
         };
-        // Returns the alphabet of this FA.
         FA.prototype.alphabet = function () {
             var result = [];
-            // TODO
             return result;
         };
-        // Reads a character, triggering state changes to this FA.
         FA.prototype.read = function (input) {
             var newStates = new UnorderedSet_1.UnorderedSet();
             var self = this;
@@ -340,13 +323,11 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             this.expandSpontaneous(newStates);
             this.currentStates = newStates;
         };
-        // Resets this FA, making it return to its initial state.
         FA.prototype.reset = function () {
             this.currentStates.clear();
             this.currentStates.insert(this.initialState);
             this.expandSpontaneous(this.currentStates);
         };
-        // Checks if this FA is in an accepting state.
         FA.prototype.accepts = function () {
             var found = false;
             var self = this;
@@ -358,20 +339,15 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             });
             return found;
         };
-        // Checks if this FA is in an error state, i.e. isn't in any state.
         FA.prototype.error = function () {
             return this.currentStates.size() == 0;
         };
-        // Returns the number of states of this FA.
         FA.prototype.numStates = function () {
             return this.stateList.length;
         };
-        // Returns all states that a given state transitions to
-        // with a given input.
         FA.prototype.transition = function (state, input) {
             return this.transitions[state][input];
         };
-        // Expands all epsilon-transitions into a given state list.
         FA.prototype.expandSpontaneous = function (stateList) {
             var queue = new Queue_1.Queue();
             stateList.forEach(function (state) {
@@ -408,7 +384,12 @@ define("Utils", ["require", "exports", "System"], function (require, exports, Sy
             var result = document.createElement(tag);
             if (props) {
                 this.foreach(props, function (key, value) {
-                    result[key] = value;
+                    if (key == "click") {
+                        result.addEventListener("click", value);
+                    }
+                    else {
+                        result[key] = value;
+                    }
                 });
             }
             return result;
@@ -431,7 +412,6 @@ define("Utils", ["require", "exports", "System"], function (require, exports, Sy
             else if ("button" in event) {
                 return event.button == 2;
             }
-            // Unknown browser
             console.log("[WARNING] Right click events will not work properly in this browser.");
             return false;
         }
@@ -442,7 +422,6 @@ define("Utils", ["require", "exports", "System"], function (require, exports, Sy
         utils.linePath = linePath;
         function line(canvas, x1, y1, x2, y2) {
             var line = canvas.path(this.linePath(x1, y1, x2, y2));
-            // TODO: make the stroke color flexible
             line.attr("stroke", "black");
             return line;
         }
@@ -470,8 +449,6 @@ define("Utils", ["require", "exports", "System"], function (require, exports, Sy
             };
         }
         utils.rotatePoint = rotatePoint;
-        // Checks if two points are equal. If either point is null,
-        // returns false.
         function samePoint(p1, p2) {
             return p1 && p2 && p1.x == p2.x && p1.y == p2.y;
         }
@@ -486,15 +463,62 @@ define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings
     "use strict";
     var initFA;
     (function (initFA) {
-        function init() {
-            var menuList = [];
-            var temp = new Menu_1.Menu(Settings_1.Strings.RECOGNITION);
+        function buildTestCaseInput(container) {
             var input = Utils_1.utils.create("input", {
                 type: "text",
                 placeholder: Settings_1.Strings.TEST_CASE
             });
-            temp.add(input);
-            menuList.push(temp);
+            container.push([input]);
+        }
+        function buildRecognitionControls(container) {
+            var restartEnabled = false;
+            var restartRecognition = Utils_1.utils.create("img", {
+                className: "image_button disabled",
+                src: "images/stop.svg",
+                title: Settings_1.Strings.RESTART_RECOGNITION,
+                click: function () {
+                    if (restartEnabled) {
+                        alert("TODO: restart");
+                    }
+                }
+            });
+            var stepRecognition = Utils_1.utils.create("img", {
+                className: "image_button",
+                src: "images/play.svg",
+                title: Settings_1.Strings.STEP_RECOGNITION,
+                click: function () {
+                    alert("TODO: step-by-step");
+                }
+            });
+            var fastRecognition = Utils_1.utils.create("img", {
+                className: "image_button",
+                src: "images/fastforward.svg",
+                title: Settings_1.Strings.FAST_RECOGNITION,
+                click: function () {
+                    alert("TODO: fast forward");
+                }
+            });
+            container.push([stepRecognition, fastRecognition,
+                restartRecognition]);
+        }
+        function init() {
+            var menuList = [];
+            var menu = new Menu_1.Menu(Settings_1.Strings.RECOGNITION);
+            var rows = [];
+            buildTestCaseInput(rows);
+            buildRecognitionControls(rows);
+            for (var _i = 0, rows_1 = rows; _i < rows_1.length; _i++) {
+                var row = rows_1[_i];
+                var div = Utils_1.utils.create("div", {
+                    className: "row"
+                });
+                for (var _a = 0, row_1 = row; _a < row_1.length; _a++) {
+                    var node = row_1[_a];
+                    div.appendChild(node);
+                }
+                menu.add(div);
+            }
+            menuList.push(menu);
             Settings_1.Settings.machines[Settings_1.Settings.Machine.FA].sidebar = menuList;
         }
         initFA.init = init;
@@ -535,10 +559,6 @@ define("Initializer", ["require", "exports", "lists/InitializerList", "Utils"], 
         function Initializer() {
         }
         Initializer.exec = function () {
-            // if (this.initialized) {
-            // 	return;
-            // }
-            // this.initialized = true;
             this.initSidebars();
         };
         Initializer.initSidebars = function () {
@@ -552,8 +572,6 @@ define("Initializer", ["require", "exports", "lists/InitializerList", "Utils"], 
 });
 define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineList", "Initializer", "Utils"], function (require, exports, lang, automata, Initializer_1, Utils_3) {
     "use strict";
-    // TODO: make it more flexible to add/remove machine types. See how
-    // the internationalization was implemented for reference.
     var Settings;
     (function (Settings) {
         Settings.sidebarID = "sidebar";
@@ -597,15 +615,11 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         };
         Settings.languages = lang;
         Settings.Machine = automata.Machine;
-        // TODO: maybe using a cookie to get the default language is a good idea
         Settings.language = lang.english;
-        // TODO: what if FAs are no longer in the system? Must find a way
-        // to get a valid machine regardless of which ones exist.
         Settings.currentMachine = Settings.Machine.FA;
         Settings.machines = {};
         var firstUpdate = true;
         function update() {
-            // window.FA = FA;
             var machineList = {};
             for (var index in Settings.Machine) {
                 if (Settings.Machine.hasOwnProperty(index) && !isNaN(parseInt(index))) {
@@ -617,11 +631,6 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
             }
             Utils_3.utils.foreach(machineList, function (key, value) {
                 Settings.machines[key] = value;
-                // if (firstUpdate) {
-                // 	machines[key] = value;
-                // } else {
-                // 	machines[key].name = value.name;
-                // }
             });
             firstUpdate = false;
             Initializer_1.Initializer.exec();
@@ -637,8 +646,6 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
     exports.Strings = Settings.language.strings;
     Settings.update();
 });
-// Initializer.exec();
-/// <reference path="../defs/jQuery.d.ts" />
 define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_1, Settings_2, Utils_4) {
     "use strict";
     var Menu = (function (_super) {
@@ -736,13 +743,8 @@ define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"],
     }(Renderer_2.Renderer));
     exports.Table = Table;
 });
-/// <reference path="../defs/filesaver.d.ts" />
 define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/Renderer", "Settings", "Settings", "System", "interface/Table", "Utils"], function (require, exports, Menu_2, Renderer_3, Settings_3, Settings_4, System_2, Table_1, Utils_6) {
     "use strict";
-    // TODO: remake pretty much this entire class (except the internationalization
-    // part, which works well). It's a very new class which already has some weird
-    // bugs and does not seem efficient at all.
-    // (pretty sure I already remade this?)
     var Sidebar = (function (_super) {
         __extends(Sidebar, _super);
         function Sidebar() {
@@ -829,7 +831,6 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             save.type = "button";
             save.value = Settings_4.Strings.SAVE;
             save.addEventListener("click", function () {
-                // TODO
                 var content = "Hello, world!";
                 var blob = new Blob([content], { type: "text/plain; charset=utf-8" });
                 saveAs(blob, "file.txt");
@@ -843,7 +844,6 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             open.type = "button";
             open.value = Settings_4.Strings.OPEN;
             open.addEventListener("click", function () {
-                // TODO
                 alert("Not yet implemented");
             });
             Utils_6.utils.bindShortcut(Settings_3.Settings.shortcuts.open, function () {
@@ -864,8 +864,6 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 button.addEventListener("click", function () {
                     machineButtonMapping[Settings_3.Settings.currentMachine].disabled = false;
                     machineButtonMapping[type].disabled = true;
-                    // Firefox ignores keyboard events triggered while focusing
-                    // a disabled input, so blur it.
                     machineButtonMapping[type].blur();
                     Settings_3.Settings.currentMachine = type;
                     self.loadMachine(type);
@@ -949,7 +947,6 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
                     return false;
                 }
             }
-            // Ignores the key combination if there are extra modifiers being pressed
             for (var _a = 0, modifiers_1 = modifiers; _a < modifiers_1.length; _a++) {
                 var modifier = modifiers_1[_a];
                 if (expectedModifiers.indexOf(modifier) == -1) {
@@ -965,7 +962,6 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
     }());
     exports.System = System;
 });
-/// <reference path="../defs/raphael.d.ts" />
 define("interface/State", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_6, Utils_8) {
     "use strict";
     var State = (function () {
@@ -1067,8 +1063,6 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
             var length = Settings_6.Settings.stateInitialMarkLength;
             var x = this.x - this.radius;
             var y = this.y;
-            // TODO: don't copy and paste
-            // Arrow head
             var arrowLength = Settings_6.Settings.stateInitialMarkHeadLength;
             var alpha = Settings_6.Settings.stateInitialMarkAngle;
             var u = 1 - arrowLength / length;
@@ -1076,7 +1070,6 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 x: x - length + u * length,
                 y: y
             };
-            // The reference points of the arrow head
             var target = { x: x, y: y };
             var p1 = Utils_8.utils.rotatePoint(ref, target, alpha);
             var p2 = Utils_8.utils.rotatePoint(ref, target, -alpha);
@@ -1096,7 +1089,6 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 var length_1 = Settings_6.Settings.stateInitialMarkLength;
                 var x = this.x - this.radius;
                 var y = this.y;
-                // TODO: reduce the copy/pasting of the following branches
                 if (this.arrowParts.length) {
                     var parts = this.arrowParts;
                     var body = parts[0];
@@ -1149,7 +1141,6 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 this.ring = null;
             }
         };
-        // TODO: find a better name for this method
         State.prototype.setVisualPosition = function (x, y) {
             this.body.attr({
                 cx: x,
@@ -1162,7 +1153,6 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 });
             }
             if (this.initial) {
-                // TODO: update initial mark
                 this.renderInitialMark();
             }
             this.setPosition(x, y);
@@ -1182,7 +1172,6 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
             return null;
         };
         State.prototype.drag = function (moveCallback, endCallback) {
-            // TODO: find a new home for all these functions
             var begin = function (x, y, event) {
                 this.ox = this.attr("cx");
                 this.oy = this.attr("cy");
@@ -1215,19 +1204,10 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
     "use strict";
     var Edge = (function () {
         function Edge() {
-            // The state that this edge comes from
             this.origin = null;
-            // The state that this edge points to
             this.target = null;
-            // The position where the origin state was when we last rendered
-            // this edge. Used to optimize rendering when both the origin and
-            // the target didn't move since the previous rendering.
             this.prevOriginPosition = null;
-            // The position where the target state was when we last rendered
-            // this edge. See prevOriginPosition for more context.
             this.prevTargetPosition = null;
-            // If this edge is not yet completed, it might point to
-            // a position in space rather than a state
             this.virtualTarget = null;
             this.body = null;
             this.head = [];
@@ -1252,8 +1232,6 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 && Utils_9.utils.samePoint(this.prevOriginPosition, this.origin.getPosition());
             var preservedTarget = this.target
                 && Utils_9.utils.samePoint(this.prevTargetPosition, this.target.getPosition());
-            // Don't re-render this edge if neither the origin nor the target
-            // states move since we last rendered this edge.
             if (!preservedOrigin || !preservedTarget) {
                 this.renderBody(canvas);
                 this.renderHead(canvas);
@@ -1287,9 +1265,6 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                     };
                     var dx_1 = target.x - origin.x;
                     var dy_1 = target.y - origin.y;
-                    // The offsets are necessary to ensure that mouse events are
-                    // still correctly fired, since not using them makes the edge
-                    // appear directly below the cursor.
                     target.x = origin.x + dx_1 * 0.98;
                     target.y = origin.y + dy_1 * 0.98;
                 }
@@ -1307,18 +1282,12 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             var cos = Math.cos(angle);
             var offsetX = Settings_7.Settings.stateRadius * cos;
             var offsetY = Settings_7.Settings.stateRadius * sin;
-            // Makes the edge start at the border of the state rather than
-            // at its center.
             origin.x += offsetX;
             origin.y += offsetY;
             if (this.target) {
-                // Adjusts the edge so that it points to the border of the state
-                // rather than its center.
                 target.x -= offsetX;
                 target.y -= offsetY;
             }
-            // TODO: handle self-edge correctly
-            // TODO: handle cases where two connected states are very close to each other
             if (!this.body) {
                 this.body = Utils_9.utils.line(canvas, origin.x, origin.y, target.x, target.y);
             }
@@ -1328,15 +1297,12 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
         };
         Edge.prototype.renderHead = function (canvas) {
             if (!this.target) {
-                // Don't render the head of the arrow if there's no target
-                // TODO: change this behavior?
                 return;
             }
             var origin = this.origin.getPosition();
             var target = this.target.getPosition();
             var dx = target.x - origin.x;
             var dy = target.y - origin.y;
-            // TODO: don't copy and paste
             var angle = Math.atan2(dy, dx);
             var sin = Math.sin(angle);
             var cos = Math.cos(angle);
@@ -1346,7 +1312,6 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             target.y -= offsetY;
             dx -= offsetX;
             dy -= offsetY;
-            // Arrow head
             var arrowLength = Settings_7.Settings.edgeArrowLength;
             var alpha = Settings_7.Settings.edgeArrowAngle;
             var edgeLength = Math.sqrt(dx * dx + dy * dy);
@@ -1355,7 +1320,6 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 x: origin.x + u * dx,
                 y: origin.y + u * dy
             };
-            // The reference points of the arrow head
             var p1 = Utils_9.utils.rotatePoint(ref, target, alpha);
             var p2 = Utils_9.utils.rotatePoint(ref, target, -alpha);
             if (!this.head.length) {
@@ -1378,7 +1342,6 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
             this.canvas = null;
             this.node = null;
             this.stateList = [];
-            // TODO: find a better data structure than a simple array
             this.edgeList = [];
             this.highlightedState = null;
             this.initialState = null;
@@ -1391,26 +1354,6 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
             var state = new State_1.State();
             state.setPosition(100, 100);
             this.stateList.push(state);
-            // let a = new State();
-            // a.setPosition(140, 230);
-            // this.stateList.push(a);
-            // let b = new State();
-            // b.setPosition(70, 250);
-            // this.stateList.push(b);
-            // let c = new State();
-            // c.setPosition(384, 70);
-            // this.stateList.push(c);
-            // let s = new State();
-            // s.setPosition(300, 100);
-            // s.setFinal(true);
-            // this.stateList.push(s);
-            // let edge = new Edge();
-            // edge.setOrigin(state);
-            // edge.setTarget(s);
-            // edge.render(this.canvas);
-            // this.edgeList.push(edge);
-            // this.selectState(state);
-            // TODO: separate left click/right click dragging handlers
             for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
                 var state_1 = _a[_i];
                 state_1.render(this.canvas);
@@ -1445,7 +1388,6 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
             state.render(this.canvas);
         };
         StateRenderer.prototype.bindStateEvents = function (state) {
-            // TODO: separate left click/right click dragging handlers
             var canvas = this.canvas;
             var self = this;
             state.drag(function () {
@@ -1581,7 +1523,6 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                     self.stateList = [];
                 }
             });
-            // TODO: try to reduce the redundancy
             Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.left, function () {
                 self.moveStateSelection(function (attempt, highlighted) {
                     return attempt.getPosition().x < highlighted.getPosition().x;
@@ -1659,7 +1600,6 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                 });
             });
             Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.undo, function () {
-                // TODO
                 alert("TODO: undo");
             });
         };
@@ -1687,8 +1627,6 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
     }());
     exports.StateRenderer = StateRenderer;
 });
-/// <reference path="../defs/raphael.d.ts" />
-/// <reference path="../defs/jQuery.d.ts" />
 define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interface/StateRenderer"], function (require, exports, Renderer_4, StateRenderer_1) {
     "use strict";
     var Mainbar = (function (_super) {
@@ -1706,7 +1644,6 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
             var canvas = this.canvas;
             if (canvas) {
                 var node = $(this.node);
-                // allows the parent node to adjust
                 canvas.setSize(50, 50);
                 var width = node.width();
                 var height = node.height() - 10;
@@ -1714,7 +1651,6 @@ define("interface/Mainbar", ["require", "exports", "interface/Renderer", "interf
             }
         };
         Mainbar.prototype.onBind = function () {
-            // 0x0 is a placeholder size: resizeCanvas() calculates the true size.
             this.canvas = Raphael(this.node, 0, 0);
             this.resizeCanvas();
             this.stateRenderer = new StateRenderer_1.StateRenderer(this.canvas, this.node);
@@ -1753,7 +1689,6 @@ define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "
     }());
     exports.UI = UI;
 });
-/// <reference path="defs/jQuery.d.ts" />
 define("main", ["require", "exports", "System", "interface/UI"], function (require, exports, System_4, UI_1) {
     "use strict";
     $(document).ready(function () {

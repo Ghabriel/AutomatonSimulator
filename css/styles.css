@@ -78,3 +78,20 @@ svg {
 .file_manip_btn:not(:last-child) {
 	margin-right: 5px;
 }
+
+div.row {
+	margin-bottom: 5px;
+}
+
+.image_button {
+	cursor: pointer;
+	max-height: 32px;
+	max-width: 32px;
+	margin-right: 5px;
+	vertical-align: middle;
+}
+
+.image_button.disabled {
+	cursor: default;
+	opacity: 0.5;
+}

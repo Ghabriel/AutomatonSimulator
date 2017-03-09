@@ -23,7 +23,7 @@ LANGFILES    :=$(basename $(notdir $(wildcard $(TS)/$(LANGFOLDER)/*.ts)))
 all: dirs libs languages
 	@echo "[.ts ⟶ .js]"
 ifneq ("$(TSFILES)", "")
-	@tsc --module amd --outFile $(JS)/$(JSBASE) $(TSFILES)
+	@tsc --removeComments --module amd --outFile $(JS)/$(JSBASE) $(TSFILES)
 else
 	@touch $(JS)/$(JSBASE)
 	@cat /dev/null > $(JS)/$(JSBASE)
