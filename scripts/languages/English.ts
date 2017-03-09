@@ -14,8 +14,8 @@ export namespace english {
 		LBA: "Linearly Bounded Automaton",
 		RECOGNITION: "Recognition",
 		TEST_CASE: "test case",
-		STEP_RECOGNITION: "Step-by-step recognition",
 		FAST_RECOGNITION: "Fast recognition",
-		RESTART_RECOGNITION: "Restart recognition",
+		STEP_RECOGNITION: "Step-by-step recognition",
+		STOP_RECOGNITION: "Stop step-by-step recognition",
 	};
 }

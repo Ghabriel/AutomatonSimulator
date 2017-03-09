@@ -3,62 +3,6 @@ import {Settings, Strings} from "../Settings"
 import {utils} from "../Utils"
 
 export namespace initFA {
-	function buildTestCaseInput(container: HTMLElement[][]) {
-		let input = <HTMLInputElement> utils.create("input", {
-			type: "text",
-			placeholder: Strings.TEST_CASE
-		});
-		container.push([input]);
-	}
-
-	function buildRecognitionControls(container: HTMLElement[][]) {
-		let restartEnabled = false;
-
-		// TODO: differenciate "next step of current recognition" vs
-		// "start step-by-step of new recognition"
-
-		// TODO: find an icon that matches "restart"
-
-		let restartRecognition = <HTMLImageElement> utils.create("img", {
-			className: "image_button disabled",
-			src: "images/stop.svg",
-			title: Strings.RESTART_RECOGNITION,
-			click: function() {
-				if (restartEnabled) {
-					// TODO
-					alert("TODO: restart");
-				}
-			}
-		});
-
-		let stepRecognition = <HTMLImageElement> utils.create("img", {
-			className: "image_button",
-			src: "images/play.svg",
-			title: Strings.STEP_RECOGNITION,
-			click: function() {
-				// TODO
-				alert("TODO: step-by-step");
-
-				// restartEnabled = !restartEnabled;
-				// let method = restartEnabled ? "remove" : "add";
-				// restartRecognition.classList[method]("disabled");
-			}
-		});
-
-		let fastRecognition = <HTMLImageElement> utils.create("img", {
-			className: "image_button",
-			src: "images/fastforward.svg",
-			title: Strings.FAST_RECOGNITION,
-			click: function() {
-				// TODO
-				alert("TODO: fast forward");
-			}
-		});
-
-		container.push([stepRecognition, fastRecognition,
-						restartRecognition]);
-	}
-
 	export function init() {
 		let menuList: Menu[] = [];
 
@@ -81,5 +25,85 @@ export namespace initFA {
 		menuList.push(menu);
 
 		Settings.machines[Settings.Machine.FA].sidebar = menuList;
+	}
+
+	let testCaseInput: HTMLInputElement = null;
+
+	function testCase(): string {
+		return testCaseInput.value;
+	}
+
+	function buildTestCaseInput(container: HTMLElement[][]) {
+		let input = <HTMLInputElement> utils.create("input", {
+			type: "text",
+			placeholder: Strings.TEST_CASE
+		});
+		container.push([input]);
+		testCaseInput = input;
+	}
+
+	function buildRecognitionControls(container: HTMLElement[][]) {
+		let fastForwardEnabled = true;
+		let stopEnabled = false;
+		// TODO: move this to Settings
+		const disabledClass = "disabled";
+
+		let fastRecognition = <HTMLImageElement> utils.create("img", {
+			className: "image_button",
+			src: "images/fastforward.svg",
+			title: Strings.FAST_RECOGNITION,
+			click: function() {
+				if (fastForwardEnabled) {
+					// TODO
+					alert("TODO: fast forward");
+				}
+			}
+		});
+
+		let stopRecognition = <HTMLImageElement> utils.create("img", {
+			className: "image_button " + disabledClass,
+			src: "images/stop.svg",
+			title: Strings.STOP_RECOGNITION
+		});
+
+		stopRecognition.addEventListener("click", function() {
+			if (stopEnabled) {
+				// TODO
+				// alert("TODO: stop");
+
+				fastForwardEnabled = true;
+				fastRecognition.classList.remove(disabledClass);
+
+				testCaseInput.disabled = false;
+
+				stopEnabled = false;
+				stopRecognition.classList.add(disabledClass);
+			}
+		});
+
+		let stepRecognition = <HTMLImageElement> utils.create("img", {
+			className: "image_button",
+			src: "images/play.svg",
+			title: Strings.STEP_RECOGNITION,
+			click: function() {
+				// TODO
+				// alert("TODO: step-by-step");
+
+				fastForwardEnabled = false;
+				fastRecognition.classList.add(disabledClass);
+
+				testCaseInput.disabled = true;
+
+				stopEnabled = true;
+				stopRecognition.classList.remove(disabledClass);
+
+				// restartEnabled = !restartEnabled;
+				// let method = restartEnabled ? "remove" : "add";
+				// restartRecognition.classList[method]("disabled");
+			}
+		});
+
+		container.push([fastRecognition, stepRecognition,
+						stopRecognition]);
 	}
 }

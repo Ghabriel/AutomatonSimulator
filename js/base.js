@@ -105,9 +105,9 @@ define("languages/Portuguese", ["require", "exports"], function (require, export
             LBA: "Autômato Linearmente Limitado",
             RECOGNITION: "Reconhecimento",
             TEST_CASE: "caso de teste",
-            STEP_RECOGNITION: "Reconhecimento passo-a-passo",
             FAST_RECOGNITION: "Reconhecimento rápido",
-            RESTART_RECOGNITION: "Reiniciar reconhecimento"
+            STEP_RECOGNITION: "Reconhecimento passo-a-passo",
+            STOP_RECOGNITION: "Parar reconhecimento passo-a-passo"
         };
     })(portuguese = exports.portuguese || (exports.portuguese = {}));
 });
@@ -130,9 +130,9 @@ define("languages/English", ["require", "exports"], function (require, exports) 
             LBA: "Linearly Bounded Automaton",
             RECOGNITION: "Recognition",
             TEST_CASE: "test case",
-            STEP_RECOGNITION: "Step-by-step recognition",
             FAST_RECOGNITION: "Fast recognition",
-            RESTART_RECOGNITION: "Restart recognition"
+            STEP_RECOGNITION: "Step-by-step recognition",
+            STOP_RECOGNITION: "Stop step-by-step recognition"
         };
     })(english = exports.english || (exports.english = {}));
 });
@@ -463,44 +463,6 @@ define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings
     "use strict";
     var initFA;
     (function (initFA) {
-        function buildTestCaseInput(container) {
-            var input = Utils_1.utils.create("input", {
-                type: "text",
-                placeholder: Settings_1.Strings.TEST_CASE
-            });
-            container.push([input]);
-        }
-        function buildRecognitionControls(container) {
-            var restartEnabled = false;
-            var restartRecognition = Utils_1.utils.create("img", {
-                className: "image_button disabled",
-                src: "images/stop.svg",
-                title: Settings_1.Strings.RESTART_RECOGNITION,
-                click: function () {
-                    if (restartEnabled) {
-                        alert("TODO: restart");
-                    }
-                }
-            });
-            var stepRecognition = Utils_1.utils.create("img", {
-                className: "image_button",
-                src: "images/play.svg",
-                title: Settings_1.Strings.STEP_RECOGNITION,
-                click: function () {
-                    alert("TODO: step-by-step");
-                }
-            });
-            var fastRecognition = Utils_1.utils.create("img", {
-                className: "image_button",
-                src: "images/fastforward.svg",
-                title: Settings_1.Strings.FAST_RECOGNITION,
-                click: function () {
-                    alert("TODO: fast forward");
-                }
-            });
-            container.push([stepRecognition, fastRecognition,
-                restartRecognition]);
-        }
         function init() {
             var menuList = [];
             var menu = new Menu_1.Menu(Settings_1.Strings.RECOGNITION);
@@ -522,6 +484,61 @@ define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings
             Settings_1.Settings.machines[Settings_1.Settings.Machine.FA].sidebar = menuList;
         }
         initFA.init = init;
+        var testCaseInput = null;
+        function testCase() {
+            return testCaseInput.value;
+        }
+        function buildTestCaseInput(container) {
+            var input = Utils_1.utils.create("input", {
+                type: "text",
+                placeholder: Settings_1.Strings.TEST_CASE
+            });
+            container.push([input]);
+            testCaseInput = input;
+        }
+        function buildRecognitionControls(container) {
+            var fastForwardEnabled = true;
+            var stopEnabled = false;
+            var disabledClass = "disabled";
+            var fastRecognition = Utils_1.utils.create("img", {
+                className: "image_button",
+                src: "images/fastforward.svg",
+                title: Settings_1.Strings.FAST_RECOGNITION,
+                click: function () {
+                    if (fastForwardEnabled) {
+                        alert("TODO: fast forward");
+                    }
+                }
+            });
+            var stopRecognition = Utils_1.utils.create("img", {
+                className: "image_button " + disabledClass,
+                src: "images/stop.svg",
+                title: Settings_1.Strings.STOP_RECOGNITION
+            });
+            stopRecognition.addEventListener("click", function () {
+                if (stopEnabled) {
+                    fastForwardEnabled = true;
+                    fastRecognition.classList.remove(disabledClass);
+                    testCaseInput.disabled = false;
+                    stopEnabled = false;
+                    stopRecognition.classList.add(disabledClass);
+                }
+            });
+            var stepRecognition = Utils_1.utils.create("img", {
+                className: "image_button",
+                src: "images/play.svg",
+                title: Settings_1.Strings.STEP_RECOGNITION,
+                click: function () {
+                    fastForwardEnabled = false;
+                    fastRecognition.classList.add(disabledClass);
+                    testCaseInput.disabled = true;
+                    stopEnabled = true;
+                    stopRecognition.classList.remove(disabledClass);
+                }
+            });
+            container.push([fastRecognition, stepRecognition,
+                stopRecognition]);
+        }
     })(initFA = exports.initFA || (exports.initFA = {}));
 });
 define("initializers/initPDA", ["require", "exports"], function (require, exports) {
