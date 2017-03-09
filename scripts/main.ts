@@ -8,6 +8,9 @@ $(document).ready(function() {
 	ui.render();
 
 	document.body.addEventListener("keydown", function(e) {
-		return System.keyEvent(e);
+		// TODO: make this look better
+		if (document.activeElement.tagName.toLowerCase() != "input") {
+			return System.keyEvent(e);
+		}
 	});
 });

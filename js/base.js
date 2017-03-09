@@ -499,7 +499,7 @@ define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings
         function buildRecognitionControls(container) {
             var fastForwardEnabled = true;
             var stopEnabled = false;
-            var disabledClass = "disabled";
+            var disabledClass = Settings_1.Settings.disabledButtonClass;
             var fastRecognition = Utils_1.utils.create("img", {
                 className: "image_button",
                 src: "images/fastforward.svg",
@@ -593,6 +593,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
     (function (Settings) {
         Settings.sidebarID = "sidebar";
         Settings.mainbarID = "mainbar";
+        Settings.disabledButtonClass = "disabled";
         Settings.slideInterval = 300;
         Settings.machineSelRows = 3;
         Settings.machineSelColumns = 1;
@@ -1712,7 +1713,9 @@ define("main", ["require", "exports", "System", "interface/UI"], function (requi
         var ui = new UI_1.UI();
         ui.render();
         document.body.addEventListener("keydown", function (e) {
-            return System_4.System.keyEvent(e);
+            if (document.activeElement.tagName.toLowerCase() != "input") {
+                return System_4.System.keyEvent(e);
+            }
         });
     });
 });

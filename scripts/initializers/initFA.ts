@@ -45,8 +45,7 @@ export namespace initFA {
 	function buildRecognitionControls(container: HTMLElement[][]) {
 		let fastForwardEnabled = true;
 		let stopEnabled = false;
-		// TODO: move this to Settings
-		const disabledClass = "disabled";
+		const disabledClass = Settings.disabledButtonClass;
 
 		let fastRecognition = <HTMLImageElement> utils.create("img", {
 			className: "image_button",

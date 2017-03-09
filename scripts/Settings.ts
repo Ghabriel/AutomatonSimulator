@@ -18,6 +18,8 @@ export namespace Settings {
 	export const sidebarID = "sidebar";
 	export const mainbarID = "mainbar";
 
+	export const disabledButtonClass = "disabled";
+
 	export const slideInterval = 300;
 	export const machineSelRows = 3;
 	export const machineSelColumns = 1;
