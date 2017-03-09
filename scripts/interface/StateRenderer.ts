@@ -12,7 +12,6 @@ export class StateRenderer {
 	public render(): void {
 		let state = new State();
 		state.setPosition(100, 100);
-		state.setInitial(true);
 		this.stateList.push(state);
 
 		// let a = new State();
@@ -148,7 +147,19 @@ export class StateRenderer {
 		utils.bindShortcut(Settings.shortcuts.toggleInitial, function() {
 			let highlightedState = self.highlightedState;
 			if (highlightedState) {
-				highlightedState.setInitial(!highlightedState.isInitial());
+				if (highlightedState == self.initialState) {
+					highlightedState.setInitial(false);
+					self.initialState = null;
+				} else {
+					if (self.initialState) {
+						self.initialState.setInitial(false);
+						self.initialState.render(canvas);
+					}
+
+					highlightedState.setInitial(true);
+					self.initialState = highlightedState;
+				}
+
 				highlightedState.render(canvas);
 			}
 		});
@@ -343,6 +354,7 @@ export class StateRenderer {
 	// TODO: find a better data structure than a simple array
 	private edgeList: Edge[] = [];
 	private highlightedState: State = null;
+	private initialState: State = null;
 	private edgeMode: boolean = false;
 	private currentEdge: Edge = null;
 }

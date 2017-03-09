@@ -24,8 +24,27 @@ export class Edge {
 	}
 
 	public render(canvas: RaphaelPaper): void {
-		this.renderBody(canvas);
-		this.renderHead(canvas);
+		let preservedOrigin = this.origin
+						   && utils.samePoint(this.prevOriginPosition,
+											  this.origin.getPosition());
+		let preservedTarget = this.target
+						   && utils.samePoint(this.prevTargetPosition,
+											  this.target.getPosition());
+
+		// Don't re-render this edge if neither the origin nor the target
+		// states move since we last rendered this edge.
+		if (!preservedOrigin || !preservedTarget) {
+			this.renderBody(canvas);
+			this.renderHead(canvas);
+
+			if (this.origin) {
+				this.prevOriginPosition = this.origin.getPosition();
+			}
+
+			if (this.target) {
+				this.prevTargetPosition = this.target.getPosition();
+			}
+		}
 	}
 
 	public remove(): void {
@@ -163,6 +182,15 @@ export class Edge {
 
 	// The state that this edge points to
 	private target: State = null;
+
+	// The position where the origin state was when we last rendered
+	// this edge. Used to optimize rendering when both the origin and
+	// the target didn't move since the previous rendering.
+	private prevOriginPosition: Point = null;
+
+	// The position where the target state was when we last rendered
+	// this edge. See prevOriginPosition for more context.
+	private prevTargetPosition: Point = null;
 
 	// If this edge is not yet completed, it might point to
 	// a position in space rather than a state

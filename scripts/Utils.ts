@@ -82,6 +82,12 @@ export namespace utils {
 		};
 	}
 
+	// Checks if two points are equal. If either point is null,
+	// returns false.
+	export function samePoint(p1: Point, p2: Point) {
+		return p1 && p2 && p1.x == p2.x && p1.y == p2.y;
+	}
+
 	export function bindShortcut(keys: string[], callback: () => void): void {
 		System.addKeyObserver(keys, callback);
 	}

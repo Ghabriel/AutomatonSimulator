@@ -470,6 +470,12 @@ define("Utils", ["require", "exports", "System"], function (require, exports, Sy
             };
         }
         utils.rotatePoint = rotatePoint;
+        // Checks if two points are equal. If either point is null,
+        // returns false.
+        function samePoint(p1, p2) {
+            return p1 && p2 && p1.x == p2.x && p1.y == p2.y;
+        }
+        utils.samePoint = samePoint;
         function bindShortcut(keys, callback) {
             System_1.System.addKeyObserver(keys, callback);
         }
@@ -1213,6 +1219,13 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             this.origin = null;
             // The state that this edge points to
             this.target = null;
+            // The position where the origin state was when we last rendered
+            // this edge. Used to optimize rendering when both the origin and
+            // the target didn't move since the previous rendering.
+            this.prevOriginPosition = null;
+            // The position where the target state was when we last rendered
+            // this edge. See prevOriginPosition for more context.
+            this.prevTargetPosition = null;
             // If this edge is not yet completed, it might point to
             // a position in space rather than a state
             this.virtualTarget = null;
@@ -1235,8 +1248,22 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             this.virtualTarget = target;
         };
         Edge.prototype.render = function (canvas) {
-            this.renderBody(canvas);
-            this.renderHead(canvas);
+            var preservedOrigin = this.origin
+                && Utils_9.utils.samePoint(this.prevOriginPosition, this.origin.getPosition());
+            var preservedTarget = this.target
+                && Utils_9.utils.samePoint(this.prevTargetPosition, this.target.getPosition());
+            // Don't re-render this edge if neither the origin nor the target
+            // states move since we last rendered this edge.
+            if (!preservedOrigin || !preservedTarget) {
+                this.renderBody(canvas);
+                this.renderHead(canvas);
+                if (this.origin) {
+                    this.prevOriginPosition = this.origin.getPosition();
+                }
+                if (this.target) {
+                    this.prevTargetPosition = this.target.getPosition();
+                }
+            }
         };
         Edge.prototype.remove = function () {
             if (this.body) {
@@ -1354,6 +1381,7 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
             // TODO: find a better data structure than a simple array
             this.edgeList = [];
             this.highlightedState = null;
+            this.initialState = null;
             this.edgeMode = false;
             this.currentEdge = null;
             this.canvas = canvas;
@@ -1362,7 +1390,6 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
         StateRenderer.prototype.render = function () {
             var state = new State_1.State();
             state.setPosition(100, 100);
-            state.setInitial(true);
             this.stateList.push(state);
             // let a = new State();
             // a.setPosition(140, 230);
@@ -1484,7 +1511,18 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
             Utils_10.utils.bindShortcut(Settings_8.Settings.shortcuts.toggleInitial, function () {
                 var highlightedState = self.highlightedState;
                 if (highlightedState) {
-                    highlightedState.setInitial(!highlightedState.isInitial());
+                    if (highlightedState == self.initialState) {
+                        highlightedState.setInitial(false);
+                        self.initialState = null;
+                    }
+                    else {
+                        if (self.initialState) {
+                            self.initialState.setInitial(false);
+                            self.initialState.render(canvas);
+                        }
+                        highlightedState.setInitial(true);
+                        self.initialState = highlightedState;
+                    }
                     highlightedState.render(canvas);
                 }
             });
