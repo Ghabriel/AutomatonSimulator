@@ -270,7 +270,9 @@ export class State {
 			let dy = this.attr("cy") - this.oy;
 			let distanceSquared = dx * dx + dy * dy;
 			let accepted = endCallback.call(this, distanceSquared, event);
-			if (!accepted) {
+			// TODO: check if we really shouldn't call
+			// moveCallback when dx = dy = 0
+			if (!accepted && (dx != 0 || dy != 0)) {
 				self.setVisualPosition(this.ox, this.oy);
 				moveCallback.call(this, event);
 			}

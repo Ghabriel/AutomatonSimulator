@@ -65,6 +65,10 @@ export namespace utils {
 		return angle * Math.PI / 180;
 	}
 
+	export function toDegrees(angle: number) {
+		return angle * 180 / Math.PI;
+	}
+
 	export function rotatePoint(point: Point,
 								center: Point,
 								angle: number) {

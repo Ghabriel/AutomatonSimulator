@@ -430,6 +430,10 @@ define("Utils", ["require", "exports", "System"], function (require, exports, Sy
             return angle * Math.PI / 180;
         }
         utils.toRadians = toRadians;
+        function toDegrees(angle) {
+            return angle * 180 / Math.PI;
+        }
+        utils.toDegrees = toDegrees;
         function rotatePoint(point, center, angle) {
             var sin = Math.sin(angle);
             var cos = Math.cos(angle);
@@ -1206,7 +1210,7 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 var dy = this.attr("cy") - this.oy;
                 var distanceSquared = dx * dx + dy * dy;
                 var accepted = endCallback.call(this, distanceSquared, event);
-                if (!accepted) {
+                if (!accepted && (dx != 0 || dy != 0)) {
                     self.setVisualPosition(this.ox, this.oy);
                     moveCallback.call(this, event);
                 }
@@ -1227,6 +1231,9 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             this.prevOriginPosition = null;
             this.prevTargetPosition = null;
             this.virtualTarget = null;
+            this.textChanged = true;
+            this.text = "hello";
+            this.textContainer = null;
             this.body = null;
             this.head = [];
         }
@@ -1245,6 +1252,9 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
         Edge.prototype.setVirtualTarget = function (target) {
             this.virtualTarget = target;
         };
+        Edge.prototype.setText = function (text) {
+            this.text = text;
+        };
         Edge.prototype.render = function (canvas) {
             var preservedOrigin = this.origin
                 && Utils_9.utils.samePoint(this.prevOriginPosition, this.origin.getPosition());
@@ -1259,6 +1269,9 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 if (this.target) {
                     this.prevTargetPosition = this.target.getPosition();
                 }
+            }
+            if (this.target && (!preservedOrigin || !preservedTarget || this.textChanged)) {
+                this.renderText(canvas);
             }
         };
         Edge.prototype.remove = function () {
@@ -1347,6 +1360,24 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             else {
                 this.head[0].attr("path", Utils_9.utils.linePath(p1.x, p1.y, target.x, target.y));
                 this.head[1].attr("path", Utils_9.utils.linePath(p2.x, p2.y, target.x, target.y));
+            }
+        };
+        Edge.prototype.renderText = function (canvas) {
+            var origin = this.origin.getPosition();
+            var target = this.target.getPosition();
+            var x = (origin.x + target.x) / 2;
+            var y = (origin.y + target.y) / 2;
+            if (!this.textContainer) {
+                this.textContainer = canvas.text(x, y, this.text);
+                this.textContainer.attr("font-family", Settings_7.Settings.edgeTextFontFamily);
+                this.textContainer.attr("font-size", Settings_7.Settings.edgeTextFontSize);
+            }
+            else {
+                this.textContainer.attr("x", x);
+                this.textContainer.attr("y", y);
+                if (this.textChanged) {
+                    this.textContainer.attr("text", this.text);
+                }
             }
         };
         return Edge;

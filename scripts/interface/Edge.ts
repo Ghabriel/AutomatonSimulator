@@ -23,6 +23,10 @@ export class Edge {
 		this.virtualTarget = target;
 	}
 
+	public setText(text: string): void {
+		this.text = text;
+	}
+
 	public render(canvas: RaphaelPaper): void {
 		let preservedOrigin = this.origin
 						   && utils.samePoint(this.prevOriginPosition,
@@ -32,7 +36,7 @@ export class Edge {
 											  this.target.getPosition());
 
 		// Don't re-render this edge if neither the origin nor the target
-		// states move since we last rendered this edge.
+		// states have moved since we last rendered this edge.
 		if (!preservedOrigin || !preservedTarget) {
 			this.renderBody(canvas);
 			this.renderHead(canvas);
@@ -44,6 +48,14 @@ export class Edge {
 			if (this.target) {
 				this.prevTargetPosition = this.target.getPosition();
 			}
+		}
+
+		// Only re-renders this edge's text if either the text has
+		// changed or if the origin/target states have moved.
+		// Also, don't render any text if this edge is incomplete
+		// (i.e it doesn't have a target state yet)
+		if (this.target && (!preservedOrigin || !preservedTarget || this.textChanged)) {
+			this.renderText(canvas);
 		}
 	}
 
@@ -177,6 +189,31 @@ export class Edge {
 		}
 	}
 
+	private renderText(canvas: RaphaelPaper): void {
+		// We can assume that there's a target state, since
+		// otherwise we wouldn't be rendering the text.
+		let origin = this.origin.getPosition();
+		let target = this.target.getPosition();
+		let x = (origin.x + target.x) / 2;
+		let y = (origin.y + target.y) / 2;
+
+		if (!this.textContainer) {
+			this.textContainer = canvas.text(x, y, this.text);
+			this.textContainer.attr("font-family", Settings.edgeTextFontFamily);
+			this.textContainer.attr("font-size", Settings.edgeTextFontSize);
+		} else {
+			this.textContainer.attr("x", x);
+			this.textContainer.attr("y", y);
+			if (this.textChanged) {
+				this.textContainer.attr("text", this.text);
+			}
+			// this.textContainer.transform("");
+		}
+
+		// let angle = Math.atan2(target.y - origin.y, target.x - origin.x);
+		// this.textContainer.rotate(utils.toDegrees(angle));
+	}
+
 	// The state that this edge comes from
 	private origin: State = null;
 
@@ -196,6 +233,14 @@ export class Edge {
 	// a position in space rather than a state
 	private virtualTarget: Point = null;
 
+	// Flag used to check if this edge's text has changed
+	// since the last rendering of this edge.
+	private textChanged: boolean = true;
+
+	// The text written in this edge
+	private text: string = "hello";
+
+	private textContainer: RaphaelElement = null;
 	private body: RaphaelElement = null;
 	private head: RaphaelElement[] = [];
 }
