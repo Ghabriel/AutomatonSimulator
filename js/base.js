@@ -1204,8 +1204,8 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
             var moveController = 0;
             var callbackFrequency = 3;
             var move = function (dx, dy, x, y, event) {
+                self.setVisualPosition(this.ox + dx, this.oy + dy);
                 if (moveController == 0) {
-                    self.setVisualPosition(this.ox + dx, this.oy + dy);
                     moveCallback.call(this, event);
                 }
                 moveController = (moveController + 1) % callbackFrequency;
@@ -1238,7 +1238,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             this.prevTargetPosition = null;
             this.virtualTarget = null;
             this.textChanged = true;
-            this.text = "a, A → ε";
+            this.text = "";
             this.body = null;
             this.head = [];
             this.textContainer = null;
@@ -1424,8 +1424,60 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
             var state = new State_1.State();
             state.setPosition(350, 300);
             this.stateList.push(state);
-            for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
-                var state_1 = _a[_i];
+            var groups = [
+                [100, 300],
+                [350, 50],
+                [600, 300],
+                [350, 550]
+            ];
+            var i = 0;
+            for (var _i = 0, groups_1 = groups; _i < groups_1.length; _i++) {
+                var group = groups_1[_i];
+                var s = new State_1.State();
+                s.setPosition(group[0], group[1]);
+                this.stateList.push(s);
+                var e = new Edge_1.Edge();
+                if (i == 1) {
+                    e.setOrigin(s);
+                    e.setTarget(state);
+                }
+                else {
+                    e.setOrigin(state);
+                    e.setTarget(s);
+                }
+                i++;
+                this.edgeList.push(e);
+            }
+            this.stateList[2].setInitial(true);
+            this.initialState = this.stateList[2];
+            this.stateList[this.stateList.length - 1].setFinal(true);
+            this.edgeList[0].setText("b");
+            this.edgeList[1].setText("a");
+            this.edgeList[2].setText("c");
+            this.edgeList[3].setText("d");
+            var e1 = new Edge_1.Edge();
+            e1.setOrigin(this.stateList[1]);
+            e1.setTarget(this.stateList[4]);
+            e1.setText("b");
+            this.edgeList.push(e1);
+            var e2 = new Edge_1.Edge();
+            e2.setOrigin(this.stateList[3]);
+            e2.setTarget(this.stateList[4]);
+            e2.setText("c");
+            this.edgeList.push(e2);
+            var e3 = new Edge_1.Edge();
+            e3.setOrigin(this.stateList[1]);
+            e3.setTarget(this.stateList[2]);
+            e3.setText("a");
+            this.edgeList.push(e3);
+            var e4 = new Edge_1.Edge();
+            e4.setOrigin(this.stateList[3]);
+            e4.setTarget(this.stateList[2]);
+            e4.setText("a");
+            this.edgeList.push(e4);
+            this.updateEdges();
+            for (var _a = 0, _b = this.stateList; _a < _b.length; _a++) {
+                var state_1 = _b[_a];
                 state_1.render(this.canvas);
                 this.bindStateEvents(state_1);
             }
@@ -1491,6 +1543,9 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
         StateRenderer.prototype.finishEdge = function (state) {
             this.edgeMode = false;
             this.currentEdge.setTarget(state);
+            this.currentEdge.render(this.canvas);
+            var text = prompt("Enter some text");
+            this.currentEdge.setText(text);
             this.currentEdge.render(this.canvas);
             this.edgeList.push(this.currentEdge);
             this.currentEdge = null;

@@ -251,7 +251,7 @@ export class Edge {
 	private textChanged: boolean = true;
 
 	// The text written in this edge
-	private text: string = "a, A → ε";
+	private text: string = "";
 
 	private body: RaphaelElement = null;
 	private head: RaphaelElement[] = [];

@@ -14,25 +14,65 @@ export class StateRenderer {
 		state.setPosition(350, 300);
 		this.stateList.push(state);
 
-		// let groups = [
-		// 	[100, 300],
-		// 	[350, 50],
-		// 	[600, 300],
-		// 	[350, 550]
-		// ];
+		let groups = [
+			[100, 300],
+			[350, 50],
+			[600, 300],
+			[350, 550]
+		];
 
-		// for (let group of groups) {
-		// 	let s = new State();
-		// 	s.setPosition(group[0], group[1]);
-		// 	this.stateList.push(s);
+		let i = 0;
+		for (let group of groups) {
+			let s = new State();
+			s.setPosition(group[0], group[1]);
+			this.stateList.push(s);
 
-		// 	let e = new Edge();
-		// 	e.setOrigin(state);
-		// 	e.setTarget(s);
-		// 	this.edgeList.push(e);
-		// }
+			let e = new Edge();
+			if (i == 1) {
+				e.setOrigin(s);
+				e.setTarget(state);
+			} else {
+				e.setOrigin(state);
+				e.setTarget(s);
+			}
+			i++;
+			this.edgeList.push(e);
+		}
 
-		// this.updateEdges();
+		this.stateList[2].setInitial(true);
+		this.initialState = this.stateList[2];
+
+		this.stateList[this.stateList.length - 1].setFinal(true);
+		this.edgeList[0].setText("b");
+		this.edgeList[1].setText("a");
+		this.edgeList[2].setText("c");
+		this.edgeList[3].setText("d");
+
+		let e1 = new Edge();
+		e1.setOrigin(this.stateList[1]);
+		e1.setTarget(this.stateList[4]);
+		e1.setText("b");
+		this.edgeList.push(e1);
+
+		let e2 = new Edge();
+		e2.setOrigin(this.stateList[3]);
+		e2.setTarget(this.stateList[4]);
+		e2.setText("c");
+		this.edgeList.push(e2);
+
+		let e3 = new Edge();
+		e3.setOrigin(this.stateList[1]);
+		e3.setTarget(this.stateList[2]);
+		e3.setText("a");
+		this.edgeList.push(e3);
+
+		let e4 = new Edge();
+		e4.setOrigin(this.stateList[3]);
+		e4.setTarget(this.stateList[2]);
+		e4.setText("a");
+		this.edgeList.push(e4);
+
+		this.updateEdges();
 
 		// this.selectState(state);
 
@@ -112,10 +152,10 @@ export class StateRenderer {
 		// Renders the edge here to show it already attached to the target state
 		this.currentEdge.render(this.canvas);
 
-		// let text = prompt("gimme text");
-		// this.currentEdge.setText(text);
+		let text = prompt("Enter some text");
+		this.currentEdge.setText(text);
 		// Renders it again, this time to show the finished edge
-		// this.currentEdge.render(this.canvas);
+		this.currentEdge.render(this.canvas);
 
 		this.edgeList.push(this.currentEdge);
 		this.currentEdge = null;

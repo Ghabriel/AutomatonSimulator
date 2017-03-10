@@ -266,8 +266,8 @@ export class State {
 		let moveController = 0;
 		let callbackFrequency = 3;
 		let move = function(dx, dy, x, y, event) {
+			self.setVisualPosition(this.ox + dx, this.oy + dy);
 			if (moveController == 0) {
-				self.setVisualPosition(this.ox + dx, this.oy + dy);
 				moveCallback.call(this, event);
 			}
 
