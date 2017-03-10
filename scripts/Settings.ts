@@ -48,6 +48,7 @@ export namespace Settings {
 
 	export const edgeTextFontFamily = "arial";
 	export const edgeTextFontSize = 20;
+	export const edgeTextFontColor = "black";
 
 	export const shortcuts = {
 		save: ["ctrl", "S"],

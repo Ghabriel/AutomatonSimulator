@@ -119,9 +119,6 @@ export class Edge {
 			this.body = utils.line(canvas,
 					origin.x, origin.y,
 					target.x, target.y);
-			// let text = canvas.text(200, 100, "abc");
-			// text.attr("font-family", Settings.edgeTextFontFamily);
-			// text.attr("font-size", Settings.edgeTextFontSize);
 		} else {
 			this.body.attr("path", utils.linePath(
 				origin.x, origin.y,
@@ -201,17 +198,28 @@ export class Edge {
 			this.textContainer = canvas.text(x, y, this.text);
 			this.textContainer.attr("font-family", Settings.edgeTextFontFamily);
 			this.textContainer.attr("font-size", Settings.edgeTextFontSize);
+			this.textContainer.attr("stroke", Settings.edgeTextFontColor);
+			this.textContainer.attr("fill", Settings.edgeTextFontColor);
 		} else {
 			this.textContainer.attr("x", x);
 			this.textContainer.attr("y", y);
 			if (this.textChanged) {
 				this.textContainer.attr("text", this.text);
 			}
-			// this.textContainer.transform("");
+			this.textContainer.transform("");
 		}
 
-		// let angle = Math.atan2(target.y - origin.y, target.x - origin.x);
-		// this.textContainer.rotate(utils.toDegrees(angle));
+		let angleRad = Math.atan2(target.y - origin.y, target.x - origin.x);
+		let angle = utils.toDegrees(angleRad);
+
+		if (angle < -90 || angle > 90) {
+			angle = (angle + 180) % 360;
+		}
+
+		this.textContainer.rotate(angle);
+
+		y -= Settings.edgeTextFontSize * .6;
+		this.textContainer.attr("y", y);
 	}
 
 	// The state that this edge comes from
@@ -238,7 +246,7 @@ export class Edge {
 	private textChanged: boolean = true;
 
 	// The text written in this edge
-	private text: string = "hello";
+	private text: string = "a, A → ε";
 
 	private textContainer: RaphaelElement = null;
 	private body: RaphaelElement = null;

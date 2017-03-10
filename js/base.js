@@ -621,6 +621,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.edgeArrowAngle = Utils_3.utils.toRadians(30);
         Settings.edgeTextFontFamily = "arial";
         Settings.edgeTextFontSize = 20;
+        Settings.edgeTextFontColor = "black";
         Settings.shortcuts = {
             save: ["ctrl", "S"],
             open: ["ctrl", "O"],
@@ -1237,7 +1238,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             this.prevTargetPosition = null;
             this.virtualTarget = null;
             this.textChanged = true;
-            this.text = "hello";
+            this.text = "a, A → ε";
             this.textContainer = null;
             this.body = null;
             this.head = [];
@@ -1376,6 +1377,8 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 this.textContainer = canvas.text(x, y, this.text);
                 this.textContainer.attr("font-family", Settings_7.Settings.edgeTextFontFamily);
                 this.textContainer.attr("font-size", Settings_7.Settings.edgeTextFontSize);
+                this.textContainer.attr("stroke", Settings_7.Settings.edgeTextFontColor);
+                this.textContainer.attr("fill", Settings_7.Settings.edgeTextFontColor);
             }
             else {
                 this.textContainer.attr("x", x);
@@ -1383,7 +1386,16 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 if (this.textChanged) {
                     this.textContainer.attr("text", this.text);
                 }
+                this.textContainer.transform("");
             }
+            var angleRad = Math.atan2(target.y - origin.y, target.x - origin.x);
+            var angle = Utils_9.utils.toDegrees(angleRad);
+            if (angle < -90 || angle > 90) {
+                angle = (angle + 180) % 360;
+            }
+            this.textContainer.rotate(angle);
+            y -= Settings_7.Settings.edgeTextFontSize * .6;
+            this.textContainer.attr("y", y);
         };
         return Edge;
     }());
@@ -1406,7 +1418,7 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
         }
         StateRenderer.prototype.render = function () {
             var state = new State_1.State();
-            state.setPosition(100, 100);
+            state.setPosition(350, 300);
             this.stateList.push(state);
             for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
                 var state_1 = _a[_i];

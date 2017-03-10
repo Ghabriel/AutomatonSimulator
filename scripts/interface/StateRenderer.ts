@@ -11,31 +11,28 @@ export class StateRenderer {
 
 	public render(): void {
 		let state = new State();
-		state.setPosition(100, 100);
+		state.setPosition(350, 300);
 		this.stateList.push(state);
 
-		// let a = new State();
-		// a.setPosition(140, 230);
-		// this.stateList.push(a);
+		// let groups = [
+		// 	[100, 300],
+		// 	[350, 50],
+		// 	[600, 300],
+		// 	[350, 550]
+		// ];
 
-		// let b = new State();
-		// b.setPosition(70, 250);
-		// this.stateList.push(b);
+		// for (let group of groups) {
+		// 	let s = new State();
+		// 	s.setPosition(group[0], group[1]);
+		// 	this.stateList.push(s);
 
-		// let c = new State();
-		// c.setPosition(384, 70);
-		// this.stateList.push(c);
+		// 	let e = new Edge();
+		// 	e.setOrigin(state);
+		// 	e.setTarget(s);
+		// 	this.edgeList.push(e);
+		// }
 
-		// let s = new State();
-		// s.setPosition(300, 100);
-		// s.setFinal(true);
-		// this.stateList.push(s);
-
-		// let edge = new Edge();
-		// edge.setOrigin(state);
-		// edge.setTarget(s);
-		// edge.render(this.canvas);
-		// this.edgeList.push(edge);
+		// this.updateEdges();
 
 		// this.selectState(state);
 
@@ -112,7 +109,14 @@ export class StateRenderer {
 	private finishEdge(state: State): void {
 		this.edgeMode = false;
 		this.currentEdge.setTarget(state);
+		// Renders the edge here to show it already attached to the target state
 		this.currentEdge.render(this.canvas);
+
+		// let text = prompt("gimme text");
+		// this.currentEdge.setText(text);
+		// Renders it again, this time to show the finished edge
+		// this.currentEdge.render(this.canvas);
+
 		this.edgeList.push(this.currentEdge);
 		this.currentEdge = null;
 	}
