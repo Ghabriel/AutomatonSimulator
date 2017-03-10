@@ -1239,9 +1239,9 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             this.virtualTarget = null;
             this.textChanged = true;
             this.text = "a, A → ε";
-            this.textContainer = null;
             this.body = null;
             this.head = [];
+            this.textContainer = null;
         }
         Edge.prototype.setOrigin = function (origin) {
             this.origin = origin;
@@ -1290,6 +1290,10 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 elem.remove();
             }
             this.head = [];
+            if (this.textContainer) {
+                this.textContainer.remove();
+                this.textContainer = null;
+            }
         };
         Edge.prototype.renderBody = function (canvas) {
             var origin = this.origin.getPosition();

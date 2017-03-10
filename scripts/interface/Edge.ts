@@ -69,6 +69,11 @@ export class Edge {
 			elem.remove();
 		}
 		this.head = [];
+
+		if (this.textContainer) {
+			this.textContainer.remove();
+			this.textContainer = null;
+		}
 	}
 
 	private renderBody(canvas: RaphaelPaper): void {
@@ -248,7 +253,7 @@ export class Edge {
 	// The text written in this edge
 	private text: string = "a, A → ε";
 
-	private textContainer: RaphaelElement = null;
 	private body: RaphaelElement = null;
 	private head: RaphaelElement[] = [];
+	private textContainer: RaphaelElement = null;
 }
