@@ -259,9 +259,19 @@ export class State {
 		};
 
 		let self = this;
+
+		// Used to optimize the dragging process. The "callbackFrequency"
+		// variable controls the frequency in which dragging pixels
+		// actually trigger the move callback.
+		let moveController = 0;
+		let callbackFrequency = 3;
 		let move = function(dx, dy, x, y, event) {
-			self.setVisualPosition(this.ox + dx, this.oy + dy);
-			moveCallback.call(this, event);
+			if (moveController == 0) {
+				self.setVisualPosition(this.ox + dx, this.oy + dy);
+				moveCallback.call(this, event);
+			}
+
+			moveController = (moveController + 1) % callbackFrequency;
 			return null;
 		};
 

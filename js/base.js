@@ -1200,9 +1200,14 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 return null;
             };
             var self = this;
+            var moveController = 0;
+            var callbackFrequency = 3;
             var move = function (dx, dy, x, y, event) {
-                self.setVisualPosition(this.ox + dx, this.oy + dy);
-                moveCallback.call(this, event);
+                if (moveController == 0) {
+                    self.setVisualPosition(this.ox + dx, this.oy + dy);
+                    moveCallback.call(this, event);
+                }
+                moveController = (moveController + 1) % callbackFrequency;
                 return null;
             };
             var end = function (event) {
