@@ -36,7 +36,9 @@ export namespace Settings {
 
 	export const stateInitialMarkLength = 40;
 	export const stateInitialMarkHeadLength = 15;
-	export const stateInitialMarkAngle = utils.toRadians(25);
+	export const stateInitialMarkAngle = utils.toRadians(20);
+	export const stateInitialMarkColor = "blue";
+	export const stateInitialMarkThickness = 2;
 
 	export const stateHighlightFillColor = "#FFD574";
 	export const stateHighlightStrokeColor = "red";

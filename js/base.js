@@ -612,7 +612,9 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.stateRingStrokeWidth = 1;
         Settings.stateInitialMarkLength = 40;
         Settings.stateInitialMarkHeadLength = 15;
-        Settings.stateInitialMarkAngle = Utils_3.utils.toRadians(25);
+        Settings.stateInitialMarkAngle = Utils_3.utils.toRadians(20);
+        Settings.stateInitialMarkColor = "blue";
+        Settings.stateInitialMarkThickness = 2;
         Settings.stateHighlightFillColor = "#FFD574";
         Settings.stateHighlightStrokeColor = "red";
         Settings.stateHighlightStrokeWidth = 3;
@@ -1125,12 +1127,20 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                     bottomLine.attr("path", Utils_8.utils.linePath(botOffsets.x + x, botOffsets.y + y, x, y));
                 }
                 else {
+                    var strokeColor = Settings_6.Settings.stateInitialMarkColor;
+                    var strokeWidth = Settings_6.Settings.stateInitialMarkThickness;
                     var body = Utils_8.utils.line(canvas, x - length_1, y, x, y);
+                    body.attr("stroke", strokeColor);
+                    body.attr("stroke-width", strokeWidth);
                     this.updateInitialMarkOffsets();
                     var topOffsets = this.initialMarkOffsets[0];
                     var botOffsets = this.initialMarkOffsets[1];
                     var topLine = Utils_8.utils.line(canvas, topOffsets.x + x, topOffsets.y + y, x, y);
+                    topLine.attr("stroke", strokeColor);
+                    topLine.attr("stroke-width", strokeWidth);
                     var bottomLine = Utils_8.utils.line(canvas, botOffsets.x + x, botOffsets.y + y, x, y);
+                    bottomLine.attr("stroke", strokeColor);
+                    bottomLine.attr("stroke-width", strokeWidth);
                     var parts = this.arrowParts;
                     parts.push(body);
                     parts.push(topLine);

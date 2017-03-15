@@ -76,7 +76,6 @@ export class StateRenderer {
 
 		// this.selectState(state);
 
-		// TODO: separate left click/right click dragging handlers
 		for (let state of this.stateList) {
 			state.render(this.canvas);
 			this.bindStateEvents(state);
@@ -116,9 +115,9 @@ export class StateRenderer {
 	}
 
 	private bindStateEvents(state: State) {
-		// TODO: separate left click/right click dragging handlers
 		let canvas = this.canvas;
 		let self = this;
+		// TODO: separate left click/right click dragging handlers if possible
 		state.drag(function() {
 			self.updateEdges();
 		}, function(distanceSquared, event) {

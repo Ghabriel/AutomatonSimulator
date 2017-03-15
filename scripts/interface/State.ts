@@ -164,7 +164,12 @@ export class State {
 				bottomLine.attr("path", utils.linePath(botOffsets.x + x, botOffsets.y + y,
 													   x, y));
 			} else {
+				let strokeColor = Settings.stateInitialMarkColor;
+				let strokeWidth = Settings.stateInitialMarkThickness;
+
 				let body = utils.line(canvas, x - length, y, x, y);
+				body.attr("stroke", strokeColor);
+				body.attr("stroke-width", strokeWidth);
 
 				this.updateInitialMarkOffsets();
 
@@ -173,8 +178,14 @@ export class State {
 
 				let topLine = utils.line(canvas, topOffsets.x + x, topOffsets.y + y,
 												 x, y);
+				topLine.attr("stroke", strokeColor);
+				topLine.attr("stroke-width", strokeWidth);
+
 				let bottomLine = utils.line(canvas, botOffsets.x + x, botOffsets.y + y,
 													x, y);
+				bottomLine.attr("stroke", strokeColor);
+				bottomLine.attr("stroke-width", strokeWidth);
+
 				let parts = this.arrowParts;
 				parts.push(body);
 				parts.push(topLine);
