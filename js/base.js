@@ -601,8 +601,6 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.slideInterval = 300;
         Settings.machineSelRows = 3;
         Settings.machineSelColumns = 1;
-        Settings.stateLabelFontFamily = "sans-serif";
-        Settings.stateLabelFontSize = 20;
         Settings.stateRadius = 32;
         Settings.stateRingRadius = 27;
         Settings.stateDragTolerance = 50;
@@ -610,6 +608,9 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.stateStrokeColor = "black";
         Settings.stateStrokeWidth = 1;
         Settings.stateRingStrokeWidth = 1;
+        Settings.stateLabelFontFamily = "arial";
+        Settings.stateLabelFontSize = 20;
+        Settings.stateLabelFontColor = "black";
         Settings.stateInitialMarkLength = 40;
         Settings.stateInitialMarkHeadLength = 15;
         Settings.stateInitialMarkAngle = Utils_3.utils.toRadians(20);
@@ -991,14 +992,15 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
     "use strict";
     var State = (function () {
         function State() {
+            this.initial = false;
+            this.final = false;
+            this.name = "";
+            this.highlighted = false;
+            this.initialMarkOffsets = [];
             this.body = null;
             this.ring = null;
             this.arrowParts = [];
-            this.name = "";
-            this.initial = false;
-            this.final = false;
-            this.highlighted = false;
-            this.initialMarkOffsets = [];
+            this.textContainer = null;
             this.radius = Settings_6.Settings.stateRadius;
         }
         State.prototype.setPosition = function (x, y) {
@@ -1011,9 +1013,6 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 y: this.y
             };
         };
-        State.prototype.setName = function (name) {
-            this.name = name;
-        };
         State.prototype.setInitial = function (flag) {
             this.initial = flag;
         };
@@ -1025,6 +1024,9 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
         };
         State.prototype.isFinal = function () {
             return this.final;
+        };
+        State.prototype.setName = function (name) {
+            this.name = name;
         };
         State.prototype.highlight = function () {
             this.highlighted = true;
@@ -1047,6 +1049,56 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
             }
             this.arrowParts = [];
         };
+        State.prototype.render = function (canvas) {
+            this.renderBody(canvas);
+            this.renderInitialMark(canvas);
+            this.renderFinalMark(canvas);
+            this.renderText(canvas);
+        };
+        State.prototype.node = function () {
+            return this.body;
+        };
+        State.prototype.html = function () {
+            if (this.body) {
+                return this.body.node;
+            }
+            return null;
+        };
+        State.prototype.drag = function (moveCallback, endCallback) {
+            var self = this;
+            var begin = function (x, y, event) {
+                var position = self.getPosition();
+                this.ox = position.x;
+                this.oy = position.y;
+                return null;
+            };
+            var moveController = 0;
+            var callbackFrequency = 3;
+            var move = function (dx, dy, x, y, event) {
+                self.setVisualPosition(this.ox + dx, this.oy + dy);
+                if (moveController == 0) {
+                    moveCallback.call(this, event);
+                }
+                moveController = (moveController + 1) % callbackFrequency;
+                return null;
+            };
+            var end = function (event) {
+                var position = self.getPosition();
+                var dx = position.x - this.ox;
+                var dy = position.y - this.oy;
+                var distanceSquared = dx * dx + dy * dy;
+                var accepted = endCallback.call(this, distanceSquared, event);
+                if (!accepted && (dx != 0 || dy != 0)) {
+                    self.setVisualPosition(this.ox, this.oy);
+                    moveCallback.call(this, event);
+                }
+                return null;
+            };
+            this.body.drag(move, begin, end);
+            if (this.textContainer) {
+                this.textContainer.drag(move, begin, end);
+            }
+        };
         State.prototype.fillColor = function () {
             return this.highlighted ? Settings_6.Settings.stateHighlightFillColor
                 : Settings_6.Settings.stateFillColor;
@@ -1066,10 +1118,6 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
         State.prototype.renderBody = function (canvas) {
             if (!this.body) {
                 this.body = canvas.circle(this.x, this.y, this.radius);
-                canvas.text(this.x, this.y, this.name).attr({
-                    "font-family": Settings_6.Settings.stateLabelFontFamily,
-                    "font-size": Settings_6.Settings.stateLabelFontSize
-                });
             }
             else {
                 this.body.attr({
@@ -1174,7 +1222,22 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 this.ring = null;
             }
         };
+        State.prototype.renderText = function (canvas) {
+            if (!this.textContainer) {
+                this.textContainer = canvas.text(this.x, this.y, this.name);
+                this.textContainer.attr("font-family", Settings_6.Settings.stateLabelFontFamily);
+                this.textContainer.attr("font-size", Settings_6.Settings.stateLabelFontSize);
+                this.textContainer.attr("stroke", Settings_6.Settings.stateLabelFontColor);
+                this.textContainer.attr("fill", Settings_6.Settings.stateLabelFontColor);
+            }
+            else {
+                this.textContainer.attr("x", this.x);
+                this.textContainer.attr("y", this.y);
+                this.textContainer.attr("text", this.name);
+            }
+        };
         State.prototype.setVisualPosition = function (x, y) {
+            this.setPosition(x, y);
             this.body.attr({
                 cx: x,
                 cy: y
@@ -1188,51 +1251,7 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
             if (this.initial) {
                 this.renderInitialMark();
             }
-            this.setPosition(x, y);
-        };
-        State.prototype.render = function (canvas) {
-            this.renderBody(canvas);
-            this.renderInitialMark(canvas);
-            this.renderFinalMark(canvas);
-        };
-        State.prototype.node = function () {
-            return this.body;
-        };
-        State.prototype.html = function () {
-            if (this.body) {
-                return this.body.node;
-            }
-            return null;
-        };
-        State.prototype.drag = function (moveCallback, endCallback) {
-            var begin = function (x, y, event) {
-                this.ox = this.attr("cx");
-                this.oy = this.attr("cy");
-                return null;
-            };
-            var self = this;
-            var moveController = 0;
-            var callbackFrequency = 3;
-            var move = function (dx, dy, x, y, event) {
-                self.setVisualPosition(this.ox + dx, this.oy + dy);
-                if (moveController == 0) {
-                    moveCallback.call(this, event);
-                }
-                moveController = (moveController + 1) % callbackFrequency;
-                return null;
-            };
-            var end = function (event) {
-                var dx = this.attr("cx") - this.ox;
-                var dy = this.attr("cy") - this.oy;
-                var distanceSquared = dx * dx + dy * dy;
-                var accepted = endCallback.call(this, distanceSquared, event);
-                if (!accepted && (dx != 0 || dy != 0)) {
-                    self.setVisualPosition(this.ox, this.oy);
-                    moveCallback.call(this, event);
-                }
-                return null;
-            };
-            this.body.drag(move, begin, end);
+            this.renderText();
         };
         return State;
     }());
@@ -1247,7 +1266,6 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             this.prevOriginPosition = null;
             this.prevTargetPosition = null;
             this.virtualTarget = null;
-            this.textChanged = true;
             this.text = "";
             this.body = null;
             this.head = [];
@@ -1271,6 +1289,21 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
         Edge.prototype.setText = function (text) {
             this.text = text;
         };
+        Edge.prototype.remove = function () {
+            if (this.body) {
+                this.body.remove();
+                this.body = null;
+            }
+            for (var _i = 0, _a = this.head; _i < _a.length; _i++) {
+                var elem = _a[_i];
+                elem.remove();
+            }
+            this.head = [];
+            if (this.textContainer) {
+                this.textContainer.remove();
+                this.textContainer = null;
+            }
+        };
         Edge.prototype.render = function (canvas) {
             var preservedOrigin = this.origin
                 && Utils_9.utils.samePoint(this.prevOriginPosition, this.origin.getPosition());
@@ -1286,23 +1319,8 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                     this.prevTargetPosition = this.target.getPosition();
                 }
             }
-            if (this.target && (!preservedOrigin || !preservedTarget || this.textChanged)) {
+            if (this.target) {
                 this.renderText(canvas);
-            }
-        };
-        Edge.prototype.remove = function () {
-            if (this.body) {
-                this.body.remove();
-                this.body = null;
-            }
-            for (var _i = 0, _a = this.head; _i < _a.length; _i++) {
-                var elem = _a[_i];
-                elem.remove();
-            }
-            this.head = [];
-            if (this.textContainer) {
-                this.textContainer.remove();
-                this.textContainer = null;
             }
         };
         Edge.prototype.renderBody = function (canvas) {
@@ -1397,9 +1415,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             else {
                 this.textContainer.attr("x", x);
                 this.textContainer.attr("y", y);
-                if (this.textChanged) {
-                    this.textContainer.attr("text", this.text);
-                }
+                this.textContainer.attr("text", this.text);
                 this.textContainer.transform("");
             }
             var angleRad = Math.atan2(target.y - origin.y, target.x - origin.x);
@@ -1461,6 +1477,9 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
             this.stateList[2].setInitial(true);
             this.initialState = this.stateList[2];
             this.stateList[this.stateList.length - 1].setFinal(true);
+            for (var i_1 = 0; i_1 < this.stateList.length; i_1++) {
+                this.stateList[i_1].setName("q" + i_1);
+            }
             this.edgeList[0].setText("b");
             this.edgeList[1].setText("a");
             this.edgeList[2].setText("c");
@@ -1499,6 +1518,11 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                 self.stateList.push(state);
                 self.selectState(state);
                 self.bindStateEvents(state);
+                setTimeout(function () {
+                    var text = prompt("Enter the state name:");
+                    state.setName(text);
+                    state.render(self.canvas);
+                }, 0);
             });
             $(this.node).contextmenu(function (e) {
                 e.preventDefault();
@@ -1554,11 +1578,14 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
             this.edgeMode = false;
             this.currentEdge.setTarget(state);
             this.currentEdge.render(this.canvas);
-            var text = prompt("Enter some text");
-            this.currentEdge.setText(text);
-            this.currentEdge.render(this.canvas);
-            this.edgeList.push(this.currentEdge);
-            this.currentEdge = null;
+            var self = this;
+            setTimeout(function () {
+                var text = prompt("Enter some text");
+                self.currentEdge.setText(text);
+                self.currentEdge.render(self.canvas);
+                self.edgeList.push(self.currentEdge);
+                self.currentEdge = null;
+            }, 0);
         };
         StateRenderer.prototype.adjustEdge = function (elem, e) {
             var target = {

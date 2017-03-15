@@ -100,4 +100,9 @@ export namespace utils {
 	export function bindShortcut(keys: string[], callback: () => void): void {
 		System.addKeyObserver(keys, callback);
 	}
+
+	// Calls a function asynchronously
+	export function async(callback: () => void): void {
+		setTimeout(callback, 0);
+	}
 }

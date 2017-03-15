@@ -1,6 +1,5 @@
 Obrigatórios:
 - adicionar suporte a laços
-- nomes nos estados (3/4 chars max?)
 - exibir a representação formal do autômato sob edição na barra lateral
 - múltiplos labels numa mesma aresta
 - save/open

@@ -27,6 +27,23 @@ export class Edge {
 		this.text = text;
 	}
 
+	public remove(): void {
+		if (this.body) {
+			this.body.remove();
+			this.body = null;
+		}
+
+		for (let elem of this.head) {
+			elem.remove();
+		}
+		this.head = [];
+
+		if (this.textContainer) {
+			this.textContainer.remove();
+			this.textContainer = null;
+		}
+	}
+
 	public render(canvas: RaphaelPaper): void {
 		let preservedOrigin = this.origin
 						   && utils.samePoint(this.prevOriginPosition,
@@ -50,29 +67,10 @@ export class Edge {
 			}
 		}
 
-		// Only re-renders this edge's text if either the text has
-		// changed or if the origin/target states have moved.
-		// Also, don't render any text if this edge is incomplete
-		// (i.e it doesn't have a target state yet)
-		if (this.target && (!preservedOrigin || !preservedTarget || this.textChanged)) {
+		// Only re-renders this edge's text if this edge is
+		// complete (i.e it already has a target state)
+		if (this.target) {
 			this.renderText(canvas);
-		}
-	}
-
-	public remove(): void {
-		if (this.body) {
-			this.body.remove();
-			this.body = null;
-		}
-
-		for (let elem of this.head) {
-			elem.remove();
-		}
-		this.head = [];
-
-		if (this.textContainer) {
-			this.textContainer.remove();
-			this.textContainer = null;
 		}
 	}
 
@@ -208,9 +206,7 @@ export class Edge {
 		} else {
 			this.textContainer.attr("x", x);
 			this.textContainer.attr("y", y);
-			if (this.textChanged) {
-				this.textContainer.attr("text", this.text);
-			}
+			this.textContainer.attr("text", this.text);
 			this.textContainer.transform("");
 		}
 
@@ -245,10 +241,6 @@ export class Edge {
 	// If this edge is not yet completed, it might point to
 	// a position in space rather than a state
 	private virtualTarget: Point = null;
-
-	// Flag used to check if this edge's text has changed
-	// since the last rendering of this edge.
-	private textChanged: boolean = true;
 
 	// The text written in this edge
 	private text: string = "";

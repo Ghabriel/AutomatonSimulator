@@ -21,10 +21,6 @@ export class State {
 		};
 	}
 
-	public setName(name: string): void {
-		this.name = name;
-	}
-
 	public setInitial(flag: boolean): void {
 		this.initial = flag;
 	}
@@ -39,6 +35,10 @@ export class State {
 
 	public isFinal(): boolean {
 		return this.final;
+	}
+
+	public setName(name: string): void {
+		this.name = name;
 	}
 
 	public highlight(): void {
@@ -66,6 +66,73 @@ export class State {
 		this.arrowParts = [];
 	}
 
+	public render(canvas: RaphaelPaper): void {
+		this.renderBody(canvas);
+		this.renderInitialMark(canvas);
+		this.renderFinalMark(canvas);
+		this.renderText(canvas);
+	}
+
+	public node(): RaphaelElement {
+		return this.body;
+	}
+
+	public html(): SVGElement {
+		if (this.body) {
+			return this.body.node;
+		}
+		return null;
+	}
+
+	public drag(moveCallback: (event?: any) => void,
+				endCallback: (distSquared: number, event: any) => boolean): void {
+
+		let self = this;
+
+		// TODO: find a new home for all these functions
+		let begin = function(x, y, event) {
+			let position = self.getPosition();
+			this.ox = position.x;
+			this.oy = position.y;
+			return null;
+		};
+
+		// Used to optimize the dragging process. The "callbackFrequency"
+		// variable controls the frequency in which dragging pixels
+		// actually trigger the move callback.
+		let moveController = 0;
+		let callbackFrequency = 3;
+		let move = function(dx, dy, x, y, event) {
+			self.setVisualPosition(this.ox + dx, this.oy + dy);
+			if (moveController == 0) {
+				moveCallback.call(this, event);
+			}
+
+			moveController = (moveController + 1) % callbackFrequency;
+			return null;
+		};
+
+		let end = function(event) {
+			let position = self.getPosition();
+			let dx = position.x - this.ox;
+			let dy = position.y - this.oy;
+			let distanceSquared = dx * dx + dy * dy;
+			let accepted = endCallback.call(this, distanceSquared, event);
+			// TODO: check if we really shouldn't call
+			// moveCallback when dx = dy = 0
+			if (!accepted && (dx != 0 || dy != 0)) {
+				self.setVisualPosition(this.ox, this.oy);
+				moveCallback.call(this, event);
+			}
+			return null;
+		};
+
+		this.body.drag(move, begin, end);
+		if (this.textContainer) {
+			this.textContainer.drag(move, begin, end);
+		}
+	}
+
 	private fillColor(): string {
 		return this.highlighted ? Settings.stateHighlightFillColor
 								: Settings.stateFillColor;
@@ -89,10 +156,6 @@ export class State {
 	private renderBody(canvas: RaphaelPaper): void {
 		if (!this.body) {
 			this.body = canvas.circle(this.x, this.y, this.radius);
-			canvas.text(this.x, this.y, this.name).attr({
-				"font-family": Settings.stateLabelFontFamily,
-				"font-size": Settings.stateLabelFontSize
-			});
 		} else {
 			this.body.attr({
 				cx: this.x,
@@ -221,8 +284,24 @@ export class State {
 		}
 	}
 
+	private renderText(canvas?: RaphaelPaper): void {
+		if (!this.textContainer) {
+			this.textContainer = canvas.text(this.x, this.y, this.name);
+			this.textContainer.attr("font-family", Settings.stateLabelFontFamily);
+			this.textContainer.attr("font-size", Settings.stateLabelFontSize);
+			this.textContainer.attr("stroke", Settings.stateLabelFontColor);
+			this.textContainer.attr("fill", Settings.stateLabelFontColor);
+		} else {
+			this.textContainer.attr("x", this.x);
+			this.textContainer.attr("y", this.y);
+			this.textContainer.attr("text", this.name);
+		}
+	}
+
 	// TODO: find a better name for this method
 	private setVisualPosition(x: number, y: number): void {
+		this.setPosition(x, y);
+
 		this.body.attr({
 			cx: x,
 			cy: y
@@ -240,78 +319,20 @@ export class State {
 			this.renderInitialMark();
 		}
 
-		this.setPosition(x, y);
+		this.renderText();
 	}
 
-	public render(canvas: RaphaelPaper): void {
-		this.renderBody(canvas);
-		this.renderInitialMark(canvas);
-		this.renderFinalMark(canvas);
-	}
-
-	public node(): RaphaelElement {
-		return this.body;
-	}
-
-	public html(): SVGElement {
-		if (this.body) {
-			return this.body.node;
-		}
-		return null;
-	}
-
-	public drag(moveCallback: (event?: any) => void,
-				endCallback: (distSquared: number, event: any) => boolean): void {
-		// TODO: find a new home for all these functions
-		let begin = function(x, y, event) {
-			this.ox = this.attr("cx");
-			this.oy = this.attr("cy");
-			return null;
-		};
-
-		let self = this;
-
-		// Used to optimize the dragging process. The "callbackFrequency"
-		// variable controls the frequency in which dragging pixels
-		// actually trigger the move callback.
-		let moveController = 0;
-		let callbackFrequency = 3;
-		let move = function(dx, dy, x, y, event) {
-			self.setVisualPosition(this.ox + dx, this.oy + dy);
-			if (moveController == 0) {
-				moveCallback.call(this, event);
-			}
-
-			moveController = (moveController + 1) % callbackFrequency;
-			return null;
-		};
-
-		let end = function(event) {
-			let dx = this.attr("cx") - this.ox;
-			let dy = this.attr("cy") - this.oy;
-			let distanceSquared = dx * dx + dy * dy;
-			let accepted = endCallback.call(this, distanceSquared, event);
-			// TODO: check if we really shouldn't call
-			// moveCallback when dx = dy = 0
-			if (!accepted && (dx != 0 || dy != 0)) {
-				self.setVisualPosition(this.ox, this.oy);
-				moveCallback.call(this, event);
-			}
-			return null;
-		};
-
-		this.body.drag(move, begin, end);
-	}
+	private x: number;
+	private y: number;
+	private radius: number;
+	private initial: boolean = false;
+	private final: boolean = false;
+	private name: string = "";
+	private highlighted: boolean = false;
+	private initialMarkOffsets: {x: number, y: number}[] = [];
 
 	private body: RaphaelElement = null;
 	private ring: RaphaelElement = null;
 	private arrowParts: RaphaelElement[] = [];
-	private x: number;
-	private y: number;
-	private radius: number;
-	private name: string = "";
-	private initial: boolean = false;
-	private final: boolean = false;
-	private highlighted: boolean = false;
-	private initialMarkOffsets: {x: number, y: number}[] = [];
+	private textContainer: RaphaelElement = null;
 }

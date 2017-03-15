@@ -24,8 +24,6 @@ export namespace Settings {
 	export const machineSelRows = 3;
 	export const machineSelColumns = 1;
 
-	export const stateLabelFontFamily = "sans-serif";
-	export const stateLabelFontSize = 20;
 	export const stateRadius = 32;
 	export const stateRingRadius = 27;
 	export const stateDragTolerance = 50;
@@ -33,6 +31,10 @@ export namespace Settings {
 	export const stateStrokeColor = "black";
 	export const stateStrokeWidth = 1;
 	export const stateRingStrokeWidth = 1;
+
+	export const stateLabelFontFamily = "arial";
+	export const stateLabelFontSize = 20;
+	export const stateLabelFontColor = "black";
 
 	export const stateInitialMarkLength = 40;
 	export const stateInitialMarkHeadLength = 15;

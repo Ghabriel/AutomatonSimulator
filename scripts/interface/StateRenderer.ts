@@ -43,6 +43,9 @@ export class StateRenderer {
 		this.initialState = this.stateList[2];
 
 		this.stateList[this.stateList.length - 1].setFinal(true);
+		for (let i = 0; i < this.stateList.length; i++) {
+			this.stateList[i].setName("q" + i);
+		}
 		this.edgeList[0].setText("b");
 		this.edgeList[1].setText("a");
 		this.edgeList[2].setText("c");
@@ -90,6 +93,13 @@ export class StateRenderer {
 			self.stateList.push(state);
 			self.selectState(state);
 			self.bindStateEvents(state);
+
+			// Allows the state to be rendered before showing the prompt
+			utils.async(function(){
+				let text = prompt("Enter the state name:");
+				state.setName(text);
+				state.render(self.canvas);
+			});
 		});
 
 		$(this.node).contextmenu(function(e) {
@@ -151,13 +161,16 @@ export class StateRenderer {
 		// Renders the edge here to show it already attached to the target state
 		this.currentEdge.render(this.canvas);
 
-		let text = prompt("Enter some text");
-		this.currentEdge.setText(text);
-		// Renders it again, this time to show the finished edge
-		this.currentEdge.render(this.canvas);
-
-		this.edgeList.push(this.currentEdge);
-		this.currentEdge = null;
+		let self = this;
+		// Allows the edge to be rendered before showing the prompt
+		utils.async(function() {
+			let text = prompt("Enter some text");
+			self.currentEdge.setText(text);
+			// Renders it again, this time to show the finished edge
+			self.currentEdge.render(self.canvas);
+			self.edgeList.push(self.currentEdge);
+			self.currentEdge = null;
+		});
 	}
 
 	private adjustEdge(elem: HTMLElement, e): void {
