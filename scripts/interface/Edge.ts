@@ -23,8 +23,8 @@ export class Edge {
 		this.virtualTarget = target;
 	}
 
-	public setText(text: string): void {
-		this.text = text;
+	public addText(text: string): void {
+		this.textList.push(text);
 	}
 
 	public remove(): void {
@@ -189,6 +189,10 @@ export class Edge {
 		}
 	}
 
+	private preparedText(): string {
+		return this.textList.join("\n");
+	}
+
 	private renderText(canvas: RaphaelPaper): void {
 		// We can assume that there's a target state, since
 		// otherwise we wouldn't be rendering the text.
@@ -198,7 +202,7 @@ export class Edge {
 		let y = (origin.y + target.y) / 2;
 
 		if (!this.textContainer) {
-			this.textContainer = canvas.text(x, y, this.text);
+			this.textContainer = canvas.text(x, y, this.preparedText());
 			this.textContainer.attr("font-family", Settings.edgeTextFontFamily);
 			this.textContainer.attr("font-size", Settings.edgeTextFontSize);
 			this.textContainer.attr("stroke", Settings.edgeTextFontColor);
@@ -206,7 +210,7 @@ export class Edge {
 		} else {
 			this.textContainer.attr("x", x);
 			this.textContainer.attr("y", y);
-			this.textContainer.attr("text", this.text);
+			this.textContainer.attr("text", this.preparedText());
 			this.textContainer.transform("");
 		}
 
@@ -220,6 +224,7 @@ export class Edge {
 		this.textContainer.rotate(angle);
 
 		y -= Settings.edgeTextFontSize * .6;
+		y -= Settings.edgeTextFontSize * (this.textList.length - 1) * .7;
 		this.textContainer.attr("y", y);
 	}
 
@@ -242,8 +247,8 @@ export class Edge {
 	// a position in space rather than a state
 	private virtualTarget: Point = null;
 
-	// The text written in this edge
-	private text: string = "";
+	// A list of texts written in this edge
+	private textList: string[] = [];
 
 	private body: RaphaelElement = null;
 	private head: RaphaelElement[] = [];

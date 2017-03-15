@@ -46,33 +46,34 @@ export class StateRenderer {
 		for (let i = 0; i < this.stateList.length; i++) {
 			this.stateList[i].setName("q" + i);
 		}
-		this.edgeList[0].setText("b");
-		this.edgeList[1].setText("a");
-		this.edgeList[2].setText("c");
-		this.edgeList[3].setText("d");
+		this.edgeList[0].addText("b");
+		this.edgeList[0].addText("e");
+		this.edgeList[1].addText("a");
+		this.edgeList[2].addText("c");
+		this.edgeList[3].addText("d");
 
 		let e1 = new Edge();
 		e1.setOrigin(this.stateList[1]);
 		e1.setTarget(this.stateList[4]);
-		e1.setText("b");
+		e1.addText("b");
 		this.edgeList.push(e1);
 
 		let e2 = new Edge();
 		e2.setOrigin(this.stateList[3]);
 		e2.setTarget(this.stateList[4]);
-		e2.setText("c");
+		e2.addText("c");
 		this.edgeList.push(e2);
 
 		let e3 = new Edge();
 		e3.setOrigin(this.stateList[1]);
 		e3.setTarget(this.stateList[2]);
-		e3.setText("a");
+		e3.addText("a");
 		this.edgeList.push(e3);
 
 		let e4 = new Edge();
 		e4.setOrigin(this.stateList[3]);
 		e4.setTarget(this.stateList[2]);
-		e4.setText("a");
+		e4.addText("a");
 		this.edgeList.push(e4);
 
 		this.updateEdges();
@@ -157,6 +158,25 @@ export class StateRenderer {
 
 	private finishEdge(state: State): void {
 		this.edgeMode = false;
+
+		// TODO: change "Enter some text" to the actual real text/message
+		// (prompt() is probably not ideal)
+
+		let origin = this.currentEdge.getOrigin();
+		// Checks if there's already an edge linking the origin and target states
+		for (let edge of this.edgeList) {
+			if (edge.getOrigin() == origin && edge.getTarget() == state) {
+				// Add the text to it instead and delete 'this.currentEdge'.
+				let text = prompt("Enter some text");
+				edge.addText(text);
+				edge.render(this.canvas);
+				this.currentEdge.remove();
+				this.currentEdge = null;
+				return;
+			}
+		}
+
+		// There's no such edge yet, so continue the configure the new one.
 		this.currentEdge.setTarget(state);
 		// Renders the edge here to show it already attached to the target state
 		this.currentEdge.render(this.canvas);
@@ -165,7 +185,7 @@ export class StateRenderer {
 		// Allows the edge to be rendered before showing the prompt
 		utils.async(function() {
 			let text = prompt("Enter some text");
-			self.currentEdge.setText(text);
+			self.currentEdge.addText(text);
 			// Renders it again, this time to show the finished edge
 			self.currentEdge.render(self.canvas);
 			self.edgeList.push(self.currentEdge);

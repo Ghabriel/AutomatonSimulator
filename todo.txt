@@ -1,7 +1,6 @@
 Obrigatórios:
 - adicionar suporte a laços
 - exibir a representação formal do autômato sob edição na barra lateral
-- múltiplos labels numa mesma aresta
 - save/open
 
 Importantes:

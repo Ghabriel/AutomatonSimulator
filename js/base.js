@@ -461,6 +461,10 @@ define("Utils", ["require", "exports", "System"], function (require, exports, Sy
             System_1.System.addKeyObserver(keys, callback);
         }
         utils.bindShortcut = bindShortcut;
+        function async(callback) {
+            setTimeout(callback, 0);
+        }
+        utils.async = async;
     })(utils = exports.utils || (exports.utils = {}));
 });
 define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings", "Utils"], function (require, exports, Menu_1, Settings_1, Utils_1) {
@@ -1266,7 +1270,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             this.prevOriginPosition = null;
             this.prevTargetPosition = null;
             this.virtualTarget = null;
-            this.text = "";
+            this.textList = [];
             this.body = null;
             this.head = [];
             this.textContainer = null;
@@ -1286,8 +1290,8 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
         Edge.prototype.setVirtualTarget = function (target) {
             this.virtualTarget = target;
         };
-        Edge.prototype.setText = function (text) {
-            this.text = text;
+        Edge.prototype.addText = function (text) {
+            this.textList.push(text);
         };
         Edge.prototype.remove = function () {
             if (this.body) {
@@ -1400,13 +1404,16 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 this.head[1].attr("path", Utils_9.utils.linePath(p2.x, p2.y, target.x, target.y));
             }
         };
+        Edge.prototype.preparedText = function () {
+            return this.textList.join("\n");
+        };
         Edge.prototype.renderText = function (canvas) {
             var origin = this.origin.getPosition();
             var target = this.target.getPosition();
             var x = (origin.x + target.x) / 2;
             var y = (origin.y + target.y) / 2;
             if (!this.textContainer) {
-                this.textContainer = canvas.text(x, y, this.text);
+                this.textContainer = canvas.text(x, y, this.preparedText());
                 this.textContainer.attr("font-family", Settings_7.Settings.edgeTextFontFamily);
                 this.textContainer.attr("font-size", Settings_7.Settings.edgeTextFontSize);
                 this.textContainer.attr("stroke", Settings_7.Settings.edgeTextFontColor);
@@ -1415,7 +1422,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             else {
                 this.textContainer.attr("x", x);
                 this.textContainer.attr("y", y);
-                this.textContainer.attr("text", this.text);
+                this.textContainer.attr("text", this.preparedText());
                 this.textContainer.transform("");
             }
             var angleRad = Math.atan2(target.y - origin.y, target.x - origin.x);
@@ -1425,6 +1432,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             }
             this.textContainer.rotate(angle);
             y -= Settings_7.Settings.edgeTextFontSize * .6;
+            y -= Settings_7.Settings.edgeTextFontSize * (this.textList.length - 1) * .7;
             this.textContainer.attr("y", y);
         };
         return Edge;
@@ -1480,29 +1488,30 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
             for (var i_1 = 0; i_1 < this.stateList.length; i_1++) {
                 this.stateList[i_1].setName("q" + i_1);
             }
-            this.edgeList[0].setText("b");
-            this.edgeList[1].setText("a");
-            this.edgeList[2].setText("c");
-            this.edgeList[3].setText("d");
+            this.edgeList[0].addText("b");
+            this.edgeList[0].addText("e");
+            this.edgeList[1].addText("a");
+            this.edgeList[2].addText("c");
+            this.edgeList[3].addText("d");
             var e1 = new Edge_1.Edge();
             e1.setOrigin(this.stateList[1]);
             e1.setTarget(this.stateList[4]);
-            e1.setText("b");
+            e1.addText("b");
             this.edgeList.push(e1);
             var e2 = new Edge_1.Edge();
             e2.setOrigin(this.stateList[3]);
             e2.setTarget(this.stateList[4]);
-            e2.setText("c");
+            e2.addText("c");
             this.edgeList.push(e2);
             var e3 = new Edge_1.Edge();
             e3.setOrigin(this.stateList[1]);
             e3.setTarget(this.stateList[2]);
-            e3.setText("a");
+            e3.addText("a");
             this.edgeList.push(e3);
             var e4 = new Edge_1.Edge();
             e4.setOrigin(this.stateList[3]);
             e4.setTarget(this.stateList[2]);
-            e4.setText("a");
+            e4.addText("a");
             this.edgeList.push(e4);
             this.updateEdges();
             for (var _a = 0, _b = this.stateList; _a < _b.length; _a++) {
@@ -1518,11 +1527,11 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
                 self.stateList.push(state);
                 self.selectState(state);
                 self.bindStateEvents(state);
-                setTimeout(function () {
+                Utils_10.utils.async(function () {
                     var text = prompt("Enter the state name:");
                     state.setName(text);
                     state.render(self.canvas);
-                }, 0);
+                });
             });
             $(this.node).contextmenu(function (e) {
                 e.preventDefault();
@@ -1576,16 +1585,28 @@ define("interface/StateRenderer", ["require", "exports", "interface/Edge", "Sett
         };
         StateRenderer.prototype.finishEdge = function (state) {
             this.edgeMode = false;
+            var origin = this.currentEdge.getOrigin();
+            for (var _i = 0, _a = this.edgeList; _i < _a.length; _i++) {
+                var edge = _a[_i];
+                if (edge.getOrigin() == origin && edge.getTarget() == state) {
+                    var text = prompt("Enter some text");
+                    edge.addText(text);
+                    edge.render(this.canvas);
+                    this.currentEdge.remove();
+                    this.currentEdge = null;
+                    return;
+                }
+            }
             this.currentEdge.setTarget(state);
             this.currentEdge.render(this.canvas);
             var self = this;
-            setTimeout(function () {
+            Utils_10.utils.async(function () {
                 var text = prompt("Enter some text");
-                self.currentEdge.setText(text);
+                self.currentEdge.addText(text);
                 self.currentEdge.render(self.canvas);
                 self.edgeList.push(self.currentEdge);
                 self.currentEdge = null;
-            }, 0);
+            });
         };
         StateRenderer.prototype.adjustEdge = function (elem, e) {
             var target = {
