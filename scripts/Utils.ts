@@ -1,3 +1,6 @@
+/// <reference path="defs/jQuery.d.ts" />
+
+import {Settings, Strings} from "./Settings"
 import {System} from "./System"
 
 export interface Point {
@@ -104,5 +107,76 @@ export namespace utils {
 	// Calls a function asynchronously
 	export function async(callback: () => void): void {
 		setTimeout(callback, 0);
+	}
+
+	// TODO: block any page actions except those that are prompt-related
+	// TODO: make this more flexible (regarding the input fields)
+	// (maybe also move it to System?)
+	export function prompt(message: string, numFields: number,
+						   success: (t: string[]) => void,
+						   fail?: () => void): void {
+
+		let container = this.create("div", {
+			id: "system_prompt"
+		});
+		container.innerHTML = message + "<br>";
+
+		let mainbar = this.id(Settings.mainbarID);
+
+		let dismiss = function() {
+			$(container).slideUp(Settings.promptSlideInterval, function() {
+				mainbar.removeChild(container);
+			});
+		};
+
+		let inputs: HTMLInputElement[] = [];
+
+		let ok = this.create("input", {
+			type: "button",
+			value: Strings.PROMPT_CONFIRM,
+			click: function() {
+				let contents: string[] = [];
+				for (let input of inputs) {
+					contents.push(input.value);
+				}
+				dismiss();
+				success(contents);
+			}
+		});
+
+		let cancel = this.create("input", {
+			type: "button",
+			value: Strings.PROMPT_CANCEL,
+			click: function() {
+				dismiss();
+				if (fail) {
+					fail();
+				}
+			}
+		});
+
+		for (let i = 0; i < numFields; i++) {
+			let input = <HTMLInputElement> this.create("input", {
+				type: "text"
+			});
+
+			input.addEventListener("keydown", function(e) {
+				if (e.keyCode == 13) {
+					ok.click();
+				}
+			});
+
+			inputs.push(input);
+			container.appendChild(input);
+		}
+
+		container.appendChild(ok);
+		container.appendChild(cancel);
+
+		$(container).toggle();
+		mainbar.insertBefore(container, mainbar.children[0]);
+		$(container).slideDown(Settings.promptSlideInterval, function() {
+			inputs[0].focus();
+		});
 	}
 }

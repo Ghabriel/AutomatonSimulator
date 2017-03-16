@@ -6,6 +6,8 @@ export namespace english {
 		FILE_MENUBAR: "File Manipulation",
 		SAVE: "Save",
 		OPEN: "Open",
+		PROMPT_CONFIRM: "Confirm",
+		PROMPT_CANCEL: "Cancel",
 		SELECT_MACHINE: "Machine Selection",
 		CLEAR_MACHINE: "Clear",
 		CLEAR_CONFIRMATION: "Do you really want to reset this automaton?",

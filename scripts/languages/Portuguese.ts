@@ -6,6 +6,8 @@ export namespace portuguese {
 		FILE_MENUBAR: "Manipulação de Arquivos",
 		SAVE: "Salvar",
 		OPEN: "Abrir",
+		PROMPT_CONFIRM: "Confirmar",
+		PROMPT_CANCEL: "Cancelar",
 		SELECT_MACHINE: "Seleção de Máquina",
 		CLEAR_MACHINE: "Limpar",
 		CLEAR_CONFIRMATION: "Deseja realmente limpar o autômato?",

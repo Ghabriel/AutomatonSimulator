@@ -80,27 +80,47 @@ export class StateRenderer {
 
 		// this.selectState(state);
 
+		this.bindEvents();
+		this.bindShortcuts();
+	}
+
+	private selectState(state: State) {
+		if (this.highlightedState) {
+			this.highlightedState.dim();
+			this.highlightedState.render(this.canvas);
+		}
+		state.highlight();
+		this.highlightedState = state;
+		state.render(this.canvas);
+	}
+
+	private bindEvents(): void {
 		for (let state of this.stateList) {
 			state.render(this.canvas);
 			this.bindStateEvents(state);
 		}
 
-		this.bindShortcuts();
-
 		let self = this;
 		$(this.node).dblclick(function(e) {
 			let state = new State();
 			state.setPosition(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
-			self.stateList.push(state);
 			self.selectState(state);
 			self.bindStateEvents(state);
 
-			// Allows the state to be rendered before showing the prompt
-			utils.async(function(){
-				let text = prompt("Enter the state name:");
-				state.setName(text);
+			utils.prompt("Enter the state name:", 1, function(data) {
+				self.stateList.push(state);
+				state.setName(data[0]);
 				state.render(self.canvas);
+			}, function() {
+				self.highlightedState = null;
+				state.remove();
 			});
+			// Allows the state to be rendered before showing the prompt
+			// utils.async(function(){
+			// 	let text = prompt("Enter the state name:");
+			// 	state.setName(text);
+			// 	state.render(self.canvas);
+			// });
 		});
 
 		$(this.node).contextmenu(function(e) {
@@ -113,16 +133,6 @@ export class StateRenderer {
 				self.adjustEdge(this, e);
 			}
 		});
-	}
-
-	private selectState(state: State) {
-		if (this.highlightedState) {
-			this.highlightedState.dim();
-			this.highlightedState.render(this.canvas);
-		}
-		state.highlight();
-		this.highlightedState = state;
-		state.render(this.canvas);
 	}
 
 	private bindStateEvents(state: State) {
@@ -162,16 +172,28 @@ export class StateRenderer {
 		// TODO: change "Enter some text" to the actual real text/message
 		// (prompt() is probably not ideal)
 
+		let edgeText = function(callback: (t: string) => void) {
+			// let text = prompt("Enter some text");
+			// callback(text);
+
+			utils.prompt("Enter some text:", 1, function(data) {
+				callback(data[0]);
+			});
+		};
+
+		let self = this;
+
 		let origin = this.currentEdge.getOrigin();
 		// Checks if there's already an edge linking the origin and target states
 		for (let edge of this.edgeList) {
 			if (edge.getOrigin() == origin && edge.getTarget() == state) {
-				// Add the text to it instead and delete 'this.currentEdge'.
-				let text = prompt("Enter some text");
-				edge.addText(text);
-				edge.render(this.canvas);
-				this.currentEdge.remove();
-				this.currentEdge = null;
+				edgeText(function(text) {
+					// Add the text to it instead and delete 'this.currentEdge'.
+					edge.addText(text);
+					edge.render(self.canvas);
+					self.currentEdge.remove();
+					self.currentEdge = null;
+				});
 				return;
 			}
 		}
@@ -181,16 +203,22 @@ export class StateRenderer {
 		// Renders the edge here to show it already attached to the target state
 		this.currentEdge.render(this.canvas);
 
-		let self = this;
-		// Allows the edge to be rendered before showing the prompt
-		utils.async(function() {
-			let text = prompt("Enter some text");
+		edgeText(function(text) {
 			self.currentEdge.addText(text);
 			// Renders it again, this time to show the finished edge
 			self.currentEdge.render(self.canvas);
 			self.edgeList.push(self.currentEdge);
 			self.currentEdge = null;
 		});
+		// Allows the edge to be rendered before showing the prompt
+		// utils.async(function() {
+		// 	let text = prompt("Enter some text");
+		// 	self.currentEdge.addText(text);
+		// 	// Renders it again, this time to show the finished edge
+		// 	self.currentEdge.render(self.canvas);
+		// 	self.edgeList.push(self.currentEdge);
+		// 	self.currentEdge = null;
+		// });
 	}
 
 	private adjustEdge(elem: HTMLElement, e): void {

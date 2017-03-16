@@ -95,3 +95,16 @@ div.row {
 	cursor: default;
 	opacity: 0.5;
 }
+
+#system_prompt {
+	background-color: #DDD;
+	border-bottom: 1px solid black;
+	margin: -5px;
+	padding: 5px;
+}
+
+#system_prompt input {
+	margin-right: 5px;
+	text-align: center;
+	width: 100px;
+}

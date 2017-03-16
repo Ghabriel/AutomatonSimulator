@@ -39,7 +39,7 @@ export class Menu extends Renderer {
 
 		title.addEventListener("click", function() {
 			if (!$(content).is(":animated")) {
-				$(content).slideToggle(Settings.slideInterval);
+				$(content).slideToggle(Settings.menuSlideInterval);
 			}
 		});
 
