@@ -1,7 +1,4 @@
 import * as init from "./lists/InitializerList"
-import * as automata from "./lists/MachineList"
-import {Menu} from "./interface/Menu"
-import {Settings, Strings} from "./Settings"
 import {utils} from "./Utils"
 
 export class Initializer {

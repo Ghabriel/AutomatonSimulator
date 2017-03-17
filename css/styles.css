@@ -102,9 +102,6 @@ div.row {
 	margin: -5px;
 	padding: 5px;
 	position: relative;
-}
-
-#system_prompt {
 	z-index: 3;
 }
 

@@ -170,7 +170,6 @@ export class StateRenderer {
 		this.edgeMode = false;
 
 		// TODO: change "Enter some text" to the actual real text/message
-		// (prompt() is probably not ideal)
 
 		let edgeText = function(callback: (t: string) => void) {
 			// let text = prompt("Enter some text");

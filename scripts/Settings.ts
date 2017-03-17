@@ -1,7 +1,9 @@
 import * as lang from "./lists/LanguageList"
 import * as automata from "./lists/MachineList"
+import * as controllers from "./lists/ControllerList"
 
 // import {Regex} from "./misc/Regex"
+import {Controller} from "./controllers/Controller"
 import {FA} from "./machines/FA"
 import {Initializer} from "./Initializer"
 import {Renderer} from "./interface/Renderer"
@@ -10,6 +12,7 @@ import {utils} from "./Utils"
 interface MachineTraits {
 	name: string;
 	sidebar: any[];
+	controller: Controller;
 }
 
 // TODO: make it more flexible to add/remove machine types. See how
@@ -77,21 +80,35 @@ export namespace Settings {
 	// TODO: maybe using a cookie to get the default language is a good idea
 	export var language = lang.english;
 
-	// TODO: what if FAs are no longer in the system? Must find a way
-	// to get a valid machine regardless of which ones exist.
-	export var currentMachine = Machine.FA;
+	// The current machine being operated on. Defaults to the first machine
+	// of the Machine enum (unless changed, that means FA)
+	export var currentMachine = 0;
 
 	export var machines: {[m: number]: MachineTraits} = {};
 
+	export var controllerMap: {[m: number]: Controller} = {};
+
 	let firstUpdate = true;
+	// TODO: check if we only need to instantiate the controllers once or
+	// if it's needed everytime (like with the sidebar)
 	export function update() {
 		// window.FA = FA;
+
+		if (firstUpdate) {
+			for (let index in Machine) {
+				if (Machine.hasOwnProperty(index) && !isNaN(parseInt(index))) {
+					controllerMap[index] = new controllers[Machine[index] + "Controller"]();
+				}
+			}
+		}
+
 		let machineList: typeof machines = {};
 		for (let index in Machine) {
 			if (Machine.hasOwnProperty(index) && !isNaN(parseInt(index))) {
 				machineList[index] = {
 					name: language.strings[Machine[index]],
-					sidebar: []
+					sidebar: [],
+					controller: controllerMap[index]
 				};
 			}
 		}

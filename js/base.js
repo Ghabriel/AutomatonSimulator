@@ -148,6 +148,45 @@ define("lists/LanguageList", ["require", "exports", "languages/Portuguese", "lan
     __export(Portuguese_1);
     __export(English_1);
 });
+define("controllers/Controller", ["require", "exports"], function (require, exports) {
+    "use strict";
+});
+define("controllers/FAController", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var FAController = (function () {
+        function FAController() {
+        }
+        return FAController;
+    }());
+    exports.FAController = FAController;
+});
+define("controllers/PDAController", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var PDAController = (function () {
+        function PDAController() {
+        }
+        return PDAController;
+    }());
+    exports.PDAController = PDAController;
+});
+define("controllers/LBAController", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var LBAController = (function () {
+        function LBAController() {
+        }
+        return LBAController;
+    }());
+    exports.LBAController = LBAController;
+});
+define("lists/ControllerList", ["require", "exports", "controllers/FAController", "controllers/PDAController", "controllers/LBAController"], function (require, exports, FAController_1, PDAController_1, LBAController_1) {
+    "use strict";
+    function __export(m) {
+        for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+    }
+    __export(FAController_1);
+    __export(PDAController_1);
+    __export(LBAController_1);
+});
 define("datastructures/Queue", ["require", "exports"], function (require, exports) {
     "use strict";
     var Queue = (function () {
@@ -665,7 +704,7 @@ define("Initializer", ["require", "exports", "lists/InitializerList", "Utils"], 
     }());
     exports.Initializer = Initializer;
 });
-define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineList", "Initializer", "Utils"], function (require, exports, lang, automata, Initializer_1, Utils_3) {
+define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineList", "lists/ControllerList", "Initializer", "Utils"], function (require, exports, lang, automata, controllers, Initializer_1, Utils_3) {
     "use strict";
     var Settings;
     (function (Settings) {
@@ -717,16 +756,25 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.languages = lang;
         Settings.Machine = automata.Machine;
         Settings.language = lang.english;
-        Settings.currentMachine = Settings.Machine.FA;
+        Settings.currentMachine = 0;
         Settings.machines = {};
+        Settings.controllerMap = {};
         var firstUpdate = true;
         function update() {
+            if (firstUpdate) {
+                for (var index in Settings.Machine) {
+                    if (Settings.Machine.hasOwnProperty(index) && !isNaN(parseInt(index))) {
+                        Settings.controllerMap[index] = new controllers[Settings.Machine[index] + "Controller"]();
+                    }
+                }
+            }
             var machineList = {};
             for (var index in Settings.Machine) {
                 if (Settings.Machine.hasOwnProperty(index) && !isNaN(parseInt(index))) {
                     machineList[index] = {
                         name: Settings.language.strings[Settings.Machine[index]],
-                        sidebar: []
+                        sidebar: [],
+                        controller: Settings.controllerMap[index]
                     };
                 }
             }
