@@ -215,20 +215,26 @@ export class AutomatonRenderer {
 			self.selectState(state);
 			self.bindStateEvents(state);
 
-			utils.prompt("Enter the state name:", 1, function(data) {
-				self.stateList.push(state);
-				state.setName(data[0]);
-				state.render(self.canvas);
-			}, function() {
-				self.highlightedState = null;
-				state.remove();
-			});
-			// Allows the state to be rendered before showing the prompt
-			// utils.async(function(){
-			// 	let text = prompt("Enter the state name:");
-			// 	state.setName(text);
-			// 	state.render(self.canvas);
-			// });
+			let stateNamePrompt = function() {
+				utils.prompt("Enter the state name:", 1, function(data) {
+					let name = data[0];
+					for (let state of self.stateList) {
+						if (state.getName() == name) {
+							alert("State name already in use");
+							return stateNamePrompt();
+						}
+					}
+
+					self.stateList.push(state);
+					state.setName(name);
+					state.render(self.canvas);
+				}, function() {
+					self.highlightedState = null;
+					state.remove();
+				});
+			};
+
+			stateNamePrompt();
 		});
 
 		$(this.node).contextmenu(function(e) {

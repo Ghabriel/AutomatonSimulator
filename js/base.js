@@ -1356,14 +1356,25 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 state.setPosition(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
                 self.selectState(state);
                 self.bindStateEvents(state);
-                Utils_5.utils.prompt("Enter the state name:", 1, function (data) {
-                    self.stateList.push(state);
-                    state.setName(data[0]);
-                    state.render(self.canvas);
-                }, function () {
-                    self.highlightedState = null;
-                    state.remove();
-                });
+                var stateNamePrompt = function () {
+                    Utils_5.utils.prompt("Enter the state name:", 1, function (data) {
+                        var name = data[0];
+                        for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
+                            var state_1 = _a[_i];
+                            if (state_1.getName() == name) {
+                                alert("State name already in use");
+                                return stateNamePrompt();
+                            }
+                        }
+                        self.stateList.push(state);
+                        state.setName(name);
+                        state.render(self.canvas);
+                    }, function () {
+                        self.highlightedState = null;
+                        state.remove();
+                    });
+                };
+                stateNamePrompt();
             });
             $(this.node).contextmenu(function (e) {
                 e.preventDefault();
@@ -1431,8 +1442,8 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             };
             for (var _i = 0, _a = this.edgeList; _i < _a.length; _i++) {
                 var edge = _a[_i];
-                var state_1 = _loop_1(edge);
-                if (typeof state_1 === "object") return state_1.value;
+                var state_2 = _loop_1(edge);
+                if (typeof state_2 === "object") return state_2.value;
             }
             this.currentEdge.setTarget(state);
             this.currentEdge.render(this.canvas);
