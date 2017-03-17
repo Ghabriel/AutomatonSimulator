@@ -1,5 +1,6 @@
 /// <reference path="defs/jQuery.d.ts" />
 
+import {Keyboard} from "./Keyboard"
 import {Settings, Strings} from "./Settings"
 import {System} from "./System"
 
@@ -116,6 +117,10 @@ export namespace utils {
 						   success: (t: string[]) => void,
 						   fail?: () => void): void {
 
+		let blocker = this.create("div", {
+			className: "click_blocker"
+		});
+
 		let container = this.create("div", {
 			id: "system_prompt"
 		});
@@ -124,6 +129,12 @@ export namespace utils {
 		let mainbar = this.id(Settings.mainbarID);
 
 		let dismiss = function() {
+			// Removes the click blocker from the page
+			document.body.removeChild(blocker);
+
+			// Removes the keyboard block
+			System.unblockEvents();
+
 			$(container).slideUp(Settings.promptSlideInterval, function() {
 				mainbar.removeChild(container);
 			});
@@ -161,8 +172,10 @@ export namespace utils {
 			});
 
 			input.addEventListener("keydown", function(e) {
-				if (e.keyCode == 13) {
+				if (e.keyCode == Keyboard.keys.ENTER) {
 					ok.click();
+				} else if (e.keyCode == Keyboard.keys.ESC) {
+					cancel.click();
 				}
 			});
 
@@ -173,7 +186,14 @@ export namespace utils {
 		container.appendChild(ok);
 		container.appendChild(cancel);
 
+		// Adds the "click blocker" to the page
+		document.body.insertBefore(blocker, document.body.children[0]);
+
+		// Sets up a keyboard block
+		System.blockEvents();
+
 		$(container).toggle();
+		// Adds the prompt to the page
 		mainbar.insertBefore(container, mainbar.children[0]);
 		$(container).slideDown(Settings.promptSlideInterval, function() {
 			inputs[0].focus();

@@ -372,7 +372,7 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
     }());
     exports.FA = FA;
 });
-define("Utils", ["require", "exports", "Settings", "System"], function (require, exports, Settings_1, System_1) {
+define("Utils", ["require", "exports", "Keyboard", "Settings", "System"], function (require, exports, Keyboard_1, Settings_1, System_1) {
     "use strict";
     var utils;
     (function (utils) {
@@ -470,12 +470,17 @@ define("Utils", ["require", "exports", "Settings", "System"], function (require,
         }
         utils.async = async;
         function prompt(message, numFields, success, fail) {
+            var blocker = this.create("div", {
+                className: "click_blocker"
+            });
             var container = this.create("div", {
                 id: "system_prompt"
             });
             container.innerHTML = message + "<br>";
             var mainbar = this.id(Settings_1.Settings.mainbarID);
             var dismiss = function () {
+                document.body.removeChild(blocker);
+                System_1.System.unblockEvents();
                 $(container).slideUp(Settings_1.Settings.promptSlideInterval, function () {
                     mainbar.removeChild(container);
                 });
@@ -509,8 +514,11 @@ define("Utils", ["require", "exports", "Settings", "System"], function (require,
                     type: "text"
                 });
                 input.addEventListener("keydown", function (e) {
-                    if (e.keyCode == 13) {
+                    if (e.keyCode == Keyboard_1.Keyboard.keys.ENTER) {
                         ok.click();
+                    }
+                    else if (e.keyCode == Keyboard_1.Keyboard.keys.ESC) {
+                        cancel.click();
                     }
                 });
                 inputs.push(input);
@@ -518,6 +526,8 @@ define("Utils", ["require", "exports", "Settings", "System"], function (require,
             }
             container.appendChild(ok);
             container.appendChild(cancel);
+            document.body.insertBefore(blocker, document.body.children[0]);
+            System_1.System.blockEvents();
             $(container).toggle();
             mainbar.insertBefore(container, mainbar.children[0]);
             $(container).slideDown(Settings_1.Settings.promptSlideInterval, function () {
@@ -981,7 +991,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
     }(Renderer_3.Renderer));
     exports.Sidebar = Sidebar;
 });
-define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], function (require, exports, Keyboard_1, Settings_6, Utils_7) {
+define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], function (require, exports, Keyboard_2, Settings_6, Utils_7) {
     "use strict";
     var System = (function () {
         function System() {
@@ -1020,7 +1030,16 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
                 callback: callback
             });
         };
+        System.blockEvents = function () {
+            this.eventBlock = true;
+        };
+        System.unblockEvents = function () {
+            this.eventBlock = false;
+        };
         System.shortcutMatches = function (event, keys) {
+            if (this.eventBlock) {
+                return false;
+            }
             function propertyName(type) {
                 return type + "Key";
             }
@@ -1034,7 +1053,7 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
                         return false;
                     }
                 }
-                else if (event.keyCode != Keyboard_1.Keyboard.keys[key]) {
+                else if (event.keyCode != Keyboard_2.Keyboard.keys[key]) {
                     return false;
                 }
             }
@@ -1049,6 +1068,7 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
             return true;
         };
         System.keyboardObservers = [];
+        System.eventBlock = false;
         return System;
     }());
     exports.System = System;

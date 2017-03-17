@@ -48,7 +48,20 @@ export class System {
 		});
 	}
 
+	static blockEvents(): void {
+		this.eventBlock = true;
+	}
+
+	static unblockEvents(): void {
+		this.eventBlock = false;
+	}
+
 	private static shortcutMatches(event: KeyboardEvent, keys: string[]): boolean {
+		if (this.eventBlock) {
+			// Ignore all keyboard events if there's an active event block.
+			return false;
+		}
+
 		function propertyName(type) {
 			return type + "Key";
 		}
@@ -80,4 +93,5 @@ export class System {
 
 	private static keyboardObservers: KeyboardObserver[] = [];
 	private static sidebar: Sidebar;
+	private static eventBlock: boolean = false;
 }
