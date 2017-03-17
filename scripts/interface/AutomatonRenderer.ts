@@ -10,73 +10,73 @@ export class AutomatonRenderer {
 	}
 
 	public render(): void {
-		// let state = new State();
-		// state.setPosition(350, 300);
-		// this.stateList.push(state);
+		let state = new State();
+		state.setPosition(350, 300);
+		this.stateList.push(state);
 
-		// let groups = [
-		// 	[100, 300],
-		// 	[350, 50],
-		// 	[600, 300],
-		// 	[350, 550]
-		// ];
+		let groups = [
+			[100, 300],
+			[350, 50],
+			[600, 300],
+			[350, 550]
+		];
 
-		// let i = 0;
-		// for (let group of groups) {
-		// 	let s = new State();
-		// 	s.setPosition(group[0], group[1]);
-		// 	this.stateList.push(s);
+		let i = 0;
+		for (let group of groups) {
+			let s = new State();
+			s.setPosition(group[0], group[1]);
+			this.stateList.push(s);
 
-		// 	let e = new Edge();
-		// 	if (i == 1) {
-		// 		e.setOrigin(s);
-		// 		e.setTarget(state);
-		// 	} else {
-		// 		e.setOrigin(state);
-		// 		e.setTarget(s);
-		// 	}
-		// 	i++;
-		// 	this.edgeList.push(e);
-		// }
+			let e = new Edge();
+			if (i == 1) {
+				e.setOrigin(s);
+				e.setTarget(state);
+			} else {
+				e.setOrigin(state);
+				e.setTarget(s);
+			}
+			i++;
+			this.edgeList.push(e);
+		}
 
-		// this.stateList[2].setInitial(true);
-		// this.initialState = this.stateList[2];
+		this.stateList[2].setInitial(true);
+		this.initialState = this.stateList[2];
 
-		// this.stateList[this.stateList.length - 1].setFinal(true);
-		// for (let i = 0; i < this.stateList.length; i++) {
-		// 	this.stateList[i].setName("q" + i);
-		// }
-		// this.edgeList[0].addText("b");
-		// this.edgeList[0].addText("e");
-		// this.edgeList[1].addText("a");
-		// this.edgeList[2].addText("c");
-		// this.edgeList[3].addText("d");
+		this.stateList[this.stateList.length - 1].setFinal(true);
+		for (let i = 0; i < this.stateList.length; i++) {
+			this.stateList[i].setName("q" + i);
+		}
+		this.edgeList[0].addText("b");
+		this.edgeList[0].addText("e");
+		this.edgeList[1].addText("a");
+		this.edgeList[2].addText("c");
+		this.edgeList[3].addText("d");
 
-		// let e1 = new Edge();
-		// e1.setOrigin(this.stateList[1]);
-		// e1.setTarget(this.stateList[4]);
-		// e1.addText("b");
-		// this.edgeList.push(e1);
+		let e1 = new Edge();
+		e1.setOrigin(this.stateList[1]);
+		e1.setTarget(this.stateList[4]);
+		e1.addText("b");
+		this.edgeList.push(e1);
 
-		// let e2 = new Edge();
-		// e2.setOrigin(this.stateList[3]);
-		// e2.setTarget(this.stateList[4]);
-		// e2.addText("c");
-		// this.edgeList.push(e2);
+		let e2 = new Edge();
+		e2.setOrigin(this.stateList[3]);
+		e2.setTarget(this.stateList[4]);
+		e2.addText("c");
+		this.edgeList.push(e2);
 
-		// let e3 = new Edge();
-		// e3.setOrigin(this.stateList[1]);
-		// e3.setTarget(this.stateList[2]);
-		// e3.addText("a");
-		// this.edgeList.push(e3);
+		let e3 = new Edge();
+		e3.setOrigin(this.stateList[1]);
+		e3.setTarget(this.stateList[2]);
+		e3.addText("a");
+		this.edgeList.push(e3);
 
-		// let e4 = new Edge();
-		// e4.setOrigin(this.stateList[3]);
-		// e4.setTarget(this.stateList[2]);
-		// e4.addText("a");
-		// this.edgeList.push(e4);
+		let e4 = new Edge();
+		e4.setOrigin(this.stateList[3]);
+		e4.setTarget(this.stateList[2]);
+		e4.addText("a");
+		this.edgeList.push(e4);
 
-		// this.updateEdges();
+		this.updateEdges();
 
 		// this.selectState(state);
 
@@ -109,6 +109,7 @@ export class AutomatonRenderer {
 
 	public save(): string {
 		let result = {
+			type: Settings.Machine[Settings.currentMachine],
 			states: [],
 			edges: []
 		};
@@ -136,7 +137,27 @@ export class AutomatonRenderer {
 	}
 
 	public load(content: string): void {
-		let obj = JSON.parse(content);
+		let error = function() {
+			alert("Invalid file");
+		};
+
+		let obj: any = {};
+		try {
+			obj = JSON.parse(content);
+		} catch (e) {
+			error();
+			return;
+		}
+
+		let machineType = Settings.Machine[Settings.currentMachine];
+		let validation = obj.type == machineType
+					  && obj.states instanceof Array
+					  && obj.edges instanceof Array;
+
+		if (!validation) {
+			error();
+			return;
+		}
 
 		let nameToIndex: {[n: string]: number} = {};
 

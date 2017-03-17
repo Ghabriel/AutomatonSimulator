@@ -1177,6 +1177,65 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.node = node;
         }
         AutomatonRenderer.prototype.render = function () {
+            var state = new State_1.State();
+            state.setPosition(350, 300);
+            this.stateList.push(state);
+            var groups = [
+                [100, 300],
+                [350, 50],
+                [600, 300],
+                [350, 550]
+            ];
+            var i = 0;
+            for (var _i = 0, groups_1 = groups; _i < groups_1.length; _i++) {
+                var group = groups_1[_i];
+                var s = new State_1.State();
+                s.setPosition(group[0], group[1]);
+                this.stateList.push(s);
+                var e = new Edge_1.Edge();
+                if (i == 1) {
+                    e.setOrigin(s);
+                    e.setTarget(state);
+                }
+                else {
+                    e.setOrigin(state);
+                    e.setTarget(s);
+                }
+                i++;
+                this.edgeList.push(e);
+            }
+            this.stateList[2].setInitial(true);
+            this.initialState = this.stateList[2];
+            this.stateList[this.stateList.length - 1].setFinal(true);
+            for (var i_1 = 0; i_1 < this.stateList.length; i_1++) {
+                this.stateList[i_1].setName("q" + i_1);
+            }
+            this.edgeList[0].addText("b");
+            this.edgeList[0].addText("e");
+            this.edgeList[1].addText("a");
+            this.edgeList[2].addText("c");
+            this.edgeList[3].addText("d");
+            var e1 = new Edge_1.Edge();
+            e1.setOrigin(this.stateList[1]);
+            e1.setTarget(this.stateList[4]);
+            e1.addText("b");
+            this.edgeList.push(e1);
+            var e2 = new Edge_1.Edge();
+            e2.setOrigin(this.stateList[3]);
+            e2.setTarget(this.stateList[4]);
+            e2.addText("c");
+            this.edgeList.push(e2);
+            var e3 = new Edge_1.Edge();
+            e3.setOrigin(this.stateList[1]);
+            e3.setTarget(this.stateList[2]);
+            e3.addText("a");
+            this.edgeList.push(e3);
+            var e4 = new Edge_1.Edge();
+            e4.setOrigin(this.stateList[3]);
+            e4.setTarget(this.stateList[2]);
+            e4.addText("a");
+            this.edgeList.push(e4);
+            this.updateEdges();
             this.bindEvents();
             this.bindShortcuts();
         };
@@ -1201,6 +1260,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         };
         AutomatonRenderer.prototype.save = function () {
             var result = {
+                type: Settings_5.Settings.Machine[Settings_5.Settings.currentMachine],
                 states: [],
                 edges: []
             };
@@ -1226,7 +1286,25 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             return JSON.stringify(result);
         };
         AutomatonRenderer.prototype.load = function (content) {
-            var obj = JSON.parse(content);
+            var error = function () {
+                alert("Invalid file");
+            };
+            var obj = {};
+            try {
+                obj = JSON.parse(content);
+            }
+            catch (e) {
+                error();
+                return;
+            }
+            var machineType = Settings_5.Settings.Machine[Settings_5.Settings.currentMachine];
+            var validation = obj.type == machineType
+                && obj.states instanceof Array
+                && obj.edges instanceof Array;
+            if (!validation) {
+                error();
+                return;
+            }
             var nameToIndex = {};
             for (var _i = 0, _a = obj.states; _i < _a.length; _i++) {
                 var data = _a[_i];
