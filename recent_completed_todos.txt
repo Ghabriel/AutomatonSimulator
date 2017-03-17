@@ -1,0 +1,4 @@
+- save/open
+- múltiplos labels numa mesma aresta
+- nomes nos estados (5 chars max)
+- mudar a cor/espessura da seta indicativa do estado inicial

@@ -127,6 +127,7 @@ export class Sidebar extends Renderer {
 		fileSelector.addEventListener("change", function(e) {
 			// TODO: change these <any> casts
 			let file = (<any> e.target).files[0];
+			(<HTMLInputElement> this).value = "";
 			if (file) {
 				let reader = new FileReader();
 				reader.onload = function(e) {
@@ -136,6 +137,7 @@ export class Sidebar extends Renderer {
 			}
 		});
 		// TODO: do we need to append fileSelector to the DOM?
+		// this.fileManipulation.add(fileSelector);
 
 
 		let open = <HTMLInputElement> utils.create("input", {
@@ -144,6 +146,7 @@ export class Sidebar extends Renderer {
 			value: Strings.OPEN,
 			click: function() {
 				fileSelector.click();
+				this.blur();
 			}
 		});
 		utils.bindShortcut(Settings.shortcuts.open, function() {

@@ -256,18 +256,20 @@ export class AutomatonRenderer {
 	private finishEdge(state: State): void {
 		this.edgeMode = false;
 
-		// TODO: change "Enter some text" to the actual real text/message
-
-		let edgeText = function(callback: (t: string) => void) {
-			// let text = prompt("Enter some text");
-			// callback(text);
-
-			utils.prompt("Enter some text:", 1, function(data) {
+		// TODO: change "Enter the edge content" to the actual real text/message
+		let edgeText = function(callback: (t: string) => void,
+								fallback: () => void) {
+			utils.prompt("Enter the edge content:", 1, function(data) {
 				callback(data[0]);
-			});
+			}, fallback);
 		};
 
 		let self = this;
+
+		let clearCurrentEdge = function() {
+			self.currentEdge.remove();
+			self.currentEdge = null;
+		};
 
 		let origin = this.currentEdge.getOrigin();
 		// Checks if there's already an edge linking the origin and target states
@@ -277,9 +279,8 @@ export class AutomatonRenderer {
 					// Add the text to it instead and delete 'this.currentEdge'.
 					edge.addText(text);
 					edge.render(self.canvas);
-					self.currentEdge.remove();
-					self.currentEdge = null;
-				});
+					clearCurrentEdge();
+				}, clearCurrentEdge);
 				return;
 			}
 		}
@@ -295,16 +296,7 @@ export class AutomatonRenderer {
 			self.currentEdge.render(self.canvas);
 			self.edgeList.push(self.currentEdge);
 			self.currentEdge = null;
-		});
-		// Allows the edge to be rendered before showing the prompt
-		// utils.async(function() {
-		// 	let text = prompt("Enter some text");
-		// 	self.currentEdge.addText(text);
-		// 	// Renders it again, this time to show the finished edge
-		// 	self.currentEdge.render(self.canvas);
-		// 	self.edgeList.push(self.currentEdge);
-		// 	self.currentEdge = null;
-		// });
+		}, clearCurrentEdge);
 	}
 
 	private adjustEdge(elem: HTMLElement, e): void {
@@ -402,17 +394,7 @@ export class AutomatonRenderer {
 		utils.bindShortcut(Settings.shortcuts.clearMachine, function() {
 			let confirmation = confirm(Strings.CLEAR_CONFIRMATION);
 			if (confirmation) {
-				self.clearSelection();
-
-				for (let edge of self.edgeList) {
-					edge.remove();
-				}
-				self.edgeList = [];
-
-				for (let state of self.stateList) {
-					state.remove();
-				}
-				self.stateList = [];
+				self.clear();
 			}
 		});
 

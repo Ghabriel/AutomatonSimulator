@@ -1,7 +1,6 @@
 Obrigatórios:
 - adicionar suporte a laços
 - exibir a representação formal do autômato sob edição na barra lateral
-- save/open
 
 Importantes:
 - suporte a ctrl+z (desfazer última ação)

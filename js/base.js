@@ -1330,21 +1330,24 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         };
         AutomatonRenderer.prototype.finishEdge = function (state) {
             this.edgeMode = false;
-            var edgeText = function (callback) {
-                Utils_5.utils.prompt("Enter some text:", 1, function (data) {
+            var edgeText = function (callback, fallback) {
+                Utils_5.utils.prompt("Enter the edge content:", 1, function (data) {
                     callback(data[0]);
-                });
+                }, fallback);
             };
             var self = this;
+            var clearCurrentEdge = function () {
+                self.currentEdge.remove();
+                self.currentEdge = null;
+            };
             var origin = this.currentEdge.getOrigin();
             var _loop_1 = function(edge) {
                 if (edge.getOrigin() == origin && edge.getTarget() == state) {
                     edgeText(function (text) {
                         edge.addText(text);
                         edge.render(self.canvas);
-                        self.currentEdge.remove();
-                        self.currentEdge = null;
-                    });
+                        clearCurrentEdge();
+                    }, clearCurrentEdge);
                     return { value: void 0 };
                 }
             };
@@ -1360,7 +1363,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 self.currentEdge.render(self.canvas);
                 self.edgeList.push(self.currentEdge);
                 self.currentEdge = null;
-            });
+            }, clearCurrentEdge);
         };
         AutomatonRenderer.prototype.adjustEdge = function (elem, e) {
             var target = {
@@ -1448,17 +1451,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             Utils_5.utils.bindShortcut(Settings_5.Settings.shortcuts.clearMachine, function () {
                 var confirmation = confirm(Settings_5.Strings.CLEAR_CONFIRMATION);
                 if (confirmation) {
-                    self.clearSelection();
-                    for (var _i = 0, _a = self.edgeList; _i < _a.length; _i++) {
-                        var edge = _a[_i];
-                        edge.remove();
-                    }
-                    self.edgeList = [];
-                    for (var _b = 0, _c = self.stateList; _b < _c.length; _b++) {
-                        var state = _c[_b];
-                        state.remove();
-                    }
-                    self.stateList = [];
+                    self.clear();
                 }
             });
             Utils_5.utils.bindShortcut(Settings_5.Settings.shortcuts.left, function () {
@@ -1858,6 +1851,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             });
             fileSelector.addEventListener("change", function (e) {
                 var file = e.target.files[0];
+                this.value = "";
                 if (file) {
                     var reader = new FileReader();
                     reader.onload = function (e) {
@@ -1872,6 +1866,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 value: Settings_8.Strings.OPEN,
                 click: function () {
                     fileSelector.click();
+                    this.blur();
                 }
             });
             Utils_9.utils.bindShortcut(Settings_7.Settings.shortcuts.open, function () {
@@ -1968,7 +1963,6 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
             this.eventBlock = false;
         };
         System.shortcutMatches = function (event, keys) {
-            console.log("block: " + this.eventBlock);
             if (this.eventBlock) {
                 return false;
             }
