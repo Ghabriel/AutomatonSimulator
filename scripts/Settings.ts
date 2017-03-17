@@ -7,6 +7,7 @@ import {Controller} from "./controllers/Controller"
 import {FA} from "./machines/FA"
 import {Initializer} from "./Initializer"
 import {Renderer} from "./interface/Renderer"
+import {AutomatonRenderer} from "./interface/AutomatonRenderer"
 import {utils} from "./Utils"
 
 interface MachineTraits {
@@ -87,6 +88,8 @@ export namespace Settings {
 	export var machines: {[m: number]: MachineTraits} = {};
 
 	export var controllerMap: {[m: number]: Controller} = {};
+
+	export var automatonRenderer: AutomatonRenderer = null;
 
 	let firstUpdate = true;
 	// TODO: check if we only need to instantiate the controllers once or

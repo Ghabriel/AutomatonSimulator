@@ -19,5 +19,6 @@ export namespace english {
 		FAST_RECOGNITION: "Fast recognition",
 		STEP_RECOGNITION: "Step-by-step recognition",
 		STOP_RECOGNITION: "Stop step-by-step recognition",
+		CHANGE_MACHINE_WARNING: "Changing the machine type resets the automaton. Do you wish to continue?",
 	};
 }

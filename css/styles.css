@@ -119,3 +119,7 @@ div.row {
 	width: 100%;
 	z-index: 2;
 }
+
+#file_selector {
+	display: none;
+}

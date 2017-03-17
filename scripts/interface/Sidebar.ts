@@ -65,6 +65,9 @@ export class Sidebar extends Renderer {
 		for (let menu of this.otherMenus) {
 			menu.bind(this.node);
 		}
+
+		// TODO
+		// console.log(Settings.machines[Settings.currentMachine].name);
 	}
 
 	private buildLanguageSelection(): void {
@@ -88,7 +91,8 @@ export class Sidebar extends Renderer {
 		this.languageSelection.toggle();
 
 		select.addEventListener("change", function(e) {
-			let option = this.options[this.selectedIndex];
+			let node = <HTMLSelectElement> this;
+			let option = node.options[node.selectedIndex];
 			let index = option.value;
 			let name = option.innerHTML;
 			let confirmation = confirm(Strings.CHANGE_LANGUAGE.replace("%", name));
@@ -100,28 +104,47 @@ export class Sidebar extends Renderer {
 
 	private buildFileManipulation(): void {
 		this.fileManipulation.clear();
-		let save = <HTMLInputElement> utils.create("input");
-		save.classList.add("file_manip_btn");
-		save.type = "button";
-		save.value = Strings.SAVE;
-		save.addEventListener("click", function() {
-			// TODO
-		    let content = "Hello, world!";
-		    let blob = new Blob([content], {type: "text/plain; charset=utf-8"});
-		    saveAs(blob, "file.txt");
+		let save = <HTMLInputElement> utils.create("input", {
+			className: "file_manip_btn",
+			type: "button",
+			value: Strings.SAVE,
+			click: function() {
+				let content = Settings.automatonRenderer.save();
+				let blob = new Blob([content], {type: "text/plain; charset=utf-8"});
+				saveAs(blob, "file.txt");
+			}
 		});
 		utils.bindShortcut(Settings.shortcuts.save, function() {
 			save.click();
 		});
 		this.fileManipulation.add(save);
 
-		let open = <HTMLInputElement> utils.create("input");
-		open.classList.add("file_manip_btn");
-		open.type = "button";
-		open.value = Strings.OPEN;
-		open.addEventListener("click", function() {
-			// TODO
-			alert("Not yet implemented");
+
+		let fileSelector = <HTMLInputElement> utils.create("input", {
+			id: "file_selector",
+			type: "file"
+		});
+		fileSelector.addEventListener("change", function(e) {
+			// TODO: change these <any> casts
+			let file = (<any> e.target).files[0];
+			if (file) {
+				let reader = new FileReader();
+				reader.onload = function(e) {
+					Settings.automatonRenderer.load((<any> e.target).result);
+				};
+				reader.readAsText(file);
+			}
+		});
+		// TODO: do we need to append fileSelector to the DOM?
+
+
+		let open = <HTMLInputElement> utils.create("input", {
+			className: "file_manip_btn",
+			type: "button",
+			value: Strings.OPEN,
+			click: function() {
+				fileSelector.click();
+			}
 		});
 		utils.bindShortcut(Settings.shortcuts.open, function() {
 			open.click();
@@ -140,14 +163,19 @@ export class Sidebar extends Renderer {
 			button.value = props.name;
 			button.disabled = (type == Settings.currentMachine);
 			button.addEventListener("click", function() {
-				machineButtonMapping[Settings.currentMachine].disabled = false;
-				machineButtonMapping[type].disabled = true;
-				// Firefox ignores keyboard events triggered while focusing
-				// a disabled input, so blur it.
-				machineButtonMapping[type].blur();
-				Settings.currentMachine = type;
-				self.loadMachine(type);
-				self.renderDynamicMenus();
+				if (Settings.automatonRenderer.empty()
+				 || confirm(Strings.CHANGE_MACHINE_WARNING)) {
+					Settings.automatonRenderer.clear();
+
+					machineButtonMapping[Settings.currentMachine].disabled = false;
+					machineButtonMapping[type].disabled = true;
+					// Firefox ignores keyboard events triggered while focusing
+					// a disabled input, so blur it.
+					machineButtonMapping[type].blur();
+					Settings.currentMachine = type;
+					self.loadMachine(type);
+					self.renderDynamicMenus();
+				}
 			});
 			table.add(button);
 			machineButtonMapping[type] = button;

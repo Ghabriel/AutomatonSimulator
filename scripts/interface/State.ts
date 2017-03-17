@@ -41,6 +41,10 @@ export class State {
 		this.name = name;
 	}
 
+	public getName(): string {
+		return this.name;
+	}
+
 	public highlight(): void {
 		this.highlighted = true;
 	}
@@ -64,6 +68,9 @@ export class State {
 			part.remove();
 		}
 		this.arrowParts = [];
+
+		this.textContainer.remove();
+		this.textContainer = null;
 	}
 
 	public render(canvas: RaphaelPaper): void {

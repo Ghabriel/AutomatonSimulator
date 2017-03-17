@@ -27,6 +27,10 @@ export class Edge {
 		this.textList.push(text);
 	}
 
+	public getTextList(): string[] {
+		return this.textList;
+	}
+
 	public remove(): void {
 		if (this.body) {
 			this.body.remove();

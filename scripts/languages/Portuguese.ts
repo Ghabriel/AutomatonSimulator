@@ -19,5 +19,6 @@ export namespace portuguese {
 		FAST_RECOGNITION: "Reconhecimento rápido",
 		STEP_RECOGNITION: "Reconhecimento passo-a-passo",
 		STOP_RECOGNITION: "Parar reconhecimento passo-a-passo",
+		CHANGE_MACHINE_WARNING: "Alterar o tipo de máquina reseta o autômato. Deseja continuar?",
 	};
 }

@@ -1,8 +1,9 @@
 /// <reference path="../defs/raphael.d.ts" />
 /// <reference path="../defs/jQuery.d.ts" />
 
+import {AutomatonRenderer} from "./AutomatonRenderer"
 import {Renderer} from "./Renderer"
-import {StateRenderer} from "./StateRenderer"
+import {Settings} from "../Settings"
 
 export class Mainbar extends Renderer {
 	constructor() {
@@ -29,13 +30,14 @@ export class Mainbar extends Renderer {
 		// 0x0 is a placeholder size: resizeCanvas() calculates the true size.
 		this.canvas = Raphael(<HTMLElement> this.node, 0, 0);
 		this.resizeCanvas();
-		this.stateRenderer = new StateRenderer(this.canvas, this.node);
+		this.automatonRenderer = new AutomatonRenderer(this.canvas, this.node);
+		Settings.automatonRenderer = this.automatonRenderer;
 	}
 
 	protected onRender(): void {
-		this.stateRenderer.render();
+		this.automatonRenderer.render();
 	}
 
 	private canvas: RaphaelPaper = null;
-	private stateRenderer: StateRenderer = null;
+	private automatonRenderer: AutomatonRenderer = null;
 }
