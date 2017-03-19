@@ -1,3 +1,4 @@
+- adicionar suporte a laços
 - save/open
 - múltiplos labels numa mesma aresta
 - nomes nos estados (5 chars max)

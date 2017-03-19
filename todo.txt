@@ -1,5 +1,4 @@
 Obrigatórios:
-- adicionar suporte a laços
 - exibir a representação formal do autômato sob edição na barra lateral
 
 Importantes:

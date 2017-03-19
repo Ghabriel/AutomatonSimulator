@@ -11,14 +11,14 @@ export class AutomatonRenderer {
 
 	public render(): void {
 		let state = new State();
-		state.setPosition(350, 300);
+		state.setPosition(350, 400);
 		this.stateList.push(state);
 
 		let groups = [
-			[100, 300],
-			[350, 50],
-			[600, 300],
-			[350, 550]
+			[100, 400],
+			[350, 150],
+			[600, 400],
+			[350, 650]
 		];
 
 		let i = 0;
@@ -75,6 +75,12 @@ export class AutomatonRenderer {
 		e4.setTarget(this.stateList[2]);
 		e4.addText("a");
 		this.edgeList.push(e4);
+
+		let e5 = new Edge();
+		e5.setOrigin(this.stateList[2]);
+		e5.setTarget(this.stateList[2]);
+		e5.addText("b");
+		this.edgeList.push(e5);
 
 		this.updateEdges();
 

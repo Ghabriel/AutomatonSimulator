@@ -990,7 +990,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             this.prevTargetPosition = null;
             this.virtualTarget = null;
             this.textList = [];
-            this.body = null;
+            this.body = [];
             this.head = [];
             this.textContainer = null;
         }
@@ -1016,12 +1016,13 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             return this.textList;
         };
         Edge.prototype.remove = function () {
-            if (this.body) {
-                this.body.remove();
-                this.body = null;
-            }
-            for (var _i = 0, _a = this.head; _i < _a.length; _i++) {
+            for (var _i = 0, _a = this.body; _i < _a.length; _i++) {
                 var elem = _a[_i];
+                elem.remove();
+            }
+            this.body = [];
+            for (var _b = 0, _c = this.head; _b < _c.length; _b++) {
+                var elem = _c[_b];
                 elem.remove();
             }
             this.head = [];
@@ -1049,6 +1050,17 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 this.renderText(canvas);
             }
         };
+        Edge.prototype.stateCenterOffsets = function (dx, dy) {
+            var angle = Math.atan2(dy, dx);
+            var sin = Math.sin(angle);
+            var cos = Math.cos(angle);
+            var offsetX = Settings_4.Settings.stateRadius * cos;
+            var offsetY = Settings_4.Settings.stateRadius * sin;
+            return {
+                x: offsetX,
+                y: offsetY
+            };
+        };
         Edge.prototype.renderBody = function (canvas) {
             var origin = this.origin.getPosition();
             var target;
@@ -1072,41 +1084,73 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             }
             var dx = target.x - origin.x;
             var dy = target.y - origin.y;
-            var angle = Math.atan2(dy, dx);
-            var sin = Math.sin(angle);
-            var cos = Math.cos(angle);
-            var offsetX = Settings_4.Settings.stateRadius * cos;
-            var offsetY = Settings_4.Settings.stateRadius * sin;
-            origin.x += offsetX;
-            origin.y += offsetY;
-            if (this.target) {
-                target.x -= offsetX;
-                target.y -= offsetY;
+            var radius = Settings_4.Settings.stateRadius;
+            var offsets = this.stateCenterOffsets(dx, dy);
+            if (dx * dx + dy * dy > radius * radius) {
+                origin.x += offsets.x;
+                origin.y += offsets.y;
             }
-            if (!this.body) {
-                this.body = Utils_4.utils.line(canvas, origin.x, origin.y, target.x, target.y);
+            if (this.target) {
+                target.x -= offsets.x;
+                target.y -= offsets.y;
+            }
+            if (this.origin == this.target) {
+                var pos = this.origin.getPosition();
+                if (!this.body.length) {
+                    this.body.push(Utils_4.utils.line(canvas, pos.x + radius, pos.y, pos.x + 2 * radius, pos.y));
+                    this.body.push(Utils_4.utils.line(canvas, pos.x + 2 * radius, pos.y, pos.x + 2 * radius, pos.y - 2 * radius));
+                    this.body.push(Utils_4.utils.line(canvas, pos.x + 2 * radius, pos.y - 2 * radius, pos.x, pos.y - 2 * radius));
+                    this.body.push(Utils_4.utils.line(canvas, pos.x, pos.y - 2 * radius, pos.x, pos.y - radius));
+                }
+                else {
+                    this.body[0].attr("path", Utils_4.utils.linePath(pos.x + radius, pos.y, pos.x + 2 * radius, pos.y));
+                    this.body[1].attr("path", Utils_4.utils.linePath(pos.x + 2 * radius, pos.y, pos.x + 2 * radius, pos.y - 2 * radius));
+                    this.body[2].attr("path", Utils_4.utils.linePath(pos.x + 2 * radius, pos.y - 2 * radius, pos.x, pos.y - 2 * radius));
+                    this.body[3].attr("path", Utils_4.utils.linePath(pos.x, pos.y - 2 * radius, pos.x, pos.y - radius));
+                }
             }
             else {
-                this.body.attr("path", Utils_4.utils.linePath(origin.x, origin.y, target.x, target.y));
+                if (!this.body.length) {
+                    this.body.push(Utils_4.utils.line(canvas, origin.x, origin.y, target.x, target.y));
+                }
+                else {
+                    this.body[0].attr("path", Utils_4.utils.linePath(origin.x, origin.y, target.x, target.y));
+                }
             }
         };
         Edge.prototype.renderHead = function (canvas) {
             if (!this.target) {
                 return;
             }
-            var origin = this.origin.getPosition();
-            var target = this.target.getPosition();
-            var dx = target.x - origin.x;
-            var dy = target.y - origin.y;
-            var angle = Math.atan2(dy, dx);
-            var sin = Math.sin(angle);
-            var cos = Math.cos(angle);
-            var offsetX = Settings_4.Settings.stateRadius * cos;
-            var offsetY = Settings_4.Settings.stateRadius * sin;
-            target.x -= offsetX;
-            target.y -= offsetY;
-            dx -= offsetX;
-            dy -= offsetY;
+            var origin;
+            var target;
+            var dx;
+            var dy;
+            if (this.origin == this.target) {
+                var pos = this.origin.getPosition();
+                var radius = Settings_4.Settings.stateRadius;
+                origin = {
+                    x: pos.x,
+                    y: pos.y - 2 * radius
+                };
+                target = {
+                    x: pos.x,
+                    y: pos.y - radius
+                };
+                dx = 0;
+                dy = radius;
+            }
+            else {
+                origin = this.origin.getPosition();
+                target = this.target.getPosition();
+                dx = target.x - origin.x;
+                dy = target.y - origin.y;
+                var offsets = this.stateCenterOffsets(dx, dy);
+                target.x -= offsets.x;
+                target.y -= offsets.y;
+                dx -= offsets.x;
+                dy -= offsets.y;
+            }
             var arrowLength = Settings_4.Settings.edgeArrowLength;
             var alpha = Settings_4.Settings.edgeArrowAngle;
             var edgeLength = Math.sqrt(dx * dx + dy * dy);
@@ -1132,8 +1176,17 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
         Edge.prototype.renderText = function (canvas) {
             var origin = this.origin.getPosition();
             var target = this.target.getPosition();
-            var x = (origin.x + target.x) / 2;
-            var y = (origin.y + target.y) / 2;
+            var x;
+            var y;
+            if (this.origin == this.target) {
+                var radius = Settings_4.Settings.stateRadius;
+                x = origin.x + radius;
+                y = origin.y - 2 * radius;
+            }
+            else {
+                x = (origin.x + target.x) / 2;
+                y = (origin.y + target.y) / 2;
+            }
             if (!this.textContainer) {
                 this.textContainer = canvas.text(x, y, this.preparedText());
                 this.textContainer.attr("font-family", Settings_4.Settings.edgeTextFontFamily);
@@ -1178,13 +1231,13 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         }
         AutomatonRenderer.prototype.render = function () {
             var state = new State_1.State();
-            state.setPosition(350, 300);
+            state.setPosition(350, 400);
             this.stateList.push(state);
             var groups = [
-                [100, 300],
-                [350, 50],
-                [600, 300],
-                [350, 550]
+                [100, 400],
+                [350, 150],
+                [600, 400],
+                [350, 650]
             ];
             var i = 0;
             for (var _i = 0, groups_1 = groups; _i < groups_1.length; _i++) {
@@ -1235,6 +1288,11 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             e4.setTarget(this.stateList[2]);
             e4.addText("a");
             this.edgeList.push(e4);
+            var e5 = new Edge_1.Edge();
+            e5.setOrigin(this.stateList[2]);
+            e5.setTarget(this.stateList[2]);
+            e5.addText("b");
+            this.edgeList.push(e5);
             this.updateEdges();
             this.bindEvents();
             this.bindShortcuts();

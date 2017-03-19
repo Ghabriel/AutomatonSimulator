@@ -32,10 +32,10 @@ export class Edge {
 	}
 
 	public remove(): void {
-		if (this.body) {
-			this.body.remove();
-			this.body = null;
+		for (let elem of this.body) {
+			elem.remove();
 		}
+		this.body = [];
 
 		for (let elem of this.head) {
 			elem.remove();
@@ -78,6 +78,18 @@ export class Edge {
 		}
 	}
 
+	private stateCenterOffsets(dx: number, dy: number): Point {
+		let angle = Math.atan2(dy, dx);
+		let sin = Math.sin(angle);
+		let cos = Math.cos(angle);
+		let offsetX = Settings.stateRadius * cos;
+		let offsetY = Settings.stateRadius * sin;
+		return {
+			x: offsetX,
+			y: offsetY
+		};
+	}
+
 	private renderBody(canvas: RaphaelPaper): void {
 		let origin = this.origin.getPosition();
 		let target: typeof origin;
@@ -103,34 +115,75 @@ export class Edge {
 
 		let dx = target.x - origin.x;
 		let dy = target.y - origin.y;
-		let angle = Math.atan2(dy, dx);
-		let sin = Math.sin(angle);
-		let cos = Math.cos(angle);
-		let offsetX = Settings.stateRadius * cos;
-		let offsetY = Settings.stateRadius * sin;
+		let radius = Settings.stateRadius;
+		let offsets = this.stateCenterOffsets(dx, dy);
 		// Makes the edge start at the border of the state rather than
-		// at its center.
-		origin.x += offsetX;
-		origin.y += offsetY;
+		// at its center, unless the virtual target is inside the state.
+		// That condition makes it easier to create loops.
+		if (dx * dx + dy * dy > radius * radius) {
+			origin.x += offsets.x;
+			origin.y += offsets.y;
+		}
 
 		if (this.target) {
 			// Adjusts the edge so that it points to the border of the state
 			// rather than its center.
-			target.x -= offsetX;
-			target.y -= offsetY;
+			target.x -= offsets.x;
+			target.y -= offsets.y;
 		}
 
-		// TODO: handle self-edge correctly
 		// TODO: handle cases where two connected states are very close to each other
-		if (!this.body) {
-			this.body = utils.line(canvas,
-					origin.x, origin.y,
-					target.x, target.y);
+		if (this.origin == this.target) {
+			// Loop case
+			let pos = this.origin.getPosition();
+			if (!this.body.length) {
+				this.body.push(utils.line(canvas,
+					pos.x + radius, pos.y,
+					pos.x + 2 * radius, pos.y
+				));
+				this.body.push(utils.line(canvas,
+					pos.x + 2 * radius, pos.y,
+					pos.x + 2 * radius, pos.y - 2 * radius
+				));
+				this.body.push(utils.line(canvas,
+					pos.x + 2 * radius, pos.y - 2 * radius,
+					pos.x, pos.y - 2 * radius
+				));
+				this.body.push(utils.line(canvas,
+					pos.x, pos.y - 2 * radius,
+					pos.x, pos.y - radius
+				));
+			} else {
+				this.body[0].attr("path", utils.linePath(
+					pos.x + radius, pos.y,
+					pos.x + 2 * radius, pos.y
+				));
+				this.body[1].attr("path", utils.linePath(
+					pos.x + 2 * radius, pos.y,
+					pos.x + 2 * radius, pos.y - 2 * radius
+				));
+				this.body[2].attr("path", utils.linePath(
+					pos.x + 2 * radius, pos.y - 2 * radius,
+					pos.x, pos.y - 2 * radius
+				));
+				this.body[3].attr("path", utils.linePath(
+					pos.x, pos.y - 2 * radius,
+					pos.x, pos.y - radius
+				));
+			}
 		} else {
-			this.body.attr("path", utils.linePath(
-				origin.x, origin.y,
-				target.x, target.y
-			));
+			// Non-loop case
+			if (!this.body.length) {
+				this.body.push(utils.line(canvas,
+					origin.x, origin.y,
+					target.x, target.y
+				));
+			} else {
+				this.body[0].attr("path", utils.linePath(
+					origin.x, origin.y,
+					target.x, target.y
+				));
+			}
 		}
 	}
 
@@ -141,21 +194,39 @@ export class Edge {
 			return;
 		}
 
-		let origin = this.origin.getPosition();
-		let target = this.target.getPosition();
+		let origin: Point;
+		let target: Point;
+		let dx: number;
+		let dy: number;
 
-		let dx = target.x - origin.x;
-		let dy = target.y - origin.y;
-		// TODO: don't copy and paste
-		let angle = Math.atan2(dy, dx);
-		let sin = Math.sin(angle);
-		let cos = Math.cos(angle);
-		let offsetX = Settings.stateRadius * cos;
-		let offsetY = Settings.stateRadius * sin;
-		target.x -= offsetX;
-		target.y -= offsetY;
-		dx -= offsetX;
-		dy -= offsetY;
+		if (this.origin == this.target) {
+			// Loop case
+			let pos = this.origin.getPosition();
+			let radius = Settings.stateRadius;
+			origin = {
+				x: pos.x,
+				y: pos.y - 2 * radius
+			};
+			target = {
+				x: pos.x,
+				y: pos.y - radius
+			};
+
+			dx = 0;
+			dy = radius;
+		} else {
+			// Non-loop case
+			origin = this.origin.getPosition();
+			target = this.target.getPosition();
+
+			dx = target.x - origin.x;
+			dy = target.y - origin.y;
+			let offsets = this.stateCenterOffsets(dx, dy);
+			target.x -= offsets.x;
+			target.y -= offsets.y;
+			dx -= offsets.x;
+			dy -= offsets.y;
+		}
 
 		// Arrow head
 		let arrowLength = Settings.edgeArrowLength;
@@ -202,8 +273,19 @@ export class Edge {
 		// otherwise we wouldn't be rendering the text.
 		let origin = this.origin.getPosition();
 		let target = this.target.getPosition();
-		let x = (origin.x + target.x) / 2;
-		let y = (origin.y + target.y) / 2;
+		let x: number;
+		let y: number;
+
+		if (this.origin == this.target) {
+			// Loop case
+			let radius = Settings.stateRadius;
+			x = origin.x + radius;
+			y = origin.y - 2 * radius;
+		} else {
+			// Non-loop case
+			x = (origin.x + target.x) / 2;
+			y = (origin.y + target.y) / 2;
+		}
 
 		if (!this.textContainer) {
 			this.textContainer = canvas.text(x, y, this.preparedText());
@@ -254,7 +336,7 @@ export class Edge {
 	// A list of texts written in this edge
 	private textList: string[] = [];
 
-	private body: RaphaelElement = null;
+	private body: RaphaelElement[] = [];
 	private head: RaphaelElement[] = [];
 	private textContainer: RaphaelElement = null;
 }
