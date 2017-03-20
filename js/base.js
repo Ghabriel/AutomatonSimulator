@@ -1064,6 +1064,8 @@ define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings
                     var controller = Settings_3.Settings.controller();
                     if (!controller.finished(input)) {
                         controller.step(input);
+                        var states = controller.currentStates();
+                        Settings_3.Settings.automatonRenderer.recognitionHighlight(states);
                         console.log(controller.currentStates());
                     }
                 }
@@ -1563,6 +1565,22 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             for (var _h = 0, _j = this.edgeList; _h < _j.length; _h++) {
                 var edge = _j[_h];
                 edge.render(this.canvas);
+            }
+        };
+        AutomatonRenderer.prototype.recognitionHighlight = function (stateNames) {
+            var nameMapping = {};
+            for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
+                var state = _a[_i];
+                nameMapping[state.getName()] = state;
+                state.dim();
+            }
+            for (var _b = 0, stateNames_1 = stateNames; _b < stateNames_1.length; _b++) {
+                var name_1 = stateNames_1[_b];
+                nameMapping[name_1].highlight();
+            }
+            for (var _c = 0, _d = this.stateList; _c < _d.length; _c++) {
+                var state = _d[_c];
+                state.render(this.canvas);
             }
         };
         AutomatonRenderer.prototype.selectState = function (state) {

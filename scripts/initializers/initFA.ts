@@ -101,6 +101,8 @@ export namespace initFA {
 				let controller = Settings.controller();
 				if (!controller.finished(input)) {
 					controller.step(input);
+					let states = controller.currentStates();
+					Settings.automatonRenderer.recognitionHighlight(states);
 					console.log(controller.currentStates());
 				}
 

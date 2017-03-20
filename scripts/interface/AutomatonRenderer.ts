@@ -229,6 +229,23 @@ export class AutomatonRenderer {
 		}
 	}
 
+	// TODO: make this method faster
+	public recognitionHighlight(stateNames: string[]): void {
+		let nameMapping: {[n: string]: State} = {};
+		for (let state of this.stateList) {
+			nameMapping[state.getName()] = state;
+			state.dim();
+		}
+
+		for (let name of stateNames) {
+			nameMapping[name].highlight();
+		}
+
+		for (let state of this.stateList) {
+			state.render(this.canvas);
+		}
+	}
+
 	private selectState(state: State) {
 		if (this.highlightedState) {
 			this.highlightedState.dim();
