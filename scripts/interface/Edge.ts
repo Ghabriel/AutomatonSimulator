@@ -31,6 +31,14 @@ export class Edge {
 		return this.textList;
 	}
 
+	public addData(data: string[]): void {
+		this.dataList.push(data);
+	}
+
+	public getDataList(): string[][] {
+		return this.dataList;
+	}
+
 	public remove(): void {
 		for (let elem of this.body) {
 			elem.remove();
@@ -342,6 +350,10 @@ export class Edge {
 
 	// A list of texts written in this edge
 	private textList: string[] = [];
+
+	// A list of data lists used by the controllers to
+	// precisely define this transition
+	private dataList: string[][] = [];
 
 	private body: RaphaelElement[] = [];
 	private head: RaphaelElement[] = [];

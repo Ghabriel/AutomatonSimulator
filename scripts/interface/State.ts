@@ -69,8 +69,10 @@ export class State {
 		}
 		this.arrowParts = [];
 
-		this.textContainer.remove();
-		this.textContainer = null;
+		if (this.textContainer) {
+			this.textContainer.remove();
+			this.textContainer = null;
+		}
 	}
 
 	public render(canvas: RaphaelPaper): void {

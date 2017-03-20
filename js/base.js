@@ -378,8 +378,10 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 part.remove();
             }
             this.arrowParts = [];
-            this.textContainer.remove();
-            this.textContainer = null;
+            if (this.textContainer) {
+                this.textContainer.remove();
+                this.textContainer = null;
+            }
         };
         State.prototype.render = function (canvas) {
             this.renderBody(canvas);
@@ -776,6 +778,14 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             this.currentStates.insert(this.initialState);
             this.expandSpontaneous(this.currentStates);
         };
+        FA.prototype.clear = function () {
+            this.stateList = [];
+            this.transitions = {};
+            this.epsilonTransitions = {};
+            this.unsetInitialState();
+            this.finalStates.clear();
+            this.currentStates.clear();
+        };
         FA.prototype.accepts = function () {
             var found = false;
             var self = this;
@@ -828,8 +838,11 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Utils"
             var self = this;
             Utils_2.utils.prompt("Enter the edge content:", 1, function (data) {
                 self.createEdge(origin, target, data);
-                callback(data[0]);
+                callback(data, self.edgeDataToText(data));
             }, fallback);
+        };
+        FAController.prototype.edgeDataToText = function (data) {
+            return data[0];
         };
         FAController.prototype.createState = function (state) {
             var name = state.getName();
@@ -864,6 +877,9 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Utils"
                 this.machine.removeAcceptingState(index);
             }
         };
+        FAController.prototype.clear = function () {
+            this.machine.clear();
+        };
         FAController.prototype.fastForward = function (input) {
             this.machine.reset();
             for (var i = 0; i < input.length; i++) {
@@ -889,17 +905,22 @@ define("controllers/PDAController", ["require", "exports", "Utils"], function (r
         }
         PDAController.prototype.edgePrompt = function (origin, target, callback, fallback) {
             var epsilon = "ε";
+            var self = this;
             Utils_3.utils.prompt("Enter the edge content:", 3, function (data) {
                 data[0] = data[0] || epsilon;
                 data[1] = data[1] || epsilon;
                 data[2] = data[2] || epsilon;
-                callback(data[0] + "," + data[1] + " → " + data[2]);
+                callback(data, self.edgeDataToText(data));
             }, fallback);
+        };
+        PDAController.prototype.edgeDataToText = function (data) {
+            return data[0] + "," + data[1] + " → " + data[2];
         };
         PDAController.prototype.createState = function (state) { };
         PDAController.prototype.createEdge = function (origin, target, data) { };
         PDAController.prototype.changeInitialFlag = function (state) { };
         PDAController.prototype.changeFinalFlag = function (state) { };
+        PDAController.prototype.clear = function () { };
         PDAController.prototype.fastForward = function (input) { };
         PDAController.prototype.step = function (input) { };
         PDAController.prototype.stop = function () { };
@@ -916,10 +937,12 @@ define("controllers/LBAController", ["require", "exports"], function (require, e
         LBAController.prototype.edgePrompt = function (origin, target, callback, fallback) {
             console.log("[TODO] LBAController::edgePrompt()");
         };
+        LBAController.prototype.edgeDataToText = function (data) { return "TODO"; };
         LBAController.prototype.createState = function (state) { };
         LBAController.prototype.createEdge = function (origin, target, data) { };
         LBAController.prototype.changeInitialFlag = function (state) { };
         LBAController.prototype.changeFinalFlag = function (state) { };
+        LBAController.prototype.clear = function () { };
         LBAController.prototype.fastForward = function (input) { };
         LBAController.prototype.step = function (input) { };
         LBAController.prototype.stop = function () { };
@@ -1079,6 +1102,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             this.prevTargetPosition = null;
             this.virtualTarget = null;
             this.textList = [];
+            this.dataList = [];
             this.body = [];
             this.head = [];
             this.textContainer = null;
@@ -1103,6 +1127,12 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
         };
         Edge.prototype.getTextList = function () {
             return this.textList;
+        };
+        Edge.prototype.addData = function (data) {
+            this.dataList.push(data);
+        };
+        Edge.prototype.getDataList = function () {
+            return this.dataList;
         };
         Edge.prototype.remove = function () {
             for (var _i = 0, _a = this.body; _i < _a.length; _i++) {
@@ -1420,6 +1450,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.initialState = null;
             this.edgeMode = false;
             this.currentEdge = null;
+            Settings_5.Settings.controller().clear();
         };
         AutomatonRenderer.prototype.empty = function () {
             return this.stateList.length == 0;
@@ -1446,13 +1477,15 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 result.edges.push({
                     origin: edge.getOrigin().getName(),
                     target: edge.getTarget().getName(),
-                    textList: edge.getTextList()
+                    dataList: edge.getDataList()
                 });
             }
             return JSON.stringify(result);
         };
         AutomatonRenderer.prototype.load = function (content) {
+            var self = this;
             var error = function () {
+                self.clear();
                 alert("Invalid file");
             };
             var obj = {};
@@ -1472,6 +1505,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 return;
             }
             var nameToIndex = {};
+            var controller = Settings_5.Settings.controller();
             for (var _i = 0, _a = obj.states; _i < _a.length; _i++) {
                 var data = _a[_i];
                 var state = new State_1.State();
@@ -1479,26 +1513,41 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 state.setInitial(data.initial);
                 state.setFinal(data.final);
                 state.setPosition(data.x, data.y);
-                state.render(this.canvas);
-                this.bindStateEvents(state);
                 if (data.initial) {
                     this.initialState = state;
                 }
                 nameToIndex[data.name] = this.stateList.length;
                 this.stateList.push(state);
+                controller.createState(state);
             }
             var states = this.stateList;
             for (var _b = 0, _c = obj.edges; _b < _c.length; _b++) {
-                var data = _c[_b];
-                var edge = new Edge_1.Edge();
-                edge.setOrigin(states[nameToIndex[data.origin]]);
-                edge.setTarget(states[nameToIndex[data.target]]);
-                for (var _d = 0, _e = data.textList; _d < _e.length; _d++) {
-                    var text = _e[_d];
-                    edge.addText(text);
+                var edgeData = _c[_b];
+                if (!edgeData.origin || !edgeData.target || !edgeData.dataList) {
+                    error();
+                    return;
                 }
-                edge.render(this.canvas);
+                var edge = new Edge_1.Edge();
+                var origin = states[nameToIndex[edgeData.origin]];
+                var target = states[nameToIndex[edgeData.target]];
+                edge.setOrigin(origin);
+                edge.setTarget(target);
+                for (var _d = 0, _e = edgeData.dataList; _d < _e.length; _d++) {
+                    var data = _e[_d];
+                    edge.addText(controller.edgeDataToText(data));
+                    edge.addData(data);
+                    controller.createEdge(origin, target, data);
+                }
                 this.edgeList.push(edge);
+            }
+            for (var _f = 0, _g = this.stateList; _f < _g.length; _f++) {
+                var state = _g[_f];
+                state.render(this.canvas);
+                this.bindStateEvents(state);
+            }
+            for (var _h = 0, _j = this.edgeList; _h < _j.length; _h++) {
+                var edge = _j[_h];
+                edge.render(this.canvas);
             }
         };
         AutomatonRenderer.prototype.selectState = function (state) {
@@ -1588,8 +1637,8 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.edgeMode = false;
             var origin = this.currentEdge.getOrigin();
             var edgeText = function (callback, fallback) {
-                Settings_5.Settings.controller().edgePrompt(origin, state, function (content) {
-                    callback(content);
+                Settings_5.Settings.controller().edgePrompt(origin, state, function (data, content) {
+                    callback(data, content);
                 }, fallback);
             };
             var self = this;
@@ -1599,8 +1648,9 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             };
             var _loop_1 = function(edge) {
                 if (edge.getOrigin() == origin && edge.getTarget() == state) {
-                    edgeText(function (text) {
+                    edgeText(function (data, text) {
                         edge.addText(text);
+                        edge.addData(data);
                         edge.render(self.canvas);
                         clearCurrentEdge();
                     }, clearCurrentEdge);
@@ -1614,8 +1664,9 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             }
             this.currentEdge.setTarget(state);
             this.currentEdge.render(this.canvas);
-            edgeText(function (text) {
+            edgeText(function (data, text) {
                 self.currentEdge.addText(text);
+                self.currentEdge.addData(data);
                 self.currentEdge.render(self.canvas);
                 self.edgeList.push(self.currentEdge);
                 self.currentEdge = null;
@@ -1679,13 +1730,13 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 var highlightedState = self.highlightedState;
                 if (highlightedState) {
                     self.setInitialState(highlightedState);
-                    highlightedState.render(this.canvas);
+                    highlightedState.render(self.canvas);
                 }
             });
             Utils_7.utils.bindShortcut(Settings_5.Settings.shortcuts.toggleFinal, function () {
                 var highlightedState = self.highlightedState;
                 if (highlightedState) {
-                    this.changeFinalFlag(highlightedState, !highlightedState.isFinal());
+                    self.changeFinalFlag(highlightedState, !highlightedState.isFinal());
                     highlightedState.render(canvas);
                 }
             });

@@ -121,6 +121,8 @@ export class AutomatonRenderer {
 		this.initialState = null;
 		this.edgeMode = false;
 		this.currentEdge = null;
+
+		Settings.controller().clear();
 	}
 
 	public empty(): boolean {
@@ -151,7 +153,7 @@ export class AutomatonRenderer {
 			result.edges.push({
 				origin: edge.getOrigin().getName(),
 				target: edge.getTarget().getName(),
-				textList: edge.getTextList()
+				dataList: edge.getDataList()
 			});
 		}
 
@@ -159,7 +161,9 @@ export class AutomatonRenderer {
 	}
 
 	public load(content: string): void {
+		let self = this;
 		let error = function() {
+			self.clear();
 			alert("Invalid file");
 		};
 
@@ -182,6 +186,7 @@ export class AutomatonRenderer {
 		}
 
 		let nameToIndex: {[n: string]: number} = {};
+		let controller = Settings.controller();
 
 		for (let data of obj.states) {
 			let state = new State();
@@ -189,8 +194,6 @@ export class AutomatonRenderer {
 			state.setInitial(data.initial);
 			state.setFinal(data.final);
 			state.setPosition(data.x, data.y);
-			state.render(this.canvas);
-			this.bindStateEvents(state);
 
 			if (data.initial) {
 				this.initialState = state;
@@ -198,19 +201,43 @@ export class AutomatonRenderer {
 
 			nameToIndex[data.name] = this.stateList.length;
 			this.stateList.push(state);
+			controller.createState(state);
 		}
 
 		let states = this.stateList;
-		for (let data of obj.edges) {
-			let edge = new Edge();
-			edge.setOrigin(states[nameToIndex[data.origin]]);
-			edge.setTarget(states[nameToIndex[data.target]]);
-			for (let text of data.textList) {
-				edge.addText(text);
+		for (let edgeData of obj.edges) {
+			if (!edgeData.origin || !edgeData.target || !edgeData.dataList) {
+				error();
+				return;
 			}
-			edge.render(this.canvas);
+			let edge = new Edge();
+			let origin = states[nameToIndex[edgeData.origin]];
+			let target = states[nameToIndex[edgeData.target]];
+			edge.setOrigin(origin);
+			edge.setTarget(target);
+			for (let data of edgeData.dataList) {
+				edge.addText(controller.edgeDataToText(data));
+				edge.addData(data);
+				controller.createEdge(origin, target, data);
+			}
 
 			this.edgeList.push(edge);
+		}
+
+		// Traverses through the state/edge lists to render them.
+		// We shouldn't render them during creation because, if
+		// the automaton is big enough and there's an error in the
+		// source file, the user would see states and edges appearing
+		// and then vanishing, then an error message. Rendering everything
+		// after processing makes it so that nothing appears (except the
+		// error message) if there's an error.
+		for (let state of this.stateList) {
+			state.render(this.canvas);
+			this.bindStateEvents(state);
+		}
+
+		for (let edge of this.edgeList) {
+			edge.render(this.canvas);
 		}
 	}
 
@@ -307,10 +334,10 @@ export class AutomatonRenderer {
 		this.edgeMode = false;
 		let origin = this.currentEdge.getOrigin();
 
-		let edgeText = function(callback: (t: string) => void,
+		let edgeText = function(callback: (d: string[], t: string) => void,
 								fallback: () => void) {
-			Settings.controller().edgePrompt(origin, state, function(content) {
-				callback(content);
+			Settings.controller().edgePrompt(origin, state, function(data, content) {
+				callback(data, content);
 			}, fallback);
 		};
 
@@ -324,9 +351,10 @@ export class AutomatonRenderer {
 		// Checks if there's already an edge linking the origin and target states
 		for (let edge of this.edgeList) {
 			if (edge.getOrigin() == origin && edge.getTarget() == state) {
-				edgeText(function(text) {
+				edgeText(function(data, text) {
 					// Add the text to it instead and delete 'this.currentEdge'.
 					edge.addText(text);
+					edge.addData(data);
 					edge.render(self.canvas);
 					clearCurrentEdge();
 				}, clearCurrentEdge);
@@ -339,8 +367,9 @@ export class AutomatonRenderer {
 		// Renders the edge here to show it already attached to the target state
 		this.currentEdge.render(this.canvas);
 
-		edgeText(function(text) {
+		edgeText(function(data, text) {
 			self.currentEdge.addText(text);
+			self.currentEdge.addData(data);
 			// Renders it again, this time to show the finished edge
 			self.currentEdge.render(self.canvas);
 			self.edgeList.push(self.currentEdge);
@@ -411,14 +440,14 @@ export class AutomatonRenderer {
 			let highlightedState = self.highlightedState;
 			if (highlightedState) {
 				self.setInitialState(highlightedState);
-				highlightedState.render(this.canvas);
+				highlightedState.render(self.canvas);
 			}
 		});
 
 		utils.bindShortcut(Settings.shortcuts.toggleFinal, function() {
 			let highlightedState = self.highlightedState;
 			if (highlightedState) {
-				this.changeFinalFlag(highlightedState, !highlightedState.isFinal());
+				self.changeFinalFlag(highlightedState, !highlightedState.isFinal());
 				highlightedState.render(canvas);
 			}
 		});

@@ -11,14 +11,18 @@ export class FAController implements Controller {
 
 	public edgePrompt(origin: State,
 					  target: State,
-					  callback: (text: string) => void,
+					  callback: (data: string[], text: string) => void,
 					  fallback: () => void): void {
 
 		let self = this;
 		utils.prompt("Enter the edge content:", 1, function(data) {
 			self.createEdge(origin, target, data);
-			callback(data[0]);
+			callback(data, self.edgeDataToText(data));
 		}, fallback);
+	}
+
+	public edgeDataToText(data: string[]): string {
+		return data[0];
 	}
 
 	public createState(state: State): void {
@@ -56,6 +60,10 @@ export class FAController implements Controller {
 		} else {
 			this.machine.removeAcceptingState(index);
 		}
+	}
+
+	public clear(): void {
+		this.machine.clear();
 	}
 
 	public fastForward(input: string): void {
