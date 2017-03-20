@@ -1378,22 +1378,17 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 }
                 switch (i) {
                     case 0:
-                        e.addText("b");
-                        e.addText("e");
-                        controller.createEdge(e.getOrigin(), e.getTarget(), ["b"]);
-                        controller.createEdge(e.getOrigin(), e.getTarget(), ["e"]);
+                        this.addEdgeData(e, ["b"]);
+                        this.addEdgeData(e, ["e"]);
                         break;
                     case 1:
-                        e.addText("a");
-                        controller.createEdge(e.getOrigin(), e.getTarget(), ["a"]);
+                        this.addEdgeData(e, ["a"]);
                         break;
                     case 2:
-                        e.addText("c");
-                        controller.createEdge(e.getOrigin(), e.getTarget(), ["c"]);
+                        this.addEdgeData(e, ["c"]);
                         break;
                     case 3:
-                        e.addText("d");
-                        controller.createEdge(e.getOrigin(), e.getTarget(), ["d"]);
+                        this.addEdgeData(e, ["d"]);
                         break;
                 }
                 this.edgeList.push(e);
@@ -1404,32 +1399,27 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             var e1 = new Edge_1.Edge();
             e1.setOrigin(this.stateList[1]);
             e1.setTarget(this.stateList[4]);
-            e1.addText("b");
-            controller.createEdge(e1.getOrigin(), e1.getTarget(), ["b"]);
+            this.addEdgeData(e1, ["b"]);
             this.edgeList.push(e1);
             var e2 = new Edge_1.Edge();
             e2.setOrigin(this.stateList[3]);
             e2.setTarget(this.stateList[4]);
-            e2.addText("c");
-            controller.createEdge(e2.getOrigin(), e2.getTarget(), ["c"]);
+            this.addEdgeData(e2, ["c"]);
             this.edgeList.push(e2);
             var e3 = new Edge_1.Edge();
             e3.setOrigin(this.stateList[1]);
             e3.setTarget(this.stateList[2]);
-            e3.addText("a");
-            controller.createEdge(e3.getOrigin(), e3.getTarget(), ["a"]);
+            this.addEdgeData(e3, ["a"]);
             this.edgeList.push(e3);
             var e4 = new Edge_1.Edge();
             e4.setOrigin(this.stateList[3]);
             e4.setTarget(this.stateList[2]);
-            e4.addText("a");
-            controller.createEdge(e4.getOrigin(), e4.getTarget(), ["a"]);
+            this.addEdgeData(e4, ["a"]);
             this.edgeList.push(e4);
             var e5 = new Edge_1.Edge();
             e5.setOrigin(this.stateList[2]);
             e5.setTarget(this.stateList[2]);
-            e5.addText("b");
-            controller.createEdge(e5.getOrigin(), e5.getTarget(), ["b"]);
+            this.addEdgeData(e5, ["b"]);
             this.edgeList.push(e5);
             this.updateEdges();
             this.bindEvents();
@@ -1534,9 +1524,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 edge.setTarget(target);
                 for (var _d = 0, _e = edgeData.dataList; _d < _e.length; _d++) {
                     var data = _e[_d];
-                    edge.addText(controller.edgeDataToText(data));
-                    edge.addData(data);
-                    controller.createEdge(origin, target, data);
+                    this.addEdgeData(edge, data);
                 }
                 this.edgeList.push(edge);
             }
@@ -1722,6 +1710,12 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         AutomatonRenderer.prototype.changeFinalFlag = function (state, value) {
             state.setFinal(value);
             Settings_5.Settings.controller().changeFinalFlag(state);
+        };
+        AutomatonRenderer.prototype.addEdgeData = function (edge, data) {
+            var controller = Settings_5.Settings.controller();
+            edge.addText(controller.edgeDataToText(data));
+            edge.addData(data);
+            controller.createEdge(edge.getOrigin(), edge.getTarget(), data);
         };
         AutomatonRenderer.prototype.bindShortcuts = function () {
             var canvas = this.canvas;

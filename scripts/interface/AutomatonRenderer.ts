@@ -37,22 +37,17 @@ export class AutomatonRenderer {
 
 			switch (i) {
 				case 0:
-					e.addText("b");
-					e.addText("e");
-					controller.createEdge(e.getOrigin(), e.getTarget(), ["b"]);
-					controller.createEdge(e.getOrigin(), e.getTarget(), ["e"]);
+					this.addEdgeData(e, ["b"]);
+					this.addEdgeData(e, ["e"]);
 					break;
 				case 1:
-					e.addText("a");
-					controller.createEdge(e.getOrigin(), e.getTarget(), ["a"]);
+					this.addEdgeData(e, ["a"]);
 					break;
 				case 2:
-					e.addText("c");
-					controller.createEdge(e.getOrigin(), e.getTarget(), ["c"]);
+					this.addEdgeData(e, ["c"]);
 					break;
 				case 3:
-					e.addText("d");
-					controller.createEdge(e.getOrigin(), e.getTarget(), ["d"]);
+					this.addEdgeData(e, ["d"]);
 					break;
 			}
 
@@ -66,36 +61,31 @@ export class AutomatonRenderer {
 		let e1 = new Edge();
 		e1.setOrigin(this.stateList[1]);
 		e1.setTarget(this.stateList[4]);
-		e1.addText("b");
-		controller.createEdge(e1.getOrigin(), e1.getTarget(), ["b"]);
+		this.addEdgeData(e1, ["b"]);
 		this.edgeList.push(e1);
 
 		let e2 = new Edge();
 		e2.setOrigin(this.stateList[3]);
 		e2.setTarget(this.stateList[4]);
-		e2.addText("c");
-		controller.createEdge(e2.getOrigin(), e2.getTarget(), ["c"]);
+		this.addEdgeData(e2, ["c"]);
 		this.edgeList.push(e2);
 
 		let e3 = new Edge();
 		e3.setOrigin(this.stateList[1]);
 		e3.setTarget(this.stateList[2]);
-		e3.addText("a");
-		controller.createEdge(e3.getOrigin(), e3.getTarget(), ["a"]);
+		this.addEdgeData(e3, ["a"]);
 		this.edgeList.push(e3);
 
 		let e4 = new Edge();
 		e4.setOrigin(this.stateList[3]);
 		e4.setTarget(this.stateList[2]);
-		e4.addText("a");
-		controller.createEdge(e4.getOrigin(), e4.getTarget(), ["a"]);
+		this.addEdgeData(e4, ["a"]);
 		this.edgeList.push(e4);
 
 		let e5 = new Edge();
 		e5.setOrigin(this.stateList[2]);
 		e5.setTarget(this.stateList[2]);
-		e5.addText("b");
-		controller.createEdge(e5.getOrigin(), e5.getTarget(), ["b"]);
+		this.addEdgeData(e5, ["b"]);
 		this.edgeList.push(e5);
 
 		this.updateEdges();
@@ -216,9 +206,7 @@ export class AutomatonRenderer {
 			edge.setOrigin(origin);
 			edge.setTarget(target);
 			for (let data of edgeData.dataList) {
-				edge.addText(controller.edgeDataToText(data));
-				edge.addData(data);
-				controller.createEdge(origin, target, data);
+				this.addEdgeData(edge, data);
 			}
 
 			this.edgeList.push(edge);
@@ -431,6 +419,13 @@ export class AutomatonRenderer {
 	private changeFinalFlag(state: State, value: boolean): void {
 		state.setFinal(value);
 		Settings.controller().changeFinalFlag(state);
+	}
+
+	private addEdgeData(edge: Edge, data: string[]): void {
+		let controller = Settings.controller();
+		edge.addText(controller.edgeDataToText(data));
+		edge.addData(data);
+		controller.createEdge(edge.getOrigin(), edge.getTarget(), data);
 	}
 
 	private bindShortcuts(): void {
