@@ -91,12 +91,14 @@ export namespace Settings {
 
 	export var automatonRenderer: AutomatonRenderer = null;
 
+	export function controller(): Controller {
+		return this.machines[this.currentMachine].controller;
+	}
+
 	let firstUpdate = true;
 	// TODO: check if we only need to instantiate the controllers once or
 	// if it's needed everytime (like with the sidebar)
-	export function update() {
-		// window.FA = FA;
-
+	export function update(): void {
 		if (firstUpdate) {
 			for (let index in Machine) {
 				if (Machine.hasOwnProperty(index) && !isNaN(parseInt(index))) {

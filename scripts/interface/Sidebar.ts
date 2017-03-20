@@ -9,10 +9,6 @@ import {System} from "../System"
 import {Table} from "./Table"
 import {utils} from "../Utils"
 
-// TODO: remake pretty much this entire class (except the internationalization
-// part, which works well). It's a very new class which already has some weird
-// bugs and does not seem efficient at all.
-// (pretty sure I already remade this?)
 export class Sidebar extends Renderer {
 	constructor() {
 		super();

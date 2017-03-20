@@ -1,5 +1,30 @@
 import {Controller} from "./Controller"
+import {State} from "../interface/State"
+import {utils} from "../Utils"
 
 export class PDAController implements Controller {
+	public edgePrompt(origin: State,
+					  target: State,
+					  callback: (text: string) => void,
+					  fallback: () => void): void {
 
+		let epsilon = "ε";
+
+		utils.prompt("Enter the edge content:", 3, function(data) {
+			data[0] = data[0] || epsilon;
+			data[1] = data[1] || epsilon;
+			data[2] = data[2] || epsilon;
+			callback(data[0] + "," + data[1] + " → " + data[2]);
+		}, fallback);
+	}
+
+	public createState(state: State): void {}
+	public changeInitialFlag(state: State): void {}
+	public changeFinalFlag(state: State): void {}
+
+	public fastForward(input: string): void {}
+	public step(input: string): void {}
+	public stop(): void {}
+
+	public accepts(): boolean { return false; }
 }

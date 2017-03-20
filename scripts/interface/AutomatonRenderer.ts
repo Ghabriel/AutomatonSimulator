@@ -4,85 +4,98 @@ import {State} from "./State"
 import {Point, utils} from "../Utils"
 
 export class AutomatonRenderer {
-	constructor(canvas:  RaphaelPaper, node: Element) {
+	constructor(canvas: RaphaelPaper, node: Element) {
 		this.canvas = canvas;
 		this.node = node;
 	}
 
 	public render(): void {
-		let state = new State();
-		state.setPosition(350, 400);
-		this.stateList.push(state);
+		// let s1 = new State();
+		// s1.setPosition(200, 300);
+		// s1.setInitial(true);
+		// this.initialState = s1;
+		// s1.setName("q0");
+		// this.stateList.push(s1);
 
-		let groups = [
-			[100, 400],
-			[350, 150],
-			[600, 400],
-			[350, 650]
-		];
+		// let s2 = new State();
+		// s2.setPosition(500, 300);
+		// s2.setFinal(true);
+		// s2.setName("q1");
+		// this.stateList.push(s2);
 
-		let i = 0;
-		for (let group of groups) {
-			let s = new State();
-			s.setPosition(group[0], group[1]);
-			this.stateList.push(s);
+		// let state = new State();
+		// state.setPosition(350, 400);
+		// this.stateList.push(state);
 
-			let e = new Edge();
-			if (i == 1) {
-				e.setOrigin(s);
-				e.setTarget(state);
-			} else {
-				e.setOrigin(state);
-				e.setTarget(s);
-			}
-			i++;
-			this.edgeList.push(e);
-		}
+		// let groups = [
+		// 	[100, 400],
+		// 	[350, 150],
+		// 	[600, 400],
+		// 	[350, 650]
+		// ];
 
-		this.stateList[2].setInitial(true);
-		this.initialState = this.stateList[2];
+		// let i = 0;
+		// for (let group of groups) {
+		// 	let s = new State();
+		// 	s.setPosition(group[0], group[1]);
+		// 	this.stateList.push(s);
 
-		this.stateList[this.stateList.length - 1].setFinal(true);
-		for (let i = 0; i < this.stateList.length; i++) {
-			this.stateList[i].setName("q" + i);
-		}
-		this.edgeList[0].addText("b");
-		this.edgeList[0].addText("e");
-		this.edgeList[1].addText("a");
-		this.edgeList[2].addText("c");
-		this.edgeList[3].addText("d");
+		// 	let e = new Edge();
+		// 	if (i == 1) {
+		// 		e.setOrigin(s);
+		// 		e.setTarget(state);
+		// 	} else {
+		// 		e.setOrigin(state);
+		// 		e.setTarget(s);
+		// 	}
+		// 	i++;
+		// 	this.edgeList.push(e);
+		// }
 
-		let e1 = new Edge();
-		e1.setOrigin(this.stateList[1]);
-		e1.setTarget(this.stateList[4]);
-		e1.addText("b");
-		this.edgeList.push(e1);
+		// this.stateList[2].setInitial(true);
+		// this.initialState = this.stateList[2];
 
-		let e2 = new Edge();
-		e2.setOrigin(this.stateList[3]);
-		e2.setTarget(this.stateList[4]);
-		e2.addText("c");
-		this.edgeList.push(e2);
+		// this.stateList[this.stateList.length - 1].setFinal(true);
+		// for (let i = 0; i < this.stateList.length; i++) {
+		// 	this.stateList[i].setName("q" + i);
+		// }
+		// this.edgeList[0].addText("b");
+		// this.edgeList[0].addText("e");
+		// this.edgeList[1].addText("a");
+		// this.edgeList[2].addText("c");
+		// this.edgeList[3].addText("d");
 
-		let e3 = new Edge();
-		e3.setOrigin(this.stateList[1]);
-		e3.setTarget(this.stateList[2]);
-		e3.addText("a");
-		this.edgeList.push(e3);
+		// let e1 = new Edge();
+		// e1.setOrigin(this.stateList[1]);
+		// e1.setTarget(this.stateList[4]);
+		// e1.addText("b");
+		// this.edgeList.push(e1);
 
-		let e4 = new Edge();
-		e4.setOrigin(this.stateList[3]);
-		e4.setTarget(this.stateList[2]);
-		e4.addText("a");
-		this.edgeList.push(e4);
+		// let e2 = new Edge();
+		// e2.setOrigin(this.stateList[3]);
+		// e2.setTarget(this.stateList[4]);
+		// e2.addText("c");
+		// this.edgeList.push(e2);
 
-		let e5 = new Edge();
-		e5.setOrigin(this.stateList[2]);
-		e5.setTarget(this.stateList[2]);
-		e5.addText("b");
-		this.edgeList.push(e5);
+		// let e3 = new Edge();
+		// e3.setOrigin(this.stateList[1]);
+		// e3.setTarget(this.stateList[2]);
+		// e3.addText("a");
+		// this.edgeList.push(e3);
 
-		this.updateEdges();
+		// let e4 = new Edge();
+		// e4.setOrigin(this.stateList[3]);
+		// e4.setTarget(this.stateList[2]);
+		// e4.addText("a");
+		// this.edgeList.push(e4);
+
+		// let e5 = new Edge();
+		// e5.setOrigin(this.stateList[2]);
+		// e5.setTarget(this.stateList[2]);
+		// e5.addText("b");
+		// this.edgeList.push(e5);
+
+		// this.updateEdges();
 
 		// this.selectState(state);
 
@@ -234,6 +247,7 @@ export class AutomatonRenderer {
 					self.stateList.push(state);
 					state.setName(name);
 					state.render(self.canvas);
+					Settings.controller().createState(state);
 				}, function() {
 					self.highlightedState = null;
 					state.remove();
@@ -288,12 +302,12 @@ export class AutomatonRenderer {
 
 	private finishEdge(state: State): void {
 		this.edgeMode = false;
+		let origin = this.currentEdge.getOrigin();
 
-		// TODO: change "Enter the edge content" to the actual real text/message
 		let edgeText = function(callback: (t: string) => void,
 								fallback: () => void) {
-			utils.prompt("Enter the edge content:", 1, function(data) {
-				callback(data[0]);
+			Settings.controller().edgePrompt(origin, state, function(content) {
+				callback(content);
 			}, fallback);
 		};
 
@@ -304,7 +318,6 @@ export class AutomatonRenderer {
 			self.currentEdge = null;
 		};
 
-		let origin = this.currentEdge.getOrigin();
 		// Checks if there's already an edge linking the origin and target states
 		for (let edge of this.edgeList) {
 			if (edge.getOrigin() == origin && edge.getTarget() == state) {
@@ -356,27 +369,34 @@ export class AutomatonRenderer {
 		}
 	}
 
+	private setInitialState(state: State): void {
+		let controller = Settings.controller();
+		if (state == this.initialState) {
+			state.setInitial(false);
+			controller.changeInitialFlag(state);
+			this.initialState = null;
+		} else {
+			if (this.initialState) {
+				this.initialState.setInitial(false);
+				controller.changeInitialFlag(this.initialState);
+				this.initialState.render(this.canvas);
+			}
+
+			state.setInitial(true);
+			controller.changeInitialFlag(state);
+			this.initialState = state;
+		}
+
+		state.render(this.canvas);
+	}
+
 	private bindShortcuts(): void {
 		let canvas = this.canvas;
 		let self = this;
 		utils.bindShortcut(Settings.shortcuts.toggleInitial, function() {
-			console.log("toggle");
 			let highlightedState = self.highlightedState;
 			if (highlightedState) {
-				if (highlightedState == self.initialState) {
-					highlightedState.setInitial(false);
-					self.initialState = null;
-				} else {
-					if (self.initialState) {
-						self.initialState.setInitial(false);
-						self.initialState.render(canvas);
-					}
-
-					highlightedState.setInitial(true);
-					self.initialState = highlightedState;
-				}
-
-				highlightedState.render(canvas);
+				self.setInitialState(highlightedState);
 			}
 		});
 
@@ -384,6 +404,7 @@ export class AutomatonRenderer {
 			let highlightedState = self.highlightedState;
 			if (highlightedState) {
 				highlightedState.setFinal(!highlightedState.isFinal());
+				Settings.controller().changeFinalFlag(highlightedState);
 				highlightedState.render(canvas);
 			}
 		});

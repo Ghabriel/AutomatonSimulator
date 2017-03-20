@@ -136,6 +136,13 @@ export class Edge {
 		if (this.origin == this.target) {
 			// Loop case
 			let pos = this.origin.getPosition();
+			if (this.body.length == 1) {
+				// Handles the case where an incomplete edge (i.e no target)
+				// becomes a loop
+				this.body[0].remove();
+				this.body = [];
+			}
+
 			if (!this.body.length) {
 				this.body.push(utils.line(canvas,
 					pos.x + radius, pos.y,

@@ -53,8 +53,10 @@ export namespace initFA {
 			title: Strings.FAST_RECOGNITION,
 			click: function() {
 				if (fastForwardEnabled) {
-					// TODO
-					alert("TODO: fast forward");
+					let input = testCase();
+					let controller = Settings.controller();
+					controller.fastForward(input);
+					alert(controller.accepts());
 				}
 			}
 		});
@@ -69,6 +71,7 @@ export namespace initFA {
 			if (stopEnabled) {
 				// TODO
 				// alert("TODO: stop");
+				Settings.controller().stop();
 
 				fastForwardEnabled = true;
 				fastRecognition.classList.remove(disabledClass);
