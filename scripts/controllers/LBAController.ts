@@ -21,6 +21,8 @@ export class LBAController implements Controller {
 	public fastForward(input: string): void {}
 	public step(input: string): void {}
 	public stop(): void {}
+	public finished(input: string): boolean { return true; }
 
+	public currentStates(): string[] { return []; }
 	public accepts(): boolean { return false; }
 }

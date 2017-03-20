@@ -73,9 +73,30 @@ export class FAController implements Controller {
 		}
 	}
 
-	public step(input: string): void {}
+	public step(input: string): void {
+		if (!this.finished(input)) {
+			// Don't parse anything if stepIndex == -1.
+			// This case is used to allow the interface
+			// to show the initial state(s) of the automaton.
+			if (this.stepIndex > -1) {
+				let symbol = input[this.stepIndex];
+				this.machine.read(symbol);
+			}
+			this.stepIndex++;
+		}
+	}
 
-	public stop(): void {}
+	public stop(): void {
+		this.stepIndex = -1;
+	}
+
+	public finished(input: string): boolean {
+		return this.stepIndex >= input.length;
+	}
+
+	public currentStates(): string[] {
+		return this.machine.getStates();
+	}
 
 	public accepts(): boolean {
 		return this.machine.accepts();
@@ -87,4 +108,5 @@ export class FAController implements Controller {
 
 	private machine: FA;
 	private stateMapping: {[name: string]: number} = {};
+	private stepIndex: number = -1;
 }

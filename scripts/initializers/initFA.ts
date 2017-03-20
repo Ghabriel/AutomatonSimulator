@@ -89,8 +89,6 @@ export namespace initFA {
 			title: Strings.STEP_RECOGNITION,
 			click: function() {
 				// TODO
-				// alert("TODO: step-by-step");
-
 				fastForwardEnabled = false;
 				fastRecognition.classList.add(disabledClass);
 
@@ -98,6 +96,13 @@ export namespace initFA {
 
 				stopEnabled = true;
 				stopRecognition.classList.remove(disabledClass);
+
+				let input = testCase();
+				let controller = Settings.controller();
+				if (!controller.finished(input)) {
+					controller.step(input);
+					console.log(controller.currentStates());
+				}
 
 				// restartEnabled = !restartEnabled;
 				// let method = restartEnabled ? "remove" : "add";

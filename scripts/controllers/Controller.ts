@@ -17,6 +17,8 @@ export interface Controller {
 	fastForward(input: string): void;
 	step(input: string): void;
 	stop(): void;
+	finished(input: string): boolean;
 
+	currentStates(): string[];
 	accepts(): boolean;
 }

@@ -831,6 +831,7 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Utils"
     var FAController = (function () {
         function FAController() {
             this.stateMapping = {};
+            this.stepIndex = -1;
             this.machine = new FA_1.FA();
             window["machine"] = this.machine;
         }
@@ -886,8 +887,24 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Utils"
                 this.machine.read(input[i]);
             }
         };
-        FAController.prototype.step = function (input) { };
-        FAController.prototype.stop = function () { };
+        FAController.prototype.step = function (input) {
+            if (!this.finished(input)) {
+                if (this.stepIndex > -1) {
+                    var symbol = input[this.stepIndex];
+                    this.machine.read(symbol);
+                }
+                this.stepIndex++;
+            }
+        };
+        FAController.prototype.stop = function () {
+            this.stepIndex = -1;
+        };
+        FAController.prototype.finished = function (input) {
+            return this.stepIndex >= input.length;
+        };
+        FAController.prototype.currentStates = function () {
+            return this.machine.getStates();
+        };
         FAController.prototype.accepts = function () {
             return this.machine.accepts();
         };
@@ -924,6 +941,8 @@ define("controllers/PDAController", ["require", "exports", "Utils"], function (r
         PDAController.prototype.fastForward = function (input) { };
         PDAController.prototype.step = function (input) { };
         PDAController.prototype.stop = function () { };
+        PDAController.prototype.finished = function (input) { return true; };
+        PDAController.prototype.currentStates = function () { return []; };
         PDAController.prototype.accepts = function () { return false; };
         return PDAController;
     }());
@@ -946,6 +965,8 @@ define("controllers/LBAController", ["require", "exports"], function (require, e
         LBAController.prototype.fastForward = function (input) { };
         LBAController.prototype.step = function (input) { };
         LBAController.prototype.stop = function () { };
+        LBAController.prototype.finished = function (input) { return true; };
+        LBAController.prototype.currentStates = function () { return []; };
         LBAController.prototype.accepts = function () { return false; };
         return LBAController;
     }());
@@ -1039,6 +1060,12 @@ define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings
                     testCaseInput.disabled = true;
                     stopEnabled = true;
                     stopRecognition.classList.remove(disabledClass);
+                    var input = testCase();
+                    var controller = Settings_3.Settings.controller();
+                    if (!controller.finished(input)) {
+                        controller.step(input);
+                        console.log(controller.currentStates());
+                    }
                 }
             });
             container.push([fastRecognition, stepRecognition,
