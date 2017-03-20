@@ -7,6 +7,7 @@ export interface Controller {
 			   fallback: () => void): void;
 
 	createState(state: State): void;
+	createEdge(origin: State, target: State, data: string[]): void;
 	changeInitialFlag(state: State): void;
 	changeFinalFlag(state: State): void;
 

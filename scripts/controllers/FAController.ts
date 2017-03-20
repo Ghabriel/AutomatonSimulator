@@ -16,9 +16,7 @@ export class FAController implements Controller {
 
 		let self = this;
 		utils.prompt("Enter the edge content:", 1, function(data) {
-			let indexOrigin = self.index(origin);
-			let indexTarget = self.index(target);
-			self.machine.addTransition(indexOrigin, indexTarget, data[0]);
+			self.createEdge(origin, target, data);
 			callback(data[0]);
 		}, fallback);
 	}
@@ -35,6 +33,12 @@ export class FAController implements Controller {
 		if (state.isFinal()) {
 			this.machine.addAcceptingState(index);
 		}
+	}
+
+	public createEdge(origin: State, target: State, data: string[]): void {
+		let indexOrigin = this.index(origin);
+		let indexTarget = this.index(target);
+		this.machine.addTransition(indexOrigin, indexTarget, data[0]);
 	}
 
 	public changeInitialFlag(state: State): void {
