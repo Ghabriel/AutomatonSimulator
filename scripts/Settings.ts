@@ -8,6 +8,7 @@ import {Controller} from "./controllers/Controller"
 import {FA} from "./machines/FA"
 import {Initializer} from "./Initializer"
 import {Renderer} from "./interface/Renderer"
+import {StatePalette} from "./interface/State"
 import {utils} from "./Utils"
 
 interface MachineTraits {
@@ -47,10 +48,19 @@ export namespace Settings {
 	export const stateInitialMarkColor = "blue";
 	export const stateInitialMarkThickness = 2;
 
-	export const stateHighlightFillColor = "#FFD574";
-	export const stateHighlightStrokeColor = "red";
-	export const stateHighlightStrokeWidth = 3;
-	export const stateHighlightRingStrokeWidth = 2;
+	export const stateHighlightPalette: StatePalette = {
+		fillColor: "#FFD574",
+		strokeColor: "red",
+		strokeWidth: 3,
+		ringStrokeWidth: 2
+	};
+
+	export const stateRecognitionPalette: StatePalette = {
+		fillColor: "#CCC",
+		strokeColor: "black",
+		strokeWidth: 3,
+		ringStrokeWidth: 2
+	};
 
 	export const edgeArrowLength = 30;
 	export const edgeArrowAngle = utils.toRadians(30);

@@ -4,6 +4,13 @@ import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
 import {utils} from "../Utils"
 
+export interface StatePalette {
+	fillColor: string;
+	strokeColor: string;
+	strokeWidth: number;
+	ringStrokeWidth: number;
+}
+
 export class State {
 	constructor() {
 		this.radius = Settings.stateRadius;
@@ -45,12 +52,12 @@ export class State {
 		return this.name;
 	}
 
-	public highlight(): void {
-		this.highlighted = true;
+	public applyPalette(palette: StatePalette): void {
+		this.palette = palette;
 	}
 
-	public dim(): void {
-		this.highlighted = false;
+	public removePalette(): void {
+		this.palette = this.defaultPalette;
 	}
 
 	public remove(): void {
@@ -143,23 +150,19 @@ export class State {
 	}
 
 	private fillColor(): string {
-		return this.highlighted ? Settings.stateHighlightFillColor
-								: Settings.stateFillColor;
+		return this.palette.fillColor;
 	}
 
 	private strokeColor(): string {
-		return this.highlighted ? Settings.stateHighlightStrokeColor
-								: Settings.stateStrokeColor;
+		return this.palette.strokeColor;
 	}
 
 	private strokeWidth(): number {
-		return this.highlighted ? Settings.stateHighlightStrokeWidth
-								: Settings.stateStrokeWidth;
+		return this.palette.strokeWidth;
 	}
 
 	private ringStrokeWidth(): number {
-		return this.highlighted ? Settings.stateHighlightRingStrokeWidth
-								: Settings.stateRingStrokeWidth;
+		return this.palette.ringStrokeWidth;
 	}
 
 	private renderBody(canvas: RaphaelPaper): void {
@@ -337,8 +340,15 @@ export class State {
 	private initial: boolean = false;
 	private final: boolean = false;
 	private name: string = "";
-	private highlighted: boolean = false;
 	private initialMarkOffsets: {x: number, y: number}[] = [];
+
+	private defaultPalette: StatePalette = {
+		fillColor: Settings.stateFillColor,
+		strokeColor: Settings.stateStrokeColor,
+		strokeWidth: Settings.stateStrokeWidth,
+		ringStrokeWidth: Settings.stateRingStrokeWidth
+	};
+	private palette: StatePalette = this.defaultPalette;
 
 	private body: RaphaelElement = null;
 	private ring: RaphaelElement = null;

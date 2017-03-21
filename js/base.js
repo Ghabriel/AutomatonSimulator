@@ -322,8 +322,14 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
             this.initial = false;
             this.final = false;
             this.name = "";
-            this.highlighted = false;
             this.initialMarkOffsets = [];
+            this.defaultPalette = {
+                fillColor: Settings_2.Settings.stateFillColor,
+                strokeColor: Settings_2.Settings.stateStrokeColor,
+                strokeWidth: Settings_2.Settings.stateStrokeWidth,
+                ringStrokeWidth: Settings_2.Settings.stateRingStrokeWidth
+            };
+            this.palette = this.defaultPalette;
             this.body = null;
             this.ring = null;
             this.arrowParts = [];
@@ -358,11 +364,11 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
         State.prototype.getName = function () {
             return this.name;
         };
-        State.prototype.highlight = function () {
-            this.highlighted = true;
+        State.prototype.applyPalette = function (palette) {
+            this.palette = palette;
         };
-        State.prototype.dim = function () {
-            this.highlighted = false;
+        State.prototype.removePalette = function () {
+            this.palette = this.defaultPalette;
         };
         State.prototype.remove = function () {
             if (this.body) {
@@ -434,20 +440,16 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
             }
         };
         State.prototype.fillColor = function () {
-            return this.highlighted ? Settings_2.Settings.stateHighlightFillColor
-                : Settings_2.Settings.stateFillColor;
+            return this.palette.fillColor;
         };
         State.prototype.strokeColor = function () {
-            return this.highlighted ? Settings_2.Settings.stateHighlightStrokeColor
-                : Settings_2.Settings.stateStrokeColor;
+            return this.palette.strokeColor;
         };
         State.prototype.strokeWidth = function () {
-            return this.highlighted ? Settings_2.Settings.stateHighlightStrokeWidth
-                : Settings_2.Settings.stateStrokeWidth;
+            return this.palette.strokeWidth;
         };
         State.prototype.ringStrokeWidth = function () {
-            return this.highlighted ? Settings_2.Settings.stateHighlightRingStrokeWidth
-                : Settings_2.Settings.stateRingStrokeWidth;
+            return this.palette.ringStrokeWidth;
         };
         State.prototype.renderBody = function (canvas) {
             if (!this.body) {
@@ -1435,23 +1437,30 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
                 var state = _a[_i];
                 nameMapping[state.getName()] = state;
-                state.dim();
+                state.removePalette();
             }
             for (var _b = 0, stateNames_1 = stateNames; _b < stateNames_1.length; _b++) {
                 var name_1 = stateNames_1[_b];
-                nameMapping[name_1].highlight();
+                nameMapping[name_1].applyPalette(Settings_4.Settings.stateRecognitionPalette);
             }
             for (var _c = 0, _d = this.stateList; _c < _d.length; _c++) {
                 var state = _d[_c];
                 state.render(this.canvas);
             }
         };
+        AutomatonRenderer.prototype.recognitionDim = function () {
+            for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
+                var state = _a[_i];
+                state.removePalette();
+                state.render(this.canvas);
+            }
+        };
         AutomatonRenderer.prototype.selectState = function (state) {
             if (this.highlightedState) {
-                this.highlightedState.dim();
+                this.highlightedState.removePalette();
                 this.highlightedState.render(this.canvas);
             }
-            state.highlight();
+            state.applyPalette(Settings_4.Settings.stateHighlightPalette);
             this.highlightedState = state;
             state.render(this.canvas);
         };
@@ -1512,7 +1521,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                         self.beginEdge(state);
                     }
                     else if (state == self.highlightedState) {
-                        state.dim();
+                        state.removePalette();
                         self.highlightedState = null;
                         state.render(canvas);
                     }
@@ -1612,7 +1621,6 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 }
                 state.setInitial(true);
                 controller.changeInitialFlag(state);
-                console.log(state);
                 this.initialState = state;
             }
         };
@@ -1646,7 +1654,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.dimState, function () {
                 var highlightedState = self.highlightedState;
                 if (highlightedState) {
-                    highlightedState.dim();
+                    highlightedState.removePalette();
                     highlightedState.render(canvas);
                     self.highlightedState = null;
                 }
@@ -1825,7 +1833,6 @@ define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings
         function highlightCurrentStates() {
             var states = Settings_5.Settings.controller().currentStates();
             Settings_5.Settings.automatonRenderer.recognitionHighlight(states);
-            console.log(Settings_5.Settings.controller().currentStates());
         }
         function buildRecognitionControls(container) {
             var disabledClass = Settings_5.Settings.disabledButtonClass;
@@ -1851,6 +1858,7 @@ define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings
             stopRecognition.addEventListener("click", function () {
                 if (stopEnabled) {
                     Settings_5.Settings.controller().stop();
+                    Settings_5.Settings.automatonRenderer.recognitionDim();
                     fastForwardEnabled = true;
                     fastRecognition.classList.remove(disabledClass);
                     testCaseInput.disabled = false;
@@ -1962,10 +1970,18 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.stateInitialMarkAngle = Utils_8.utils.toRadians(20);
         Settings.stateInitialMarkColor = "blue";
         Settings.stateInitialMarkThickness = 2;
-        Settings.stateHighlightFillColor = "#FFD574";
-        Settings.stateHighlightStrokeColor = "red";
-        Settings.stateHighlightStrokeWidth = 3;
-        Settings.stateHighlightRingStrokeWidth = 2;
+        Settings.stateHighlightPalette = {
+            fillColor: "#FFD574",
+            strokeColor: "red",
+            strokeWidth: 3,
+            ringStrokeWidth: 2
+        };
+        Settings.stateRecognitionPalette = {
+            fillColor: "#CCC",
+            strokeColor: "black",
+            strokeWidth: 3,
+            ringStrokeWidth: 2
+        };
         Settings.edgeArrowLength = 30;
         Settings.edgeArrowAngle = Utils_8.utils.toRadians(30);
         Settings.edgeTextFontFamily = "arial";

@@ -76,6 +76,7 @@ export namespace initFA {
 				// TODO
 				// alert("TODO: stop");
 				Settings.controller().stop();
+				Settings.automatonRenderer.recognitionDim();
 
 				fastForwardEnabled = true;
 				fastRecognition.classList.remove(disabledClass);

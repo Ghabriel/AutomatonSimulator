@@ -234,11 +234,11 @@ export class AutomatonRenderer {
 		let nameMapping: {[n: string]: State} = {};
 		for (let state of this.stateList) {
 			nameMapping[state.getName()] = state;
-			state.dim();
+			state.removePalette();
 		}
 
 		for (let name of stateNames) {
-			nameMapping[name].highlight();
+			nameMapping[name].applyPalette(Settings.stateRecognitionPalette);
 		}
 
 		for (let state of this.stateList) {
@@ -246,12 +246,19 @@ export class AutomatonRenderer {
 		}
 	}
 
+	public recognitionDim(): void {
+		for (let state of this.stateList) {
+			state.removePalette();
+			state.render(this.canvas);
+		}
+	}
+
 	private selectState(state: State) {
 		if (this.highlightedState) {
-			this.highlightedState.dim();
+			this.highlightedState.removePalette();
 			this.highlightedState.render(this.canvas);
 		}
-		state.highlight();
+		state.applyPalette(Settings.stateHighlightPalette);
 		this.highlightedState = state;
 		state.render(this.canvas);
 	}
@@ -317,7 +324,7 @@ export class AutomatonRenderer {
 				} else if (utils.isRightClick(event)) {
 					self.beginEdge(state);
 				} else if (state == self.highlightedState) {
-					state.dim();
+					state.removePalette();
 					self.highlightedState = null;
 					state.render(canvas);
 				} else {
@@ -467,7 +474,7 @@ export class AutomatonRenderer {
 		utils.bindShortcut(Settings.shortcuts.dimState, function() {
 			let highlightedState = self.highlightedState;
 			if (highlightedState) {
-				highlightedState.dim();
+				highlightedState.removePalette();
 				highlightedState.render(canvas);
 				self.highlightedState = null;
 			}
