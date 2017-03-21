@@ -107,9 +107,9 @@ define("languages/Portuguese", ["require", "exports"], function (require, export
             LBA: "Autômato Linearmente Limitado",
             RECOGNITION: "Reconhecimento",
             TEST_CASE: "caso de teste",
-            FAST_RECOGNITION: "Reconhecimento rápido",
-            STEP_RECOGNITION: "Reconhecimento passo-a-passo",
-            STOP_RECOGNITION: "Parar reconhecimento passo-a-passo",
+            FAST_RECOGNITION: "Reconhecimento rápido (R)",
+            STEP_RECOGNITION: "Reconhecimento passo-a-passo (N)",
+            STOP_RECOGNITION: "Parar reconhecimento passo-a-passo (S)",
             CHANGE_MACHINE_WARNING: "Alterar o tipo de máquina reseta o autômato. Deseja continuar?"
         };
     })(portuguese = exports.portuguese || (exports.portuguese = {}));
@@ -135,9 +135,9 @@ define("languages/English", ["require", "exports"], function (require, exports) 
             LBA: "Linearly Bounded Automaton",
             RECOGNITION: "Recognition",
             TEST_CASE: "test case",
-            FAST_RECOGNITION: "Fast recognition",
-            STEP_RECOGNITION: "Step-by-step recognition",
-            STOP_RECOGNITION: "Stop step-by-step recognition",
+            FAST_RECOGNITION: "Fast recognition (R)",
+            STEP_RECOGNITION: "Step-by-step recognition (N)",
+            STOP_RECOGNITION: "Stop step-by-step recognition (S)",
             CHANGE_MACHINE_WARNING: "Changing the machine type resets the automaton. Do you wish to continue?"
         };
     })(english = exports.english || (exports.english = {}));
@@ -889,7 +889,10 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Utils"
         };
         FAController.prototype.step = function (input) {
             if (!this.finished(input)) {
-                if (this.stepIndex > -1) {
+                if (this.stepIndex == -1) {
+                    this.machine.reset();
+                }
+                else {
                     var symbol = input[this.stepIndex];
                     this.machine.read(symbol);
                 }
@@ -981,147 +984,7 @@ define("lists/ControllerList", ["require", "exports", "controllers/FAController"
     __export(PDAController_1);
     __export(LBAController_1);
 });
-define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings", "Utils"], function (require, exports, Menu_1, Settings_3, Utils_4) {
-    "use strict";
-    var initFA;
-    (function (initFA) {
-        function init() {
-            var menuList = [];
-            var menu = new Menu_1.Menu(Settings_3.Strings.RECOGNITION);
-            var rows = [];
-            buildTestCaseInput(rows);
-            buildRecognitionControls(rows);
-            for (var _i = 0, rows_1 = rows; _i < rows_1.length; _i++) {
-                var row = rows_1[_i];
-                var div = Utils_4.utils.create("div", {
-                    className: "row"
-                });
-                for (var _a = 0, row_1 = row; _a < row_1.length; _a++) {
-                    var node = row_1[_a];
-                    div.appendChild(node);
-                }
-                menu.add(div);
-            }
-            menuList.push(menu);
-            Settings_3.Settings.machines[Settings_3.Settings.Machine.FA].sidebar = menuList;
-        }
-        initFA.init = init;
-        var testCaseInput = null;
-        function testCase() {
-            return testCaseInput.value;
-        }
-        function buildTestCaseInput(container) {
-            var input = Utils_4.utils.create("input", {
-                type: "text",
-                placeholder: Settings_3.Strings.TEST_CASE
-            });
-            container.push([input]);
-            testCaseInput = input;
-        }
-        function buildRecognitionControls(container) {
-            var fastForwardEnabled = true;
-            var stopEnabled = false;
-            var disabledClass = Settings_3.Settings.disabledButtonClass;
-            var fastRecognition = Utils_4.utils.create("img", {
-                className: "image_button",
-                src: "images/fastforward.svg",
-                title: Settings_3.Strings.FAST_RECOGNITION,
-                click: function () {
-                    if (fastForwardEnabled) {
-                        var input = testCase();
-                        var controller = Settings_3.Settings.controller();
-                        controller.fastForward(input);
-                        alert(controller.accepts());
-                    }
-                }
-            });
-            var stopRecognition = Utils_4.utils.create("img", {
-                className: "image_button " + disabledClass,
-                src: "images/stop.svg",
-                title: Settings_3.Strings.STOP_RECOGNITION
-            });
-            stopRecognition.addEventListener("click", function () {
-                if (stopEnabled) {
-                    Settings_3.Settings.controller().stop();
-                    fastForwardEnabled = true;
-                    fastRecognition.classList.remove(disabledClass);
-                    testCaseInput.disabled = false;
-                    stopEnabled = false;
-                    stopRecognition.classList.add(disabledClass);
-                }
-            });
-            var stepRecognition = Utils_4.utils.create("img", {
-                className: "image_button",
-                src: "images/play.svg",
-                title: Settings_3.Strings.STEP_RECOGNITION,
-                click: function () {
-                    fastForwardEnabled = false;
-                    fastRecognition.classList.add(disabledClass);
-                    testCaseInput.disabled = true;
-                    stopEnabled = true;
-                    stopRecognition.classList.remove(disabledClass);
-                    var input = testCase();
-                    var controller = Settings_3.Settings.controller();
-                    if (!controller.finished(input)) {
-                        controller.step(input);
-                        var states = controller.currentStates();
-                        Settings_3.Settings.automatonRenderer.recognitionHighlight(states);
-                        console.log(controller.currentStates());
-                    }
-                }
-            });
-            container.push([fastRecognition, stepRecognition,
-                stopRecognition]);
-        }
-    })(initFA = exports.initFA || (exports.initFA = {}));
-});
-define("initializers/initPDA", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var initPDA;
-    (function (initPDA) {
-        function init() {
-            console.log("[INIT] PDA");
-        }
-        initPDA.init = init;
-    })(initPDA = exports.initPDA || (exports.initPDA = {}));
-});
-define("initializers/initLBA", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var initLBA;
-    (function (initLBA) {
-        function init() {
-            console.log("[INIT] LBA");
-        }
-        initLBA.init = init;
-    })(initLBA = exports.initLBA || (exports.initLBA = {}));
-});
-define("lists/InitializerList", ["require", "exports", "initializers/initFA", "initializers/initPDA", "initializers/initLBA"], function (require, exports, initFA_1, initPDA_1, initLBA_1) {
-    "use strict";
-    function __export(m) {
-        for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
-    }
-    __export(initFA_1);
-    __export(initPDA_1);
-    __export(initLBA_1);
-});
-define("Initializer", ["require", "exports", "lists/InitializerList", "Utils"], function (require, exports, init, Utils_5) {
-    "use strict";
-    var Initializer = (function () {
-        function Initializer() {
-        }
-        Initializer.exec = function () {
-            this.initSidebars();
-        };
-        Initializer.initSidebars = function () {
-            Utils_5.utils.foreach(init, function (moduleName, obj) {
-                obj.init();
-            });
-        };
-        return Initializer;
-    }());
-    exports.Initializer = Initializer;
-});
-define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_4, Utils_6) {
+define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_3, Utils_4) {
     "use strict";
     var Edge = (function () {
         function Edge() {
@@ -1181,9 +1044,9 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
         };
         Edge.prototype.render = function (canvas) {
             var preservedOrigin = this.origin
-                && Utils_6.utils.samePoint(this.prevOriginPosition, this.origin.getPosition());
+                && Utils_4.utils.samePoint(this.prevOriginPosition, this.origin.getPosition());
             var preservedTarget = this.target
-                && Utils_6.utils.samePoint(this.prevTargetPosition, this.target.getPosition());
+                && Utils_4.utils.samePoint(this.prevTargetPosition, this.target.getPosition());
             if (!preservedOrigin || !preservedTarget) {
                 this.renderBody(canvas);
                 this.renderHead(canvas);
@@ -1202,8 +1065,8 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             var angle = Math.atan2(dy, dx);
             var sin = Math.sin(angle);
             var cos = Math.cos(angle);
-            var offsetX = Settings_4.Settings.stateRadius * cos;
-            var offsetY = Settings_4.Settings.stateRadius * sin;
+            var offsetX = Settings_3.Settings.stateRadius * cos;
+            var offsetY = Settings_3.Settings.stateRadius * sin;
             return {
                 x: offsetX,
                 y: offsetY
@@ -1232,7 +1095,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             }
             var dx = target.x - origin.x;
             var dy = target.y - origin.y;
-            var radius = Settings_4.Settings.stateRadius;
+            var radius = Settings_3.Settings.stateRadius;
             var offsets = this.stateCenterOffsets(dx, dy);
             if (dx * dx + dy * dy > radius * radius) {
                 origin.x += offsets.x;
@@ -1249,24 +1112,24 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                     this.body = [];
                 }
                 if (!this.body.length) {
-                    this.body.push(Utils_6.utils.line(canvas, pos.x + radius, pos.y, pos.x + 2 * radius, pos.y));
-                    this.body.push(Utils_6.utils.line(canvas, pos.x + 2 * radius, pos.y, pos.x + 2 * radius, pos.y - 2 * radius));
-                    this.body.push(Utils_6.utils.line(canvas, pos.x + 2 * radius, pos.y - 2 * radius, pos.x, pos.y - 2 * radius));
-                    this.body.push(Utils_6.utils.line(canvas, pos.x, pos.y - 2 * radius, pos.x, pos.y - radius));
+                    this.body.push(Utils_4.utils.line(canvas, pos.x + radius, pos.y, pos.x + 2 * radius, pos.y));
+                    this.body.push(Utils_4.utils.line(canvas, pos.x + 2 * radius, pos.y, pos.x + 2 * radius, pos.y - 2 * radius));
+                    this.body.push(Utils_4.utils.line(canvas, pos.x + 2 * radius, pos.y - 2 * radius, pos.x, pos.y - 2 * radius));
+                    this.body.push(Utils_4.utils.line(canvas, pos.x, pos.y - 2 * radius, pos.x, pos.y - radius));
                 }
                 else {
-                    this.body[0].attr("path", Utils_6.utils.linePath(pos.x + radius, pos.y, pos.x + 2 * radius, pos.y));
-                    this.body[1].attr("path", Utils_6.utils.linePath(pos.x + 2 * radius, pos.y, pos.x + 2 * radius, pos.y - 2 * radius));
-                    this.body[2].attr("path", Utils_6.utils.linePath(pos.x + 2 * radius, pos.y - 2 * radius, pos.x, pos.y - 2 * radius));
-                    this.body[3].attr("path", Utils_6.utils.linePath(pos.x, pos.y - 2 * radius, pos.x, pos.y - radius));
+                    this.body[0].attr("path", Utils_4.utils.linePath(pos.x + radius, pos.y, pos.x + 2 * radius, pos.y));
+                    this.body[1].attr("path", Utils_4.utils.linePath(pos.x + 2 * radius, pos.y, pos.x + 2 * radius, pos.y - 2 * radius));
+                    this.body[2].attr("path", Utils_4.utils.linePath(pos.x + 2 * radius, pos.y - 2 * radius, pos.x, pos.y - 2 * radius));
+                    this.body[3].attr("path", Utils_4.utils.linePath(pos.x, pos.y - 2 * radius, pos.x, pos.y - radius));
                 }
             }
             else {
                 if (!this.body.length) {
-                    this.body.push(Utils_6.utils.line(canvas, origin.x, origin.y, target.x, target.y));
+                    this.body.push(Utils_4.utils.line(canvas, origin.x, origin.y, target.x, target.y));
                 }
                 else {
-                    this.body[0].attr("path", Utils_6.utils.linePath(origin.x, origin.y, target.x, target.y));
+                    this.body[0].attr("path", Utils_4.utils.linePath(origin.x, origin.y, target.x, target.y));
                 }
             }
         };
@@ -1280,7 +1143,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             var dy;
             if (this.origin == this.target) {
                 var pos = this.origin.getPosition();
-                var radius = Settings_4.Settings.stateRadius;
+                var radius = Settings_3.Settings.stateRadius;
                 origin = {
                     x: pos.x,
                     y: pos.y - 2 * radius
@@ -1303,23 +1166,23 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 dx -= offsets.x;
                 dy -= offsets.y;
             }
-            var arrowLength = Settings_4.Settings.edgeArrowLength;
-            var alpha = Settings_4.Settings.edgeArrowAngle;
+            var arrowLength = Settings_3.Settings.edgeArrowLength;
+            var alpha = Settings_3.Settings.edgeArrowAngle;
             var edgeLength = Math.sqrt(dx * dx + dy * dy);
             var u = 1 - arrowLength / edgeLength;
             var ref = {
                 x: origin.x + u * dx,
                 y: origin.y + u * dy
             };
-            var p1 = Utils_6.utils.rotatePoint(ref, target, alpha);
-            var p2 = Utils_6.utils.rotatePoint(ref, target, -alpha);
+            var p1 = Utils_4.utils.rotatePoint(ref, target, alpha);
+            var p2 = Utils_4.utils.rotatePoint(ref, target, -alpha);
             if (!this.head.length) {
-                this.head.push(Utils_6.utils.line(canvas, p1.x, p1.y, target.x, target.y));
-                this.head.push(Utils_6.utils.line(canvas, p2.x, p2.y, target.x, target.y));
+                this.head.push(Utils_4.utils.line(canvas, p1.x, p1.y, target.x, target.y));
+                this.head.push(Utils_4.utils.line(canvas, p2.x, p2.y, target.x, target.y));
             }
             else {
-                this.head[0].attr("path", Utils_6.utils.linePath(p1.x, p1.y, target.x, target.y));
-                this.head[1].attr("path", Utils_6.utils.linePath(p2.x, p2.y, target.x, target.y));
+                this.head[0].attr("path", Utils_4.utils.linePath(p1.x, p1.y, target.x, target.y));
+                this.head[1].attr("path", Utils_4.utils.linePath(p2.x, p2.y, target.x, target.y));
             }
         };
         Edge.prototype.preparedText = function () {
@@ -1331,7 +1194,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             var x;
             var y;
             if (this.origin == this.target) {
-                var radius = Settings_4.Settings.stateRadius;
+                var radius = Settings_3.Settings.stateRadius;
                 x = origin.x + radius;
                 y = origin.y - 2 * radius;
             }
@@ -1341,10 +1204,10 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             }
             if (!this.textContainer) {
                 this.textContainer = canvas.text(x, y, this.preparedText());
-                this.textContainer.attr("font-family", Settings_4.Settings.edgeTextFontFamily);
-                this.textContainer.attr("font-size", Settings_4.Settings.edgeTextFontSize);
-                this.textContainer.attr("stroke", Settings_4.Settings.edgeTextFontColor);
-                this.textContainer.attr("fill", Settings_4.Settings.edgeTextFontColor);
+                this.textContainer.attr("font-family", Settings_3.Settings.edgeTextFontFamily);
+                this.textContainer.attr("font-size", Settings_3.Settings.edgeTextFontSize);
+                this.textContainer.attr("stroke", Settings_3.Settings.edgeTextFontColor);
+                this.textContainer.attr("fill", Settings_3.Settings.edgeTextFontColor);
             }
             else {
                 this.textContainer.attr("x", x);
@@ -1353,20 +1216,20 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 this.textContainer.transform("");
             }
             var angleRad = Math.atan2(target.y - origin.y, target.x - origin.x);
-            var angle = Utils_6.utils.toDegrees(angleRad);
+            var angle = Utils_4.utils.toDegrees(angleRad);
             if (angle < -90 || angle > 90) {
                 angle = (angle + 180) % 360;
             }
             this.textContainer.rotate(angle);
-            y -= Settings_4.Settings.edgeTextFontSize * .6;
-            y -= Settings_4.Settings.edgeTextFontSize * (this.textList.length - 1) * .7;
+            y -= Settings_3.Settings.edgeTextFontSize * .6;
+            y -= Settings_3.Settings.edgeTextFontSize * (this.textList.length - 1) * .7;
             this.textContainer.attr("y", y);
         };
         return Edge;
     }());
     exports.Edge = Edge;
 });
-define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "Settings", "interface/State", "Utils"], function (require, exports, Edge_1, Settings_5, State_1, Utils_7) {
+define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "Settings", "interface/State", "Utils"], function (require, exports, Edge_1, Settings_4, State_1, Utils_5) {
     "use strict";
     var AutomatonRenderer = (function () {
         function AutomatonRenderer(canvas, node) {
@@ -1391,7 +1254,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 [350, 650]
             ];
             var i = 0;
-            var controller = Settings_5.Settings.controller();
+            var controller = Settings_4.Settings.controller();
             for (var _i = 0, groups_1 = groups; _i < groups_1.length; _i++) {
                 var group = groups_1[_i];
                 var s = this.newState("q" + this.stateList.length);
@@ -1469,14 +1332,14 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.initialState = null;
             this.edgeMode = false;
             this.currentEdge = null;
-            Settings_5.Settings.controller().clear();
+            Settings_4.Settings.controller().clear();
         };
         AutomatonRenderer.prototype.empty = function () {
             return this.stateList.length == 0;
         };
         AutomatonRenderer.prototype.save = function () {
             var result = {
-                type: Settings_5.Settings.Machine[Settings_5.Settings.currentMachine],
+                type: Settings_4.Settings.Machine[Settings_4.Settings.currentMachine],
                 states: [],
                 edges: []
             };
@@ -1515,7 +1378,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 error();
                 return;
             }
-            var machineType = Settings_5.Settings.Machine[Settings_5.Settings.currentMachine];
+            var machineType = Settings_4.Settings.Machine[Settings_4.Settings.currentMachine];
             var validation = obj.type == machineType
                 && obj.states instanceof Array
                 && obj.edges instanceof Array;
@@ -1524,7 +1387,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 return;
             }
             var nameToIndex = {};
-            var controller = Settings_5.Settings.controller();
+            var controller = Settings_4.Settings.controller();
             for (var _i = 0, _a = obj.states; _i < _a.length; _i++) {
                 var data = _a[_i];
                 var state = new State_1.State();
@@ -1605,7 +1468,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 self.selectState(state);
                 self.bindStateEvents(state);
                 var stateNamePrompt = function () {
-                    Utils_7.utils.prompt("Enter the state name:", 1, function (data) {
+                    Utils_5.utils.prompt("Enter the state name:", 1, function (data) {
                         var name = data[0];
                         for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
                             var state_1 = _a[_i];
@@ -1617,7 +1480,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                         self.stateList.push(state);
                         state.setName(name);
                         state.render(self.canvas);
-                        Settings_5.Settings.controller().createState(state);
+                        Settings_4.Settings.controller().createState(state);
                     }, function () {
                         self.highlightedState = null;
                         state.remove();
@@ -1641,11 +1504,11 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             state.drag(function () {
                 self.updateEdges();
             }, function (distanceSquared, event) {
-                if (distanceSquared <= Settings_5.Settings.stateDragTolerance) {
+                if (distanceSquared <= Settings_4.Settings.stateDragTolerance) {
                     if (self.edgeMode) {
                         self.finishEdge(state);
                     }
-                    else if (Utils_7.utils.isRightClick(event)) {
+                    else if (Utils_5.utils.isRightClick(event)) {
                         self.beginEdge(state);
                     }
                     else if (state == self.highlightedState) {
@@ -1670,7 +1533,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.edgeMode = false;
             var origin = this.currentEdge.getOrigin();
             var edgeText = function (callback, fallback) {
-                Settings_5.Settings.controller().edgePrompt(origin, state, function (data, content) {
+                Settings_4.Settings.controller().edgePrompt(origin, state, function (data, content) {
                     callback(data, content);
                 }, fallback);
             };
@@ -1731,11 +1594,11 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             var state = new State_1.State();
             state.setName(name);
             this.stateList.push(state);
-            Settings_5.Settings.controller().createState(state);
+            Settings_4.Settings.controller().createState(state);
             return state;
         };
         AutomatonRenderer.prototype.setInitialState = function (state) {
-            var controller = Settings_5.Settings.controller();
+            var controller = Settings_4.Settings.controller();
             if (state == this.initialState) {
                 state.setInitial(false);
                 controller.changeInitialFlag(state);
@@ -1749,15 +1612,16 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 }
                 state.setInitial(true);
                 controller.changeInitialFlag(state);
+                console.log(state);
                 this.initialState = state;
             }
         };
         AutomatonRenderer.prototype.changeFinalFlag = function (state, value) {
             state.setFinal(value);
-            Settings_5.Settings.controller().changeFinalFlag(state);
+            Settings_4.Settings.controller().changeFinalFlag(state);
         };
         AutomatonRenderer.prototype.addEdgeData = function (edge, data) {
-            var controller = Settings_5.Settings.controller();
+            var controller = Settings_4.Settings.controller();
             edge.addText(controller.edgeDataToText(data));
             edge.addData(data);
             controller.createEdge(edge.getOrigin(), edge.getTarget(), data);
@@ -1765,21 +1629,21 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         AutomatonRenderer.prototype.bindShortcuts = function () {
             var canvas = this.canvas;
             var self = this;
-            Utils_7.utils.bindShortcut(Settings_5.Settings.shortcuts.toggleInitial, function () {
+            Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.toggleInitial, function () {
                 var highlightedState = self.highlightedState;
                 if (highlightedState) {
                     self.setInitialState(highlightedState);
                     highlightedState.render(self.canvas);
                 }
             });
-            Utils_7.utils.bindShortcut(Settings_5.Settings.shortcuts.toggleFinal, function () {
+            Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.toggleFinal, function () {
                 var highlightedState = self.highlightedState;
                 if (highlightedState) {
                     self.changeFinalFlag(highlightedState, !highlightedState.isFinal());
                     highlightedState.render(canvas);
                 }
             });
-            Utils_7.utils.bindShortcut(Settings_5.Settings.shortcuts.dimState, function () {
+            Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.dimState, function () {
                 var highlightedState = self.highlightedState;
                 if (highlightedState) {
                     highlightedState.dim();
@@ -1787,7 +1651,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     self.highlightedState = null;
                 }
             });
-            Utils_7.utils.bindShortcut(Settings_5.Settings.shortcuts.deleteState, function () {
+            Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.deleteState, function () {
                 var highlightedState = self.highlightedState;
                 if (highlightedState) {
                     for (var i = 0; i < self.edgeList.length; i++) {
@@ -1811,13 +1675,13 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     self.clearSelection();
                 }
             });
-            Utils_7.utils.bindShortcut(Settings_5.Settings.shortcuts.clearMachine, function () {
-                var confirmation = confirm(Settings_5.Strings.CLEAR_CONFIRMATION);
+            Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.clearMachine, function () {
+                var confirmation = confirm(Settings_4.Strings.CLEAR_CONFIRMATION);
                 if (confirmation) {
                     self.clear();
                 }
             });
-            Utils_7.utils.bindShortcut(Settings_5.Settings.shortcuts.left, function () {
+            Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.left, function () {
                 self.moveStateSelection(function (attempt, highlighted) {
                     return attempt.getPosition().x < highlighted.getPosition().x;
                 }, function (attempt, currBest, highlighted) {
@@ -1836,7 +1700,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     return dy < targetDy;
                 });
             });
-            Utils_7.utils.bindShortcut(Settings_5.Settings.shortcuts.right, function () {
+            Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.right, function () {
                 self.moveStateSelection(function (attempt, highlighted) {
                     return attempt.getPosition().x > highlighted.getPosition().x;
                 }, function (attempt, currBest, highlighted) {
@@ -1855,7 +1719,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     return dy < targetDy;
                 });
             });
-            Utils_7.utils.bindShortcut(Settings_5.Settings.shortcuts.up, function () {
+            Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.up, function () {
                 self.moveStateSelection(function (attempt, highlighted) {
                     return attempt.getPosition().y < highlighted.getPosition().y;
                 }, function (attempt, currBest, highlighted) {
@@ -1874,7 +1738,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     return dx < targetDx;
                 });
             });
-            Utils_7.utils.bindShortcut(Settings_5.Settings.shortcuts.down, function () {
+            Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.down, function () {
                 self.moveStateSelection(function (attempt, highlighted) {
                     return attempt.getPosition().y > highlighted.getPosition().y;
                 }, function (attempt, currBest, highlighted) {
@@ -1893,12 +1757,12 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     return dx < targetDx;
                 });
             });
-            Utils_7.utils.bindShortcut(Settings_5.Settings.shortcuts.undo, function () {
+            Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.undo, function () {
                 alert("TODO: undo");
             });
         };
         AutomatonRenderer.prototype.selectionThreshold = function () {
-            return 2 * Settings_5.Settings.stateRadius;
+            return 2 * Settings_4.Settings.stateRadius;
         };
         AutomatonRenderer.prototype.moveStateSelection = function (isViable, isBetterCandidate) {
             var highlightedState = this.highlightedState;
@@ -1920,6 +1784,157 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         return AutomatonRenderer;
     }());
     exports.AutomatonRenderer = AutomatonRenderer;
+});
+define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings", "Utils"], function (require, exports, Menu_1, Settings_5, Utils_6) {
+    "use strict";
+    var initFA;
+    (function (initFA) {
+        function init() {
+            var menuList = [];
+            var menu = new Menu_1.Menu(Settings_5.Strings.RECOGNITION);
+            var rows = [];
+            buildTestCaseInput(rows);
+            buildRecognitionControls(rows);
+            for (var _i = 0, rows_1 = rows; _i < rows_1.length; _i++) {
+                var row = rows_1[_i];
+                var div = Utils_6.utils.create("div", {
+                    className: "row"
+                });
+                for (var _a = 0, row_1 = row; _a < row_1.length; _a++) {
+                    var node = row_1[_a];
+                    div.appendChild(node);
+                }
+                menu.add(div);
+            }
+            menuList.push(menu);
+            Settings_5.Settings.machines[Settings_5.Settings.Machine.FA].sidebar = menuList;
+        }
+        initFA.init = init;
+        var testCaseInput = null;
+        function testCase() {
+            return testCaseInput.value;
+        }
+        function buildTestCaseInput(container) {
+            var input = Utils_6.utils.create("input", {
+                type: "text",
+                placeholder: Settings_5.Strings.TEST_CASE
+            });
+            container.push([input]);
+            testCaseInput = input;
+        }
+        function highlightCurrentStates() {
+            var states = Settings_5.Settings.controller().currentStates();
+            Settings_5.Settings.automatonRenderer.recognitionHighlight(states);
+            console.log(Settings_5.Settings.controller().currentStates());
+        }
+        function buildRecognitionControls(container) {
+            var disabledClass = Settings_5.Settings.disabledButtonClass;
+            var fastForwardEnabled = true;
+            var stopEnabled = false;
+            var fastRecognition = Utils_6.utils.create("img", {
+                className: "image_button",
+                src: "images/fastforward.svg",
+                title: Settings_5.Strings.FAST_RECOGNITION,
+                click: function () {
+                    if (fastForwardEnabled) {
+                        var input = testCase();
+                        Settings_5.Settings.controller().fastForward(input);
+                        highlightCurrentStates();
+                    }
+                }
+            });
+            var stopRecognition = Utils_6.utils.create("img", {
+                className: "image_button " + disabledClass,
+                src: "images/stop.svg",
+                title: Settings_5.Strings.STOP_RECOGNITION
+            });
+            stopRecognition.addEventListener("click", function () {
+                if (stopEnabled) {
+                    Settings_5.Settings.controller().stop();
+                    fastForwardEnabled = true;
+                    fastRecognition.classList.remove(disabledClass);
+                    testCaseInput.disabled = false;
+                    stopEnabled = false;
+                    stopRecognition.classList.add(disabledClass);
+                }
+            });
+            var stepRecognition = Utils_6.utils.create("img", {
+                className: "image_button",
+                src: "images/play.svg",
+                title: Settings_5.Strings.STEP_RECOGNITION,
+                click: function () {
+                    fastForwardEnabled = false;
+                    fastRecognition.classList.add(disabledClass);
+                    testCaseInput.disabled = true;
+                    stopEnabled = true;
+                    stopRecognition.classList.remove(disabledClass);
+                    var input = testCase();
+                    var controller = Settings_5.Settings.controller();
+                    if (!controller.finished(input)) {
+                        controller.step(input);
+                        highlightCurrentStates();
+                    }
+                }
+            });
+            container.push([fastRecognition, stepRecognition,
+                stopRecognition]);
+            Utils_6.utils.bindShortcut(Settings_5.Settings.shortcuts.fastForward, function () {
+                fastRecognition.click();
+            });
+            Utils_6.utils.bindShortcut(Settings_5.Settings.shortcuts.step, function () {
+                stepRecognition.click();
+            });
+            Utils_6.utils.bindShortcut(Settings_5.Settings.shortcuts.stop, function () {
+                stopRecognition.click();
+            });
+        }
+    })(initFA = exports.initFA || (exports.initFA = {}));
+});
+define("initializers/initPDA", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var initPDA;
+    (function (initPDA) {
+        function init() {
+            console.log("[INIT] PDA");
+        }
+        initPDA.init = init;
+    })(initPDA = exports.initPDA || (exports.initPDA = {}));
+});
+define("initializers/initLBA", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var initLBA;
+    (function (initLBA) {
+        function init() {
+            console.log("[INIT] LBA");
+        }
+        initLBA.init = init;
+    })(initLBA = exports.initLBA || (exports.initLBA = {}));
+});
+define("lists/InitializerList", ["require", "exports", "initializers/initFA", "initializers/initPDA", "initializers/initLBA"], function (require, exports, initFA_1, initPDA_1, initLBA_1) {
+    "use strict";
+    function __export(m) {
+        for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+    }
+    __export(initFA_1);
+    __export(initPDA_1);
+    __export(initLBA_1);
+});
+define("Initializer", ["require", "exports", "lists/InitializerList", "Utils"], function (require, exports, init, Utils_7) {
+    "use strict";
+    var Initializer = (function () {
+        function Initializer() {
+        }
+        Initializer.exec = function () {
+            this.initSidebars();
+        };
+        Initializer.initSidebars = function () {
+            Utils_7.utils.foreach(init, function (moduleName, obj) {
+                obj.init();
+            });
+        };
+        return Initializer;
+    }());
+    exports.Initializer = Initializer;
 });
 define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineList", "lists/ControllerList", "Initializer", "Utils"], function (require, exports, lang, automata, controllers, Initializer_1, Utils_8) {
     "use strict";
@@ -1968,7 +1983,10 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
             right: ["RIGHT"],
             up: ["UP"],
             down: ["DOWN"],
-            undo: ["ctrl", "Z"]
+            undo: ["ctrl", "Z"],
+            fastForward: ["R"],
+            step: ["N"],
+            stop: ["S"]
         };
         Settings.languages = lang;
         Settings.Machine = automata.Machine;
@@ -2015,7 +2033,6 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.changeLanguage = changeLanguage;
     })(Settings = exports.Settings || (exports.Settings = {}));
     exports.Strings = Settings.language.strings;
-    Settings.update();
 });
 define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_1, Settings_6, Utils_9) {
     "use strict";
@@ -2429,8 +2446,9 @@ define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "
     }());
     exports.UI = UI;
 });
-define("main", ["require", "exports", "System", "interface/UI"], function (require, exports, System_4, UI_1) {
+define("main", ["require", "exports", "Settings", "System", "interface/UI"], function (require, exports, Settings_12, System_4, UI_1) {
     "use strict";
+    Settings_12.Settings.update();
     $(document).ready(function () {
         var ui = new UI_1.UI();
         ui.render();

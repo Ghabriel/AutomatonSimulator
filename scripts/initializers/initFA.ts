@@ -42,10 +42,15 @@ export namespace initFA {
 		testCaseInput = input;
 	}
 
+	function highlightCurrentStates(): void {
+		let states = Settings.controller().currentStates();
+		Settings.automatonRenderer.recognitionHighlight(states);
+	}
+
 	function buildRecognitionControls(container: HTMLElement[][]) {
+		const disabledClass = Settings.disabledButtonClass;
 		let fastForwardEnabled = true;
 		let stopEnabled = false;
-		const disabledClass = Settings.disabledButtonClass;
 
 		let fastRecognition = <HTMLImageElement> utils.create("img", {
 			className: "image_button",
@@ -54,9 +59,8 @@ export namespace initFA {
 			click: function() {
 				if (fastForwardEnabled) {
 					let input = testCase();
-					let controller = Settings.controller();
-					controller.fastForward(input);
-					alert(controller.accepts());
+					Settings.controller().fastForward(input);
+					highlightCurrentStates();
 				}
 			}
 		});
@@ -101,9 +105,7 @@ export namespace initFA {
 				let controller = Settings.controller();
 				if (!controller.finished(input)) {
 					controller.step(input);
-					let states = controller.currentStates();
-					Settings.automatonRenderer.recognitionHighlight(states);
-					console.log(controller.currentStates());
+					highlightCurrentStates();
 				}
 
 				// restartEnabled = !restartEnabled;
@@ -114,5 +116,17 @@ export namespace initFA {
 
 		container.push([fastRecognition, stepRecognition,
 						stopRecognition]);
+
+		utils.bindShortcut(Settings.shortcuts.fastForward, function() {
+			fastRecognition.click();
+		});
+
+		utils.bindShortcut(Settings.shortcuts.step, function() {
+			stepRecognition.click();
+		});
+
+		utils.bindShortcut(Settings.shortcuts.stop, function() {
+			stopRecognition.click();
+		});
 	}
 }

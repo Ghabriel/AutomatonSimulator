@@ -16,9 +16,9 @@ export namespace portuguese {
 		LBA: "Autômato Linearmente Limitado",
 		RECOGNITION: "Reconhecimento",
 		TEST_CASE: "caso de teste",
-		FAST_RECOGNITION: "Reconhecimento rápido",
-		STEP_RECOGNITION: "Reconhecimento passo-a-passo",
-		STOP_RECOGNITION: "Parar reconhecimento passo-a-passo",
+		FAST_RECOGNITION: "Reconhecimento rápido (R)",
+		STEP_RECOGNITION: "Reconhecimento passo-a-passo (N)",
+		STOP_RECOGNITION: "Parar reconhecimento passo-a-passo (S)",
 		CHANGE_MACHINE_WARNING: "Alterar o tipo de máquina reseta o autômato. Deseja continuar?",
 	};
 }

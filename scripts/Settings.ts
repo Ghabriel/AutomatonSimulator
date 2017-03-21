@@ -3,11 +3,11 @@ import * as automata from "./lists/MachineList"
 import * as controllers from "./lists/ControllerList"
 
 // import {Regex} from "./misc/Regex"
+import {AutomatonRenderer} from "./interface/AutomatonRenderer"
 import {Controller} from "./controllers/Controller"
 import {FA} from "./machines/FA"
 import {Initializer} from "./Initializer"
 import {Renderer} from "./interface/Renderer"
-import {AutomatonRenderer} from "./interface/AutomatonRenderer"
 import {utils} from "./Utils"
 
 interface MachineTraits {
@@ -60,8 +60,10 @@ export namespace Settings {
 	export const edgeTextFontColor = "black";
 
 	export const shortcuts = {
+		// File-related controls
 		save: ["ctrl", "S"],
 		open: ["ctrl", "O"],
+		// Automaton-related controls
 		toggleInitial: ["I"],
 		toggleFinal: ["F"],
 		dimState: ["ESC"],
@@ -72,6 +74,10 @@ export namespace Settings {
 		up: ["UP"],
 		down: ["DOWN"],
 		undo: ["ctrl", "Z"],
+		// Recognition-related controls
+		fastForward: ["R"], // "R"ecognize (is there a better alternative?)
+		step: ["N"], // "N"ext step
+		stop: ["S"],
 	};
 
 	export const languages = lang;
@@ -140,5 +146,5 @@ export namespace Settings {
 
 export var Strings = Settings.language.strings;
 
-Settings.update();
+// Settings.update();
 // Initializer.exec();

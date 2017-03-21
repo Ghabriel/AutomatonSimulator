@@ -75,10 +75,12 @@ export class FAController implements Controller {
 
 	public step(input: string): void {
 		if (!this.finished(input)) {
-			// Don't parse anything if stepIndex == -1.
-			// This case is used to allow the interface
-			// to show the initial state(s) of the automaton.
-			if (this.stepIndex > -1) {
+			if (this.stepIndex == -1) {
+				// Don't parse anything if stepIndex == -1.
+				// This case is used to allow the interface
+				// to show the initial state(s) of the automaton.
+				this.machine.reset();
+			} else {
 				let symbol = input[this.stepIndex];
 				this.machine.read(symbol);
 			}
