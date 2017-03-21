@@ -707,6 +707,22 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             return index;
         };
         FA.prototype.removeState = function (index) {
+            for (var originIndex in this.transitions) {
+                var origin = parseInt(originIndex);
+                if (this.transitions.hasOwnProperty(originIndex) && origin != index) {
+                    var transitions = this.transitions[origin];
+                    for (var input in transitions) {
+                        if (transitions.hasOwnProperty(input)) {
+                            if (transitions[input].contains(index)) {
+                                this.removeTransition(origin, index, input);
+                            }
+                        }
+                    }
+                }
+            }
+            if (this.transitions.hasOwnProperty(index + "")) {
+                delete this.transitions[index];
+            }
         };
         FA.prototype.addTransition = function (source, target, input) {
             var transitions = this.transitions[source];
@@ -861,7 +877,8 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Utils"
         FAController.prototype.createEdge = function (origin, target, data) {
             var indexOrigin = this.index(origin);
             var indexTarget = this.index(target);
-            this.machine.addTransition(indexOrigin, indexTarget, data[0]);
+            var edgeText = this.edgeDataToText(data);
+            this.machine.addTransition(indexOrigin, indexTarget, edgeText);
         };
         FAController.prototype.changeInitialFlag = function (state) {
             if (state.isInitial()) {
@@ -879,6 +896,15 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Utils"
             else {
                 this.machine.removeAcceptingState(index);
             }
+        };
+        FAController.prototype.deleteState = function (state) {
+            this.machine.removeState(this.index(state));
+        };
+        FAController.prototype.deleteEdge = function (origin, target, data) {
+            var indexOrigin = this.index(origin);
+            var indexTarget = this.index(target);
+            var edgeText = this.edgeDataToText(data);
+            this.machine.removeTransition(indexOrigin, indexTarget, edgeText);
         };
         FAController.prototype.clear = function () {
             this.machine.clear();
@@ -942,6 +968,8 @@ define("controllers/PDAController", ["require", "exports", "Utils"], function (r
         PDAController.prototype.createEdge = function (origin, target, data) { };
         PDAController.prototype.changeInitialFlag = function (state) { };
         PDAController.prototype.changeFinalFlag = function (state) { };
+        PDAController.prototype.deleteState = function (state) { };
+        PDAController.prototype.deleteEdge = function (origin, target, data) { };
         PDAController.prototype.clear = function () { };
         PDAController.prototype.fastForward = function (input) { };
         PDAController.prototype.step = function (input) { };
@@ -966,6 +994,8 @@ define("controllers/LBAController", ["require", "exports"], function (require, e
         LBAController.prototype.createEdge = function (origin, target, data) { };
         LBAController.prototype.changeInitialFlag = function (state) { };
         LBAController.prototype.changeFinalFlag = function (state) { };
+        LBAController.prototype.deleteState = function (state) { };
+        LBAController.prototype.deleteEdge = function (origin, target, data) { };
         LBAController.prototype.clear = function () { };
         LBAController.prototype.fastForward = function (input) { };
         LBAController.prototype.step = function (input) { };
@@ -1634,6 +1664,27 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             edge.addData(data);
             controller.createEdge(edge.getOrigin(), edge.getTarget(), data);
         };
+        AutomatonRenderer.prototype.deleteState = function (state) {
+            for (var i = 0; i < this.edgeList.length; i++) {
+                var edge = this.edgeList[i];
+                var origin = edge.getOrigin();
+                var target = edge.getTarget();
+                if (origin == state || target == state) {
+                    edge.remove();
+                    this.edgeList.splice(i, 1);
+                    i--;
+                }
+            }
+            state.remove();
+            var states = this.stateList;
+            for (var i = 0; i < states.length; i++) {
+                if (states[i] == state) {
+                    states.splice(i, 1);
+                    break;
+                }
+            }
+            Settings_4.Settings.controller().deleteState(state);
+        };
         AutomatonRenderer.prototype.bindShortcuts = function () {
             var canvas = this.canvas;
             var self = this;
@@ -1662,24 +1713,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.deleteState, function () {
                 var highlightedState = self.highlightedState;
                 if (highlightedState) {
-                    for (var i = 0; i < self.edgeList.length; i++) {
-                        var edge = self.edgeList[i];
-                        var origin = edge.getOrigin();
-                        var target = edge.getTarget();
-                        if (origin == highlightedState || target == highlightedState) {
-                            edge.remove();
-                            self.edgeList.splice(i, 1);
-                            i--;
-                        }
-                    }
-                    highlightedState.remove();
-                    var states = self.stateList;
-                    for (var i = 0; i < states.length; i++) {
-                        if (states[i] == highlightedState) {
-                            states.splice(i, 1);
-                            break;
-                        }
-                    }
+                    self.deleteState(highlightedState);
                     self.clearSelection();
                 }
             });

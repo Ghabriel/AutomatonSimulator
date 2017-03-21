@@ -21,7 +21,29 @@ export class FA {
 
 	// Removes a state from this FA.
 	public removeState(index: Index): void {
-		// TODO
+		for (let originIndex in this.transitions) {
+			let origin = parseInt(originIndex);
+			if (this.transitions.hasOwnProperty(originIndex) && origin != index) {
+				let transitions = this.transitions[origin];
+				for (let input in transitions) {
+					if (transitions.hasOwnProperty(input)) {
+						if (transitions[input].contains(index)) {
+							this.removeTransition(origin, index, input);
+						}
+					}
+				}
+			}
+		}
+
+		if (this.transitions.hasOwnProperty(index + "")) {
+			// Don't delete if the index exists but is not a proper property
+			delete this.transitions[index];
+		}
+
+		// TODO: do we really need to remove the state from the state list?
+		// Doing so would require changes to numStates() and possibly
+		// other methods. Maybe replacing it by some kind of "invalid entry"
+		// is a better solution.
 	}
 
 	// Adds a transition to this FA. An empty input adds an

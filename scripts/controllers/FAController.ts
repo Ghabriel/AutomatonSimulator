@@ -42,7 +42,8 @@ export class FAController implements Controller {
 	public createEdge(origin: State, target: State, data: string[]): void {
 		let indexOrigin = this.index(origin);
 		let indexTarget = this.index(target);
-		this.machine.addTransition(indexOrigin, indexTarget, data[0]);
+		let edgeText = this.edgeDataToText(data);
+		this.machine.addTransition(indexOrigin, indexTarget, edgeText);
 	}
 
 	public changeInitialFlag(state: State): void {
@@ -60,6 +61,17 @@ export class FAController implements Controller {
 		} else {
 			this.machine.removeAcceptingState(index);
 		}
+	}
+
+	public deleteState(state: State): void {
+		this.machine.removeState(this.index(state));
+	}
+
+	public deleteEdge(origin: State, target: State, data: string[]): void {
+		let indexOrigin = this.index(origin);
+		let indexTarget = this.index(target);
+		let edgeText = this.edgeDataToText(data);
+		this.machine.removeTransition(indexOrigin, indexTarget, edgeText);
 	}
 
 	public clear(): void {

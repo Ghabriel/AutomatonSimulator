@@ -452,6 +452,31 @@ export class AutomatonRenderer {
 		controller.createEdge(edge.getOrigin(), edge.getTarget(), data);
 	}
 
+	private deleteState(state: State): void {
+		for (let i = 0; i < this.edgeList.length; i++) {
+			let edge = this.edgeList[i];
+			let origin = edge.getOrigin();
+			let target = edge.getTarget();
+			if (origin == state || target == state) {
+				edge.remove();
+				this.edgeList.splice(i, 1);
+				i--;
+			}
+		}
+
+		state.remove();
+
+		let states = this.stateList;
+		for (let i = 0; i < states.length; i++) {
+			if (states[i] == state) {
+				states.splice(i, 1);
+				break;
+			}
+		}
+
+		Settings.controller().deleteState(state);
+	}
+
 	private bindShortcuts(): void {
 		let canvas = this.canvas;
 		let self = this;
@@ -483,26 +508,7 @@ export class AutomatonRenderer {
 		utils.bindShortcut(Settings.shortcuts.deleteState, function() {
 			let highlightedState = self.highlightedState;
 			if (highlightedState) {
-				for (let i = 0; i < self.edgeList.length; i++) {
-					let edge = self.edgeList[i];
-					let origin = edge.getOrigin();
-					let target = edge.getTarget();
-					if (origin == highlightedState || target == highlightedState) {
-						edge.remove();
-						self.edgeList.splice(i, 1);
-						i--;
-					}
-				}
-				highlightedState.remove();
-
-				let states = self.stateList;
-				for (let i = 0; i < states.length; i++) {
-					if (states[i] == highlightedState) {
-						states.splice(i, 1);
-						break;
-					}
-				}
-
+				self.deleteState(highlightedState);
 				self.clearSelection();
 			}
 		});

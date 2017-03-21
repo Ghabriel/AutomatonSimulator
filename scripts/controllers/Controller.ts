@@ -12,6 +12,8 @@ export interface Controller {
 	createEdge(origin: State, target: State, data: string[]): void;
 	changeInitialFlag(state: State): void;
 	changeFinalFlag(state: State): void;
+	deleteState(state: State): void;
+	deleteEdge(origin: State, target: State, data: string[]): void;
 	clear(): void;
 
 	fastForward(input: string): void;
