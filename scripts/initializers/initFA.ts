@@ -1,3 +1,4 @@
+import {Keyboard} from "../Keyboard"
 import {Menu} from "../interface/Menu"
 import {Settings, Strings} from "../Settings"
 import {utils} from "../Utils"
@@ -11,6 +12,7 @@ export namespace initFA {
 
 		buildTestCaseInput(rows);
 		buildRecognitionControls(rows);
+		bindShortcuts();
 
 		for (let row of rows) {
 			let div = <HTMLDivElement> utils.create("div", {
@@ -27,13 +29,17 @@ export namespace initFA {
 		Settings.machines[Settings.Machine.FA].sidebar = menuList;
 	}
 
+	let boundShortcuts = false;
 	let testCaseInput: HTMLInputElement = null;
+	let fastRecognition: HTMLImageElement = null;
+	let stepRecognition: HTMLImageElement = null;
+	let stopRecognition: HTMLImageElement = null;
 
 	function testCase(): string {
 		return testCaseInput.value;
 	}
 
-	function buildTestCaseInput(container: HTMLElement[][]) {
+	function buildTestCaseInput(container: HTMLElement[][]): void {
 		let input = <HTMLInputElement> utils.create("input", {
 			type: "text",
 			placeholder: Strings.TEST_CASE
@@ -47,60 +53,75 @@ export namespace initFA {
 		Settings.automatonRenderer.recognitionHighlight(states);
 	}
 
-	function buildRecognitionControls(container: HTMLElement[][]) {
+	function buildRecognitionControls(container: HTMLElement[][]): void {
 		const disabledClass = Settings.disabledButtonClass;
 		let fastForwardEnabled = true;
+		let stepEnabled = true;
 		let stopEnabled = false;
 
-		let fastRecognition = <HTMLImageElement> utils.create("img", {
+		fastRecognition = <HTMLImageElement> utils.create("img", {
 			className: "image_button",
 			src: "images/fastforward.svg",
-			title: Strings.FAST_RECOGNITION,
-			click: function() {
-				if (fastForwardEnabled) {
-					let input = testCase();
-					Settings.controller().fastForward(input);
-					highlightCurrentStates();
-				}
-			}
+			title: Strings.FAST_RECOGNITION
 		});
 
-		let stopRecognition = <HTMLImageElement> utils.create("img", {
+		stopRecognition = <HTMLImageElement> utils.create("img", {
 			className: "image_button " + disabledClass,
 			src: "images/stop.svg",
 			title: Strings.STOP_RECOGNITION
 		});
 
-		stopRecognition.addEventListener("click", function() {
-			if (stopEnabled) {
-				// TODO
-				// alert("TODO: stop");
-				Settings.controller().stop();
-				Settings.automatonRenderer.recognitionDim();
+		stepRecognition = <HTMLImageElement> utils.create("img", {
+			className: "image_button",
+			src: "images/play.svg",
+			title: Strings.STEP_RECOGNITION
+		});
 
-				fastForwardEnabled = true;
-				fastRecognition.classList.remove(disabledClass);
+		let fastForwardStatus = function(enabled) {
+			fastForwardEnabled = enabled;
+			fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+		};
 
-				testCaseInput.disabled = false;
+		let stepStatus = function(enabled) {
+			stepEnabled = enabled;
+			stepRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+		};
 
-				stopEnabled = false;
-				stopRecognition.classList.add(disabledClass);
+		let stopStatus = function(enabled) {
+			stopEnabled = enabled;
+			stopRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+		};
+
+		fastRecognition.addEventListener("click", function() {
+			if (fastForwardEnabled) {
+				let input = testCase();
+				Settings.controller().fastForward(input);
+				highlightCurrentStates();
+
+				fastForwardStatus(false);
+				stepStatus(false);
+				stopStatus(true);
+				testCaseInput.disabled = true;
 			}
 		});
 
-		let stepRecognition = <HTMLImageElement> utils.create("img", {
-			className: "image_button",
-			src: "images/play.svg",
-			title: Strings.STEP_RECOGNITION,
-			click: function() {
-				// TODO
-				fastForwardEnabled = false;
-				fastRecognition.classList.add(disabledClass);
+		stopRecognition.addEventListener("click", function() {
+			if (stopEnabled) {
+				Settings.controller().stop();
+				Settings.automatonRenderer.recognitionDim();
 
+				fastForwardStatus(true);
+				stepStatus(true);
+				stopStatus(false);
+				testCaseInput.disabled = false;
+			}
+		});
+
+		stepRecognition.addEventListener("click", function() {
+			if (stepEnabled) {
+				fastForwardStatus(false);
+				stopStatus(true);
 				testCaseInput.disabled = true;
-
-				stopEnabled = true;
-				stopRecognition.classList.remove(disabledClass);
 
 				let input = testCase();
 				let controller = Settings.controller();
@@ -117,17 +138,38 @@ export namespace initFA {
 
 		container.push([fastRecognition, stepRecognition,
 						stopRecognition]);
+	}
 
-		utils.bindShortcut(Settings.shortcuts.fastForward, function() {
-			fastRecognition.click();
-		});
+	function bindShortcuts(): void {
+		// Avoids a problem where changing the system language would make
+		// these shortcuts be rebound, which would effectively make them
+		// trigger multiple times by one keystroke.
+		if (!boundShortcuts) {
+			utils.bindShortcut(Settings.shortcuts.focusTestCase, function() {
+				testCaseInput.focus();
+			});
 
-		utils.bindShortcut(Settings.shortcuts.step, function() {
-			stepRecognition.click();
-		});
+			testCaseInput.addEventListener("keydown", function(e) {
+				if (e.keyCode == Keyboard.keys[Settings.shortcuts.dimTestCase[0]]) {
+					if (testCaseInput == document.activeElement) {
+						testCaseInput.blur();
+					}
+				}
+			});
 
-		utils.bindShortcut(Settings.shortcuts.stop, function() {
-			stopRecognition.click();
-		});
+			utils.bindShortcut(Settings.shortcuts.fastForward, function() {
+				fastRecognition.click();
+			});
+
+			utils.bindShortcut(Settings.shortcuts.step, function() {
+				stepRecognition.click();
+			});
+
+			utils.bindShortcut(Settings.shortcuts.stop, function() {
+				stopRecognition.click();
+			});
+
+			boundShortcuts = true;
+		}
 	}
 }

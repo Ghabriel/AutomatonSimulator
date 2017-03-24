@@ -108,6 +108,10 @@ export class FAController implements Controller {
 		return this.stepIndex >= input.length;
 	}
 
+	public isStopped(): boolean {
+		return this.stepIndex == -1;
+	}
+
 	public currentStates(): string[] {
 		return this.machine.getStates();
 	}

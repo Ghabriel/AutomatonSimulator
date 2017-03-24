@@ -20,6 +20,7 @@ export interface Controller {
 	step(input: string): void;
 	stop(): void;
 	finished(input: string): boolean;
+	isStopped(): boolean;
 
 	currentStates(): string[];
 	accepts(): boolean;

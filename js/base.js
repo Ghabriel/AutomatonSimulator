@@ -933,6 +933,9 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Utils"
         FAController.prototype.finished = function (input) {
             return this.stepIndex >= input.length;
         };
+        FAController.prototype.isStopped = function () {
+            return this.stepIndex == -1;
+        };
         FAController.prototype.currentStates = function () {
             return this.machine.getStates();
         };
@@ -975,6 +978,7 @@ define("controllers/PDAController", ["require", "exports", "Utils"], function (r
         PDAController.prototype.step = function (input) { };
         PDAController.prototype.stop = function () { };
         PDAController.prototype.finished = function (input) { return true; };
+        PDAController.prototype.isStopped = function () { return true; };
         PDAController.prototype.currentStates = function () { return []; };
         PDAController.prototype.accepts = function () { return false; };
         return PDAController;
@@ -1001,6 +1005,7 @@ define("controllers/LBAController", ["require", "exports"], function (require, e
         LBAController.prototype.step = function (input) { };
         LBAController.prototype.stop = function () { };
         LBAController.prototype.finished = function (input) { return true; };
+        LBAController.prototype.isStopped = function () { return true; };
         LBAController.prototype.currentStates = function () { return []; };
         LBAController.prototype.accepts = function () { return false; };
         return LBAController;
@@ -1278,12 +1283,12 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         }
         AutomatonRenderer.prototype.render = function () {
             var state = this.newState("q0");
-            state.setPosition(350, 400);
+            state.setPosition(350, 350);
             var groups = [
-                [100, 400],
-                [350, 150],
-                [600, 400],
-                [350, 650]
+                [100, 350],
+                [350, 100],
+                [600, 350],
+                [350, 600]
             ];
             var i = 0;
             var controller = Settings_4.Settings.controller();
@@ -1827,7 +1832,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
     }());
     exports.AutomatonRenderer = AutomatonRenderer;
 });
-define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings", "Utils"], function (require, exports, Menu_1, Settings_5, Utils_6) {
+define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "Utils"], function (require, exports, Keyboard_2, Menu_1, Settings_5, Utils_6) {
     "use strict";
     var initFA;
     (function (initFA) {
@@ -1837,6 +1842,7 @@ define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings
             var rows = [];
             buildTestCaseInput(rows);
             buildRecognitionControls(rows);
+            bindShortcuts();
             for (var _i = 0, rows_1 = rows; _i < rows_1.length; _i++) {
                 var row = rows_1[_i];
                 var div = Utils_6.utils.create("div", {
@@ -1852,7 +1858,11 @@ define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings
             Settings_5.Settings.machines[Settings_5.Settings.Machine.FA].sidebar = menuList;
         }
         initFA.init = init;
+        var boundShortcuts = false;
         var testCaseInput = null;
+        var fastRecognition = null;
+        var stepRecognition = null;
+        var stopRecognition = null;
         function testCase() {
             return testCaseInput.value;
         }
@@ -1871,45 +1881,61 @@ define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings
         function buildRecognitionControls(container) {
             var disabledClass = Settings_5.Settings.disabledButtonClass;
             var fastForwardEnabled = true;
+            var stepEnabled = true;
             var stopEnabled = false;
-            var fastRecognition = Utils_6.utils.create("img", {
+            fastRecognition = Utils_6.utils.create("img", {
                 className: "image_button",
                 src: "images/fastforward.svg",
-                title: Settings_5.Strings.FAST_RECOGNITION,
-                click: function () {
-                    if (fastForwardEnabled) {
-                        var input = testCase();
-                        Settings_5.Settings.controller().fastForward(input);
-                        highlightCurrentStates();
-                    }
-                }
+                title: Settings_5.Strings.FAST_RECOGNITION
             });
-            var stopRecognition = Utils_6.utils.create("img", {
+            stopRecognition = Utils_6.utils.create("img", {
                 className: "image_button " + disabledClass,
                 src: "images/stop.svg",
                 title: Settings_5.Strings.STOP_RECOGNITION
+            });
+            stepRecognition = Utils_6.utils.create("img", {
+                className: "image_button",
+                src: "images/play.svg",
+                title: Settings_5.Strings.STEP_RECOGNITION
+            });
+            var fastForwardStatus = function (enabled) {
+                fastForwardEnabled = enabled;
+                fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+            };
+            var stepStatus = function (enabled) {
+                stepEnabled = enabled;
+                stepRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+            };
+            var stopStatus = function (enabled) {
+                stopEnabled = enabled;
+                stopRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+            };
+            fastRecognition.addEventListener("click", function () {
+                if (fastForwardEnabled) {
+                    var input = testCase();
+                    Settings_5.Settings.controller().fastForward(input);
+                    highlightCurrentStates();
+                    fastForwardStatus(false);
+                    stepStatus(false);
+                    stopStatus(true);
+                    testCaseInput.disabled = true;
+                }
             });
             stopRecognition.addEventListener("click", function () {
                 if (stopEnabled) {
                     Settings_5.Settings.controller().stop();
                     Settings_5.Settings.automatonRenderer.recognitionDim();
-                    fastForwardEnabled = true;
-                    fastRecognition.classList.remove(disabledClass);
+                    fastForwardStatus(true);
+                    stepStatus(true);
+                    stopStatus(false);
                     testCaseInput.disabled = false;
-                    stopEnabled = false;
-                    stopRecognition.classList.add(disabledClass);
                 }
             });
-            var stepRecognition = Utils_6.utils.create("img", {
-                className: "image_button",
-                src: "images/play.svg",
-                title: Settings_5.Strings.STEP_RECOGNITION,
-                click: function () {
-                    fastForwardEnabled = false;
-                    fastRecognition.classList.add(disabledClass);
+            stepRecognition.addEventListener("click", function () {
+                if (stepEnabled) {
+                    fastForwardStatus(false);
+                    stopStatus(true);
                     testCaseInput.disabled = true;
-                    stopEnabled = true;
-                    stopRecognition.classList.remove(disabledClass);
                     var input = testCase();
                     var controller = Settings_5.Settings.controller();
                     if (!controller.finished(input)) {
@@ -1920,15 +1946,30 @@ define("initializers/initFA", ["require", "exports", "interface/Menu", "Settings
             });
             container.push([fastRecognition, stepRecognition,
                 stopRecognition]);
-            Utils_6.utils.bindShortcut(Settings_5.Settings.shortcuts.fastForward, function () {
-                fastRecognition.click();
-            });
-            Utils_6.utils.bindShortcut(Settings_5.Settings.shortcuts.step, function () {
-                stepRecognition.click();
-            });
-            Utils_6.utils.bindShortcut(Settings_5.Settings.shortcuts.stop, function () {
-                stopRecognition.click();
-            });
+        }
+        function bindShortcuts() {
+            if (!boundShortcuts) {
+                Utils_6.utils.bindShortcut(Settings_5.Settings.shortcuts.focusTestCase, function () {
+                    testCaseInput.focus();
+                });
+                testCaseInput.addEventListener("keydown", function (e) {
+                    if (e.keyCode == Keyboard_2.Keyboard.keys[Settings_5.Settings.shortcuts.dimTestCase[0]]) {
+                        if (testCaseInput == document.activeElement) {
+                            testCaseInput.blur();
+                        }
+                    }
+                });
+                Utils_6.utils.bindShortcut(Settings_5.Settings.shortcuts.fastForward, function () {
+                    fastRecognition.click();
+                });
+                Utils_6.utils.bindShortcut(Settings_5.Settings.shortcuts.step, function () {
+                    stepRecognition.click();
+                });
+                Utils_6.utils.bindShortcut(Settings_5.Settings.shortcuts.stop, function () {
+                    stopRecognition.click();
+                });
+                boundShortcuts = true;
+            }
         }
     })(initFA = exports.initFA || (exports.initFA = {}));
 });
@@ -2034,6 +2075,8 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
             up: ["UP"],
             down: ["DOWN"],
             undo: ["ctrl", "Z"],
+            focusTestCase: ["ctrl", "I"],
+            dimTestCase: ["ENTER"],
             fastForward: ["R"],
             step: ["N"],
             stop: ["S"]
@@ -2351,7 +2394,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
     }(Renderer_3.Renderer));
     exports.Sidebar = Sidebar;
 });
-define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], function (require, exports, Keyboard_2, Settings_9, Utils_12) {
+define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], function (require, exports, Keyboard_3, Settings_9, Utils_12) {
     "use strict";
     var System = (function () {
         function System() {
@@ -2413,7 +2456,7 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
                         return false;
                     }
                 }
-                else if (event.keyCode != Keyboard_2.Keyboard.keys[key]) {
+                else if (event.keyCode != Keyboard_3.Keyboard.keys[key]) {
                     return false;
                 }
             }

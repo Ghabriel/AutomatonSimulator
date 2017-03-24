@@ -85,6 +85,8 @@ export namespace Settings {
 		down: ["DOWN"],
 		undo: ["ctrl", "Z"],
 		// Recognition-related controls
+		focusTestCase: ["ctrl", "I"],
+		dimTestCase: ["ENTER"], // must be unitary since it's not bound via bindShortcut
 		fastForward: ["R"], // "R"ecognize (is there a better alternative?)
 		step: ["N"], // "N"ext step
 		stop: ["S"],

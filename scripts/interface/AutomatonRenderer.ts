@@ -11,13 +11,13 @@ export class AutomatonRenderer {
 
 	public render(): void {
 		let state = this.newState("q0");
-		state.setPosition(350, 400);
+		state.setPosition(350, 350);
 
 		let groups = [
-			[100, 400],
-			[350, 150],
-			[600, 400],
-			[350, 650]
+			[100, 350],
+			[350, 100],
+			[600, 350],
+			[350, 600]
 		];
 
 		let i = 0;
