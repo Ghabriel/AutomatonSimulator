@@ -20,5 +20,7 @@ export namespace english {
 		STEP_RECOGNITION: "Step-by-step recognition (N)",
 		STOP_RECOGNITION: "Stop step-by-step recognition (S)",
 		CHANGE_MACHINE_WARNING: "Changing the machine type resets the automaton. Do you wish to continue?",
+		INPUT_ACCEPTED: "accepted",
+		INPUT_REJECTED: "rejected",
 	};
 }

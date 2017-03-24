@@ -93,11 +93,11 @@ export namespace initFA {
 
 	function showAcceptanceStatus(): void {
 		if (Settings.controller().accepts()) {
-			progressContainer.style.color = "green";
-			progressContainer.innerHTML = "accepted";
+			progressContainer.style.color = Settings.acceptedTestCaseColor;
+			progressContainer.innerHTML = Strings.INPUT_ACCEPTED;
 		} else {
-			progressContainer.style.color = "red";
-			progressContainer.innerHTML = "rejected";
+			progressContainer.style.color = Settings.rejectedTestCaseColor;
+			progressContainer.innerHTML = Strings.INPUT_REJECTED;
 		}
 	}
 

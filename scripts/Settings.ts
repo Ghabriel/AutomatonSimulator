@@ -69,6 +69,9 @@ export namespace Settings {
 	export const edgeTextFontSize = 20;
 	export const edgeTextFontColor = "black";
 
+	export const acceptedTestCaseColor = "green";
+	export const rejectedTestCaseColor = "red";
+
 	export const shortcuts = {
 		// File-related controls
 		save: ["ctrl", "S"],

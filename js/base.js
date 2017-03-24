@@ -110,7 +110,9 @@ define("languages/Portuguese", ["require", "exports"], function (require, export
             FAST_RECOGNITION: "Reconhecimento rápido (R)",
             STEP_RECOGNITION: "Reconhecimento passo-a-passo (N)",
             STOP_RECOGNITION: "Parar reconhecimento passo-a-passo (S)",
-            CHANGE_MACHINE_WARNING: "Alterar o tipo de máquina reseta o autômato. Deseja continuar?"
+            CHANGE_MACHINE_WARNING: "Alterar o tipo de máquina reseta o autômato. Deseja continuar?",
+            INPUT_ACCEPTED: "aceito",
+            INPUT_REJECTED: "rejeitado"
         };
     })(portuguese = exports.portuguese || (exports.portuguese = {}));
 });
@@ -138,7 +140,9 @@ define("languages/English", ["require", "exports"], function (require, exports) 
             FAST_RECOGNITION: "Fast recognition (R)",
             STEP_RECOGNITION: "Step-by-step recognition (N)",
             STOP_RECOGNITION: "Stop step-by-step recognition (S)",
-            CHANGE_MACHINE_WARNING: "Changing the machine type resets the automaton. Do you wish to continue?"
+            CHANGE_MACHINE_WARNING: "Changing the machine type resets the automaton. Do you wish to continue?",
+            INPUT_ACCEPTED: "accepted",
+            INPUT_REJECTED: "rejected"
         };
     })(english = exports.english || (exports.english = {}));
 });
@@ -1287,75 +1291,40 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.node = node;
         }
         AutomatonRenderer.prototype.render = function () {
-            var state = this.newState("q0");
-            state.setPosition(350, 350);
-            var groups = [
-                [100, 350],
-                [350, 100],
-                [600, 350],
-                [350, 600]
-            ];
-            var i = 0;
-            var controller = Settings_4.Settings.controller();
-            for (var _i = 0, groups_1 = groups; _i < groups_1.length; _i++) {
-                var group = groups_1[_i];
-                var s = this.newState("q" + this.stateList.length);
-                s.setPosition(group[0], group[1]);
-                var e = new Edge_1.Edge();
-                if (i == 1) {
-                    e.setOrigin(s);
-                    e.setTarget(state);
-                }
-                else {
-                    e.setOrigin(state);
-                    e.setTarget(s);
-                }
-                switch (i) {
-                    case 0:
-                        this.addEdgeData(e, ["b"]);
-                        this.addEdgeData(e, ["e"]);
-                        break;
-                    case 1:
-                        this.addEdgeData(e, ["a"]);
-                        break;
-                    case 2:
-                        this.addEdgeData(e, ["c"]);
-                        break;
-                    case 3:
-                        this.addEdgeData(e, ["d"]);
-                        break;
-                }
-                this.edgeList.push(e);
-                i++;
-            }
-            this.setInitialState(this.stateList[2]);
-            this.changeFinalFlag(this.stateList[this.stateList.length - 1], true);
+            var q0 = this.newState("q0");
+            q0.setPosition(100, 200);
+            var q1 = this.newState("q1");
+            q1.setPosition(250, 350);
+            var q2 = this.newState("q2");
+            q2.setPosition(450, 350);
+            var q3 = this.newState("q3");
+            q3.setPosition(650, 350);
             var e1 = new Edge_1.Edge();
-            e1.setOrigin(this.stateList[1]);
-            e1.setTarget(this.stateList[4]);
-            this.addEdgeData(e1, ["b"]);
+            e1.setOrigin(q0);
+            e1.setTarget(q0);
+            this.addEdgeData(e1, ["0"]);
+            this.addEdgeData(e1, ["1"]);
             this.edgeList.push(e1);
             var e2 = new Edge_1.Edge();
-            e2.setOrigin(this.stateList[3]);
-            e2.setTarget(this.stateList[4]);
-            this.addEdgeData(e2, ["c"]);
+            e2.setOrigin(q0);
+            e2.setTarget(q1);
+            this.addEdgeData(e2, ["1"]);
             this.edgeList.push(e2);
             var e3 = new Edge_1.Edge();
-            e3.setOrigin(this.stateList[1]);
-            e3.setTarget(this.stateList[2]);
-            this.addEdgeData(e3, ["a"]);
+            e3.setOrigin(q1);
+            e3.setTarget(q2);
+            this.addEdgeData(e3, ["0"]);
+            this.addEdgeData(e3, ["1"]);
             this.edgeList.push(e3);
             var e4 = new Edge_1.Edge();
-            e4.setOrigin(this.stateList[3]);
-            e4.setTarget(this.stateList[2]);
-            this.addEdgeData(e4, ["a"]);
+            e4.setOrigin(q2);
+            e4.setTarget(q3);
+            this.addEdgeData(e4, ["0"]);
+            this.addEdgeData(e4, ["1"]);
             this.edgeList.push(e4);
-            var e5 = new Edge_1.Edge();
-            e5.setOrigin(this.stateList[2]);
-            e5.setTarget(this.stateList[2]);
-            this.addEdgeData(e5, ["b"]);
-            this.edgeList.push(e5);
             this.updateEdges();
+            this.setInitialState(q0);
+            this.changeFinalFlag(q3, true);
             this.bindEvents();
             this.bindShortcuts();
         };
@@ -1915,12 +1884,12 @@ define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu
         }
         function showAcceptanceStatus() {
             if (Settings_5.Settings.controller().accepts()) {
-                progressContainer.style.color = "green";
-                progressContainer.innerHTML = "accepted";
+                progressContainer.style.color = Settings_5.Settings.acceptedTestCaseColor;
+                progressContainer.innerHTML = Settings_5.Strings.INPUT_ACCEPTED;
             }
             else {
-                progressContainer.style.color = "red";
-                progressContainer.innerHTML = "rejected";
+                progressContainer.style.color = Settings_5.Settings.rejectedTestCaseColor;
+                progressContainer.innerHTML = Settings_5.Strings.INPUT_REJECTED;
             }
         }
         function bindRecognitionEvents() {
@@ -2116,6 +2085,8 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.edgeTextFontFamily = "arial";
         Settings.edgeTextFontSize = 20;
         Settings.edgeTextFontColor = "black";
+        Settings.acceptedTestCaseColor = "green";
+        Settings.rejectedTestCaseColor = "red";
         Settings.shortcuts = {
             save: ["ctrl", "S"],
             open: ["ctrl", "O"],

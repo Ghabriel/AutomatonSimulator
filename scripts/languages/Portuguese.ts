@@ -20,5 +20,7 @@ export namespace portuguese {
 		STEP_RECOGNITION: "Reconhecimento passo-a-passo (N)",
 		STOP_RECOGNITION: "Parar reconhecimento passo-a-passo (S)",
 		CHANGE_MACHINE_WARNING: "Alterar o tipo de máquina reseta o autômato. Deseja continuar?",
+		INPUT_ACCEPTED: "aceito",
+		INPUT_REJECTED: "rejeitado",
 	};
 }

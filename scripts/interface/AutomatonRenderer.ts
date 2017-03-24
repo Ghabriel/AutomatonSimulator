@@ -10,85 +10,129 @@ export class AutomatonRenderer {
 	}
 
 	public render(): void {
-		let state = this.newState("q0");
-		state.setPosition(350, 350);
+		let q0 = this.newState("q0");
+		q0.setPosition(100, 200);
 
-		let groups = [
-			[100, 350],
-			[350, 100],
-			[600, 350],
-			[350, 600]
-		];
+		let q1 = this.newState("q1");
+		q1.setPosition(250, 350);
 
-		let i = 0;
-		let controller = Settings.controller();
-		for (let group of groups) {
-			let s = this.newState("q" + this.stateList.length);
-			s.setPosition(group[0], group[1]);
+		let q2 = this.newState("q2");
+		q2.setPosition(450, 350);
 
-			let e = new Edge();
-			if (i == 1) {
-				e.setOrigin(s);
-				e.setTarget(state);
-			} else {
-				e.setOrigin(state);
-				e.setTarget(s);
-			}
-
-			switch (i) {
-				case 0:
-					this.addEdgeData(e, ["b"]);
-					this.addEdgeData(e, ["e"]);
-					break;
-				case 1:
-					this.addEdgeData(e, ["a"]);
-					break;
-				case 2:
-					this.addEdgeData(e, ["c"]);
-					break;
-				case 3:
-					this.addEdgeData(e, ["d"]);
-					break;
-			}
-
-			this.edgeList.push(e);
-			i++;
-		}
-
-		this.setInitialState(this.stateList[2]);
-		this.changeFinalFlag(this.stateList[this.stateList.length - 1], true);
+		let q3 = this.newState("q3");
+		q3.setPosition(650, 350);
 
 		let e1 = new Edge();
-		e1.setOrigin(this.stateList[1]);
-		e1.setTarget(this.stateList[4]);
-		this.addEdgeData(e1, ["b"]);
+		e1.setOrigin(q0);
+		e1.setTarget(q0);
+		this.addEdgeData(e1, ["0"]);
+		this.addEdgeData(e1, ["1"]);
 		this.edgeList.push(e1);
 
 		let e2 = new Edge();
-		e2.setOrigin(this.stateList[3]);
-		e2.setTarget(this.stateList[4]);
-		this.addEdgeData(e2, ["c"]);
+		e2.setOrigin(q0);
+		e2.setTarget(q1);
+		this.addEdgeData(e2, ["1"]);
 		this.edgeList.push(e2);
 
 		let e3 = new Edge();
-		e3.setOrigin(this.stateList[1]);
-		e3.setTarget(this.stateList[2]);
-		this.addEdgeData(e3, ["a"]);
+		e3.setOrigin(q1);
+		e3.setTarget(q2);
+		this.addEdgeData(e3, ["0"]);
+		this.addEdgeData(e3, ["1"]);
 		this.edgeList.push(e3);
 
 		let e4 = new Edge();
-		e4.setOrigin(this.stateList[3]);
-		e4.setTarget(this.stateList[2]);
-		this.addEdgeData(e4, ["a"]);
+		e4.setOrigin(q2);
+		e4.setTarget(q3);
+		this.addEdgeData(e4, ["0"]);
+		this.addEdgeData(e4, ["1"]);
 		this.edgeList.push(e4);
 
-		let e5 = new Edge();
-		e5.setOrigin(this.stateList[2]);
-		e5.setTarget(this.stateList[2]);
-		this.addEdgeData(e5, ["b"]);
-		this.edgeList.push(e5);
-
 		this.updateEdges();
+
+		this.setInitialState(q0);
+		this.changeFinalFlag(q3, true);
+
+		// let state = this.newState("q0");
+		// state.setPosition(350, 350);
+
+		// let groups = [
+		// 	[100, 350],
+		// 	[350, 100],
+		// 	[600, 350],
+		// 	[350, 600]
+		// ];
+
+		// let i = 0;
+		// let controller = Settings.controller();
+		// for (let group of groups) {
+		// 	let s = this.newState("q" + this.stateList.length);
+		// 	s.setPosition(group[0], group[1]);
+
+		// 	let e = new Edge();
+		// 	if (i == 1) {
+		// 		e.setOrigin(s);
+		// 		e.setTarget(state);
+		// 	} else {
+		// 		e.setOrigin(state);
+		// 		e.setTarget(s);
+		// 	}
+
+		// 	switch (i) {
+		// 		case 0:
+		// 			this.addEdgeData(e, ["b"]);
+		// 			this.addEdgeData(e, ["e"]);
+		// 			break;
+		// 		case 1:
+		// 			this.addEdgeData(e, ["a"]);
+		// 			break;
+		// 		case 2:
+		// 			this.addEdgeData(e, ["c"]);
+		// 			break;
+		// 		case 3:
+		// 			this.addEdgeData(e, ["d"]);
+		// 			break;
+		// 	}
+
+		// 	this.edgeList.push(e);
+		// 	i++;
+		// }
+
+		// this.setInitialState(this.stateList[2]);
+		// this.changeFinalFlag(this.stateList[this.stateList.length - 1], true);
+
+		// let e1 = new Edge();
+		// e1.setOrigin(this.stateList[1]);
+		// e1.setTarget(this.stateList[4]);
+		// this.addEdgeData(e1, ["b"]);
+		// this.edgeList.push(e1);
+
+		// let e2 = new Edge();
+		// e2.setOrigin(this.stateList[3]);
+		// e2.setTarget(this.stateList[4]);
+		// this.addEdgeData(e2, ["c"]);
+		// this.edgeList.push(e2);
+
+		// let e3 = new Edge();
+		// e3.setOrigin(this.stateList[1]);
+		// e3.setTarget(this.stateList[2]);
+		// this.addEdgeData(e3, ["a"]);
+		// this.edgeList.push(e3);
+
+		// let e4 = new Edge();
+		// e4.setOrigin(this.stateList[3]);
+		// e4.setTarget(this.stateList[2]);
+		// this.addEdgeData(e4, ["a"]);
+		// this.edgeList.push(e4);
+
+		// let e5 = new Edge();
+		// e5.setOrigin(this.stateList[2]);
+		// e5.setTarget(this.stateList[2]);
+		// this.addEdgeData(e5, ["b"]);
+		// this.edgeList.push(e5);
+
+		// this.updateEdges();
 
 		// this.selectState(state);
 
