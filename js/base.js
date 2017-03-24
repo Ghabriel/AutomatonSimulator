@@ -1877,8 +1877,7 @@ define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu
         function buildTestCaseInput(container) {
             var input = Utils_6.utils.create("input", {
                 type: "text",
-                placeholder: Settings_5.Strings.TEST_CASE,
-                value: "11100110100"
+                placeholder: Settings_5.Strings.TEST_CASE
             });
             container.push([input]);
             testCaseInput = input;
@@ -1976,6 +1975,11 @@ define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu
                     var controller = Settings_5.Settings.controller();
                     if (controller.isStopped()) {
                         progressContainer.style.display = "";
+                        var sidebar = Utils_6.utils.id(Settings_5.Settings.sidebarID);
+                        var width = sidebar.offsetWidth;
+                        width -= 10;
+                        width -= 1;
+                        progressContainer.style.width = width + "px";
                     }
                     var finished = controller.finished(input);
                     if (!finished) {

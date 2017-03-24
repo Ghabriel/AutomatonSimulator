@@ -132,4 +132,5 @@ div.row {
 	margin-top: 5px;
 	overflow: hidden;
 	padding: 5px;
+	text-overflow: ellipsis;
 }
