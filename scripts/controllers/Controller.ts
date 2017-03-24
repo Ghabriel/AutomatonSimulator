@@ -21,6 +21,7 @@ export interface Controller {
 	stop(): void;
 	finished(input: string): boolean;
 	isStopped(): boolean;
+	stepPosition(): number;
 
 	currentStates(): string[];
 	accepts(): boolean;

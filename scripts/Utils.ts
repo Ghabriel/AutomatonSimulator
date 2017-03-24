@@ -101,6 +101,7 @@ export namespace utils {
 		return p1 && p2 && p1.x == p2.x && p1.y == p2.y;
 	}
 
+	// Adds a keyboard shortcut to the page.
 	export function bindShortcut(keys: string[], callback: () => void): void {
 		System.addKeyObserver(keys, callback);
 	}
@@ -110,7 +111,6 @@ export namespace utils {
 		setTimeout(callback, 0);
 	}
 
-	// TODO: block any page actions except those that are prompt-related
 	// TODO: make this more flexible (regarding the input fields)
 	// (maybe also move it to System?)
 	export function prompt(message: string, numFields: number,

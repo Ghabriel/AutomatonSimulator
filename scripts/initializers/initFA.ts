@@ -12,6 +12,8 @@ export namespace initFA {
 
 		buildTestCaseInput(rows);
 		buildRecognitionControls(rows);
+		buildRecognitionProgress(rows);
+		bindRecognitionEvents();
 		bindShortcuts();
 
 		for (let row of rows) {
@@ -34,6 +36,7 @@ export namespace initFA {
 	let fastRecognition: HTMLImageElement = null;
 	let stepRecognition: HTMLImageElement = null;
 	let stopRecognition: HTMLImageElement = null;
+	let progressContainer: HTMLDivElement = null;
 
 	function testCase(): string {
 		return testCaseInput.value;
@@ -55,9 +58,6 @@ export namespace initFA {
 
 	function buildRecognitionControls(container: HTMLElement[][]): void {
 		const disabledClass = Settings.disabledButtonClass;
-		let fastForwardEnabled = true;
-		let stepEnabled = true;
-		let stopEnabled = false;
 
 		fastRecognition = <HTMLImageElement> utils.create("img", {
 			className: "image_button",
@@ -77,6 +77,36 @@ export namespace initFA {
 			title: Strings.STEP_RECOGNITION
 		});
 
+		container.push([fastRecognition, stepRecognition,
+						stopRecognition]);
+	}
+
+	function buildRecognitionProgress(container: HTMLElement[][]): void {
+		progressContainer = <HTMLDivElement> utils.create("div", {
+			id: "recognition_progress"
+		});
+
+		progressContainer.style.display = "none";
+
+		container.push([progressContainer]);
+	}
+
+	function showAcceptanceStatus(): void {
+		if (Settings.controller().accepts()) {
+			progressContainer.style.color = "green";
+			progressContainer.innerHTML = "accepted";
+		} else {
+			progressContainer.style.color = "red";
+			progressContainer.innerHTML = "rejected";
+		}
+	}
+
+	function bindRecognitionEvents(): void {
+		const disabledClass = Settings.disabledButtonClass;
+		let fastForwardEnabled = true;
+		let stepEnabled = true;
+		let stopEnabled = false;
+
 		let fastForwardStatus = function(enabled) {
 			fastForwardEnabled = enabled;
 			fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
@@ -95,8 +125,12 @@ export namespace initFA {
 		fastRecognition.addEventListener("click", function() {
 			if (fastForwardEnabled) {
 				let input = testCase();
-				Settings.controller().fastForward(input);
+				let controller = Settings.controller();
+				controller.fastForward(input);
 				highlightCurrentStates();
+
+				progressContainer.style.display = "";
+				showAcceptanceStatus();
 
 				fastForwardStatus(false);
 				stepStatus(false);
@@ -109,6 +143,9 @@ export namespace initFA {
 			if (stopEnabled) {
 				Settings.controller().stop();
 				Settings.automatonRenderer.recognitionDim();
+
+				progressContainer.style.color = "black";
+				progressContainer.style.display = "none";
 
 				fastForwardStatus(true);
 				stepStatus(true);
@@ -125,19 +162,30 @@ export namespace initFA {
 
 				let input = testCase();
 				let controller = Settings.controller();
-				if (!controller.finished(input)) {
-					controller.step(input);
-					highlightCurrentStates();
+				if (controller.isStopped()) {
+					progressContainer.style.display = "";
 				}
 
-				// restartEnabled = !restartEnabled;
-				// let method = restartEnabled ? "remove" : "add";
-				// restartRecognition.classList[method]("disabled");
+				let finished = controller.finished(input);
+				if (!finished) {
+					controller.step(input);
+					highlightCurrentStates();
+					finished = controller.finished(input);
+				}
+
+				let position = controller.stepPosition();
+				let displayedText = input.substr(position);
+				if (displayedText == "") {
+					showAcceptanceStatus();
+				} else {
+					progressContainer.innerHTML = displayedText;
+				}
+
+				if (finished) {
+					stepStatus(false);
+				}
 			}
 		});
-
-		container.push([fastRecognition, stepRecognition,
-						stopRecognition]);
 	}
 
 	function bindShortcuts(): void {

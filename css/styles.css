@@ -123,3 +123,13 @@ div.row {
 #file_selector {
 	display: none;
 }
+
+#recognition_progress {
+	background-color: #DDD;
+	font-size: 300%;
+	margin-left: -5px;
+	margin-right: -5px;
+	margin-top: 5px;
+	overflow: hidden;
+	padding: 5px;
+}

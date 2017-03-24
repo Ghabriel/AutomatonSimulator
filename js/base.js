@@ -936,6 +936,9 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Utils"
         FAController.prototype.isStopped = function () {
             return this.stepIndex == -1;
         };
+        FAController.prototype.stepPosition = function () {
+            return this.stepIndex;
+        };
         FAController.prototype.currentStates = function () {
             return this.machine.getStates();
         };
@@ -979,6 +982,7 @@ define("controllers/PDAController", ["require", "exports", "Utils"], function (r
         PDAController.prototype.stop = function () { };
         PDAController.prototype.finished = function (input) { return true; };
         PDAController.prototype.isStopped = function () { return true; };
+        PDAController.prototype.stepPosition = function () { return -1; };
         PDAController.prototype.currentStates = function () { return []; };
         PDAController.prototype.accepts = function () { return false; };
         return PDAController;
@@ -1006,6 +1010,7 @@ define("controllers/LBAController", ["require", "exports"], function (require, e
         LBAController.prototype.stop = function () { };
         LBAController.prototype.finished = function (input) { return true; };
         LBAController.prototype.isStopped = function () { return true; };
+        LBAController.prototype.stepPosition = function () { return -1; };
         LBAController.prototype.currentStates = function () { return []; };
         LBAController.prototype.accepts = function () { return false; };
         return LBAController;
@@ -1842,6 +1847,8 @@ define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu
             var rows = [];
             buildTestCaseInput(rows);
             buildRecognitionControls(rows);
+            buildRecognitionProgress(rows);
+            bindRecognitionEvents();
             bindShortcuts();
             for (var _i = 0, rows_1 = rows; _i < rows_1.length; _i++) {
                 var row = rows_1[_i];
@@ -1863,13 +1870,15 @@ define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu
         var fastRecognition = null;
         var stepRecognition = null;
         var stopRecognition = null;
+        var progressContainer = null;
         function testCase() {
             return testCaseInput.value;
         }
         function buildTestCaseInput(container) {
             var input = Utils_6.utils.create("input", {
                 type: "text",
-                placeholder: Settings_5.Strings.TEST_CASE
+                placeholder: Settings_5.Strings.TEST_CASE,
+                value: "11100110100"
             });
             container.push([input]);
             testCaseInput = input;
@@ -1880,9 +1889,6 @@ define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu
         }
         function buildRecognitionControls(container) {
             var disabledClass = Settings_5.Settings.disabledButtonClass;
-            var fastForwardEnabled = true;
-            var stepEnabled = true;
-            var stopEnabled = false;
             fastRecognition = Utils_6.utils.create("img", {
                 className: "image_button",
                 src: "images/fastforward.svg",
@@ -1898,6 +1904,31 @@ define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu
                 src: "images/play.svg",
                 title: Settings_5.Strings.STEP_RECOGNITION
             });
+            container.push([fastRecognition, stepRecognition,
+                stopRecognition]);
+        }
+        function buildRecognitionProgress(container) {
+            progressContainer = Utils_6.utils.create("div", {
+                id: "recognition_progress"
+            });
+            progressContainer.style.display = "none";
+            container.push([progressContainer]);
+        }
+        function showAcceptanceStatus() {
+            if (Settings_5.Settings.controller().accepts()) {
+                progressContainer.style.color = "green";
+                progressContainer.innerHTML = "accepted";
+            }
+            else {
+                progressContainer.style.color = "red";
+                progressContainer.innerHTML = "rejected";
+            }
+        }
+        function bindRecognitionEvents() {
+            var disabledClass = Settings_5.Settings.disabledButtonClass;
+            var fastForwardEnabled = true;
+            var stepEnabled = true;
+            var stopEnabled = false;
             var fastForwardStatus = function (enabled) {
                 fastForwardEnabled = enabled;
                 fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
@@ -1913,8 +1944,11 @@ define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu
             fastRecognition.addEventListener("click", function () {
                 if (fastForwardEnabled) {
                     var input = testCase();
-                    Settings_5.Settings.controller().fastForward(input);
+                    var controller = Settings_5.Settings.controller();
+                    controller.fastForward(input);
                     highlightCurrentStates();
+                    progressContainer.style.display = "";
+                    showAcceptanceStatus();
                     fastForwardStatus(false);
                     stepStatus(false);
                     stopStatus(true);
@@ -1925,6 +1959,8 @@ define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu
                 if (stopEnabled) {
                     Settings_5.Settings.controller().stop();
                     Settings_5.Settings.automatonRenderer.recognitionDim();
+                    progressContainer.style.color = "black";
+                    progressContainer.style.display = "none";
                     fastForwardStatus(true);
                     stepStatus(true);
                     stopStatus(false);
@@ -1938,14 +1974,28 @@ define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu
                     testCaseInput.disabled = true;
                     var input = testCase();
                     var controller = Settings_5.Settings.controller();
-                    if (!controller.finished(input)) {
+                    if (controller.isStopped()) {
+                        progressContainer.style.display = "";
+                    }
+                    var finished = controller.finished(input);
+                    if (!finished) {
                         controller.step(input);
                         highlightCurrentStates();
+                        finished = controller.finished(input);
+                    }
+                    var position = controller.stepPosition();
+                    var displayedText = input.substr(position);
+                    if (displayedText == "") {
+                        showAcceptanceStatus();
+                    }
+                    else {
+                        progressContainer.innerHTML = displayedText;
+                    }
+                    if (finished) {
+                        stepStatus(false);
                     }
                 }
             });
-            container.push([fastRecognition, stepRecognition,
-                stopRecognition]);
         }
         function bindShortcuts() {
             if (!boundShortcuts) {

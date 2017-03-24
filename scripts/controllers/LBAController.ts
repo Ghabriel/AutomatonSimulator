@@ -25,6 +25,7 @@ export class LBAController implements Controller {
 	public stop(): void {}
 	public finished(input: string): boolean { return true; }
 	public isStopped(): boolean { return true; }
+	public stepPosition(): number { return -1; }
 
 	public currentStates(): string[] { return []; }
 	public accepts(): boolean { return false; }

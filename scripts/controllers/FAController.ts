@@ -112,6 +112,10 @@ export class FAController implements Controller {
 		return this.stepIndex == -1;
 	}
 
+	public stepPosition(): number {
+		return this.stepIndex;
+	}
+
 	public currentStates(): string[] {
 		return this.machine.getStates();
 	}
