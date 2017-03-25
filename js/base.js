@@ -154,6 +154,48 @@ define("lists/LanguageList", ["require", "exports", "languages/Portuguese", "lan
     __export(Portuguese_1);
     __export(English_1);
 });
+define("Browser", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var Browser;
+    (function (Browser) {
+        var data = info();
+        Browser.name = data.name;
+        Browser.version = data.version;
+        function info() {
+            var ua = navigator.userAgent.toLowerCase();
+            var test = function (regex) {
+                return regex.test(ua);
+            };
+            var data = {
+                msie: test(/msie/) || test(/trident/),
+                edge: test(/edge/),
+                firefox: test(/mozilla/) && test(/firefox/),
+                chrome: test(/webkit/) && test(/chrome/) && !test(/edge/),
+                safari: test(/safari/) && test(/applewebkit/) && !test(/chrome/),
+                opera: test(/opera/)
+            };
+            var browserName = "";
+            var version = "Unknown";
+            for (var name_1 in data) {
+                if (data.hasOwnProperty(name_1) && data[name_1]) {
+                    browserName = name_1;
+                    var regex = new RegExp(name_1 + "( |/)([0-9]+)");
+                    var matches = ua.match(regex);
+                    if (matches) {
+                        version = matches[2];
+                    }
+                    else if (matches = ua.match(/rv:([0-9]+)/)) {
+                        version = matches[1];
+                    }
+                }
+            }
+            return {
+                name: browserName,
+                version: version
+            };
+        }
+    })(Browser = exports.Browser || (exports.Browser = {}));
+});
 define("Utils", ["require", "exports", "Keyboard", "Settings", "System"], function (require, exports, Keyboard_1, Settings_1, System_1) {
     "use strict";
     var utils;
@@ -319,7 +361,7 @@ define("Utils", ["require", "exports", "Keyboard", "Settings", "System"], functi
         utils.prompt = prompt;
     })(utils = exports.utils || (exports.utils = {}));
 });
-define("interface/State", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_2, Utils_1) {
+define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"], function (require, exports, Browser_1, Settings_2, Utils_1) {
     "use strict";
     var State = (function () {
         function State() {
@@ -417,7 +459,13 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 return null;
             };
             var moveController = 0;
-            var callbackFrequency = 3;
+            var callbackFrequency;
+            if (Browser_1.Browser.name == "chrome") {
+                callbackFrequency = 3;
+            }
+            else {
+                callbackFrequency = 4;
+            }
             var move = function (dx, dy, x, y, event) {
                 self.setVisualPosition(this.ox + dx, this.oy + dy);
                 if (moveController == 0) {
@@ -434,8 +482,8 @@ define("interface/State", ["require", "exports", "Settings", "Utils"], function 
                 var accepted = endCallback.call(this, distanceSquared, event);
                 if (!accepted && (dx != 0 || dy != 0)) {
                     self.setVisualPosition(this.ox, this.oy);
-                    moveCallback.call(this, event);
                 }
+                moveCallback.call(this, event);
                 return null;
             };
             this.body.drag(move, begin, end);
@@ -858,9 +906,11 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Utils"
             window["machine"] = this.machine;
         }
         FAController.prototype.edgePrompt = function (origin, target, callback, fallback) {
+            var epsilon = "ε";
             var self = this;
             Utils_2.utils.prompt("Enter the edge content:", 1, function (data) {
                 self.createEdge(origin, target, data);
+                data[0] = data[0] || epsilon;
                 callback(data, self.edgeDataToText(data));
             }, fallback);
         };
@@ -1072,6 +1122,15 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
         Edge.prototype.getDataList = function () {
             return this.dataList;
         };
+        Edge.prototype.addClickHandler = function (callback) {
+            var self = this;
+            for (var _i = 0, _a = this.body; _i < _a.length; _i++) {
+                var elem = _a[_i];
+                elem.click(function (e) {
+                    callback.call(self);
+                });
+            }
+        };
         Edge.prototype.remove = function () {
             for (var _i = 0, _a = this.body; _i < _a.length; _i++) {
                 var elem = _a[_i];
@@ -1162,6 +1221,10 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                     this.body.push(Utils_4.utils.line(canvas, pos.x + 2 * radius, pos.y, pos.x + 2 * radius, pos.y - 2 * radius));
                     this.body.push(Utils_4.utils.line(canvas, pos.x + 2 * radius, pos.y - 2 * radius, pos.x, pos.y - 2 * radius));
                     this.body.push(Utils_4.utils.line(canvas, pos.x, pos.y - 2 * radius, pos.x, pos.y - radius));
+                    for (var _i = 0, _a = this.body; _i < _a.length; _i++) {
+                        var elem = _a[_i];
+                        elem.attr("stroke-width", Settings_3.Settings.edgeArrowThickness);
+                    }
                 }
                 else {
                     this.body[0].attr("path", Utils_4.utils.linePath(pos.x + radius, pos.y, pos.x + 2 * radius, pos.y));
@@ -1173,6 +1236,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             else {
                 if (!this.body.length) {
                     this.body.push(Utils_4.utils.line(canvas, origin.x, origin.y, target.x, target.y));
+                    this.body[0].attr("stroke-width", Settings_3.Settings.edgeArrowThickness);
                 }
                 else {
                     this.body[0].attr("path", Utils_4.utils.linePath(origin.x, origin.y, target.x, target.y));
@@ -1225,6 +1289,10 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             if (!this.head.length) {
                 this.head.push(Utils_4.utils.line(canvas, p1.x, p1.y, target.x, target.y));
                 this.head.push(Utils_4.utils.line(canvas, p2.x, p2.y, target.x, target.y));
+                for (var _i = 0, _a = this.head; _i < _a.length; _i++) {
+                    var elem = _a[_i];
+                    elem.attr("stroke-width", Settings_3.Settings.edgeArrowThickness);
+                }
             }
             else {
                 this.head[0].attr("path", Utils_4.utils.linePath(p1.x, p1.y, target.x, target.y));
@@ -1449,8 +1517,8 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 state.removePalette();
             }
             for (var _b = 0, stateNames_1 = stateNames; _b < stateNames_1.length; _b++) {
-                var name_1 = stateNames_1[_b];
-                nameMapping[name_1].applyPalette(Settings_4.Settings.stateRecognitionPalette);
+                var name_2 = stateNames_1[_b];
+                nameMapping[name_2].applyPalette(Settings_4.Settings.stateRecognitionPalette);
             }
             for (var _c = 0, _d = this.stateList; _c < _d.length; _c++) {
                 var state = _d[_c];
@@ -1473,11 +1541,18 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.highlightedState = state;
             state.render(this.canvas);
         };
+        AutomatonRenderer.prototype.selectEdge = function (edge) {
+            console.log("edge click");
+        };
         AutomatonRenderer.prototype.bindEvents = function () {
             for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
                 var state = _a[_i];
                 state.render(this.canvas);
                 this.bindStateEvents(state);
+            }
+            for (var _b = 0, _c = this.edgeList; _b < _c.length; _b++) {
+                var edge = _c[_b];
+                this.bindEdgeEvents(edge);
             }
             var self = this;
             $(this.node).dblclick(function (e) {
@@ -1514,6 +1589,12 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 if (self.edgeMode) {
                     self.adjustEdge(this, e);
                 }
+            });
+        };
+        AutomatonRenderer.prototype.bindEdgeEvents = function (edge) {
+            var self = this;
+            edge.addClickHandler(function () {
+                self.selectEdge(this);
             });
         };
         AutomatonRenderer.prototype.bindStateEvents = function (state) {
@@ -1581,6 +1662,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             edgeText(function (data, text) {
                 self.currentEdge.addText(text);
                 self.currentEdge.addData(data);
+                self.bindEdgeEvents(self.currentEdge);
                 self.currentEdge.render(self.canvas);
                 self.edgeList.push(self.currentEdge);
                 self.currentEdge = null;
@@ -2080,6 +2162,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
             strokeWidth: 3,
             ringStrokeWidth: 2
         };
+        Settings.edgeArrowThickness = 2;
         Settings.edgeArrowLength = 30;
         Settings.edgeArrowAngle = Utils_8.utils.toRadians(30);
         Settings.edgeTextFontFamily = "arial";

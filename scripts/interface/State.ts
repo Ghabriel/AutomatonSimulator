@@ -1,5 +1,6 @@
 /// <reference path="../defs/raphael.d.ts" />
 
+import {Browser} from "../Browser"
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
 import {utils} from "../Utils"
@@ -117,7 +118,14 @@ export class State {
 		// variable controls the frequency in which dragging pixels
 		// actually trigger the move callback.
 		let moveController = 0;
-		let callbackFrequency = 3;
+		let callbackFrequency: number;
+		// TODO: check the performance in other browsers
+		if (Browser.name == "chrome") {
+			// Chrome is really good at rendering SVG
+			callbackFrequency = 3;
+		} else {
+			callbackFrequency = 4;
+		}
 		let move = function(dx, dy, x, y, event) {
 			self.setVisualPosition(this.ox + dx, this.oy + dy);
 			if (moveController == 0) {
@@ -138,8 +146,12 @@ export class State {
 			// moveCallback when dx = dy = 0
 			if (!accepted && (dx != 0 || dy != 0)) {
 				self.setVisualPosition(this.ox, this.oy);
-				moveCallback.call(this, event);
 			}
+
+			// Calls the moveCallback here to prevent the visual
+			// detachment of edges in low callback frequency rates
+			// after the dragging has stopped.
+			moveCallback.call(this, event);
 			return null;
 		};
 

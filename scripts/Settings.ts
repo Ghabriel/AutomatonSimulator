@@ -62,6 +62,8 @@ export namespace Settings {
 		ringStrokeWidth: 2
 	};
 
+	export const edgeArrowThickness = 2;
+
 	export const edgeArrowLength = 30;
 	export const edgeArrowAngle = utils.toRadians(30);
 

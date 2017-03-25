@@ -39,6 +39,15 @@ export class Edge {
 		return this.dataList;
 	}
 
+	public addClickHandler(callback: () => void): void {
+		let self = this;
+		for (let elem of this.body) {
+			elem.click(function(e) {
+				callback.call(self);
+			});
+		}
+	}
+
 	public remove(): void {
 		for (let elem of this.body) {
 			elem.remove();
@@ -168,6 +177,10 @@ export class Edge {
 					pos.x, pos.y - 2 * radius,
 					pos.x, pos.y - radius
 				));
+
+				for (let elem of this.body) {
+					elem.attr("stroke-width", Settings.edgeArrowThickness);
+				}
 			} else {
 				this.body[0].attr("path", utils.linePath(
 					pos.x + radius, pos.y,
@@ -193,6 +206,8 @@ export class Edge {
 					origin.x, origin.y,
 					target.x, target.y
 				));
+
+				this.body[0].attr("stroke-width", Settings.edgeArrowThickness);
 			} else {
 				this.body[0].attr("path", utils.linePath(
 					origin.x, origin.y,
@@ -266,6 +281,10 @@ export class Edge {
 			this.head.push(utils.line(canvas,
 				p2.x, p2.y,
 				target.x, target.y));
+
+			for (let elem of this.head) {
+				elem.attr("stroke-width", Settings.edgeArrowThickness);
+			}
 		} else {
 			this.head[0].attr("path", utils.linePath(
 				p1.x, p1.y,

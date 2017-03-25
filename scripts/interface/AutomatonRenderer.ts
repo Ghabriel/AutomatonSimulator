@@ -307,10 +307,19 @@ export class AutomatonRenderer {
 		state.render(this.canvas);
 	}
 
+	private selectEdge(edge: Edge) {
+		// TODO
+		console.log("edge click");
+	}
+
 	private bindEvents(): void {
 		for (let state of this.stateList) {
 			state.render(this.canvas);
 			this.bindStateEvents(state);
+		}
+
+		for (let edge of this.edgeList) {
+			this.bindEdgeEvents(edge);
 		}
 
 		let self = this;
@@ -352,6 +361,13 @@ export class AutomatonRenderer {
 			if (self.edgeMode) {
 				self.adjustEdge(this, e);
 			}
+		});
+	}
+
+	private bindEdgeEvents(edge: Edge) {
+		let self = this;
+		edge.addClickHandler(function() {
+			self.selectEdge(this);
 		});
 	}
 
@@ -426,6 +442,7 @@ export class AutomatonRenderer {
 		edgeText(function(data, text) {
 			self.currentEdge.addText(text);
 			self.currentEdge.addData(data);
+			self.bindEdgeEvents(self.currentEdge);
 			// Renders it again, this time to show the finished edge
 			self.currentEdge.render(self.canvas);
 			self.edgeList.push(self.currentEdge);

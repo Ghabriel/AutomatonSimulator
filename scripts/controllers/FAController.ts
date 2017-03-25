@@ -14,9 +14,12 @@ export class FAController implements Controller {
 					  callback: (data: string[], text: string) => void,
 					  fallback: () => void): void {
 
+		let epsilon = "ε";
+
 		let self = this;
 		utils.prompt("Enter the edge content:", 1, function(data) {
 			self.createEdge(origin, target, data);
+			data[0] = data[0] || epsilon;
 			callback(data, self.edgeDataToText(data));
 		}, fallback);
 	}
