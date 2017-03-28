@@ -1372,6 +1372,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.node = node;
         }
         AutomatonRenderer.prototype.render = function () {
+            window["sidebar"] = Settings_4.Settings.sidebar;
             var q0 = this.newState("q0");
             q0.setPosition(100, 200);
             var q1 = this.newState("q1");
@@ -2241,6 +2242,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.currentMachine = 0;
         Settings.machines = {};
         Settings.controllerMap = {};
+        Settings.sidebar = null;
         Settings.automatonRenderer = null;
         function controller() {
             return this.machines[this.currentMachine].controller;
@@ -2340,6 +2342,9 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
         Menu.prototype.html = function () {
             return this.body;
         };
+        Menu.prototype.content = function () {
+            return this.body.querySelector(".content");
+        };
         Menu.prototype.updateArrow = function () {
             var arrow = this.body.querySelector(".menu_arrow");
             if ($(this.content()).css("display") == "none") {
@@ -2348,9 +2353,6 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
             else {
                 arrow.innerHTML = "&#x25BC;";
             }
-        };
-        Menu.prototype.content = function () {
-            return this.body.querySelector(".content");
         };
         Menu.prototype.internalToggle = function () {
             $(this.content()).toggle();
@@ -2418,6 +2420,18 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 this.onBind();
             }
         };
+        Sidebar.prototype.setSelectedEntityContent = function (content) {
+            var node = this.selectedEntity.content();
+            $(node.querySelector(".none")).hide();
+            node.appendChild(content);
+        };
+        Sidebar.prototype.unsetSelectedEntityContent = function () {
+            var node = this.selectedEntity.content();
+            while (node.children.length > 1) {
+                node.removeChild(node.children[node.children.length - 1]);
+            }
+            $(node.querySelector(".none")).show();
+        };
         Sidebar.prototype.onBind = function () {
             this.languageSelection.bind(this.node);
             this.fileManipulation.bind(this.node);
@@ -2427,6 +2441,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 var menu = _a[_i];
                 menu.bind(this.node);
             }
+            Settings_7.Settings.sidebar = this;
         };
         Sidebar.prototype.onRender = function () {
             this.languageSelection.render();

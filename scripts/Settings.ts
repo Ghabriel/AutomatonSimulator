@@ -8,6 +8,7 @@ import {Controller} from "./controllers/Controller"
 import {FA} from "./machines/FA"
 import {Initializer} from "./Initializer"
 import {Renderer} from "./interface/Renderer"
+import {Sidebar} from "./interface/Sidebar"
 import {StatePalette} from "./interface/State"
 import {utils} from "./Utils"
 
@@ -114,6 +115,7 @@ export namespace Settings {
 
 	export var controllerMap: {[m: number]: Controller} = {};
 
+	export var sidebar: Sidebar = null;
 	export var automatonRenderer: AutomatonRenderer = null;
 
 	export function controller(): Controller {

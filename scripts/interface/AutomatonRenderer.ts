@@ -329,6 +329,8 @@ export class AutomatonRenderer {
 			state.applyPalette(Settings.stateHighlightPalette);
 			this.highlightedState = state;
 			state.render(this.canvas);
+
+			// TODO: show the state in the 'selected entity' area
 		}
 	}
 

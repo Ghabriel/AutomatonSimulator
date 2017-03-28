@@ -33,6 +33,20 @@ export class Sidebar extends Renderer {
 		}
 	}
 
+	public setSelectedEntityContent(content: HTMLElement): void {
+		let node = this.selectedEntity.content();
+		$(node.querySelector(".none")).hide();
+		node.appendChild(content);
+	}
+
+	public unsetSelectedEntityContent(): void {
+		let node = this.selectedEntity.content();
+		while (node.children.length > 1) {
+			node.removeChild(node.children[node.children.length - 1]);
+		}
+		$(node.querySelector(".none")).show();
+	}
+
 	protected onBind(): void {
 		this.languageSelection.bind(this.node);
 		this.fileManipulation.bind(this.node);
@@ -41,6 +55,7 @@ export class Sidebar extends Renderer {
 		for (let menu of this.otherMenus) {
 			menu.bind(this.node);
 		}
+		Settings.sidebar = this;
 	}
 
 	protected onRender(): void {

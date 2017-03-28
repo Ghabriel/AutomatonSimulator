@@ -11,15 +11,15 @@ export class Menu extends Renderer {
 		this.children = [];
 	}
 
-	add(elem: Element): void {
+	public add(elem: Element): void {
 		this.children.push(elem);
 	}
 
-	clear(): void {
+	public clear(): void {
 		this.children = [];
 	}
 
-	onRender(): void {
+	public onRender(): void {
 		let node = this.node;
 		let wrapper = utils.create("div");
 		wrapper.classList.add("menu");
@@ -59,15 +59,19 @@ export class Menu extends Renderer {
 		this.updateArrow();
 	}
 
-	toggle(): void {
+	public toggle(): void {
 		this.toggled = !this.toggled;
 		if (this.body) {
 			this.internalToggle();
 		}
 	}
 
-	html(): HTMLDivElement {
+	public html(): HTMLDivElement {
 		return this.body;
+	}
+
+	public content(): HTMLDivElement {
+		return <HTMLDivElement> this.body.querySelector(".content");
 	}
 
 	private updateArrow(): void {
@@ -77,10 +81,6 @@ export class Menu extends Renderer {
 		} else {
 			arrow.innerHTML = "&#x25BC;";
 		}
-	}
-
-	private content(): Element {
-		return this.body.querySelector(".content");
 	}
 
 	private internalToggle(): void {
