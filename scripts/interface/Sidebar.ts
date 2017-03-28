@@ -18,12 +18,15 @@ export class Sidebar extends Renderer {
 	public build(): void {
 		this.languageSelection = new Menu(Strings.SELECT_LANGUAGE);
 		this.fileManipulation = new Menu(Strings.FILE_MENUBAR);
+		this.selectedEntity = new Menu(Strings.SELECTED_ENTITY);
 		this.machineSelection = new Menu(Strings.SELECT_MACHINE);
 		this.otherMenus = [];
 
 		this.buildLanguageSelection();
 		this.buildFileManipulation();
+		this.buildSelectedEntityArea();
 		this.buildMachineSelection();
+		// this.loadMachine(Settings.currentMachine);
 
 		if (this.node) {
 			this.onBind();
@@ -33,6 +36,7 @@ export class Sidebar extends Renderer {
 	protected onBind(): void {
 		this.languageSelection.bind(this.node);
 		this.fileManipulation.bind(this.node);
+		this.selectedEntity.bind(this.node);
 		this.machineSelection.bind(this.node);
 		for (let menu of this.otherMenus) {
 			menu.bind(this.node);
@@ -42,6 +46,7 @@ export class Sidebar extends Renderer {
 	protected onRender(): void {
 		this.languageSelection.render();
 		this.fileManipulation.render();
+		this.selectedEntity.render();
 		this.machineSelection.render();
 		this.renderDynamicMenus();
 	}
@@ -151,6 +156,14 @@ export class Sidebar extends Renderer {
 		this.fileManipulation.add(open);
 	}
 
+	private buildSelectedEntityArea(): void {
+		let none = <HTMLSpanElement> utils.create("span", {
+			className: "none",
+			innerHTML: Strings.NO_SELECTED_ENTITY
+		});
+		this.selectedEntity.add(none);
+	}
+
 	private buildMachineSelection(): void {
 		let table = new Table(Settings.machineSelRows, Settings.machineSelColumns);
 		let machineButtonMapping = {};
@@ -198,6 +211,7 @@ export class Sidebar extends Renderer {
 
 	private languageSelection: Menu;
 	private fileManipulation: Menu;
+	private selectedEntity: Menu;
 	private machineSelection: Menu;
 	private otherMenus: Menu[];
 }

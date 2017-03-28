@@ -99,6 +99,8 @@ define("languages/Portuguese", ["require", "exports"], function (require, export
             OPEN: "Abrir",
             PROMPT_CONFIRM: "Confirmar",
             PROMPT_CANCEL: "Cancelar",
+            SELECTED_ENTITY: "Entidade selecionada",
+            NO_SELECTED_ENTITY: "nenhuma entidade selecionada",
             SELECT_MACHINE: "Seleção de Máquina",
             CLEAR_MACHINE: "Limpar",
             CLEAR_CONFIRMATION: "Deseja realmente limpar o autômato?",
@@ -129,6 +131,8 @@ define("languages/English", ["require", "exports"], function (require, exports) 
             OPEN: "Open",
             PROMPT_CONFIRM: "Confirm",
             PROMPT_CANCEL: "Cancel",
+            SELECTED_ENTITY: "Selected entity",
+            NO_SELECTED_ENTITY: "no selected entity",
             SELECT_MACHINE: "Machine Selection",
             CLEAR_MACHINE: "Clear",
             CLEAR_CONFIRMATION: "Do you really want to reset this automaton?",
@@ -2298,9 +2302,12 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
             var node = this.node;
             var wrapper = Utils_9.utils.create("div");
             wrapper.classList.add("menu");
+            var arrow = Utils_9.utils.create("div");
+            arrow.classList.add("menu_arrow");
             var title = Utils_9.utils.create("div");
             title.classList.add("title");
-            title.innerHTML = this.title;
+            title.appendChild(arrow);
+            title.innerHTML += this.title;
             wrapper.appendChild(title);
             var content = Utils_9.utils.create("div");
             content.classList.add("content");
@@ -2310,15 +2317,19 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
             }
             wrapper.appendChild(content);
             node.appendChild(wrapper);
+            var self = this;
             title.addEventListener("click", function () {
                 if (!$(content).is(":animated")) {
-                    $(content).slideToggle(Settings_6.Settings.menuSlideInterval);
+                    $(content).slideToggle(Settings_6.Settings.menuSlideInterval, function () {
+                        self.updateArrow();
+                    });
                 }
             });
             this.body = wrapper;
             if (this.toggled) {
                 this.internalToggle();
             }
+            this.updateArrow();
         };
         Menu.prototype.toggle = function () {
             this.toggled = !this.toggled;
@@ -2329,9 +2340,20 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
         Menu.prototype.html = function () {
             return this.body;
         };
+        Menu.prototype.updateArrow = function () {
+            var arrow = this.body.querySelector(".menu_arrow");
+            if ($(this.content()).css("display") == "none") {
+                arrow.innerHTML = "&#x25BA;";
+            }
+            else {
+                arrow.innerHTML = "&#x25BC;";
+            }
+        };
+        Menu.prototype.content = function () {
+            return this.body.querySelector(".content");
+        };
         Menu.prototype.internalToggle = function () {
-            var content = this.body.querySelector(".content");
-            $(content).toggle();
+            $(this.content()).toggle();
         };
         return Menu;
     }(Renderer_1.Renderer));
@@ -2385,10 +2407,12 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
         Sidebar.prototype.build = function () {
             this.languageSelection = new Menu_2.Menu(Settings_8.Strings.SELECT_LANGUAGE);
             this.fileManipulation = new Menu_2.Menu(Settings_8.Strings.FILE_MENUBAR);
+            this.selectedEntity = new Menu_2.Menu(Settings_8.Strings.SELECTED_ENTITY);
             this.machineSelection = new Menu_2.Menu(Settings_8.Strings.SELECT_MACHINE);
             this.otherMenus = [];
             this.buildLanguageSelection();
             this.buildFileManipulation();
+            this.buildSelectedEntityArea();
             this.buildMachineSelection();
             if (this.node) {
                 this.onBind();
@@ -2397,6 +2421,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
         Sidebar.prototype.onBind = function () {
             this.languageSelection.bind(this.node);
             this.fileManipulation.bind(this.node);
+            this.selectedEntity.bind(this.node);
             this.machineSelection.bind(this.node);
             for (var _i = 0, _a = this.otherMenus; _i < _a.length; _i++) {
                 var menu = _a[_i];
@@ -2406,6 +2431,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
         Sidebar.prototype.onRender = function () {
             this.languageSelection.render();
             this.fileManipulation.render();
+            this.selectedEntity.render();
             this.machineSelection.render();
             this.renderDynamicMenus();
         };
@@ -2500,6 +2526,13 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 open.click();
             });
             this.fileManipulation.add(open);
+        };
+        Sidebar.prototype.buildSelectedEntityArea = function () {
+            var none = Utils_11.utils.create("span", {
+                className: "none",
+                innerHTML: Settings_8.Strings.NO_SELECTED_ENTITY
+            });
+            this.selectedEntity.add(none);
         };
         Sidebar.prototype.buildMachineSelection = function () {
             var table = new Table_1.Table(Settings_7.Settings.machineSelRows, Settings_7.Settings.machineSelColumns);

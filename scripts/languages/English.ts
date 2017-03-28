@@ -8,6 +8,8 @@ export namespace english {
 		OPEN: "Open",
 		PROMPT_CONFIRM: "Confirm",
 		PROMPT_CANCEL: "Cancel",
+		SELECTED_ENTITY: "Selected entity",
+		NO_SELECTED_ENTITY: "no selected entity",
 		SELECT_MACHINE: "Machine Selection",
 		CLEAR_MACHINE: "Clear",
 		CLEAR_CONFIRMATION: "Do you really want to reset this automaton?",

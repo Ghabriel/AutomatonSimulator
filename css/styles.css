@@ -51,6 +51,11 @@ svg {
 	margin: -5px;
 }
 
+.menu .menu_arrow {
+	display: inline-block;
+	float: right;
+}
+
 .menu .title {
 	background-color: #428bca;
 	border-bottom: 1px solid #2070a0;
@@ -133,4 +138,9 @@ div.row {
 	overflow: hidden;
 	padding: 5px;
 	text-overflow: ellipsis;
+}
+
+span.none {
+	color: #888;
+	font-style: italic;
 }

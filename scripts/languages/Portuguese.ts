@@ -8,6 +8,8 @@ export namespace portuguese {
 		OPEN: "Abrir",
 		PROMPT_CONFIRM: "Confirmar",
 		PROMPT_CANCEL: "Cancelar",
+		SELECTED_ENTITY: "Entidade selecionada",
+		NO_SELECTED_ENTITY: "nenhuma entidade selecionada",
 		SELECT_MACHINE: "Seleção de Máquina",
 		CLEAR_MACHINE: "Limpar",
 		CLEAR_CONFIRMATION: "Deseja realmente limpar o autômato?",

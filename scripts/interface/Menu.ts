@@ -24,9 +24,13 @@ export class Menu extends Renderer {
 		let wrapper = utils.create("div");
 		wrapper.classList.add("menu");
 
+		let arrow = utils.create("div");
+		arrow.classList.add("menu_arrow");
+
 		let title = utils.create("div");
 		title.classList.add("title");
-		title.innerHTML = this.title;
+		title.appendChild(arrow);
+		title.innerHTML += this.title;
 		wrapper.appendChild(title);
 
 		let content = utils.create("div");
@@ -37,9 +41,12 @@ export class Menu extends Renderer {
 		wrapper.appendChild(content);
 		node.appendChild(wrapper);
 
+		let self = this;
 		title.addEventListener("click", function() {
 			if (!$(content).is(":animated")) {
-				$(content).slideToggle(Settings.menuSlideInterval);
+				$(content).slideToggle(Settings.menuSlideInterval, function() {
+					self.updateArrow();
+				});
 			}
 		});
 
@@ -48,6 +55,8 @@ export class Menu extends Renderer {
 		if (this.toggled) {
 			this.internalToggle();
 		}
+
+		this.updateArrow();
 	}
 
 	toggle(): void {
@@ -61,9 +70,21 @@ export class Menu extends Renderer {
 		return this.body;
 	}
 
+	private updateArrow(): void {
+		let arrow = this.body.querySelector(".menu_arrow");
+		if ($(this.content()).css("display") == "none") {
+			arrow.innerHTML = "&#x25BA;";
+		} else {
+			arrow.innerHTML = "&#x25BC;";
+		}
+	}
+
+	private content(): Element {
+		return this.body.querySelector(".content");
+	}
+
 	private internalToggle(): void {
-		let content = this.body.querySelector(".content");
-		$(content).toggle();
+		$(this.content()).toggle();
 	}
 
 	private body: HTMLDivElement = null;
