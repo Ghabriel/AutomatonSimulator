@@ -166,29 +166,36 @@ export class AutomatonRenderer {
 	}
 
 	public save(): string {
-		let result = {
-			type: Settings.Machine[Settings.currentMachine],
-			states: [],
-			edges: []
-		};
+		let result: any = [
+			Settings.Machine[Settings.currentMachine], // automaton type
+			[], // state list
+			[], // edge list
+			-1  // initial state index
+		];
 
+		let i = 0;
 		for (let state of this.stateList) {
 			let position = state.getPosition();
-			result.states.push({
-				name: state.getName(),
-				initial: state.isInitial(),
-				final: state.isFinal(),
-				x: position.x,
-				y: position.y
-			});
+			result[1].push([
+				state.getName(),
+				state.isFinal() ? 1 : 0,
+				position.x,
+				position.y
+			]);
+
+			if (state == this.initialState) {
+				result[3] = i;
+			}
+
+			i++;
 		}
 
 		for (let edge of this.edgeList) {
-			result.edges.push({
-				origin: edge.getOrigin().getName(),
-				target: edge.getTarget().getName(),
-				dataList: edge.getDataList()
-			});
+			result[2].push([
+				edge.getOrigin().getName(),
+				edge.getTarget().getName(),
+				edge.getDataList()
+			]);
 		}
 
 		return JSON.stringify(result);
@@ -201,7 +208,7 @@ export class AutomatonRenderer {
 			alert("Invalid file");
 		};
 
-		let obj: any = {};
+		let obj: any = [];
 		try {
 			obj = JSON.parse(content);
 		} catch (e) {
@@ -210,9 +217,11 @@ export class AutomatonRenderer {
 		}
 
 		let machineType = Settings.Machine[Settings.currentMachine];
-		let validation = obj.type == machineType
-					  && obj.states instanceof Array
-					  && obj.edges instanceof Array;
+		let validation = obj[0] == machineType
+					  && obj[1] instanceof Array
+					  && obj[2] instanceof Array
+					  && typeof obj[3] == "number"
+					  && obj.length == 4;
 
 		if (!validation) {
 			error();
@@ -222,34 +231,37 @@ export class AutomatonRenderer {
 		let nameToIndex: {[n: string]: number} = {};
 		let controller = Settings.controller();
 
-		for (let data of obj.states) {
+		let i = 0;
+		for (let data of obj[1]) {
+			let isInitial = (obj[3] == i);
 			let state = new State();
-			state.setName(data.name);
-			state.setInitial(data.initial);
-			state.setFinal(data.final);
-			state.setPosition(data.x, data.y);
+			state.setName(data[0]);
+			state.setInitial(isInitial);
+			state.setFinal(!!data[1]);
+			state.setPosition(data[2], data[3]);
 
-			if (data.initial) {
+			if (isInitial) {
 				this.initialState = state;
 			}
 
-			nameToIndex[data.name] = this.stateList.length;
+			nameToIndex[data[0]] = i;
 			this.stateList.push(state);
 			controller.createState(state);
+			i++;
 		}
 
 		let states = this.stateList;
-		for (let edgeData of obj.edges) {
-			if (!edgeData.origin || !edgeData.target || !edgeData.dataList) {
+		for (let edgeData of obj[2]) {
+			if (edgeData.length != 3) {
 				error();
 				return;
 			}
 			let edge = new Edge();
-			let origin = states[nameToIndex[edgeData.origin]];
-			let target = states[nameToIndex[edgeData.target]];
+			let origin = states[nameToIndex[edgeData[0]]];
+			let target = states[nameToIndex[edgeData[1]]];
 			edge.setOrigin(origin);
 			edge.setTarget(target);
-			for (let data of edgeData.dataList) {
+			for (let data of edgeData[2]) {
 				this.addEdgeData(edge, data);
 			}
 

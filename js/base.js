@@ -1426,29 +1426,34 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             return this.stateList.length == 0;
         };
         AutomatonRenderer.prototype.save = function () {
-            var result = {
-                type: Settings_4.Settings.Machine[Settings_4.Settings.currentMachine],
-                states: [],
-                edges: []
-            };
+            var result = [
+                Settings_4.Settings.Machine[Settings_4.Settings.currentMachine],
+                [],
+                [],
+                -1
+            ];
+            var i = 0;
             for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
                 var state = _a[_i];
                 var position = state.getPosition();
-                result.states.push({
-                    name: state.getName(),
-                    initial: state.isInitial(),
-                    final: state.isFinal(),
-                    x: position.x,
-                    y: position.y
-                });
+                result[1].push([
+                    state.getName(),
+                    state.isFinal() ? 1 : 0,
+                    position.x,
+                    position.y
+                ]);
+                if (state == this.initialState) {
+                    result[3] = i;
+                }
+                i++;
             }
             for (var _b = 0, _c = this.edgeList; _b < _c.length; _b++) {
                 var edge = _c[_b];
-                result.edges.push({
-                    origin: edge.getOrigin().getName(),
-                    target: edge.getTarget().getName(),
-                    dataList: edge.getDataList()
-                });
+                result[2].push([
+                    edge.getOrigin().getName(),
+                    edge.getTarget().getName(),
+                    edge.getDataList()
+                ]);
             }
             return JSON.stringify(result);
         };
@@ -1458,7 +1463,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 self.clear();
                 alert("Invalid file");
             };
-            var obj = {};
+            var obj = [];
             try {
                 obj = JSON.parse(content);
             }
@@ -1467,42 +1472,47 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 return;
             }
             var machineType = Settings_4.Settings.Machine[Settings_4.Settings.currentMachine];
-            var validation = obj.type == machineType
-                && obj.states instanceof Array
-                && obj.edges instanceof Array;
+            var validation = obj[0] == machineType
+                && obj[1] instanceof Array
+                && obj[2] instanceof Array
+                && typeof obj[3] == "number"
+                && obj.length == 4;
             if (!validation) {
                 error();
                 return;
             }
             var nameToIndex = {};
             var controller = Settings_4.Settings.controller();
-            for (var _i = 0, _a = obj.states; _i < _a.length; _i++) {
+            var i = 0;
+            for (var _i = 0, _a = obj[1]; _i < _a.length; _i++) {
                 var data = _a[_i];
+                var isInitial = (obj[3] == i);
                 var state = new State_1.State();
-                state.setName(data.name);
-                state.setInitial(data.initial);
-                state.setFinal(data.final);
-                state.setPosition(data.x, data.y);
-                if (data.initial) {
+                state.setName(data[0]);
+                state.setInitial(isInitial);
+                state.setFinal(!!data[1]);
+                state.setPosition(data[2], data[3]);
+                if (isInitial) {
                     this.initialState = state;
                 }
-                nameToIndex[data.name] = this.stateList.length;
+                nameToIndex[data[0]] = i;
                 this.stateList.push(state);
                 controller.createState(state);
+                i++;
             }
             var states = this.stateList;
-            for (var _b = 0, _c = obj.edges; _b < _c.length; _b++) {
+            for (var _b = 0, _c = obj[2]; _b < _c.length; _b++) {
                 var edgeData = _c[_b];
-                if (!edgeData.origin || !edgeData.target || !edgeData.dataList) {
+                if (edgeData.length != 3) {
                     error();
                     return;
                 }
                 var edge = new Edge_1.Edge();
-                var origin = states[nameToIndex[edgeData.origin]];
-                var target = states[nameToIndex[edgeData.target]];
+                var origin = states[nameToIndex[edgeData[0]]];
+                var target = states[nameToIndex[edgeData[1]]];
                 edge.setOrigin(origin);
                 edge.setTarget(target);
-                for (var _d = 0, _e = edgeData.dataList; _d < _e.length; _d++) {
+                for (var _d = 0, _e = edgeData[2]; _d < _e.length; _d++) {
                     var data = _e[_d];
                     this.addEdgeData(edge, data);
                 }
