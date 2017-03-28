@@ -285,10 +285,18 @@ define("Utils", ["require", "exports", "Keyboard", "Settings", "System"], functi
             return p1 && p2 && p1.x == p2.x && p1.y == p2.y;
         }
         utils.samePoint = samePoint;
-        function bindShortcut(keys, callback) {
-            System_1.System.addKeyObserver(keys, callback);
+        function bindShortcut(keys, callback, group) {
+            System_1.System.addKeyObserver(keys, callback, group);
         }
         utils.bindShortcut = bindShortcut;
+        function lockShortcutGroup(group) {
+            System_1.System.lockShortcutGroup(group);
+        }
+        utils.lockShortcutGroup = lockShortcutGroup;
+        function unlockShortcutGroup(group) {
+            System_1.System.unlockShortcutGroup(group);
+        }
+        utils.unlockShortcutGroup = unlockShortcutGroup;
         function async(callback) {
             setTimeout(callback, 0);
         }
@@ -1355,6 +1363,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.initialState = null;
             this.edgeMode = false;
             this.currentEdge = null;
+            this.locked = false;
             this.canvas = canvas;
             this.node = node;
         }
@@ -1531,15 +1540,33 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 state.removePalette();
                 state.render(this.canvas);
             }
+            this.highlightedState = null;
+        };
+        AutomatonRenderer.prototype.lock = function () {
+            Utils_5.utils.lockShortcutGroup(Settings_4.Settings.canvasShortcutID);
+            this.locked = true;
+        };
+        AutomatonRenderer.prototype.unlock = function () {
+            Utils_5.utils.unlockShortcutGroup(Settings_4.Settings.canvasShortcutID);
+            this.locked = false;
         };
         AutomatonRenderer.prototype.selectState = function (state) {
-            if (this.highlightedState) {
+            if (!this.locked) {
+                if (this.highlightedState) {
+                    this.highlightedState.removePalette();
+                    this.highlightedState.render(this.canvas);
+                }
+                state.applyPalette(Settings_4.Settings.stateHighlightPalette);
+                this.highlightedState = state;
+                state.render(this.canvas);
+            }
+        };
+        AutomatonRenderer.prototype.dimState = function () {
+            if (!this.locked && this.highlightedState) {
                 this.highlightedState.removePalette();
                 this.highlightedState.render(this.canvas);
+                this.highlightedState = null;
             }
-            state.applyPalette(Settings_4.Settings.stateHighlightPalette);
-            this.highlightedState = state;
-            state.render(this.canvas);
         };
         AutomatonRenderer.prototype.selectEdge = function (edge) {
             console.log("edge click");
@@ -1556,30 +1583,32 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             }
             var self = this;
             $(this.node).dblclick(function (e) {
-                var state = new State_1.State();
-                state.setPosition(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
-                self.selectState(state);
-                self.bindStateEvents(state);
-                var stateNamePrompt = function () {
-                    Utils_5.utils.prompt("Enter the state name:", 1, function (data) {
-                        var name = data[0];
-                        for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
-                            var state_1 = _a[_i];
-                            if (state_1.getName() == name) {
-                                alert("State name already in use");
-                                return stateNamePrompt();
+                if (!self.locked) {
+                    var state_1 = new State_1.State();
+                    state_1.setPosition(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
+                    self.selectState(state_1);
+                    self.bindStateEvents(state_1);
+                    var stateNamePrompt_1 = function () {
+                        Utils_5.utils.prompt("Enter the state name:", 1, function (data) {
+                            var name = data[0];
+                            for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
+                                var state_2 = _a[_i];
+                                if (state_2.getName() == name) {
+                                    alert("State name already in use");
+                                    return stateNamePrompt_1();
+                                }
                             }
-                        }
-                        self.stateList.push(state);
-                        state.setName(name);
-                        state.render(self.canvas);
-                        Settings_4.Settings.controller().createState(state);
-                    }, function () {
-                        self.highlightedState = null;
-                        state.remove();
-                    });
-                };
-                stateNamePrompt();
+                            self.stateList.push(state_1);
+                            state_1.setName(name);
+                            state_1.render(self.canvas);
+                            Settings_4.Settings.controller().createState(state_1);
+                        }, function () {
+                            self.highlightedState = null;
+                            state_1.remove();
+                        });
+                    };
+                    stateNamePrompt_1();
+                }
             });
             $(this.node).contextmenu(function (e) {
                 e.preventDefault();
@@ -1603,7 +1632,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             state.drag(function () {
                 self.updateEdges();
             }, function (distanceSquared, event) {
-                if (distanceSquared <= Settings_4.Settings.stateDragTolerance) {
+                if (!self.locked && distanceSquared <= Settings_4.Settings.stateDragTolerance) {
                     if (self.edgeMode) {
                         self.finishEdge(state);
                     }
@@ -1611,9 +1640,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                         self.beginEdge(state);
                     }
                     else if (state == self.highlightedState) {
-                        state.removePalette();
-                        self.highlightedState = null;
-                        state.render(canvas);
+                        self.dimState();
                     }
                     else {
                         self.selectState(state);
@@ -1654,8 +1681,8 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             };
             for (var _i = 0, _a = this.edgeList; _i < _a.length; _i++) {
                 var edge = _a[_i];
-                var state_2 = _loop_1(edge);
-                if (typeof state_2 === "object") return state_2.value;
+                var state_3 = _loop_1(edge);
+                if (typeof state_3 === "object") return state_3.value;
             }
             this.currentEdge.setTarget(state);
             this.currentEdge.render(this.canvas);
@@ -1749,20 +1776,21 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         AutomatonRenderer.prototype.bindShortcuts = function () {
             var canvas = this.canvas;
             var self = this;
+            var group = Settings_4.Settings.canvasShortcutID;
             Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.toggleInitial, function () {
                 var highlightedState = self.highlightedState;
                 if (highlightedState) {
                     self.setInitialState(highlightedState);
                     highlightedState.render(self.canvas);
                 }
-            });
+            }, group);
             Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.toggleFinal, function () {
                 var highlightedState = self.highlightedState;
                 if (highlightedState) {
                     self.changeFinalFlag(highlightedState, !highlightedState.isFinal());
                     highlightedState.render(canvas);
                 }
-            });
+            }, group);
             Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.dimState, function () {
                 var highlightedState = self.highlightedState;
                 if (highlightedState) {
@@ -1770,20 +1798,20 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     highlightedState.render(canvas);
                     self.highlightedState = null;
                 }
-            });
+            }, group);
             Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.deleteState, function () {
                 var highlightedState = self.highlightedState;
                 if (highlightedState) {
                     self.deleteState(highlightedState);
                     self.clearSelection();
                 }
-            });
+            }, group);
             Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.clearMachine, function () {
                 var confirmation = confirm(Settings_4.Strings.CLEAR_CONFIRMATION);
                 if (confirmation) {
                     self.clear();
                 }
-            });
+            }, group);
             Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.left, function () {
                 self.moveStateSelection(function (attempt, highlighted) {
                     return attempt.getPosition().x < highlighted.getPosition().x;
@@ -1802,7 +1830,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     }
                     return dy < targetDy;
                 });
-            });
+            }, group);
             Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.right, function () {
                 self.moveStateSelection(function (attempt, highlighted) {
                     return attempt.getPosition().x > highlighted.getPosition().x;
@@ -1821,7 +1849,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     }
                     return dy < targetDy;
                 });
-            });
+            }, group);
             Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.up, function () {
                 self.moveStateSelection(function (attempt, highlighted) {
                     return attempt.getPosition().y < highlighted.getPosition().y;
@@ -1840,7 +1868,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     }
                     return dx < targetDx;
                 });
-            });
+            }, group);
             Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.down, function () {
                 self.moveStateSelection(function (attempt, highlighted) {
                     return attempt.getPosition().y > highlighted.getPosition().y;
@@ -1859,10 +1887,10 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     }
                     return dx < targetDx;
                 });
-            });
+            }, group);
             Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.undo, function () {
                 alert("TODO: undo");
-            });
+            }, group);
         };
         AutomatonRenderer.prototype.selectionThreshold = function () {
             return 2 * Settings_4.Settings.stateRadius;
@@ -1993,6 +2021,7 @@ define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu
             };
             fastRecognition.addEventListener("click", function () {
                 if (fastForwardEnabled) {
+                    Settings_5.Settings.automatonRenderer.lock();
                     var input = testCase();
                     var controller = Settings_5.Settings.controller();
                     controller.fastForward(input);
@@ -2009,6 +2038,7 @@ define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu
                 if (stopEnabled) {
                     Settings_5.Settings.controller().stop();
                     Settings_5.Settings.automatonRenderer.recognitionDim();
+                    Settings_5.Settings.automatonRenderer.unlock();
                     progressContainer.style.color = "black";
                     progressContainer.style.display = "none";
                     fastForwardStatus(true);
@@ -2025,6 +2055,7 @@ define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu
                     var input = testCase();
                     var controller = Settings_5.Settings.controller();
                     if (controller.isStopped()) {
+                        Settings_5.Settings.automatonRenderer.lock();
                         progressContainer.style.display = "";
                         var sidebar = Utils_6.utils.id(Settings_5.Settings.sidebarID);
                         var width = sidebar.offsetWidth;
@@ -2131,6 +2162,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.sidebarID = "sidebar";
         Settings.mainbarID = "mainbar";
         Settings.disabledButtonClass = "disabled";
+        Settings.canvasShortcutID = "canvas";
         Settings.menuSlideInterval = 300;
         Settings.promptSlideInterval = 200;
         Settings.machineSelRows = 3;
@@ -2524,7 +2556,7 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
             for (var _i = 0, _a = this.keyboardObservers; _i < _a.length; _i++) {
                 var observer = _a[_i];
                 var keys = observer.keys;
-                if (this.shortcutMatches(event, keys)) {
+                if (!this.locked(observer) && this.shortcutMatches(event, keys)) {
                     observer.callback();
                     triggered = true;
                 }
@@ -2535,11 +2567,18 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
             }
             return true;
         };
-        System.addKeyObserver = function (keys, callback) {
+        System.addKeyObserver = function (keys, callback, group) {
             this.keyboardObservers.push({
                 keys: keys,
-                callback: callback
+                callback: callback,
+                group: group
             });
+        };
+        System.lockShortcutGroup = function (group) {
+            this.lockedGroups[group] = true;
+        };
+        System.unlockShortcutGroup = function (group) {
+            delete this.lockedGroups[group];
         };
         System.blockEvents = function () {
             this.eventBlock = true;
@@ -2578,8 +2617,12 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
             }
             return true;
         };
+        System.locked = function (observer) {
+            return this.lockedGroups.hasOwnProperty(observer.group);
+        };
         System.keyboardObservers = [];
         System.eventBlock = false;
+        System.lockedGroups = {};
         return System;
     }());
     exports.System = System;

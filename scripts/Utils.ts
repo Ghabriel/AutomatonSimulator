@@ -102,8 +102,16 @@ export namespace utils {
 	}
 
 	// Adds a keyboard shortcut to the page.
-	export function bindShortcut(keys: string[], callback: () => void): void {
-		System.addKeyObserver(keys, callback);
+	export function bindShortcut(keys: string[], callback: () => void, group?: string): void {
+		System.addKeyObserver(keys, callback, group);
+	}
+
+	export function lockShortcutGroup(group: string): void {
+		System.lockShortcutGroup(group);
+	}
+
+	export function unlockShortcutGroup(group: string): void {
+		System.unlockShortcutGroup(group);
 	}
 
 	// Calls a function asynchronously

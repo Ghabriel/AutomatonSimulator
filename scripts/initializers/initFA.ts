@@ -124,6 +124,7 @@ export namespace initFA {
 
 		fastRecognition.addEventListener("click", function() {
 			if (fastForwardEnabled) {
+				Settings.automatonRenderer.lock();
 				let input = testCase();
 				let controller = Settings.controller();
 				controller.fastForward(input);
@@ -143,6 +144,7 @@ export namespace initFA {
 			if (stopEnabled) {
 				Settings.controller().stop();
 				Settings.automatonRenderer.recognitionDim();
+				Settings.automatonRenderer.unlock();
 
 				progressContainer.style.color = "black";
 				progressContainer.style.display = "none";
@@ -163,6 +165,7 @@ export namespace initFA {
 				let input = testCase();
 				let controller = Settings.controller();
 				if (controller.isStopped()) {
+					Settings.automatonRenderer.lock();
 					progressContainer.style.display = "";
 					let sidebar = <HTMLDivElement> utils.id(Settings.sidebarID);
 					let width = sidebar.offsetWidth;

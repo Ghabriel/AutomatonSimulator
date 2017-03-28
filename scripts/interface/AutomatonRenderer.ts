@@ -295,16 +295,37 @@ export class AutomatonRenderer {
 			state.removePalette();
 			state.render(this.canvas);
 		}
+		this.highlightedState = null;
+	}
+
+	public lock(): void {
+		utils.lockShortcutGroup(Settings.canvasShortcutID);
+		this.locked = true;
+	}
+
+	public unlock(): void {
+		utils.unlockShortcutGroup(Settings.canvasShortcutID);
+		this.locked = false;
 	}
 
 	private selectState(state: State) {
-		if (this.highlightedState) {
+		if (!this.locked) {
+			if (this.highlightedState) {
+				this.highlightedState.removePalette();
+				this.highlightedState.render(this.canvas);
+			}
+			state.applyPalette(Settings.stateHighlightPalette);
+			this.highlightedState = state;
+			state.render(this.canvas);
+		}
+	}
+
+	private dimState(): void {
+		if (!this.locked && this.highlightedState) {
 			this.highlightedState.removePalette();
 			this.highlightedState.render(this.canvas);
+			this.highlightedState = null;
 		}
-		state.applyPalette(Settings.stateHighlightPalette);
-		this.highlightedState = state;
-		state.render(this.canvas);
 	}
 
 	private selectEdge(edge: Edge) {
@@ -324,32 +345,34 @@ export class AutomatonRenderer {
 
 		let self = this;
 		$(this.node).dblclick(function(e) {
-			let state = new State();
-			state.setPosition(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
-			self.selectState(state);
-			self.bindStateEvents(state);
+			if (!self.locked) {
+				let state = new State();
+				state.setPosition(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
+				self.selectState(state);
+				self.bindStateEvents(state);
 
-			let stateNamePrompt = function() {
-				utils.prompt("Enter the state name:", 1, function(data) {
-					let name = data[0];
-					for (let state of self.stateList) {
-						if (state.getName() == name) {
-							alert("State name already in use");
-							return stateNamePrompt();
+				let stateNamePrompt = function() {
+					utils.prompt("Enter the state name:", 1, function(data) {
+						let name = data[0];
+						for (let state of self.stateList) {
+							if (state.getName() == name) {
+								alert("State name already in use");
+								return stateNamePrompt();
+							}
 						}
-					}
 
-					self.stateList.push(state);
-					state.setName(name);
-					state.render(self.canvas);
-					Settings.controller().createState(state);
-				}, function() {
-					self.highlightedState = null;
-					state.remove();
-				});
-			};
+						self.stateList.push(state);
+						state.setName(name);
+						state.render(self.canvas);
+						Settings.controller().createState(state);
+					}, function() {
+						self.highlightedState = null;
+						state.remove();
+					});
+				};
 
-			stateNamePrompt();
+				stateNamePrompt();
+			}
 		});
 
 		$(this.node).contextmenu(function(e) {
@@ -378,15 +401,13 @@ export class AutomatonRenderer {
 		state.drag(function() {
 			self.updateEdges();
 		}, function(distanceSquared, event) {
-			if (distanceSquared <= Settings.stateDragTolerance) {
+			if (!self.locked && distanceSquared <= Settings.stateDragTolerance) {
 				if (self.edgeMode) {
 					self.finishEdge(state);
 				} else if (utils.isRightClick(event)) {
 					self.beginEdge(state);
 				} else if (state == self.highlightedState) {
-					state.removePalette();
-					self.highlightedState = null;
-					state.render(canvas);
+					self.dimState();
 				} else {
 					self.selectState(state);
 				}
@@ -541,13 +562,14 @@ export class AutomatonRenderer {
 	private bindShortcuts(): void {
 		let canvas = this.canvas;
 		let self = this;
+		let group = Settings.canvasShortcutID;
 		utils.bindShortcut(Settings.shortcuts.toggleInitial, function() {
 			let highlightedState = self.highlightedState;
 			if (highlightedState) {
 				self.setInitialState(highlightedState);
 				highlightedState.render(self.canvas);
 			}
-		});
+		}, group);
 
 		utils.bindShortcut(Settings.shortcuts.toggleFinal, function() {
 			let highlightedState = self.highlightedState;
@@ -555,7 +577,7 @@ export class AutomatonRenderer {
 				self.changeFinalFlag(highlightedState, !highlightedState.isFinal());
 				highlightedState.render(canvas);
 			}
-		});
+		}, group);
 
 		utils.bindShortcut(Settings.shortcuts.dimState, function() {
 			let highlightedState = self.highlightedState;
@@ -564,7 +586,7 @@ export class AutomatonRenderer {
 				highlightedState.render(canvas);
 				self.highlightedState = null;
 			}
-		});
+		}, group);
 
 		utils.bindShortcut(Settings.shortcuts.deleteState, function() {
 			let highlightedState = self.highlightedState;
@@ -572,14 +594,14 @@ export class AutomatonRenderer {
 				self.deleteState(highlightedState);
 				self.clearSelection();
 			}
-		});
+		}, group);
 
 		utils.bindShortcut(Settings.shortcuts.clearMachine, function() {
 			let confirmation = confirm(Strings.CLEAR_CONFIRMATION);
 			if (confirmation) {
 				self.clear();
 			}
-		});
+		}, group);
 
 		// TODO: try to reduce the redundancy
 		utils.bindShortcut(Settings.shortcuts.left, function() {
@@ -603,7 +625,7 @@ export class AutomatonRenderer {
 
 				return dy < targetDy;
 			});
-		});
+		}, group);
 
 		utils.bindShortcut(Settings.shortcuts.right, function() {
 			self.moveStateSelection(function(attempt, highlighted) {
@@ -626,7 +648,7 @@ export class AutomatonRenderer {
 
 				return dy < targetDy;
 			});
-		});
+		}, group);
 
 		utils.bindShortcut(Settings.shortcuts.up, function() {
 			self.moveStateSelection(function(attempt, highlighted) {
@@ -649,7 +671,7 @@ export class AutomatonRenderer {
 
 				return dx < targetDx;
 			});
-		});
+		}, group);
 
 		utils.bindShortcut(Settings.shortcuts.down, function() {
 			self.moveStateSelection(function(attempt, highlighted) {
@@ -672,12 +694,12 @@ export class AutomatonRenderer {
 
 				return dx < targetDx;
 			});
-		});
+		}, group);
 
 		utils.bindShortcut(Settings.shortcuts.undo, function() {
 			// TODO
 			alert("TODO: undo");
-		});
+		}, group);
 	}
 
 	private selectionThreshold(): number {
@@ -713,4 +735,6 @@ export class AutomatonRenderer {
 	private initialState: State = null;
 	private edgeMode: boolean = false;
 	private currentEdge: Edge = null;
+
+	private locked: boolean = false;
 }

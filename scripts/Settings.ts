@@ -25,6 +25,8 @@ export namespace Settings {
 
 	export const disabledButtonClass = "disabled";
 
+	export const canvasShortcutID = "canvas";
+
 	export const menuSlideInterval = 300;
 	export const promptSlideInterval = 200;
 	export const machineSelRows = 3;

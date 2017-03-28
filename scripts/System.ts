@@ -6,6 +6,7 @@ import {utils} from "./Utils"
 interface KeyboardObserver {
 	keys: string[];
 	callback: () => void;
+	group: string;
 }
 
 export class System {
@@ -28,7 +29,7 @@ export class System {
 		let triggered = false;
 		for (let observer of this.keyboardObservers) {
 			let keys = observer.keys;
-			if (this.shortcutMatches(event, keys)) {
+			if (!this.locked(observer) && this.shortcutMatches(event, keys)) {
 				observer.callback();
 				triggered = true;
 			}
@@ -41,11 +42,20 @@ export class System {
 		return true;
 	}
 
-	static addKeyObserver(keys: string[], callback: () => void): void {
+	static addKeyObserver(keys: string[], callback: () => void, group?: string): void {
 		this.keyboardObservers.push({
 			keys: keys,
-			callback: callback
+			callback: callback,
+			group: group
 		});
+	}
+
+	static lockShortcutGroup(group: string): void {
+		this.lockedGroups[group] = true;
+	}
+
+	static unlockShortcutGroup(group: string): void {
+		delete this.lockedGroups[group];
 	}
 
 	static blockEvents(): void {
@@ -91,7 +101,12 @@ export class System {
 		return true;
 	}
 
+	private static locked(observer: KeyboardObserver): boolean {
+		return this.lockedGroups.hasOwnProperty(observer.group);
+	}
+
 	private static keyboardObservers: KeyboardObserver[] = [];
 	private static sidebar: Sidebar;
 	private static eventBlock: boolean = false;
+	private static lockedGroups: {[g: string]: boolean} = {};
 }
