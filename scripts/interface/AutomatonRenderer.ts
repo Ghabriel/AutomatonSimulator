@@ -330,7 +330,8 @@ export class AutomatonRenderer {
 			this.highlightedState = state;
 			state.render(this.canvas);
 
-			// TODO: show the state in the 'selected entity' area
+			Settings.sidebar.unsetSelectedEntityContent();
+			Settings.sidebar.setSelectedEntityContent(this.showEditableState(state));
 		}
 	}
 
@@ -339,12 +340,61 @@ export class AutomatonRenderer {
 			this.highlightedState.removePalette();
 			this.highlightedState.render(this.canvas);
 			this.highlightedState = null;
+
+			Settings.sidebar.unsetSelectedEntityContent();
 		}
 	}
 
 	private selectEdge(edge: Edge) {
-		// TODO
-		console.log("edge click");
+		Settings.sidebar.unsetSelectedEntityContent();
+		Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
+	}
+
+	private showEditableState(state: State): HTMLDivElement {
+		let span = function(innerHTML: string, id: string) {
+			return "<span id='" + id + "' class='property_value'>" + innerHTML + "</span>";
+		};
+
+		let button = function(value: string, id: string) {
+			return "<input type='button' value='" + value + "' id='" + id + "' class='change_property'>";
+		};
+
+		let row = function(label, spanValue, spanId, buttonContent, buttonId) {
+			return label + ": " + span(spanValue, spanId) + " " + button(buttonContent, buttonId);
+		};
+
+		let container = <HTMLDivElement> utils.create("div");
+		let rows = [
+			row("Name", state.getName(), "entity_name", "change", "entity_name_change"),
+			row("Is initial", state.isInitial() ? "yes" : "no", "entity_initial", "change", "entity_initial_change"),
+			row("Is final", state.isFinal() ? "yes" : "no", "entity_final", "change", "entity_final_change"),
+		];
+		container.innerHTML = rows.join("<br>");
+
+		return container;
+	}
+
+	private showEditableEdge(edge: Edge): HTMLDivElement {
+		let span = function(innerHTML: string, id: string) {
+			return "<span id='" + id + "' class='property_value'>" + innerHTML + "</span>";
+		};
+
+		let button = function(value: string, id: string) {
+			return "<input type='button' value='" + value + "' id='" + id + "' class='change_property'>";
+		};
+
+		let row = function(label, spanValue, spanId, buttonContent, buttonId) {
+			return label + ": " + span(spanValue, spanId) + " " + button(buttonContent, buttonId);
+		};
+
+		let container = <HTMLDivElement> utils.create("div");
+		let rows = [
+			row("Origin", edge.getOrigin().getName(), "entity_origin", "change", "entity_origin_change"),
+			row("Target", edge.getTarget().getName(), "entity_target", "change", "entity_target_change"),
+		];
+		container.innerHTML = rows.join("<br>");
+
+		return container;
 	}
 
 	private bindEvents(): void {
@@ -594,12 +644,7 @@ export class AutomatonRenderer {
 		}, group);
 
 		utils.bindShortcut(Settings.shortcuts.dimState, function() {
-			let highlightedState = self.highlightedState;
-			if (highlightedState) {
-				highlightedState.removePalette();
-				highlightedState.render(canvas);
-				self.highlightedState = null;
-			}
+			self.dimState();
 		}, group);
 
 		utils.bindShortcut(Settings.shortcuts.deleteState, function() {

@@ -1372,7 +1372,6 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.node = node;
         }
         AutomatonRenderer.prototype.render = function () {
-            window["sidebar"] = Settings_4.Settings.sidebar;
             var q0 = this.newState("q0");
             q0.setPosition(100, 200);
             var q1 = this.newState("q1");
@@ -1574,6 +1573,8 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 state.applyPalette(Settings_4.Settings.stateHighlightPalette);
                 this.highlightedState = state;
                 state.render(this.canvas);
+                Settings_4.Settings.sidebar.unsetSelectedEntityContent();
+                Settings_4.Settings.sidebar.setSelectedEntityContent(this.showEditableState(state));
             }
         };
         AutomatonRenderer.prototype.dimState = function () {
@@ -1581,10 +1582,49 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 this.highlightedState.removePalette();
                 this.highlightedState.render(this.canvas);
                 this.highlightedState = null;
+                Settings_4.Settings.sidebar.unsetSelectedEntityContent();
             }
         };
         AutomatonRenderer.prototype.selectEdge = function (edge) {
-            console.log("edge click");
+            Settings_4.Settings.sidebar.unsetSelectedEntityContent();
+            Settings_4.Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
+        };
+        AutomatonRenderer.prototype.showEditableState = function (state) {
+            var span = function (innerHTML, id) {
+                return "<span id='" + id + "' class='property_value'>" + innerHTML + "</span>";
+            };
+            var button = function (value, id) {
+                return "<input type='button' value='" + value + "' id='" + id + "' class='change_property'>";
+            };
+            var row = function (label, spanValue, spanId, buttonContent, buttonId) {
+                return label + ": " + span(spanValue, spanId) + " " + button(buttonContent, buttonId);
+            };
+            var container = Utils_5.utils.create("div");
+            var rows = [
+                row("Name", state.getName(), "entity_name", "change", "entity_name_change"),
+                row("Is initial", state.isInitial() ? "yes" : "no", "entity_initial", "change", "entity_initial_change"),
+                row("Is final", state.isFinal() ? "yes" : "no", "entity_final", "change", "entity_final_change"),
+            ];
+            container.innerHTML = rows.join("<br>");
+            return container;
+        };
+        AutomatonRenderer.prototype.showEditableEdge = function (edge) {
+            var span = function (innerHTML, id) {
+                return "<span id='" + id + "' class='property_value'>" + innerHTML + "</span>";
+            };
+            var button = function (value, id) {
+                return "<input type='button' value='" + value + "' id='" + id + "' class='change_property'>";
+            };
+            var row = function (label, spanValue, spanId, buttonContent, buttonId) {
+                return label + ": " + span(spanValue, spanId) + " " + button(buttonContent, buttonId);
+            };
+            var container = Utils_5.utils.create("div");
+            var rows = [
+                row("Origin", edge.getOrigin().getName(), "entity_origin", "change", "entity_origin_change"),
+                row("Target", edge.getTarget().getName(), "entity_target", "change", "entity_target_change"),
+            ];
+            container.innerHTML = rows.join("<br>");
+            return container;
         };
         AutomatonRenderer.prototype.bindEvents = function () {
             for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
@@ -1807,12 +1847,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 }
             }, group);
             Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.dimState, function () {
-                var highlightedState = self.highlightedState;
-                if (highlightedState) {
-                    highlightedState.removePalette();
-                    highlightedState.render(canvas);
-                    self.highlightedState = null;
-                }
+                self.dimState();
             }, group);
             Utils_5.utils.bindShortcut(Settings_4.Settings.shortcuts.deleteState, function () {
                 var highlightedState = self.highlightedState;

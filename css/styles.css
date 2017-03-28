@@ -76,6 +76,14 @@ svg {
 	text-align: center;
 }
 
+.menu .content span.property_value {
+	font-weight: bold;
+}
+
+.menu .content input[type="button"].change_property {
+	margin-left: 20px;
+}
+
 .machine_selection_btn {
 	width: 100%;
 }
