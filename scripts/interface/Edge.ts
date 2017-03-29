@@ -65,6 +65,14 @@ export class Edge {
 		}
 	}
 
+	public setCustomColor(color: string): void {
+		this.color = color;
+	}
+
+	public removeCustomColor(): void {
+		this.color = this.defaultColor;
+	}
+
 	public render(canvas: RaphaelPaper): void {
 		let preservedOrigin = this.origin
 						   && utils.samePoint(this.prevOriginPosition,
@@ -88,11 +96,23 @@ export class Edge {
 			}
 		}
 
+		for (let elem of this.body) {
+			elem.attr("stroke", this.strokeColor());
+		}
+
+		for (let elem of this.head) {
+			elem.attr("stroke", this.strokeColor());
+		}
+
 		// Only re-renders this edge's text if this edge is
 		// complete (i.e it already has a target state)
 		if (this.target) {
 			this.renderText(canvas);
 		}
+	}
+
+	private strokeColor(): string {
+		return this.color;
 	}
 
 	private stateCenterOffsets(dx: number, dy: number): Point {
@@ -373,6 +393,9 @@ export class Edge {
 	// A list of data lists used by the controllers to
 	// precisely define this transition
 	private dataList: string[][] = [];
+
+	private defaultColor = Settings.edgeStrokeColor;
+	private color: string = this.defaultColor;
 
 	private body: RaphaelElement[] = [];
 	private head: RaphaelElement[] = [];

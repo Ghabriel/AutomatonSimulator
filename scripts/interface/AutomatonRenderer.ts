@@ -2,6 +2,7 @@ import {Edge} from "./Edge"
 import {Settings, Strings} from "../Settings"
 import {State} from "./State"
 import {Point, utils} from "../Utils"
+import {Table} from "./Table"
 
 export class AutomatonRenderer {
 	constructor(canvas: RaphaelPaper, node: Element) {
@@ -322,6 +323,7 @@ export class AutomatonRenderer {
 
 	private selectState(state: State) {
 		if (!this.locked) {
+			this.dimEdge();
 			if (this.highlightedState) {
 				this.highlightedState.removePalette();
 				this.highlightedState.render(this.canvas);
@@ -346,54 +348,62 @@ export class AutomatonRenderer {
 	}
 
 	private selectEdge(edge: Edge) {
-		Settings.sidebar.unsetSelectedEntityContent();
-		Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
+		if (!this.locked) {
+			this.dimState();
+			if (this.highlightedEdge) {
+				this.highlightedEdge.removeCustomColor();
+				this.highlightedEdge.render(this.canvas);
+			}
+			edge.setCustomColor("red");
+			this.highlightedEdge = edge;
+			edge.render(this.canvas);
+
+			Settings.sidebar.unsetSelectedEntityContent();
+			Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
+		}
+	}
+
+	private dimEdge(): void {
+		if (!this.locked && this.highlightedEdge) {
+			this.highlightedEdge.removeCustomColor();
+			this.highlightedEdge.render(this.canvas);
+			this.highlightedEdge = null;
+
+			Settings.sidebar.unsetSelectedEntityContent();
+		}
 	}
 
 	private showEditableState(state: State): HTMLDivElement {
-		let span = function(innerHTML: string, id: string) {
-			return "<span id='" + id + "' class='property_value'>" + innerHTML + "</span>";
-		};
-
-		let button = function(value: string, id: string) {
-			return "<input type='button' value='" + value + "' id='" + id + "' class='change_property'>";
-		};
-
-		let row = function(label, spanValue, spanId, buttonContent, buttonId) {
-			return label + ": " + span(spanValue, spanId) + " " + button(buttonContent, buttonId);
-		};
-
 		let container = <HTMLDivElement> utils.create("div");
-		let rows = [
-			row("Name", state.getName(), "entity_name", "change", "entity_name_change"),
-			row("Is initial", state.isInitial() ? "yes" : "no", "entity_initial", "change", "entity_initial_change"),
-			row("Is final", state.isFinal() ? "yes" : "no", "entity_final", "change", "entity_final_change"),
-		];
-		container.innerHTML = rows.join("<br>");
-
+		let table = new Table(3, 2);
+		table.add(utils.create("span", { innerHTML: "Name:" }));
+		table.add(utils.create("span", { innerHTML: state.getName(),
+										 className: "property_value",
+										 id: "entity_name" }));
+		table.add(utils.create("span", { innerHTML: "Is initial:" }));
+		table.add(utils.create("span", { innerHTML: state.isInitial() ? "yes" : "no",
+										 className: "property_value",
+										 id: "entity_initial" }));
+		table.add(utils.create("span", { innerHTML: "Is final:" }));
+		table.add(utils.create("span", { innerHTML: state.isFinal() ? "yes" : "no",
+										 className: "property_value",
+										 id: "entity_final" }));
+		container.appendChild(table.html());
 		return container;
 	}
 
 	private showEditableEdge(edge: Edge): HTMLDivElement {
-		let span = function(innerHTML: string, id: string) {
-			return "<span id='" + id + "' class='property_value'>" + innerHTML + "</span>";
-		};
-
-		let button = function(value: string, id: string) {
-			return "<input type='button' value='" + value + "' id='" + id + "' class='change_property'>";
-		};
-
-		let row = function(label, spanValue, spanId, buttonContent, buttonId) {
-			return label + ": " + span(spanValue, spanId) + " " + button(buttonContent, buttonId);
-		};
-
 		let container = <HTMLDivElement> utils.create("div");
-		let rows = [
-			row("Origin", edge.getOrigin().getName(), "entity_origin", "change", "entity_origin_change"),
-			row("Target", edge.getTarget().getName(), "entity_target", "change", "entity_target_change"),
-		];
-		container.innerHTML = rows.join("<br>");
-
+		let table = new Table(2, 2);
+		table.add(utils.create("span", { innerHTML: "Origin:" }));
+		table.add(utils.create("span", { innerHTML: edge.getOrigin().getName(),
+										 className: "property_value",
+										 id: "entity_origin" }));
+		table.add(utils.create("span", { innerHTML: "Target:" }));
+		table.add(utils.create("span", { innerHTML: edge.getTarget().getName(),
+										 className: "property_value",
+										 id: "entity_target" }));
+		container.appendChild(table.html());
 		return container;
 	}
 
@@ -552,6 +562,7 @@ export class AutomatonRenderer {
 
 	private clearSelection(): void {
 		this.highlightedState = null;
+		this.highlightedEdge = null;
 		if (this.edgeMode) {
 			this.edgeMode = false;
 			this.currentEdge.remove();
@@ -623,28 +634,38 @@ export class AutomatonRenderer {
 		Settings.controller().deleteState(state);
 	}
 
+	// Toggles the initial flag of the highlighted state
+	private toggleInitial(): void {
+		let highlightedState = this.highlightedState;
+		if (highlightedState) {
+			this.setInitialState(highlightedState);
+			highlightedState.render(this.canvas);
+		}
+	}
+
+	// Toggles the final flag of the highlighted state
+	private toggleFinal(): void {
+		let highlightedState = this.highlightedState;
+		if (highlightedState) {
+			this.changeFinalFlag(highlightedState, !highlightedState.isFinal());
+			highlightedState.render(this.canvas);
+		}
+	}
+
 	private bindShortcuts(): void {
-		let canvas = this.canvas;
 		let self = this;
 		let group = Settings.canvasShortcutID;
 		utils.bindShortcut(Settings.shortcuts.toggleInitial, function() {
-			let highlightedState = self.highlightedState;
-			if (highlightedState) {
-				self.setInitialState(highlightedState);
-				highlightedState.render(self.canvas);
-			}
+			self.toggleInitial();
 		}, group);
 
 		utils.bindShortcut(Settings.shortcuts.toggleFinal, function() {
-			let highlightedState = self.highlightedState;
-			if (highlightedState) {
-				self.changeFinalFlag(highlightedState, !highlightedState.isFinal());
-				highlightedState.render(canvas);
-			}
+			self.toggleFinal();
 		}, group);
 
-		utils.bindShortcut(Settings.shortcuts.dimState, function() {
+		utils.bindShortcut(Settings.shortcuts.dimSelection, function() {
 			self.dimState();
+			self.dimEdge();
 		}, group);
 
 		utils.bindShortcut(Settings.shortcuts.deleteState, function() {
@@ -791,6 +812,7 @@ export class AutomatonRenderer {
 	// TODO: find a better data structure than a simple array
 	private edgeList: Edge[] = [];
 	private highlightedState: State = null;
+	private highlightedEdge: Edge = null;
 	private initialState: State = null;
 	private edgeMode: boolean = false;
 	private currentEdge: Edge = null;
