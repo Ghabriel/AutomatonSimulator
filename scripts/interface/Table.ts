@@ -25,7 +25,7 @@ export class Table extends Renderer {
 				let td = <HTMLTableCellElement> utils.create("td");
 				if (index < this.children.length) {
 					if (this.customColspans.hasOwnProperty(index + "")) {
-						let colSpan = this.customColspans[index]
+						let colSpan = this.customColspans[index];
 						td.colSpan = colSpan;
 						j += colSpan - 1;
 					}

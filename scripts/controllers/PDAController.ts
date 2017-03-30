@@ -3,24 +3,21 @@ import {State} from "../interface/State"
 import {utils} from "../Utils"
 
 export class PDAController implements Controller {
-	public edgePrompt(origin: State,
-					  target: State,
-					  callback: (data: string[], text: string) => void,
-					  fallback: () => void): void {
-
-		let epsilon = "ε";
+	public edgePrompt(callback: (data: string[], text: string) => void,
+					  fallback?: () => void): void {
 
 		let self = this;
 		utils.prompt("Enter the edge content:", 3, function(data) {
-			data[0] = data[0] || epsilon;
-			data[1] = data[1] || epsilon;
-			data[2] = data[2] || epsilon;
 			callback(data, self.edgeDataToText(data));
 		}, fallback);
 	}
 
 	public edgeDataToText(data: string[]): string {
-		return data[0] + "," + data[1] + " → " + data[2];
+		let epsilon = "ε";
+		let input = data[0] || epsilon;
+		let stackRead = data[1] || epsilon;
+		let stackWrite = data[2] || epsilon;
+		return input + "," + stackRead + " → " + stackWrite;
 	}
 
 	public createState(state: State): void {}

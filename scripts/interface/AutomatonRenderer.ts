@@ -437,7 +437,7 @@ export class AutomatonRenderer {
 
 	private showEditableEdge(edge: Edge): HTMLDivElement {
 		let container = <HTMLDivElement> utils.create("div");
-		let table = new Table(4, 3);
+		let table = new Table(5, 3);
 		let canvas = this.canvas;
 		let self = this;
 		// TODO: use images for the buttons instead of labels
@@ -473,29 +473,43 @@ export class AutomatonRenderer {
 			type: "button",
 			value: "change",
 			click: function() {
-				// TODO
+				let transitionSelector = <HTMLSelectElement> $("#entity_transition_list").get(0);
+				let selectedIndex = transitionSelector.selectedIndex;
+				let transition = transitionSelector[selectedIndex].innerHTML;
+				let controller = Settings.controller();
+				controller.edgePrompt(function(data, content) {
+					// let origin = edge.getOrigin();
+					// let target = edge.getTarget();
+					// let dataList = edge.getDataList();
+					// controller.deleteEdge(origin, target, dataList[selectedIndex]);
+					// edge.getDataList()[selectedIndex] = data;
+					// edge.render(self.canvas);
+					// controller.createEdge(origin, target, data);
+					console.log("TODO: change " + transition + " to " + content);
+				});
 			}
 		});
 		let deleteTransitionButton = utils.create("input", {
 			type: "button",
-			value: "delete",
+			value: "Delete selected transition",
 			click: function() {
-				// TODO
+				let transitionSelector = <HTMLSelectElement> $("#entity_transition_list").get(0);
+				console.log(transitionSelector.selectedIndex);
+				console.log(transitionSelector.children[transitionSelector.selectedIndex].innerHTML);
+				// self.deleteState(state);
+				// self.clearSelection();
+				// Settings.sidebar.unsetSelectedEntityContent();
 			}
 		});
-		let deleteButton = utils.create("input", {
+		let deleteAllButton = utils.create("input", {
 			type: "button",
-			value: "Delete edge",
+			value: "Delete all transitions",
 			click: function() {
 				// self.deleteState(state);
 				// self.clearSelection();
 				Settings.sidebar.unsetSelectedEntityContent();
 			}
 		});
-
-		let transitionActionContainer = utils.create("span");
-		transitionActionContainer.appendChild(changeTransitionButton);
-		transitionActionContainer.appendChild(deleteTransitionButton);
 
 		table.add(utils.create("span", { innerHTML: "Origin:" }));
 		table.add(utils.create("span", { innerHTML: edge.getOrigin().getName(),
@@ -508,7 +522,9 @@ export class AutomatonRenderer {
 										 id: "entity_target" }));
 		table.add(changeTargetButton);
 
-		let textSelector = <HTMLSelectElement> utils.create("select");
+		let textSelector = <HTMLSelectElement> utils.create("select", {
+			id: "entity_transition_list"
+		});
 		let textList = edge.getTextList();
 		let i = 0;
 		for (let text of textList) {
@@ -518,9 +534,10 @@ export class AutomatonRenderer {
 		}
 		table.add(utils.create("span", { innerHTML: "Transitions:" }));
 		table.add(textSelector);
-		table.add(transitionActionContainer);
+		table.add(changeTransitionButton);
 
-		table.add(deleteButton, 3);
+		table.add(deleteTransitionButton, 3);
+		table.add(deleteAllButton, 3);
 		container.appendChild(table.html());
 		return container;
 	}
@@ -621,7 +638,9 @@ export class AutomatonRenderer {
 
 		let edgeText = function(callback: (d: string[], t: string) => void,
 								fallback: () => void) {
-			Settings.controller().edgePrompt(origin, state, function(data, content) {
+			let controller = Settings.controller();
+			controller.edgePrompt(function(data, content) {
+				controller.createEdge(origin, state, data);
 				callback(data, content);
 			}, fallback);
 		};

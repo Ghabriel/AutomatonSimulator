@@ -3,10 +3,8 @@ import {State} from "../interface/State"
 import {utils} from "../Utils"
 
 export class LBAController implements Controller {
-	public edgePrompt(origin: State,
-					  target: State,
-					  callback: (data: string[], text: string) => void,
-					  fallback: () => void): void {
+	public edgePrompt(callback: (data: string[], text: string) => void,
+					  fallback?: () => void): void {
 		console.log("[TODO] LBAController::edgePrompt()");
 	}
 

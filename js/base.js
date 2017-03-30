@@ -917,17 +917,15 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Utils"
             this.machine = new FA_1.FA();
             window["machine"] = this.machine;
         }
-        FAController.prototype.edgePrompt = function (origin, target, callback, fallback) {
-            var epsilon = "ε";
+        FAController.prototype.edgePrompt = function (callback, fallback) {
             var self = this;
             Utils_2.utils.prompt("Enter the edge content:", 1, function (data) {
-                self.createEdge(origin, target, data);
-                data[0] = data[0] || epsilon;
                 callback(data, self.edgeDataToText(data));
             }, fallback);
         };
         FAController.prototype.edgeDataToText = function (data) {
-            return data[0];
+            var epsilon = "ε";
+            return data[0] || epsilon;
         };
         FAController.prototype.createState = function (state) {
             var name = state.getName();
@@ -1023,18 +1021,18 @@ define("controllers/PDAController", ["require", "exports", "Utils"], function (r
     var PDAController = (function () {
         function PDAController() {
         }
-        PDAController.prototype.edgePrompt = function (origin, target, callback, fallback) {
-            var epsilon = "ε";
+        PDAController.prototype.edgePrompt = function (callback, fallback) {
             var self = this;
             Utils_3.utils.prompt("Enter the edge content:", 3, function (data) {
-                data[0] = data[0] || epsilon;
-                data[1] = data[1] || epsilon;
-                data[2] = data[2] || epsilon;
                 callback(data, self.edgeDataToText(data));
             }, fallback);
         };
         PDAController.prototype.edgeDataToText = function (data) {
-            return data[0] + "," + data[1] + " → " + data[2];
+            var epsilon = "ε";
+            var input = data[0] || epsilon;
+            var stackRead = data[1] || epsilon;
+            var stackWrite = data[2] || epsilon;
+            return input + "," + stackRead + " → " + stackWrite;
         };
         PDAController.prototype.createState = function (state) { };
         PDAController.prototype.createEdge = function (origin, target, data) { };
@@ -1060,7 +1058,7 @@ define("controllers/LBAController", ["require", "exports"], function (require, e
     var LBAController = (function () {
         function LBAController() {
         }
-        LBAController.prototype.edgePrompt = function (origin, target, callback, fallback) {
+        LBAController.prototype.edgePrompt = function (callback, fallback) {
             console.log("[TODO] LBAController::edgePrompt()");
         };
         LBAController.prototype.edgeDataToText = function (data) { return "TODO"; };
@@ -1739,7 +1737,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         };
         AutomatonRenderer.prototype.showEditableEdge = function (edge) {
             var container = Utils_6.utils.create("div");
-            var table = new Table_1.Table(4, 3);
+            var table = new Table_1.Table(5, 3);
             var canvas = this.canvas;
             var self = this;
             var changeOriginButton = Utils_6.utils.create("input", {
@@ -1776,24 +1774,37 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 type: "button",
                 value: "change",
                 click: function () {
+                    var transitionSelector = $("#entity_transition_list").get(0);
+                    var selectedIndex = transitionSelector.selectedIndex;
+                    var transition = transitionSelector[selectedIndex].innerHTML;
+                    var controller = Settings_4.Settings.controller();
+                    controller.edgePrompt(function (data, content) {
+                        var origin = edge.getOrigin();
+                        var target = edge.getTarget();
+                        var dataList = edge.getDataList();
+                        controller.deleteEdge(origin, target, dataList[selectedIndex]);
+                        edge.getDataList()[selectedIndex] = data;
+                        edge.render(self.canvas);
+                        controller.createEdge(origin, target, data);
+                    });
                 }
             });
             var deleteTransitionButton = Utils_6.utils.create("input", {
                 type: "button",
-                value: "delete",
+                value: "Delete selected transition",
                 click: function () {
+                    var transitionSelector = $("#entity_transition_list").get(0);
+                    console.log(transitionSelector.selectedIndex);
+                    console.log(transitionSelector.children[transitionSelector.selectedIndex].innerHTML);
                 }
             });
-            var deleteButton = Utils_6.utils.create("input", {
+            var deleteAllButton = Utils_6.utils.create("input", {
                 type: "button",
-                value: "Delete edge",
+                value: "Delete all transitions",
                 click: function () {
                     Settings_4.Settings.sidebar.unsetSelectedEntityContent();
                 }
             });
-            var transitionActionContainer = Utils_6.utils.create("span");
-            transitionActionContainer.appendChild(changeTransitionButton);
-            transitionActionContainer.appendChild(deleteTransitionButton);
             table.add(Utils_6.utils.create("span", { innerHTML: "Origin:" }));
             table.add(Utils_6.utils.create("span", { innerHTML: edge.getOrigin().getName(),
                 className: "property_value",
@@ -1804,7 +1815,9 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 className: "property_value",
                 id: "entity_target" }));
             table.add(changeTargetButton);
-            var textSelector = Utils_6.utils.create("select");
+            var textSelector = Utils_6.utils.create("select", {
+                id: "entity_transition_list"
+            });
             var textList = edge.getTextList();
             var i = 0;
             for (var _i = 0, textList_1 = textList; _i < textList_1.length; _i++) {
@@ -1815,8 +1828,9 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             }
             table.add(Utils_6.utils.create("span", { innerHTML: "Transitions:" }));
             table.add(textSelector);
-            table.add(transitionActionContainer);
-            table.add(deleteButton, 3);
+            table.add(changeTransitionButton);
+            table.add(deleteTransitionButton, 3);
+            table.add(deleteAllButton, 3);
             container.appendChild(table.html());
             return container;
         };
@@ -1908,7 +1922,9 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.edgeMode = false;
             var origin = this.currentEdge.getOrigin();
             var edgeText = function (callback, fallback) {
-                Settings_4.Settings.controller().edgePrompt(origin, state, function (data, content) {
+                var controller = Settings_4.Settings.controller();
+                controller.edgePrompt(function (data, content) {
+                    controller.createEdge(origin, state, data);
                     callback(data, content);
                 }, fallback);
             };

@@ -1,10 +1,8 @@
 import {State} from "../interface/State"
 
 export interface Controller {
-	edgePrompt(origin: State,
-			   target: State,
-			   callback: (data: string[], text: string) => void,
-			   fallback: () => void): void;
+	edgePrompt(callback: (data: string[], text: string) => void,
+			   fallback?: () => void): void;
 
 	edgeDataToText(data: string[]): string;
 

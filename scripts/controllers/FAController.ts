@@ -9,23 +9,18 @@ export class FAController implements Controller {
 		window["machine"] = this.machine;
 	}
 
-	public edgePrompt(origin: State,
-					  target: State,
-					  callback: (data: string[], text: string) => void,
-					  fallback: () => void): void {
-
-		let epsilon = "ε";
+	public edgePrompt(callback: (data: string[], text: string) => void,
+					  fallback?: () => void): void {
 
 		let self = this;
 		utils.prompt("Enter the edge content:", 1, function(data) {
-			self.createEdge(origin, target, data);
-			data[0] = data[0] || epsilon;
 			callback(data, self.edgeDataToText(data));
 		}, fallback);
 	}
 
 	public edgeDataToText(data: string[]): string {
-		return data[0];
+		let epsilon = "ε";
+		return data[0] || epsilon;
 	}
 
 	public createState(state: State): void {
