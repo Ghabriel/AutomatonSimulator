@@ -229,6 +229,10 @@ export class Edge {
 
 				this.body[0].attr("stroke-width", Settings.edgeArrowThickness);
 			} else {
+				while (this.body.length > 1) {
+					this.body[this.body.length - 1].remove();
+					this.body.pop();
+				}
 				this.body[0].attr("path", utils.linePath(
 					origin.x, origin.y,
 					target.x, target.y

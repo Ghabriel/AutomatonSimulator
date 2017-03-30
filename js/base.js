@@ -1270,6 +1270,10 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                     this.body[0].attr("stroke-width", Settings_3.Settings.edgeArrowThickness);
                 }
                 else {
+                    while (this.body.length > 1) {
+                        this.body[this.body.length - 1].remove();
+                        this.body.pop();
+                    }
                     this.body[0].attr("path", Utils_4.utils.linePath(origin.x, origin.y, target.x, target.y));
                 }
             }
@@ -1380,11 +1384,15 @@ define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"],
         __extends(Table, _super);
         function Table(numRows, numColumns) {
             _super.call(this);
+            this.customColspans = {};
             this.numRows = numRows;
             this.numColumns = numColumns;
             this.children = [];
         }
-        Table.prototype.add = function (elem) {
+        Table.prototype.add = function (elem, colspan) {
+            if (colspan) {
+                this.customColspans[this.children.length] = colspan;
+            }
             this.children.push(elem);
         };
         Table.prototype.html = function () {
@@ -1395,6 +1403,11 @@ define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"],
                 for (var j = 0; j < this.numColumns; j++) {
                     var td = Utils_5.utils.create("td");
                     if (index < this.children.length) {
+                        if (this.customColspans.hasOwnProperty(index + "")) {
+                            var colSpan = this.customColspans[index];
+                            td.colSpan = colSpan;
+                            j += colSpan - 1;
+                        }
                         td.appendChild(this.children[index]);
                     }
                     tr.appendChild(td);
@@ -1477,10 +1490,8 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 edge.remove();
             }
             this.edgeList = [];
-            this.highlightedState = null;
             this.initialState = null;
-            this.edgeMode = false;
-            this.currentEdge = null;
+            this.clearSelection();
             Settings_4.Settings.controller().clear();
         };
         AutomatonRenderer.prototype.empty = function () {
@@ -1667,33 +1678,145 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         };
         AutomatonRenderer.prototype.showEditableState = function (state) {
             var container = Utils_6.utils.create("div");
-            var table = new Table_1.Table(3, 2);
+            var table = new Table_1.Table(4, 3);
+            var canvas = this.canvas;
+            var self = this;
+            var renameButton = Utils_6.utils.create("input", {
+                type: "button",
+                value: "rename",
+                click: function () {
+                    var newName = prompt("gimme new name pl0x");
+                    state.setName(newName);
+                    state.render(canvas);
+                    $("#entity_name").html(newName);
+                }
+            });
+            var toggleInitialButton = Utils_6.utils.create("input", {
+                type: "button",
+                value: "toggle",
+                click: function () {
+                    self.setInitialState(state);
+                    state.render(canvas);
+                    $("#entity_initial").html(state.isInitial() ? "yes" : "no");
+                }
+            });
+            var toggleFinalButton = Utils_6.utils.create("input", {
+                type: "button",
+                value: "toggle",
+                click: function () {
+                    self.changeFinalFlag(state, !state.isFinal());
+                    state.render(canvas);
+                    $("#entity_initial").html(state.isFinal() ? "yes" : "no");
+                }
+            });
+            var deleteButton = Utils_6.utils.create("input", {
+                type: "button",
+                value: "Delete state",
+                click: function () {
+                    self.deleteState(state);
+                    self.clearSelection();
+                    Settings_4.Settings.sidebar.unsetSelectedEntityContent();
+                }
+            });
             table.add(Utils_6.utils.create("span", { innerHTML: "Name:" }));
             table.add(Utils_6.utils.create("span", { innerHTML: state.getName(),
                 className: "property_value",
                 id: "entity_name" }));
+            table.add(renameButton);
             table.add(Utils_6.utils.create("span", { innerHTML: "Is initial:" }));
             table.add(Utils_6.utils.create("span", { innerHTML: state.isInitial() ? "yes" : "no",
                 className: "property_value",
                 id: "entity_initial" }));
+            table.add(toggleInitialButton);
             table.add(Utils_6.utils.create("span", { innerHTML: "Is final:" }));
             table.add(Utils_6.utils.create("span", { innerHTML: state.isFinal() ? "yes" : "no",
                 className: "property_value",
                 id: "entity_final" }));
+            table.add(toggleFinalButton);
+            table.add(deleteButton, 3);
             container.appendChild(table.html());
             return container;
         };
         AutomatonRenderer.prototype.showEditableEdge = function (edge) {
             var container = Utils_6.utils.create("div");
-            var table = new Table_1.Table(2, 2);
+            var table = new Table_1.Table(4, 3);
+            var canvas = this.canvas;
+            var self = this;
+            var changeOriginButton = Utils_6.utils.create("input", {
+                type: "button",
+                value: "change",
+                click: function () {
+                    var newOrigin = prompt("gimme new origin pl0x");
+                    for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
+                        var state = _a[_i];
+                        if (state.getName() == newOrigin) {
+                            edge.setOrigin(state);
+                        }
+                    }
+                    edge.render(canvas);
+                    $("#entity_origin").html(newOrigin);
+                }
+            });
+            var changeTargetButton = Utils_6.utils.create("input", {
+                type: "button",
+                value: "change",
+                click: function () {
+                    var newTarget = prompt("gimme new target pl0x");
+                    for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
+                        var state = _a[_i];
+                        if (state.getName() == newTarget) {
+                            edge.setTarget(state);
+                        }
+                    }
+                    edge.render(canvas);
+                    $("#entity_origin").html(newTarget);
+                }
+            });
+            var changeTransitionButton = Utils_6.utils.create("input", {
+                type: "button",
+                value: "change",
+                click: function () {
+                }
+            });
+            var deleteTransitionButton = Utils_6.utils.create("input", {
+                type: "button",
+                value: "delete",
+                click: function () {
+                }
+            });
+            var deleteButton = Utils_6.utils.create("input", {
+                type: "button",
+                value: "Delete edge",
+                click: function () {
+                    Settings_4.Settings.sidebar.unsetSelectedEntityContent();
+                }
+            });
+            var transitionActionContainer = Utils_6.utils.create("span");
+            transitionActionContainer.appendChild(changeTransitionButton);
+            transitionActionContainer.appendChild(deleteTransitionButton);
             table.add(Utils_6.utils.create("span", { innerHTML: "Origin:" }));
             table.add(Utils_6.utils.create("span", { innerHTML: edge.getOrigin().getName(),
                 className: "property_value",
                 id: "entity_origin" }));
+            table.add(changeOriginButton);
             table.add(Utils_6.utils.create("span", { innerHTML: "Target:" }));
             table.add(Utils_6.utils.create("span", { innerHTML: edge.getTarget().getName(),
                 className: "property_value",
                 id: "entity_target" }));
+            table.add(changeTargetButton);
+            var textSelector = Utils_6.utils.create("select");
+            var textList = edge.getTextList();
+            var i = 0;
+            for (var _i = 0, textList_1 = textList; _i < textList_1.length; _i++) {
+                var text = textList_1[_i];
+                var option = Utils_6.utils.create("option", { value: i, innerHTML: text });
+                textSelector.appendChild(option);
+                i++;
+            }
+            table.add(Utils_6.utils.create("span", { innerHTML: "Transitions:" }));
+            table.add(textSelector);
+            table.add(transitionActionContainer);
+            table.add(deleteButton, 3);
             container.appendChild(table.html());
             return container;
         };
@@ -1838,6 +1961,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         AutomatonRenderer.prototype.clearSelection = function () {
             this.highlightedState = null;
             this.highlightedEdge = null;
+            Settings_4.Settings.sidebar.unsetSelectedEntityContent();
             if (this.edgeMode) {
                 this.edgeMode = false;
                 this.currentEdge.remove();

@@ -152,10 +152,8 @@ export class AutomatonRenderer {
 		}
 		this.edgeList = [];
 
-		this.highlightedState = null;
 		this.initialState = null;
-		this.edgeMode = false;
-		this.currentEdge = null;
+		this.clearSelection();
 
 		Settings.controller().clear();
 	}
@@ -375,34 +373,154 @@ export class AutomatonRenderer {
 
 	private showEditableState(state: State): HTMLDivElement {
 		let container = <HTMLDivElement> utils.create("div");
-		let table = new Table(3, 2);
+		let table = new Table(4, 3);
+		let canvas = this.canvas;
+		let self = this;
+		// TODO: use images for the buttons instead of labels
+		let renameButton = utils.create("input", {
+			type: "button",
+			value: "rename",
+			click: function() {
+				let newName = prompt("gimme new name pl0x");
+				state.setName(newName);
+				state.render(canvas);
+				$("#entity_name").html(newName);
+			}
+		});
+		let toggleInitialButton = utils.create("input", {
+			type: "button",
+			value: "toggle",
+			click: function() {
+				self.setInitialState(state);
+				state.render(canvas);
+				$("#entity_initial").html(state.isInitial() ? "yes" : "no");
+			}
+		});
+		let toggleFinalButton = utils.create("input", {
+			type: "button",
+			value: "toggle",
+			click: function() {
+				self.changeFinalFlag(state, !state.isFinal());
+				state.render(canvas);
+				$("#entity_initial").html(state.isFinal() ? "yes" : "no");
+			}
+		});
+		let deleteButton = utils.create("input", {
+			type: "button",
+			value: "Delete state",
+			click: function() {
+				self.deleteState(state);
+				self.clearSelection();
+				Settings.sidebar.unsetSelectedEntityContent();
+			}
+		});
+
 		table.add(utils.create("span", { innerHTML: "Name:" }));
 		table.add(utils.create("span", { innerHTML: state.getName(),
 										 className: "property_value",
 										 id: "entity_name" }));
+		table.add(renameButton);
 		table.add(utils.create("span", { innerHTML: "Is initial:" }));
 		table.add(utils.create("span", { innerHTML: state.isInitial() ? "yes" : "no",
 										 className: "property_value",
 										 id: "entity_initial" }));
+		table.add(toggleInitialButton);
 		table.add(utils.create("span", { innerHTML: "Is final:" }));
 		table.add(utils.create("span", { innerHTML: state.isFinal() ? "yes" : "no",
 										 className: "property_value",
 										 id: "entity_final" }));
+		table.add(toggleFinalButton);
+		table.add(deleteButton, 3);
 		container.appendChild(table.html());
 		return container;
 	}
 
 	private showEditableEdge(edge: Edge): HTMLDivElement {
 		let container = <HTMLDivElement> utils.create("div");
-		let table = new Table(2, 2);
+		let table = new Table(4, 3);
+		let canvas = this.canvas;
+		let self = this;
+		// TODO: use images for the buttons instead of labels
+		let changeOriginButton = utils.create("input", {
+			type: "button",
+			value: "change",
+			click: function() {
+				let newOrigin = prompt("gimme new origin pl0x");
+				for (let state of self.stateList) {
+					if (state.getName() == newOrigin) {
+						edge.setOrigin(state);
+					}
+				}
+				edge.render(canvas);
+				$("#entity_origin").html(newOrigin);
+			}
+		});
+		let changeTargetButton = utils.create("input", {
+			type: "button",
+			value: "change",
+			click: function() {
+				let newTarget = prompt("gimme new target pl0x");
+				for (let state of self.stateList) {
+					if (state.getName() == newTarget) {
+						edge.setTarget(state);
+					}
+				}
+				edge.render(canvas);
+				$("#entity_origin").html(newTarget);
+			}
+		});
+		let changeTransitionButton = utils.create("input", {
+			type: "button",
+			value: "change",
+			click: function() {
+				// TODO
+			}
+		});
+		let deleteTransitionButton = utils.create("input", {
+			type: "button",
+			value: "delete",
+			click: function() {
+				// TODO
+			}
+		});
+		let deleteButton = utils.create("input", {
+			type: "button",
+			value: "Delete edge",
+			click: function() {
+				// self.deleteState(state);
+				// self.clearSelection();
+				Settings.sidebar.unsetSelectedEntityContent();
+			}
+		});
+
+		let transitionActionContainer = utils.create("span");
+		transitionActionContainer.appendChild(changeTransitionButton);
+		transitionActionContainer.appendChild(deleteTransitionButton);
+
 		table.add(utils.create("span", { innerHTML: "Origin:" }));
 		table.add(utils.create("span", { innerHTML: edge.getOrigin().getName(),
 										 className: "property_value",
 										 id: "entity_origin" }));
+		table.add(changeOriginButton);
 		table.add(utils.create("span", { innerHTML: "Target:" }));
 		table.add(utils.create("span", { innerHTML: edge.getTarget().getName(),
 										 className: "property_value",
 										 id: "entity_target" }));
+		table.add(changeTargetButton);
+
+		let textSelector = <HTMLSelectElement> utils.create("select");
+		let textList = edge.getTextList();
+		let i = 0;
+		for (let text of textList) {
+			let option = utils.create("option", { value: i, innerHTML: text });
+			textSelector.appendChild(option);
+			i++;
+		}
+		table.add(utils.create("span", { innerHTML: "Transitions:" }));
+		table.add(textSelector);
+		table.add(transitionActionContainer);
+
+		table.add(deleteButton, 3);
 		container.appendChild(table.html());
 		return container;
 	}
@@ -563,6 +681,7 @@ export class AutomatonRenderer {
 	private clearSelection(): void {
 		this.highlightedState = null;
 		this.highlightedEdge = null;
+		Settings.sidebar.unsetSelectedEntityContent();
 		if (this.edgeMode) {
 			this.edgeMode = false;
 			this.currentEdge.remove();
