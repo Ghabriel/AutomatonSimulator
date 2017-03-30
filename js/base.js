@@ -1640,8 +1640,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 state.applyPalette(Settings_4.Settings.stateHighlightPalette);
                 this.highlightedState = state;
                 state.render(this.canvas);
-                Settings_4.Settings.sidebar.unsetSelectedEntityContent();
-                Settings_4.Settings.sidebar.setSelectedEntityContent(this.showEditableState(state));
+                this.updateEditableState(state);
             }
         };
         AutomatonRenderer.prototype.dimState = function () {
@@ -1662,8 +1661,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 edge.setCustomColor("red");
                 this.highlightedEdge = edge;
                 edge.render(this.canvas);
-                Settings_4.Settings.sidebar.unsetSelectedEntityContent();
-                Settings_4.Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
+                this.updateEditableEdge(edge);
             }
         };
         AutomatonRenderer.prototype.dimEdge = function () {
@@ -1673,6 +1671,14 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 this.highlightedEdge = null;
                 Settings_4.Settings.sidebar.unsetSelectedEntityContent();
             }
+        };
+        AutomatonRenderer.prototype.updateEditableState = function (state) {
+            Settings_4.Settings.sidebar.unsetSelectedEntityContent();
+            Settings_4.Settings.sidebar.setSelectedEntityContent(this.showEditableState(state));
+        };
+        AutomatonRenderer.prototype.updateEditableEdge = function (edge) {
+            Settings_4.Settings.sidebar.unsetSelectedEntityContent();
+            Settings_4.Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
         };
         AutomatonRenderer.prototype.showEditableState = function (state) {
             var container = Utils_6.utils.create("div");
@@ -1784,8 +1790,10 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                         var dataList = edge.getDataList();
                         controller.deleteEdge(origin, target, dataList[selectedIndex]);
                         edge.getDataList()[selectedIndex] = data;
+                        edge.getTextList()[selectedIndex] = content;
                         edge.render(self.canvas);
                         controller.createEdge(origin, target, data);
+                        self.updateEditableEdge(edge);
                     });
                 }
             });

@@ -330,8 +330,7 @@ export class AutomatonRenderer {
 			this.highlightedState = state;
 			state.render(this.canvas);
 
-			Settings.sidebar.unsetSelectedEntityContent();
-			Settings.sidebar.setSelectedEntityContent(this.showEditableState(state));
+			this.updateEditableState(state);
 		}
 	}
 
@@ -356,8 +355,7 @@ export class AutomatonRenderer {
 			this.highlightedEdge = edge;
 			edge.render(this.canvas);
 
-			Settings.sidebar.unsetSelectedEntityContent();
-			Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
+			this.updateEditableEdge(edge);
 		}
 	}
 
@@ -369,6 +367,16 @@ export class AutomatonRenderer {
 
 			Settings.sidebar.unsetSelectedEntityContent();
 		}
+	}
+
+	private updateEditableState(state: State): void {
+		Settings.sidebar.unsetSelectedEntityContent();
+		Settings.sidebar.setSelectedEntityContent(this.showEditableState(state));
+	}
+
+	private updateEditableEdge(edge: Edge): void {
+		Settings.sidebar.unsetSelectedEntityContent();
+		Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
 	}
 
 	private showEditableState(state: State): HTMLDivElement {
@@ -478,14 +486,16 @@ export class AutomatonRenderer {
 				let transition = transitionSelector[selectedIndex].innerHTML;
 				let controller = Settings.controller();
 				controller.edgePrompt(function(data, content) {
-					// let origin = edge.getOrigin();
-					// let target = edge.getTarget();
-					// let dataList = edge.getDataList();
-					// controller.deleteEdge(origin, target, dataList[selectedIndex]);
-					// edge.getDataList()[selectedIndex] = data;
-					// edge.render(self.canvas);
-					// controller.createEdge(origin, target, data);
-					console.log("TODO: change " + transition + " to " + content);
+					let origin = edge.getOrigin();
+					let target = edge.getTarget();
+					let dataList = edge.getDataList();
+					controller.deleteEdge(origin, target, dataList[selectedIndex]);
+					edge.getDataList()[selectedIndex] = data;
+					edge.getTextList()[selectedIndex] = content;
+					edge.render(self.canvas);
+					controller.createEdge(origin, target, data);
+					self.updateEditableEdge(edge);
+					// console.log("TODO: change " + transition + " to " + content);
 				});
 			}
 		});
