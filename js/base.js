@@ -101,6 +101,20 @@ define("languages/Portuguese", ["require", "exports"], function (require, export
             PROMPT_CANCEL: "Cancelar",
             SELECTED_ENTITY: "Entidade selecionada",
             NO_SELECTED_ENTITY: "nenhuma entidade selecionada",
+            ORIGIN: "Origem",
+            TARGET: "Destino",
+            TRANSITIONS: "Transições",
+            STATE_NAME: "Nome",
+            STATE_IS_INITIAL: "É inicial",
+            STATE_IS_FINAL: "É final",
+            RENAME_STATE: "renomear",
+            TOGGLE_PROPERTY: "alternar",
+            CHANGE_PROPERTY: "alterar",
+            DELETE_STATE: "Remover estado",
+            DELETE_SELECTED_TRANSITION: "Remover transição selecionada",
+            DELETE_ALL_TRANSITIONS: "Remover todas as transições",
+            YES: "sim",
+            NO: "não",
             SELECT_MACHINE: "Seleção de Máquina",
             CLEAR_MACHINE: "Limpar",
             CLEAR_CONFIRMATION: "Deseja realmente limpar o autômato?",
@@ -133,6 +147,20 @@ define("languages/English", ["require", "exports"], function (require, exports) 
             PROMPT_CANCEL: "Cancel",
             SELECTED_ENTITY: "Selected entity",
             NO_SELECTED_ENTITY: "no selected entity",
+            ORIGIN: "Origin",
+            TARGET: "Target",
+            TRANSITIONS: "Transitions",
+            STATE_NAME: "Name",
+            STATE_IS_INITIAL: "Is initial",
+            STATE_IS_FINAL: "Is final",
+            RENAME_STATE: "rename",
+            TOGGLE_PROPERTY: "toggle",
+            CHANGE_PROPERTY: "change",
+            DELETE_STATE: "Delete state",
+            DELETE_SELECTED_TRANSITION: "Delete selected transition",
+            DELETE_ALL_TRANSITIONS: "Delete all transitions",
+            YES: "yes",
+            NO: "no",
             SELECT_MACHINE: "Machine Selection",
             CLEAR_MACHINE: "Clear",
             CLEAR_CONFIRMATION: "Do you really want to reset this automaton?",
@@ -1687,7 +1715,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             var self = this;
             var renameButton = Utils_6.utils.create("input", {
                 type: "button",
-                value: "rename",
+                value: Settings_4.Strings.RENAME_STATE,
                 click: function () {
                     var newName = prompt("gimme new name pl0x");
                     state.setName(newName);
@@ -1697,43 +1725,47 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             });
             var toggleInitialButton = Utils_6.utils.create("input", {
                 type: "button",
-                value: "toggle",
+                value: Settings_4.Strings.TOGGLE_PROPERTY,
                 click: function () {
                     self.setInitialState(state);
                     state.render(canvas);
-                    $("#entity_initial").html(state.isInitial() ? "yes" : "no");
+                    $("#entity_initial").html(state.isInitial() ? Settings_4.Strings.YES
+                        : Settings_4.Strings.NO);
                 }
             });
             var toggleFinalButton = Utils_6.utils.create("input", {
                 type: "button",
-                value: "toggle",
+                value: Settings_4.Strings.TOGGLE_PROPERTY,
                 click: function () {
                     self.changeFinalFlag(state, !state.isFinal());
                     state.render(canvas);
-                    $("#entity_initial").html(state.isFinal() ? "yes" : "no");
+                    $("#entity_initial").html(state.isFinal() ? Settings_4.Strings.YES
+                        : Settings_4.Strings.NO);
                 }
             });
             var deleteButton = Utils_6.utils.create("input", {
                 type: "button",
-                value: "Delete state",
+                value: Settings_4.Strings.DELETE_STATE,
                 click: function () {
                     self.deleteState(state);
                     self.clearSelection();
                     Settings_4.Settings.sidebar.unsetSelectedEntityContent();
                 }
             });
-            table.add(Utils_6.utils.create("span", { innerHTML: "Name:" }));
+            table.add(Utils_6.utils.create("span", { innerHTML: Settings_4.Strings.STATE_NAME + ":" }));
             table.add(Utils_6.utils.create("span", { innerHTML: state.getName(),
                 className: "property_value",
                 id: "entity_name" }));
             table.add(renameButton);
-            table.add(Utils_6.utils.create("span", { innerHTML: "Is initial:" }));
-            table.add(Utils_6.utils.create("span", { innerHTML: state.isInitial() ? "yes" : "no",
+            table.add(Utils_6.utils.create("span", { innerHTML: Settings_4.Strings.STATE_IS_INITIAL + ":" }));
+            table.add(Utils_6.utils.create("span", { innerHTML: state.isInitial() ? Settings_4.Strings.YES
+                    : Settings_4.Strings.NO,
                 className: "property_value",
                 id: "entity_initial" }));
             table.add(toggleInitialButton);
-            table.add(Utils_6.utils.create("span", { innerHTML: "Is final:" }));
-            table.add(Utils_6.utils.create("span", { innerHTML: state.isFinal() ? "yes" : "no",
+            table.add(Utils_6.utils.create("span", { innerHTML: Settings_4.Strings.STATE_IS_FINAL + ":" }));
+            table.add(Utils_6.utils.create("span", { innerHTML: state.isFinal() ? Settings_4.Strings.YES
+                    : Settings_4.Strings.NO,
                 className: "property_value",
                 id: "entity_final" }));
             table.add(toggleFinalButton);
@@ -1748,7 +1780,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             var self = this;
             var changeOriginButton = Utils_6.utils.create("input", {
                 type: "button",
-                value: "change",
+                value: Settings_4.Strings.CHANGE_PROPERTY,
                 click: function () {
                     var newOrigin = prompt("gimme new origin pl0x");
                     for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
@@ -1763,7 +1795,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             });
             var changeTargetButton = Utils_6.utils.create("input", {
                 type: "button",
-                value: "change",
+                value: Settings_4.Strings.CHANGE_PROPERTY,
                 click: function () {
                     var newTarget = prompt("gimme new target pl0x");
                     for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
@@ -1778,7 +1810,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             });
             var changeTransitionButton = Utils_6.utils.create("input", {
                 type: "button",
-                value: "change",
+                value: Settings_4.Strings.CHANGE_PROPERTY,
                 click: function () {
                     var transitionSelector = $("#entity_transition_list").get(0);
                     var selectedIndex = transitionSelector.selectedIndex;
@@ -1799,7 +1831,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             });
             var deleteTransitionButton = Utils_6.utils.create("input", {
                 type: "button",
-                value: "Delete selected transition",
+                value: Settings_4.Strings.DELETE_SELECTED_TRANSITION,
                 click: function () {
                     var transitionSelector = $("#entity_transition_list").get(0);
                     console.log(transitionSelector.selectedIndex);
@@ -1808,17 +1840,17 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             });
             var deleteAllButton = Utils_6.utils.create("input", {
                 type: "button",
-                value: "Delete all transitions",
+                value: Settings_4.Strings.DELETE_ALL_TRANSITIONS,
                 click: function () {
                     Settings_4.Settings.sidebar.unsetSelectedEntityContent();
                 }
             });
-            table.add(Utils_6.utils.create("span", { innerHTML: "Origin:" }));
+            table.add(Utils_6.utils.create("span", { innerHTML: Settings_4.Strings.ORIGIN + ":" }));
             table.add(Utils_6.utils.create("span", { innerHTML: edge.getOrigin().getName(),
                 className: "property_value",
                 id: "entity_origin" }));
             table.add(changeOriginButton);
-            table.add(Utils_6.utils.create("span", { innerHTML: "Target:" }));
+            table.add(Utils_6.utils.create("span", { innerHTML: Settings_4.Strings.TARGET + ":" }));
             table.add(Utils_6.utils.create("span", { innerHTML: edge.getTarget().getName(),
                 className: "property_value",
                 id: "entity_target" }));
@@ -1834,7 +1866,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 textSelector.appendChild(option);
                 i++;
             }
-            table.add(Utils_6.utils.create("span", { innerHTML: "Transitions:" }));
+            table.add(Utils_6.utils.create("span", { innerHTML: Settings_4.Strings.TRANSITIONS + ":" }));
             table.add(textSelector);
             table.add(changeTransitionButton);
             table.add(deleteTransitionButton, 3);

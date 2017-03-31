@@ -387,7 +387,7 @@ export class AutomatonRenderer {
 		// TODO: use images for the buttons instead of labels
 		let renameButton = utils.create("input", {
 			type: "button",
-			value: "rename",
+			value: Strings.RENAME_STATE,
 			click: function() {
 				let newName = prompt("gimme new name pl0x");
 				state.setName(newName);
@@ -397,25 +397,27 @@ export class AutomatonRenderer {
 		});
 		let toggleInitialButton = utils.create("input", {
 			type: "button",
-			value: "toggle",
+			value: Strings.TOGGLE_PROPERTY,
 			click: function() {
 				self.setInitialState(state);
 				state.render(canvas);
-				$("#entity_initial").html(state.isInitial() ? "yes" : "no");
+				$("#entity_initial").html(state.isInitial() ? Strings.YES
+															: Strings.NO);
 			}
 		});
 		let toggleFinalButton = utils.create("input", {
 			type: "button",
-			value: "toggle",
+			value: Strings.TOGGLE_PROPERTY,
 			click: function() {
 				self.changeFinalFlag(state, !state.isFinal());
 				state.render(canvas);
-				$("#entity_initial").html(state.isFinal() ? "yes" : "no");
+				$("#entity_initial").html(state.isFinal() ? Strings.YES
+														  : Strings.NO);
 			}
 		});
 		let deleteButton = utils.create("input", {
 			type: "button",
-			value: "Delete state",
+			value: Strings.DELETE_STATE,
 			click: function() {
 				self.deleteState(state);
 				self.clearSelection();
@@ -423,18 +425,20 @@ export class AutomatonRenderer {
 			}
 		});
 
-		table.add(utils.create("span", { innerHTML: "Name:" }));
+		table.add(utils.create("span", { innerHTML: Strings.STATE_NAME + ":" }));
 		table.add(utils.create("span", { innerHTML: state.getName(),
 										 className: "property_value",
 										 id: "entity_name" }));
 		table.add(renameButton);
-		table.add(utils.create("span", { innerHTML: "Is initial:" }));
-		table.add(utils.create("span", { innerHTML: state.isInitial() ? "yes" : "no",
+		table.add(utils.create("span", { innerHTML: Strings.STATE_IS_INITIAL + ":" }));
+		table.add(utils.create("span", { innerHTML: state.isInitial() ? Strings.YES
+																	  : Strings.NO,
 										 className: "property_value",
 										 id: "entity_initial" }));
 		table.add(toggleInitialButton);
-		table.add(utils.create("span", { innerHTML: "Is final:" }));
-		table.add(utils.create("span", { innerHTML: state.isFinal() ? "yes" : "no",
+		table.add(utils.create("span", { innerHTML: Strings.STATE_IS_FINAL + ":" }));
+		table.add(utils.create("span", { innerHTML: state.isFinal() ? Strings.YES
+																	: Strings.NO,
 										 className: "property_value",
 										 id: "entity_final" }));
 		table.add(toggleFinalButton);
@@ -451,7 +455,7 @@ export class AutomatonRenderer {
 		// TODO: use images for the buttons instead of labels
 		let changeOriginButton = utils.create("input", {
 			type: "button",
-			value: "change",
+			value: Strings.CHANGE_PROPERTY,
 			click: function() {
 				let newOrigin = prompt("gimme new origin pl0x");
 				for (let state of self.stateList) {
@@ -465,7 +469,7 @@ export class AutomatonRenderer {
 		});
 		let changeTargetButton = utils.create("input", {
 			type: "button",
-			value: "change",
+			value: Strings.CHANGE_PROPERTY,
 			click: function() {
 				let newTarget = prompt("gimme new target pl0x");
 				for (let state of self.stateList) {
@@ -479,7 +483,7 @@ export class AutomatonRenderer {
 		});
 		let changeTransitionButton = utils.create("input", {
 			type: "button",
-			value: "change",
+			value: Strings.CHANGE_PROPERTY,
 			click: function() {
 				let transitionSelector = <HTMLSelectElement> $("#entity_transition_list").get(0);
 				let selectedIndex = transitionSelector.selectedIndex;
@@ -501,7 +505,7 @@ export class AutomatonRenderer {
 		});
 		let deleteTransitionButton = utils.create("input", {
 			type: "button",
-			value: "Delete selected transition",
+			value: Strings.DELETE_SELECTED_TRANSITION,
 			click: function() {
 				let transitionSelector = <HTMLSelectElement> $("#entity_transition_list").get(0);
 				console.log(transitionSelector.selectedIndex);
@@ -513,7 +517,7 @@ export class AutomatonRenderer {
 		});
 		let deleteAllButton = utils.create("input", {
 			type: "button",
-			value: "Delete all transitions",
+			value: Strings.DELETE_ALL_TRANSITIONS,
 			click: function() {
 				// self.deleteState(state);
 				// self.clearSelection();
@@ -521,12 +525,12 @@ export class AutomatonRenderer {
 			}
 		});
 
-		table.add(utils.create("span", { innerHTML: "Origin:" }));
+		table.add(utils.create("span", { innerHTML: Strings.ORIGIN + ":" }));
 		table.add(utils.create("span", { innerHTML: edge.getOrigin().getName(),
 										 className: "property_value",
 										 id: "entity_origin" }));
 		table.add(changeOriginButton);
-		table.add(utils.create("span", { innerHTML: "Target:" }));
+		table.add(utils.create("span", { innerHTML: Strings.TARGET + ":" }));
 		table.add(utils.create("span", { innerHTML: edge.getTarget().getName(),
 										 className: "property_value",
 										 id: "entity_target" }));
@@ -542,7 +546,7 @@ export class AutomatonRenderer {
 			textSelector.appendChild(option);
 			i++;
 		}
-		table.add(utils.create("span", { innerHTML: "Transitions:" }));
+		table.add(utils.create("span", { innerHTML: Strings.TRANSITIONS + ":" }));
 		table.add(textSelector);
 		table.add(changeTransitionButton);
 
