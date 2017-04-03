@@ -1819,7 +1819,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                         }
                     }
                     edge.render(canvas);
-                    $("#entity_origin").html(newTarget);
+                    $("#entity_target").html(newTarget);
                 }
             });
             var changeTransitionButton = Utils_6.utils.create("input", {
@@ -1828,7 +1828,6 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 click: function () {
                     var transitionSelector = $("#entity_transition_list").get(0);
                     var selectedIndex = transitionSelector.selectedIndex;
-                    var transition = transitionSelector[selectedIndex].innerHTML;
                     var controller = Settings_5.Settings.controller();
                     controller.edgePrompt(function (data, content) {
                         var origin = edge.getOrigin();
@@ -1848,14 +1847,31 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 value: Settings_5.Strings.DELETE_SELECTED_TRANSITION,
                 click: function () {
                     var transitionSelector = $("#entity_transition_list").get(0);
-                    console.log(transitionSelector.selectedIndex);
-                    console.log(transitionSelector.children[transitionSelector.selectedIndex].innerHTML);
+                    var selectedIndex = transitionSelector.selectedIndex;
+                    var controller = Settings_5.Settings.controller();
+                    var origin = edge.getOrigin();
+                    var target = edge.getTarget();
+                    var dataList = edge.getDataList();
+                    controller.deleteEdge(origin, target, dataList[selectedIndex]);
+                    edge.getDataList().splice(selectedIndex, 1);
+                    edge.getTextList().splice(selectedIndex, 1);
+                    if (dataList.length == 0) {
+                        self.deleteEdge(edge);
+                        self.clearSelection();
+                        Settings_5.Settings.sidebar.unsetSelectedEntityContent();
+                    }
+                    else {
+                        edge.render(self.canvas);
+                        self.updateEditableEdge(edge);
+                    }
                 }
             });
             var deleteAllButton = Utils_6.utils.create("input", {
                 type: "button",
                 value: Settings_5.Strings.DELETE_ALL_TRANSITIONS,
                 click: function () {
+                    self.deleteEdge(edge);
+                    self.clearSelection();
                     Settings_5.Settings.sidebar.unsetSelectedEntityContent();
                 }
             });
@@ -2093,6 +2109,15 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 }
             }
             Settings_5.Settings.controller().deleteState(state);
+        };
+        AutomatonRenderer.prototype.deleteEdge = function (edge) {
+            for (var i = 0; i < this.edgeList.length; i++) {
+                if (this.edgeList[i] == edge) {
+                    edge.remove();
+                    this.edgeList.splice(i, 1);
+                    break;
+                }
+            }
         };
         AutomatonRenderer.prototype.toggleInitial = function () {
             var highlightedState = this.highlightedState;

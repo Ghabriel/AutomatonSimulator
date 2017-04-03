@@ -452,7 +452,7 @@ export class AutomatonRenderer {
 		let table = new Table(5, 3);
 		let canvas = this.canvas;
 		let self = this;
-		// TODO: use images for the buttons instead of labels
+		// TODO: check for already existing edges after changing origin/target
 		let changeOriginButton = utils.create("input", {
 			type: "button",
 			value: Strings.CHANGE_PROPERTY,
@@ -478,7 +478,7 @@ export class AutomatonRenderer {
 					}
 				}
 				edge.render(canvas);
-				$("#entity_origin").html(newTarget);
+				$("#entity_target").html(newTarget);
 			}
 		});
 		let changeTransitionButton = utils.create("input", {
@@ -487,9 +487,10 @@ export class AutomatonRenderer {
 			click: function() {
 				let transitionSelector = <HTMLSelectElement> $("#entity_transition_list").get(0);
 				let selectedIndex = transitionSelector.selectedIndex;
-				let transition = transitionSelector[selectedIndex].innerHTML;
 				let controller = Settings.controller();
 				controller.edgePrompt(function(data, content) {
+					// TODO: check if the new content conflicts with an already
+					// existing transition in this edge (e.g 0,1 -> 1,1)
 					let origin = edge.getOrigin();
 					let target = edge.getTarget();
 					let dataList = edge.getDataList();
@@ -499,7 +500,6 @@ export class AutomatonRenderer {
 					edge.render(self.canvas);
 					controller.createEdge(origin, target, data);
 					self.updateEditableEdge(edge);
-					// console.log("TODO: change " + transition + " to " + content);
 				});
 			}
 		});
@@ -508,19 +508,33 @@ export class AutomatonRenderer {
 			value: Strings.DELETE_SELECTED_TRANSITION,
 			click: function() {
 				let transitionSelector = <HTMLSelectElement> $("#entity_transition_list").get(0);
-				console.log(transitionSelector.selectedIndex);
-				console.log(transitionSelector.children[transitionSelector.selectedIndex].innerHTML);
-				// self.deleteState(state);
-				// self.clearSelection();
-				// Settings.sidebar.unsetSelectedEntityContent();
+				let selectedIndex = transitionSelector.selectedIndex;
+
+				let controller = Settings.controller();
+				let origin = edge.getOrigin();
+				let target = edge.getTarget();
+				let dataList = edge.getDataList();
+
+				controller.deleteEdge(origin, target, dataList[selectedIndex]);
+				edge.getDataList().splice(selectedIndex, 1);
+				edge.getTextList().splice(selectedIndex, 1);
+
+				if (dataList.length == 0) {
+					self.deleteEdge(edge);
+					self.clearSelection();
+					Settings.sidebar.unsetSelectedEntityContent();
+				} else {
+					edge.render(self.canvas);
+					self.updateEditableEdge(edge);
+				}
 			}
 		});
 		let deleteAllButton = utils.create("input", {
 			type: "button",
 			value: Strings.DELETE_ALL_TRANSITIONS,
 			click: function() {
-				// self.deleteState(state);
-				// self.clearSelection();
+				self.deleteEdge(edge);
+				self.clearSelection();
 				Settings.sidebar.unsetSelectedEntityContent();
 			}
 		});
@@ -784,6 +798,16 @@ export class AutomatonRenderer {
 		}
 
 		Settings.controller().deleteState(state);
+	}
+
+	private deleteEdge(edge: Edge): void {
+		for (let i = 0; i < this.edgeList.length; i++) {
+			if (this.edgeList[i] == edge) {
+				edge.remove();
+				this.edgeList.splice(i, 1);
+				break;
+			}
+		}
 	}
 
 	// Toggles the initial flag of the highlighted state
