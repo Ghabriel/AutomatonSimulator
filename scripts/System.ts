@@ -9,6 +9,20 @@ interface KeyboardObserver {
 	group: string;
 }
 
+interface KeyboardKeyPress {
+	altKey: boolean;
+	ctrlKey: boolean;
+	shiftKey: boolean;
+	keyCode: number;
+	preventDefault: () => void;
+}
+
+const modifiers = ["alt", "ctrl", "shift"];
+
+function propertyName(type) {
+	return type + "Key";
+}
+
 export class System {
 	static changeLanguage(language): void {
 		Settings.changeLanguage(language);
@@ -25,7 +39,27 @@ export class System {
 		this.sidebar = sidebar;
 	}
 
-	static keyEvent(event: KeyboardEvent): boolean {
+	static emitKeyEvent(keys: string[]): void {
+		let event = {
+			preventDefault: function() {}
+		};
+
+		for (let modifier of modifiers) {
+			event[propertyName(modifier)] = false;
+		}
+
+		for (let key of keys) {
+			if (modifiers.indexOf(key) >= 0) {
+				event[propertyName(key)] = true;
+			} else {
+				event["keyCode"] = Keyboard.keys[key.toUpperCase()];
+			}
+		}
+
+		this.keyEvent(<KeyboardKeyPress> event);
+	}
+
+	static keyEvent(event: KeyboardKeyPress): boolean {
 		let triggered = false;
 		for (let observer of this.keyboardObservers) {
 			let keys = observer.keys;
@@ -66,17 +100,12 @@ export class System {
 		this.eventBlock = false;
 	}
 
-	private static shortcutMatches(event: KeyboardEvent, keys: string[]): boolean {
+	private static shortcutMatches(event: KeyboardKeyPress, keys: string[]): boolean {
 		if (this.eventBlock) {
 			// Ignore all keyboard events if there's an active event block.
 			return false;
 		}
 
-		function propertyName(type) {
-			return type + "Key";
-		}
-
-		const modifiers = ["alt", "ctrl", "shift"];
 		let expectedModifiers = [];
 		for (let key of keys) {
 			if (modifiers.indexOf(key) >= 0) {

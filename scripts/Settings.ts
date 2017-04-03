@@ -32,6 +32,8 @@ export namespace Settings {
 	export const promptSlideInterval = 200;
 	export const machineSelRows = 3;
 	export const machineSelColumns = 1;
+	export const machineActionRows = 2;
+	export const machineActionColumns = 2;
 
 	export const stateRadius = 32;
 	export const stateRingRadius = 27;

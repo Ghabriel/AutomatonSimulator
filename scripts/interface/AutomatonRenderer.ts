@@ -384,12 +384,12 @@ export class AutomatonRenderer {
 		let table = new Table(4, 3);
 		let canvas = this.canvas;
 		let self = this;
-		// TODO: use images for the buttons instead of labels
 		let renameButton = utils.create("input", {
 			type: "button",
 			value: Strings.RENAME_STATE,
 			click: function() {
 				let newName = prompt("gimme new name pl0x");
+				// TODO: check if the chosen name is already in use
 				state.setName(newName);
 				state.render(canvas);
 				$("#entity_name").html(newName);
@@ -411,7 +411,7 @@ export class AutomatonRenderer {
 			click: function() {
 				self.changeFinalFlag(state, !state.isFinal());
 				state.render(canvas);
-				$("#entity_initial").html(state.isFinal() ? Strings.YES
+				$("#entity_final").html(state.isFinal() ? Strings.YES
 														  : Strings.NO);
 			}
 		});

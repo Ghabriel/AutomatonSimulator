@@ -16,16 +16,19 @@ export class Sidebar extends Renderer {
 	}
 
 	public build(): void {
-		this.languageSelection = new Menu(Strings.SELECT_LANGUAGE);
-		this.fileManipulation = new Menu(Strings.FILE_MENUBAR);
-		this.selectedEntity = new Menu(Strings.SELECTED_ENTITY);
-		this.machineSelection = new Menu(Strings.SELECT_MACHINE);
-		this.otherMenus = [];
+		this.mainMenus = {
+			languageSelection: new Menu(Strings.SELECT_LANGUAGE),
+			fileManipulation: new Menu(Strings.FILE_MENUBAR),
+			selectedEntity: new Menu(Strings.SELECTED_ENTITY),
+			machineSelection: new Menu(Strings.SELECT_MACHINE),
+			actionMenu: new Menu(Strings.ACTION_LIST),
+		};
 
 		this.buildLanguageSelection();
 		this.buildFileManipulation();
 		this.buildSelectedEntityArea();
 		this.buildMachineSelection();
+		this.buildActionMenu();
 		// this.loadMachine(Settings.currentMachine);
 
 		if (this.node) {
@@ -34,13 +37,13 @@ export class Sidebar extends Renderer {
 	}
 
 	public setSelectedEntityContent(content: HTMLElement): void {
-		let node = this.selectedEntity.content();
+		let node = this.mainMenus.selectedEntity.content();
 		$(node.querySelector(".none")).hide();
 		node.appendChild(content);
 	}
 
 	public unsetSelectedEntityContent(): void {
-		let node = this.selectedEntity.content();
+		let node = this.mainMenus.selectedEntity.content();
 		while (node.children.length > 1) {
 			node.removeChild(node.children[node.children.length - 1]);
 		}
@@ -48,10 +51,11 @@ export class Sidebar extends Renderer {
 	}
 
 	protected onBind(): void {
-		this.languageSelection.bind(this.node);
-		this.fileManipulation.bind(this.node);
-		this.selectedEntity.bind(this.node);
-		this.machineSelection.bind(this.node);
+		let self = this;
+		utils.foreach(this.mainMenus, function(name, menu) {
+			menu.bind(self.node);
+		});
+
 		for (let menu of this.otherMenus) {
 			menu.bind(this.node);
 		}
@@ -59,10 +63,9 @@ export class Sidebar extends Renderer {
 	}
 
 	protected onRender(): void {
-		this.languageSelection.render();
-		this.fileManipulation.render();
-		this.selectedEntity.render();
-		this.machineSelection.render();
+		utils.foreach(this.mainMenus, function(name, menu) {
+			menu.render();
+		});
 		this.renderDynamicMenus();
 	}
 
@@ -102,9 +105,11 @@ export class Sidebar extends Renderer {
 			}
 			i++;
 		});
-		this.languageSelection.clear();
-		this.languageSelection.add(select);
-		this.languageSelection.toggle();
+
+		let languageSelection = this.mainMenus.languageSelection;
+		languageSelection.clear();
+		languageSelection.add(select);
+		languageSelection.toggle();
 
 		select.addEventListener("change", function(e) {
 			let node = <HTMLSelectElement> this;
@@ -119,7 +124,8 @@ export class Sidebar extends Renderer {
 	}
 
 	private buildFileManipulation(): void {
-		this.fileManipulation.clear();
+		let fileManipulation = this.mainMenus.fileManipulation;
+		fileManipulation.clear();
 		let save = <HTMLInputElement> utils.create("input", {
 			className: "file_manip_btn",
 			type: "button",
@@ -133,7 +139,7 @@ export class Sidebar extends Renderer {
 		utils.bindShortcut(Settings.shortcuts.save, function() {
 			save.click();
 		});
-		this.fileManipulation.add(save);
+		fileManipulation.add(save);
 
 
 		let fileSelector = <HTMLInputElement> utils.create("input", {
@@ -153,7 +159,7 @@ export class Sidebar extends Renderer {
 			}
 		});
 		// TODO: do we need to append fileSelector to the DOM?
-		// this.fileManipulation.add(fileSelector);
+		// fileManipulation.add(fileSelector);
 
 
 		let open = <HTMLInputElement> utils.create("input", {
@@ -168,7 +174,7 @@ export class Sidebar extends Renderer {
 		utils.bindShortcut(Settings.shortcuts.open, function() {
 			open.click();
 		});
-		this.fileManipulation.add(open);
+		fileManipulation.add(open);
 	}
 
 	private buildSelectedEntityArea(): void {
@@ -176,7 +182,7 @@ export class Sidebar extends Renderer {
 			className: "none",
 			innerHTML: Strings.NO_SELECTED_ENTITY
 		});
-		this.selectedEntity.add(none);
+		this.mainMenus.selectedEntity.add(none);
 	}
 
 	private buildMachineSelection(): void {
@@ -219,14 +225,69 @@ export class Sidebar extends Renderer {
 			}
 		});
 
-		this.machineSelection.clear();
-		this.machineSelection.add(table.html());
+		let machineSelection = this.mainMenus.machineSelection;
+		machineSelection.clear();
+		machineSelection.add(table.html());
 		this.loadMachine(Settings.currentMachine);
 	}
 
-	private languageSelection: Menu;
-	private fileManipulation: Menu;
-	private selectedEntity: Menu;
-	private machineSelection: Menu;
-	private otherMenus: Menu[];
+	private buildActionMenu(): void {
+		let table = new Table(Settings.machineActionRows, Settings.machineActionColumns);
+		let createState = <HTMLInputElement> utils.create("input", {
+			title: Strings.CREATE_STATE_INSTRUCTIONS,
+			type: "button",
+			value: Strings.CREATE_STATE,
+			click: function() {
+				// TODO
+			}
+		});
+		table.add(createState);
+
+		let createEdge = <HTMLInputElement> utils.create("input", {
+			title: Strings.CREATE_EDGE_INSTRUCTIONS,
+			type: "button",
+			value: Strings.CREATE_EDGE,
+			click: function() {
+				utils.prompt("TODO: text", 2, function(data) {
+
+				});
+			}
+		});
+		table.add(createEdge);
+
+		let clearMachine = <HTMLInputElement> utils.create("input", {
+			title: Settings.shortcuts.clearMachine.join(" "),
+			type: "button",
+			value: Strings.CLEAR_MACHINE,
+			click: function() {
+				System.emitKeyEvent(Settings.shortcuts.clearMachine);
+			}
+		});
+		table.add(clearMachine);
+
+		let undo = <HTMLInputElement> utils.create("input", {
+			title: Settings.shortcuts.undo.join(" "),
+			type: "button",
+			value: Strings.UNDO,
+			click: function() {
+				System.emitKeyEvent(Settings.shortcuts.undo);
+			}
+		});
+		table.add(undo);
+
+		let actionMenu = this.mainMenus.actionMenu;
+		let tableElement = table.html();
+		tableElement.id = "machine_actions";
+		actionMenu.add(tableElement);
+	}
+
+	// private mainMenus = {
+	// 	languageSelection: new Menu(Strings.SELECT_LANGUAGE),
+	// 	fileManipulation: new Menu(Strings.FILE_MENUBAR),
+	// 	selectedEntity: new Menu(Strings.SELECTED_ENTITY),
+	// 	machineSelection: new Menu(Strings.SELECT_MACHINE),
+	// 	actionMenu: new Menu("Actions"),
+	// };
+	private mainMenus;
+	private otherMenus: Menu[] = [];
 }

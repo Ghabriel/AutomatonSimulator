@@ -152,3 +152,7 @@ span.none {
 	color: #888;
 	font-style: italic;
 }
+
+#machine_actions input[type="button"] {
+	width: 100%;
+}

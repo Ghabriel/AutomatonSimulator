@@ -1,6 +1,7 @@
 import {Controller} from "./Controller"
 import {FA} from "../machines/FA"
 import {State} from "../interface/State"
+import {Strings} from "../Settings"
 import {utils} from "../Utils"
 
 export class FAController implements Controller {
@@ -13,7 +14,7 @@ export class FAController implements Controller {
 					  fallback?: () => void): void {
 
 		let self = this;
-		utils.prompt("Enter the edge content:", 1, function(data) {
+		utils.prompt(Strings.FA_ENTER_EDGE_CONTENT, 1, function(data) {
 			callback(data, self.edgeDataToText(data));
 		}, fallback);
 	}
