@@ -222,6 +222,8 @@ export class Edge {
 		} else {
 			// Non-loop case
 			if (!this.body.length) {
+				// TODO: curves
+				// http://jsfiddle.net/ry8kT/94/
 				this.body.push(utils.line(canvas,
 					origin.x, origin.y,
 					target.x, target.y
@@ -229,6 +231,8 @@ export class Edge {
 
 				this.body[0].attr("stroke-width", Settings.edgeArrowThickness);
 			} else {
+				// Handles the case where a loop becomes a non-loop
+				// (via edge edition)
 				while (this.body.length > 1) {
 					this.body[this.body.length - 1].remove();
 					this.body.pop();
