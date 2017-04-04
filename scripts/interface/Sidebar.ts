@@ -31,6 +31,7 @@ export class Sidebar extends Renderer {
 		this.buildActionMenu();
 		// this.loadMachine(Settings.currentMachine);
 
+		// Re-binds all menus when the system language is changed
 		if (this.node) {
 			this.onBind();
 		}

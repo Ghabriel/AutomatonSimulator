@@ -205,14 +205,6 @@ export namespace initFA {
 				testCaseInput.focus();
 			});
 
-			testCaseInput.addEventListener("keydown", function(e) {
-				if (e.keyCode == Keyboard.keys[Settings.shortcuts.dimTestCase[0]]) {
-					if (testCaseInput == document.activeElement) {
-						testCaseInput.blur();
-					}
-				}
-			});
-
 			utils.bindShortcut(Settings.shortcuts.fastForward, function() {
 				fastRecognition.click();
 			});
@@ -227,5 +219,16 @@ export namespace initFA {
 
 			boundShortcuts = true;
 		}
+
+		// Must be always rebound since the system's internal shortcut handler
+		// is not used here and the test case input vanishes when the system
+		// language is changed.
+		testCaseInput.addEventListener("keydown", function(e) {
+			if (e.keyCode == Keyboard.keys[Settings.shortcuts.dimTestCase[0]]) {
+				if (testCaseInput == document.activeElement) {
+					testCaseInput.blur();
+				}
+			}
+		});
 	}
 }

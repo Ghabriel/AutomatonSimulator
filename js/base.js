@@ -2481,13 +2481,6 @@ define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu
                 Utils_7.utils.bindShortcut(Settings_6.Settings.shortcuts.focusTestCase, function () {
                     testCaseInput.focus();
                 });
-                testCaseInput.addEventListener("keydown", function (e) {
-                    if (e.keyCode == Keyboard_2.Keyboard.keys[Settings_6.Settings.shortcuts.dimTestCase[0]]) {
-                        if (testCaseInput == document.activeElement) {
-                            testCaseInput.blur();
-                        }
-                    }
-                });
                 Utils_7.utils.bindShortcut(Settings_6.Settings.shortcuts.fastForward, function () {
                     fastRecognition.click();
                 });
@@ -2499,6 +2492,13 @@ define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu
                 });
                 boundShortcuts = true;
             }
+            testCaseInput.addEventListener("keydown", function (e) {
+                if (e.keyCode == Keyboard_2.Keyboard.keys[Settings_6.Settings.shortcuts.dimTestCase[0]]) {
+                    if (testCaseInput == document.activeElement) {
+                        testCaseInput.blur();
+                    }
+                }
+            });
         }
     })(initFA = exports.initFA || (exports.initFA = {}));
 });
