@@ -55,87 +55,7 @@ export class AutomatonRenderer {
 		this.setInitialState(q0);
 		this.changeFinalFlag(q3, true);
 
-		// let state = this.newState("q0");
-		// state.setPosition(350, 350);
 
-		// let groups = [
-		// 	[100, 350],
-		// 	[350, 100],
-		// 	[600, 350],
-		// 	[350, 600]
-		// ];
-
-		// let i = 0;
-		// let controller = Settings.controller();
-		// for (let group of groups) {
-		// 	let s = this.newState("q" + this.stateList.length);
-		// 	s.setPosition(group[0], group[1]);
-
-		// 	let e = new Edge();
-		// 	if (i == 1) {
-		// 		e.setOrigin(s);
-		// 		e.setTarget(state);
-		// 	} else {
-		// 		e.setOrigin(state);
-		// 		e.setTarget(s);
-		// 	}
-
-		// 	switch (i) {
-		// 		case 0:
-		// 			this.addEdgeData(e, ["b"]);
-		// 			this.addEdgeData(e, ["e"]);
-		// 			break;
-		// 		case 1:
-		// 			this.addEdgeData(e, ["a"]);
-		// 			break;
-		// 		case 2:
-		// 			this.addEdgeData(e, ["c"]);
-		// 			break;
-		// 		case 3:
-		// 			this.addEdgeData(e, ["d"]);
-		// 			break;
-		// 	}
-
-		// 	this.edgeList.push(e);
-		// 	i++;
-		// }
-
-		// this.setInitialState(this.stateList[2]);
-		// this.changeFinalFlag(this.stateList[this.stateList.length - 1], true);
-
-		// let e1 = new Edge();
-		// e1.setOrigin(this.stateList[1]);
-		// e1.setTarget(this.stateList[4]);
-		// this.addEdgeData(e1, ["b"]);
-		// this.edgeList.push(e1);
-
-		// let e2 = new Edge();
-		// e2.setOrigin(this.stateList[3]);
-		// e2.setTarget(this.stateList[4]);
-		// this.addEdgeData(e2, ["c"]);
-		// this.edgeList.push(e2);
-
-		// let e3 = new Edge();
-		// e3.setOrigin(this.stateList[1]);
-		// e3.setTarget(this.stateList[2]);
-		// this.addEdgeData(e3, ["a"]);
-		// this.edgeList.push(e3);
-
-		// let e4 = new Edge();
-		// e4.setOrigin(this.stateList[3]);
-		// e4.setTarget(this.stateList[2]);
-		// this.addEdgeData(e4, ["a"]);
-		// this.edgeList.push(e4);
-
-		// let e5 = new Edge();
-		// e5.setOrigin(this.stateList[2]);
-		// e5.setTarget(this.stateList[2]);
-		// this.addEdgeData(e5, ["b"]);
-		// this.edgeList.push(e5);
-
-		// this.updateEdges();
-
-		// this.selectState(state);
 
 		this.bindEvents();
 		this.bindShortcuts();
@@ -319,6 +239,37 @@ export class AutomatonRenderer {
 		this.locked = false;
 	}
 
+	public stateManualCreation(): void {
+		let stateRadius = Settings.stateRadius;
+		this.newStateAt(stateRadius, stateRadius);
+	}
+
+	public edgeManualCreation(): void {
+		if (!this.locked) {
+			let self = this;
+			utils.prompt("Choose the origin and destination", 2, function(data) {
+				let edge = new Edge();
+				for (let state of self.stateList) {
+					let name = state.getName();
+					if (name == data[0]) {
+						edge.setOrigin(state);
+					}
+
+					if (name == data[1]) {
+						edge.setTarget(state);
+					}
+				}
+
+				if (edge.getOrigin() && edge.getTarget()) {
+					self.currentEdge = edge;
+					self.finishEdge(edge.getTarget());
+				} else {
+					alert(Strings.ERROR_INVALID_STATE_NAME);
+				}
+			});
+		}
+	}
+
 	private selectState(state: State) {
 		if (!this.locked) {
 			this.dimEdge();
@@ -371,12 +322,16 @@ export class AutomatonRenderer {
 
 	private updateEditableState(state: State): void {
 		Settings.sidebar.unsetSelectedEntityContent();
-		Settings.sidebar.setSelectedEntityContent(this.showEditableState(state));
+		if (state) {
+			Settings.sidebar.setSelectedEntityContent(this.showEditableState(state));
+		}
 	}
 
 	private updateEditableEdge(edge: Edge): void {
 		Settings.sidebar.unsetSelectedEntityContent();
-		Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
+		if (edge) {
+			Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
+		}
 	}
 
 	private showEditableState(state: State): HTMLDivElement {
@@ -582,34 +537,7 @@ export class AutomatonRenderer {
 
 		let self = this;
 		$(this.node).dblclick(function(e) {
-			if (!self.locked) {
-				let state = new State();
-				state.setPosition(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
-				self.selectState(state);
-				self.bindStateEvents(state);
-
-				let stateNamePrompt = function() {
-					utils.prompt("Enter the state name:", 1, function(data) {
-						let name = data[0];
-						for (let state of self.stateList) {
-							if (state.getName() == name) {
-								alert("State name already in use");
-								return stateNamePrompt();
-							}
-						}
-
-						self.stateList.push(state);
-						state.setName(name);
-						state.render(self.canvas);
-						Settings.controller().createState(state);
-					}, function() {
-						self.highlightedState = null;
-						state.remove();
-					});
-				};
-
-				stateNamePrompt();
-			}
+			self.newStateAt(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
 		});
 
 		$(this.node).contextmenu(function(e) {
@@ -736,6 +664,40 @@ export class AutomatonRenderer {
 		}
 	}
 
+	private newStateAt(x: number, y: number): void {
+		if (!this.locked) {
+			let state = new State();
+			state.setPosition(x, y);
+			this.selectState(state);
+			this.bindStateEvents(state);
+
+			let self = this;
+			let stateNamePrompt = function() {
+				utils.prompt("Enter the state name:", 1, function(data) {
+					let name = data[0];
+					for (let state of self.stateList) {
+						if (state.getName() == name) {
+							alert("State name already in use");
+							return stateNamePrompt();
+						}
+					}
+
+					self.stateList.push(state);
+					state.setName(name);
+					state.render(self.canvas);
+					Settings.controller().createState(state);
+					self.updateEditableState(state);
+				}, function() {
+					self.highlightedState = null;
+					state.remove();
+					self.updateEditableState(null);
+				});
+			};
+
+			stateNamePrompt();
+		}
+	}
+
 	private newState(name: string): State {
 		let state = new State();
 		state.setName(name);
@@ -840,6 +802,11 @@ export class AutomatonRenderer {
 		}, group);
 
 		utils.bindShortcut(Settings.shortcuts.dimSelection, function() {
+			if (self.edgeMode) {
+				self.edgeMode = false;
+				self.currentEdge.remove();
+				self.currentEdge = null;
+			}
 			self.dimState();
 			self.dimEdge();
 		}, group);

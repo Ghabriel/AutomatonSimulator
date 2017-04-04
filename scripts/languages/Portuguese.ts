@@ -45,5 +45,6 @@ export namespace portuguese {
 		CHANGE_MACHINE_WARNING: "Alterar o tipo de máquina reseta o autômato. Deseja continuar?",
 		INPUT_ACCEPTED: "aceito",
 		INPUT_REJECTED: "rejeitado",
+		ERROR_INVALID_STATE_NAME: "Nome de estado inválido",
 	};
 }

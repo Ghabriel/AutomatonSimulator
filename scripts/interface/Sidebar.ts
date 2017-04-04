@@ -238,7 +238,7 @@ export class Sidebar extends Renderer {
 			type: "button",
 			value: Strings.CREATE_STATE,
 			click: function() {
-				// TODO
+				Settings.automatonRenderer.stateManualCreation();
 			}
 		});
 		table.add(createState);
@@ -248,9 +248,7 @@ export class Sidebar extends Renderer {
 			type: "button",
 			value: Strings.CREATE_EDGE,
 			click: function() {
-				utils.prompt("TODO: text", 2, function(data) {
-
-				});
+				Settings.automatonRenderer.edgeManualCreation();
 			}
 		});
 		table.add(createEdge);

@@ -135,7 +135,8 @@ define("languages/Portuguese", ["require", "exports"], function (require, export
             STOP_RECOGNITION: "Parar reconhecimento passo-a-passo (S)",
             CHANGE_MACHINE_WARNING: "Alterar o tipo de máquina reseta o autômato. Deseja continuar?",
             INPUT_ACCEPTED: "aceito",
-            INPUT_REJECTED: "rejeitado"
+            INPUT_REJECTED: "rejeitado",
+            ERROR_INVALID_STATE_NAME: "Nome de estado inválido"
         };
     })(portuguese = exports.portuguese || (exports.portuguese = {}));
 });
@@ -188,7 +189,8 @@ define("languages/English", ["require", "exports"], function (require, exports) 
             STOP_RECOGNITION: "Stop step-by-step recognition (S)",
             CHANGE_MACHINE_WARNING: "Changing the machine type resets the automaton. Do you wish to continue?",
             INPUT_ACCEPTED: "accepted",
-            INPUT_REJECTED: "rejected"
+            INPUT_REJECTED: "rejected",
+            ERROR_INVALID_STATE_NAME: "Invalid state name"
         };
     })(english = exports.english || (exports.english = {}));
 });
@@ -1672,6 +1674,35 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             Utils_6.utils.unlockShortcutGroup(Settings_5.Settings.canvasShortcutID);
             this.locked = false;
         };
+        AutomatonRenderer.prototype.stateManualCreation = function () {
+            var stateRadius = Settings_5.Settings.stateRadius;
+            this.newStateAt(stateRadius, stateRadius);
+        };
+        AutomatonRenderer.prototype.edgeManualCreation = function () {
+            if (!this.locked) {
+                var self_1 = this;
+                Utils_6.utils.prompt("Choose the origin and destination", 2, function (data) {
+                    var edge = new Edge_1.Edge();
+                    for (var _i = 0, _a = self_1.stateList; _i < _a.length; _i++) {
+                        var state = _a[_i];
+                        var name_3 = state.getName();
+                        if (name_3 == data[0]) {
+                            edge.setOrigin(state);
+                        }
+                        if (name_3 == data[1]) {
+                            edge.setTarget(state);
+                        }
+                    }
+                    if (edge.getOrigin() && edge.getTarget()) {
+                        self_1.currentEdge = edge;
+                        self_1.finishEdge(edge.getTarget());
+                    }
+                    else {
+                        alert(Settings_5.Strings.ERROR_INVALID_STATE_NAME);
+                    }
+                });
+            }
+        };
         AutomatonRenderer.prototype.selectState = function (state) {
             if (!this.locked) {
                 this.dimEdge();
@@ -1716,11 +1747,15 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         };
         AutomatonRenderer.prototype.updateEditableState = function (state) {
             Settings_5.Settings.sidebar.unsetSelectedEntityContent();
-            Settings_5.Settings.sidebar.setSelectedEntityContent(this.showEditableState(state));
+            if (state) {
+                Settings_5.Settings.sidebar.setSelectedEntityContent(this.showEditableState(state));
+            }
         };
         AutomatonRenderer.prototype.updateEditableEdge = function (edge) {
             Settings_5.Settings.sidebar.unsetSelectedEntityContent();
-            Settings_5.Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
+            if (edge) {
+                Settings_5.Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
+            }
         };
         AutomatonRenderer.prototype.showEditableState = function (state) {
             var container = Utils_6.utils.create("div");
@@ -1916,32 +1951,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             }
             var self = this;
             $(this.node).dblclick(function (e) {
-                if (!self.locked) {
-                    var state_1 = new State_1.State();
-                    state_1.setPosition(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
-                    self.selectState(state_1);
-                    self.bindStateEvents(state_1);
-                    var stateNamePrompt_1 = function () {
-                        Utils_6.utils.prompt("Enter the state name:", 1, function (data) {
-                            var name = data[0];
-                            for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
-                                var state_2 = _a[_i];
-                                if (state_2.getName() == name) {
-                                    alert("State name already in use");
-                                    return stateNamePrompt_1();
-                                }
-                            }
-                            self.stateList.push(state_1);
-                            state_1.setName(name);
-                            state_1.render(self.canvas);
-                            Settings_5.Settings.controller().createState(state_1);
-                        }, function () {
-                            self.highlightedState = null;
-                            state_1.remove();
-                        });
-                    };
-                    stateNamePrompt_1();
-                }
+                self.newStateAt(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
             });
             $(this.node).contextmenu(function (e) {
                 e.preventDefault();
@@ -2016,8 +2026,8 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             };
             for (var _i = 0, _a = this.edgeList; _i < _a.length; _i++) {
                 var edge = _a[_i];
-                var state_3 = _loop_1(edge);
-                if (typeof state_3 === "object") return state_3.value;
+                var state_1 = _loop_1(edge);
+                if (typeof state_1 === "object") return state_1.value;
             }
             this.currentEdge.setTarget(state);
             this.currentEdge.render(this.canvas);
@@ -2052,6 +2062,37 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 this.edgeMode = false;
                 this.currentEdge.remove();
                 this.currentEdge = null;
+            }
+        };
+        AutomatonRenderer.prototype.newStateAt = function (x, y) {
+            if (!this.locked) {
+                var state_2 = new State_1.State();
+                state_2.setPosition(x, y);
+                this.selectState(state_2);
+                this.bindStateEvents(state_2);
+                var self_2 = this;
+                var stateNamePrompt_1 = function () {
+                    Utils_6.utils.prompt("Enter the state name:", 1, function (data) {
+                        var name = data[0];
+                        for (var _i = 0, _a = self_2.stateList; _i < _a.length; _i++) {
+                            var state_3 = _a[_i];
+                            if (state_3.getName() == name) {
+                                alert("State name already in use");
+                                return stateNamePrompt_1();
+                            }
+                        }
+                        self_2.stateList.push(state_2);
+                        state_2.setName(name);
+                        state_2.render(self_2.canvas);
+                        Settings_5.Settings.controller().createState(state_2);
+                        self_2.updateEditableState(state_2);
+                    }, function () {
+                        self_2.highlightedState = null;
+                        state_2.remove();
+                        self_2.updateEditableState(null);
+                    });
+                };
+                stateNamePrompt_1();
             }
         };
         AutomatonRenderer.prototype.newState = function (name) {
@@ -2143,6 +2184,11 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 self.toggleFinal();
             }, group);
             Utils_6.utils.bindShortcut(Settings_5.Settings.shortcuts.dimSelection, function () {
+                if (self.edgeMode) {
+                    self.edgeMode = false;
+                    self.currentEdge.remove();
+                    self.currentEdge = null;
+                }
                 self.dimState();
                 self.dimEdge();
             }, group);
@@ -2899,6 +2945,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 type: "button",
                 value: Settings_9.Strings.CREATE_STATE,
                 click: function () {
+                    Settings_8.Settings.automatonRenderer.stateManualCreation();
                 }
             });
             table.add(createState);
@@ -2907,8 +2954,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 type: "button",
                 value: Settings_9.Strings.CREATE_EDGE,
                 click: function () {
-                    Utils_11.utils.prompt("TODO: text", 2, function (data) {
-                    });
+                    Settings_8.Settings.automatonRenderer.edgeManualCreation();
                 }
             });
             table.add(createEdge);
