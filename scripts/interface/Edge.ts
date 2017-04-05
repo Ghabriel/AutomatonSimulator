@@ -224,6 +224,46 @@ export class Edge {
 			if (!this.body.length) {
 				// TODO: curves
 				// http://jsfiddle.net/ry8kT/94/
+
+				// let midPoint = {
+				// 	x: (origin.x + target.x)/2,
+				// 	y: (origin.y + target.y)/2
+				// };
+
+				// let hypot = Math.sqrt(dx * dx + dy * dy);
+
+				// // A normalized vector that is perpendicular to the
+				// // line joining the origin and the target.
+				// let perpendicularVector: Point;
+				// if (dy == 0) {
+				// 	perpendicularVector = {
+				// 		x: dy / hypot,
+				// 		y: -dx / hypot
+				// 	}
+				// } else {
+				// 	perpendicularVector = {
+				// 		// x: dx / hypot,
+				// 		// y: -dy / hypot
+				// 		x: dy / hypot,
+				// 		y: -dx / hypot
+				// 	};
+				// }
+
+				// let distance = 50;
+
+				// let controlPoint = {
+				// 	x: midPoint.x + perpendicularVector.x * distance,
+				// 	y: midPoint.y + perpendicularVector.y * distance
+				// };
+
+				// console.log(origin, target, midPoint, perpendicularVector, controlPoint);
+				// this.body.push(
+				// 	canvas.path("M" + origin.x + "," + origin.y +
+				// 				"C" + origin.x + "," + origin.y +
+				// 				" " + controlPoint.x + "," + controlPoint.y +
+				// 				" " + target.x + "," + target.y)
+				// );
+
 				this.body.push(utils.line(canvas,
 					origin.x, origin.y,
 					target.x, target.y
