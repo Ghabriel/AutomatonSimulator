@@ -1145,6 +1145,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             this.virtualTarget = null;
             this.textList = [];
             this.dataList = [];
+            this.curved = false;
             this.defaultColor = Settings_4.Settings.edgeStrokeColor;
             this.color = this.defaultColor;
             this.body = [];
@@ -1177,6 +1178,12 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
         };
         Edge.prototype.getDataList = function () {
             return this.dataList;
+        };
+        Edge.prototype.setCurveFlag = function (flag) {
+            this.curved = flag;
+        };
+        Edge.prototype.isCurved = function () {
+            return this.curved;
         };
         Edge.prototype.addClickHandler = function (callback) {
             var self = this;
@@ -1284,41 +1291,73 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 target.y -= offsets.y;
             }
             if (this.origin == this.target) {
-                var pos = this.origin.getPosition();
-                if (this.body.length == 1) {
-                    this.body[0].remove();
-                    this.body = [];
-                }
-                if (!this.body.length) {
-                    this.body.push(Utils_4.utils.line(canvas, pos.x + radius, pos.y, pos.x + 2 * radius, pos.y));
-                    this.body.push(Utils_4.utils.line(canvas, pos.x + 2 * radius, pos.y, pos.x + 2 * radius, pos.y - 2 * radius));
-                    this.body.push(Utils_4.utils.line(canvas, pos.x + 2 * radius, pos.y - 2 * radius, pos.x, pos.y - 2 * radius));
-                    this.body.push(Utils_4.utils.line(canvas, pos.x, pos.y - 2 * radius, pos.x, pos.y - radius));
-                    for (var _i = 0, _a = this.body; _i < _a.length; _i++) {
-                        var elem = _a[_i];
-                        elem.attr("stroke-width", Settings_4.Settings.edgeArrowThickness);
-                    }
-                }
-                else {
-                    this.body[0].attr("path", Utils_4.utils.linePath(pos.x + radius, pos.y, pos.x + 2 * radius, pos.y));
-                    this.body[1].attr("path", Utils_4.utils.linePath(pos.x + 2 * radius, pos.y, pos.x + 2 * radius, pos.y - 2 * radius));
-                    this.body[2].attr("path", Utils_4.utils.linePath(pos.x + 2 * radius, pos.y - 2 * radius, pos.x, pos.y - 2 * radius));
-                    this.body[3].attr("path", Utils_4.utils.linePath(pos.x, pos.y - 2 * radius, pos.x, pos.y - radius));
-                }
+                this.loop(canvas);
+            }
+            else if (this.isCurved()) {
+                this.curve(canvas, origin, target);
             }
             else {
-                if (!this.body.length) {
-                    this.body.push(Utils_4.utils.line(canvas, origin.x, origin.y, target.x, target.y));
-                    this.body[0].attr("stroke-width", Settings_4.Settings.edgeArrowThickness);
-                }
-                else {
-                    while (this.body.length > 1) {
-                        this.body[this.body.length - 1].remove();
-                        this.body.pop();
-                    }
-                    this.body[0].attr("path", Utils_4.utils.linePath(origin.x, origin.y, target.x, target.y));
+                this.normal(canvas, origin, target);
+            }
+        };
+        Edge.prototype.adjustBodyLength = function (canvas, length) {
+            if (this.body.length == length) {
+                return false;
+            }
+            while (this.body.length > length) {
+                this.body[this.body.length - 1].remove();
+                this.body.pop();
+            }
+            while (this.body.length < length) {
+                this.body.push(Utils_4.utils.line(canvas, 0, 0, 0, 0));
+            }
+            return true;
+        };
+        Edge.prototype.loop = function (canvas) {
+            var radius = Settings_4.Settings.stateRadius;
+            var pos = this.origin.getPosition();
+            if (this.adjustBodyLength(canvas, 4)) {
+                for (var _i = 0, _a = this.body; _i < _a.length; _i++) {
+                    var elem = _a[_i];
+                    elem.attr("stroke-width", Settings_4.Settings.edgeArrowThickness);
                 }
             }
+            this.body[0].attr("path", Utils_4.utils.linePath(pos.x + radius, pos.y, pos.x + 2 * radius, pos.y));
+            this.body[1].attr("path", Utils_4.utils.linePath(pos.x + 2 * radius, pos.y, pos.x + 2 * radius, pos.y - 2 * radius));
+            this.body[2].attr("path", Utils_4.utils.linePath(pos.x + 2 * radius, pos.y - 2 * radius, pos.x, pos.y - 2 * radius));
+            this.body[3].attr("path", Utils_4.utils.linePath(pos.x, pos.y - 2 * radius, pos.x, pos.y - radius));
+        };
+        Edge.prototype.curve = function (canvas, origin, target) {
+            var dx = target.x - origin.x;
+            var dy = target.y - origin.y;
+            var hypot = Math.sqrt(dx * dx + dy * dy);
+            var perpVector = {
+                x: dy / hypot,
+                y: -dx / hypot
+            };
+            var distance = 30;
+            var offsets = {
+                x: distance * perpVector.x,
+                y: distance * perpVector.y
+            };
+            if (this.adjustBodyLength(canvas, 3)) {
+                for (var _i = 0, _a = this.body; _i < _a.length; _i++) {
+                    var elem = _a[_i];
+                    elem.attr("stroke-width", Settings_4.Settings.edgeArrowThickness);
+                }
+            }
+            this.body[0].attr("path", Utils_4.utils.linePath(origin.x, origin.y, origin.x + offsets.x + dx * 0.125, origin.y + offsets.y + dy * 0.125));
+            this.body[1].attr("path", Utils_4.utils.linePath(origin.x + offsets.x + dx * 0.125, origin.y + offsets.y + dy * 0.125, origin.x + offsets.x + dx * 0.875, origin.y + offsets.y + dy * 0.875));
+            this.body[2].attr("path", Utils_4.utils.linePath(origin.x + offsets.x + dx * 0.875, origin.y + offsets.y + dy * 0.875, target.x, target.y));
+        };
+        Edge.prototype.normal = function (canvas, origin, target) {
+            if (this.adjustBodyLength(canvas, 1)) {
+                for (var _i = 0, _a = this.body; _i < _a.length; _i++) {
+                    var elem = _a[_i];
+                    elem.attr("stroke-width", Settings_4.Settings.edgeArrowThickness);
+                }
+            }
+            this.body[0].attr("path", Utils_4.utils.linePath(origin.x, origin.y, target.x, target.y));
         };
         Edge.prototype.renderHead = function (canvas) {
             if (!this.target) {
@@ -1342,6 +1381,19 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 dx = 0;
                 dy = radius;
             }
+            else if (this.isCurved()) {
+                var path = this.body[2].attr("path");
+                origin = {
+                    x: path[0][1],
+                    y: path[0][2]
+                };
+                target = {
+                    x: path[1][1],
+                    y: path[1][2]
+                };
+                dx = target.x - origin.x;
+                dy = target.y - origin.y;
+            }
             else {
                 origin = this.origin.getPosition();
                 target = this.target.getPosition();
@@ -1364,17 +1416,15 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             var p1 = Utils_4.utils.rotatePoint(ref, target, alpha);
             var p2 = Utils_4.utils.rotatePoint(ref, target, -alpha);
             if (!this.head.length) {
-                this.head.push(Utils_4.utils.line(canvas, p1.x, p1.y, target.x, target.y));
-                this.head.push(Utils_4.utils.line(canvas, p2.x, p2.y, target.x, target.y));
+                this.head.push(Utils_4.utils.line(canvas, 0, 0, 0, 0));
+                this.head.push(Utils_4.utils.line(canvas, 0, 0, 0, 0));
                 for (var _i = 0, _a = this.head; _i < _a.length; _i++) {
                     var elem = _a[_i];
                     elem.attr("stroke-width", Settings_4.Settings.edgeArrowThickness);
                 }
             }
-            else {
-                this.head[0].attr("path", Utils_4.utils.linePath(p1.x, p1.y, target.x, target.y));
-                this.head[1].attr("path", Utils_4.utils.linePath(p2.x, p2.y, target.x, target.y));
-            }
+            this.head[0].attr("path", Utils_4.utils.linePath(p1.x, p1.y, target.x, target.y));
+            this.head[1].attr("path", Utils_4.utils.linePath(p2.x, p2.y, target.x, target.y));
         };
         Edge.prototype.preparedText = function () {
             return this.textList.join("\n");
@@ -1388,6 +1438,13 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 var radius = Settings_4.Settings.stateRadius;
                 x = origin.x + radius;
                 y = origin.y - 2 * radius;
+            }
+            else if (this.isCurved()) {
+                var path = this.body[1].attr("path");
+                var first = path[0][2];
+                var second = path[1][2];
+                x = (origin.x + target.x) / 2;
+                y = (first + second) / 2;
             }
             else {
                 x = (origin.x + target.x) / 2;
@@ -1485,39 +1542,22 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         }
         AutomatonRenderer.prototype.render = function () {
             var q0 = this.newState("q0");
-            q0.setPosition(100, 200);
+            q0.setPosition(200, 200);
             var q1 = this.newState("q1");
-            q1.setPosition(250, 350);
-            var q2 = this.newState("q2");
-            q2.setPosition(450, 350);
-            var q3 = this.newState("q3");
-            q3.setPosition(650, 350);
+            q1.setPosition(400, 200);
             var e1 = new Edge_1.Edge();
             e1.setOrigin(q0);
-            e1.setTarget(q0);
-            this.addEdgeData(e1, ["0"]);
-            this.addEdgeData(e1, ["1"]);
+            e1.setTarget(q1);
+            e1.setCurveFlag(true);
+            this.addEdgeData(e1, ["a"]);
             this.edgeList.push(e1);
             var e2 = new Edge_1.Edge();
-            e2.setOrigin(q0);
-            e2.setTarget(q1);
-            this.addEdgeData(e2, ["1"]);
+            e2.setOrigin(q1);
+            e2.setTarget(q0);
+            e2.setCurveFlag(true);
+            this.addEdgeData(e2, ["b"]);
             this.edgeList.push(e2);
-            var e3 = new Edge_1.Edge();
-            e3.setOrigin(q1);
-            e3.setTarget(q2);
-            this.addEdgeData(e3, ["0"]);
-            this.addEdgeData(e3, ["1"]);
-            this.edgeList.push(e3);
-            var e4 = new Edge_1.Edge();
-            e4.setOrigin(q2);
-            e4.setTarget(q3);
-            this.addEdgeData(e4, ["0"]);
-            this.addEdgeData(e4, ["1"]);
-            this.edgeList.push(e4);
             this.updateEdges();
-            this.setInitialState(q0);
-            this.changeFinalFlag(q3, true);
             this.bindEvents();
             this.bindShortcuts();
         };

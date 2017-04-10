@@ -39,6 +39,14 @@ export class Edge {
 		return this.dataList;
 	}
 
+	public setCurveFlag(flag: boolean): void {
+		this.curved = flag;
+	}
+
+	public isCurved(): boolean {
+		return this.curved;
+	}
+
 	public addClickHandler(callback: () => void): void {
 		let self = this;
 		for (let elem of this.body) {
@@ -171,118 +179,115 @@ export class Edge {
 
 		// TODO: handle cases where two connected states are very close to each other
 		if (this.origin == this.target) {
-			// Loop case
-			let pos = this.origin.getPosition();
-			if (this.body.length == 1) {
-				// Handles the case where an incomplete edge (i.e no target)
-				// becomes a loop
-				this.body[0].remove();
-				this.body = [];
-			}
-
-			if (!this.body.length) {
-				this.body.push(utils.line(canvas,
-					pos.x + radius, pos.y,
-					pos.x + 2 * radius, pos.y
-				));
-				this.body.push(utils.line(canvas,
-					pos.x + 2 * radius, pos.y,
-					pos.x + 2 * radius, pos.y - 2 * radius
-				));
-				this.body.push(utils.line(canvas,
-					pos.x + 2 * radius, pos.y - 2 * radius,
-					pos.x, pos.y - 2 * radius
-				));
-				this.body.push(utils.line(canvas,
-					pos.x, pos.y - 2 * radius,
-					pos.x, pos.y - radius
-				));
-
-				for (let elem of this.body) {
-					elem.attr("stroke-width", Settings.edgeArrowThickness);
-				}
-			} else {
-				this.body[0].attr("path", utils.linePath(
-					pos.x + radius, pos.y,
-					pos.x + 2 * radius, pos.y
-				));
-				this.body[1].attr("path", utils.linePath(
-					pos.x + 2 * radius, pos.y,
-					pos.x + 2 * radius, pos.y - 2 * radius
-				));
-				this.body[2].attr("path", utils.linePath(
-					pos.x + 2 * radius, pos.y - 2 * radius,
-					pos.x, pos.y - 2 * radius
-				));
-				this.body[3].attr("path", utils.linePath(
-					pos.x, pos.y - 2 * radius,
-					pos.x, pos.y - radius
-				));
-			}
+			this.loop(canvas);
+		} else if (this.isCurved()) {
+			this.curve(canvas, origin, target);
 		} else {
-			// Non-loop case
-			if (!this.body.length) {
-				// TODO: curves
-				// http://jsfiddle.net/ry8kT/94/
+			this.normal(canvas, origin, target);
+		}
+	}
 
-				// let midPoint = {
-				// 	x: (origin.x + target.x)/2,
-				// 	y: (origin.y + target.y)/2
-				// };
+	// Adjusts the length of the this.body array so that it is equal to
+	// a given value. Returns a flag indicating if any change was made
+	// to this.body.
+	private adjustBodyLength(canvas: RaphaelPaper, length: number): boolean {
+		if (this.body.length == length) {
+			return false;
+		}
 
-				// let hypot = Math.sqrt(dx * dx + dy * dy);
+		while (this.body.length > length) {
+			this.body[this.body.length - 1].remove();
+			this.body.pop();
+		}
 
-				// // A normalized vector that is perpendicular to the
-				// // line joining the origin and the target.
-				// let perpendicularVector: Point;
-				// if (dy == 0) {
-				// 	perpendicularVector = {
-				// 		x: dy / hypot,
-				// 		y: -dx / hypot
-				// 	}
-				// } else {
-				// 	perpendicularVector = {
-				// 		// x: dx / hypot,
-				// 		// y: -dy / hypot
-				// 		x: dy / hypot,
-				// 		y: -dx / hypot
-				// 	};
-				// }
+		while (this.body.length < length) {
+			this.body.push(utils.line(canvas, 0, 0, 0, 0));
+		}
 
-				// let distance = 50;
+		return true;
+	}
 
-				// let controlPoint = {
-				// 	x: midPoint.x + perpendicularVector.x * distance,
-				// 	y: midPoint.y + perpendicularVector.y * distance
-				// };
-
-				// console.log(origin, target, midPoint, perpendicularVector, controlPoint);
-				// this.body.push(
-				// 	canvas.path("M" + origin.x + "," + origin.y +
-				// 				"C" + origin.x + "," + origin.y +
-				// 				" " + controlPoint.x + "," + controlPoint.y +
-				// 				" " + target.x + "," + target.y)
-				// );
-
-				this.body.push(utils.line(canvas,
-					origin.x, origin.y,
-					target.x, target.y
-				));
-
-				this.body[0].attr("stroke-width", Settings.edgeArrowThickness);
-			} else {
-				// Handles the case where a loop becomes a non-loop
-				// (via edge edition)
-				while (this.body.length > 1) {
-					this.body[this.body.length - 1].remove();
-					this.body.pop();
-				}
-				this.body[0].attr("path", utils.linePath(
-					origin.x, origin.y,
-					target.x, target.y
-				));
+	// Renders a loop-style body.
+	private loop(canvas: RaphaelPaper): void {
+		let radius = Settings.stateRadius;
+		let pos = this.origin.getPosition();
+		if (this.adjustBodyLength(canvas, 4)) {
+			for (let elem of this.body) {
+				elem.attr("stroke-width", Settings.edgeArrowThickness);
 			}
 		}
+
+		this.body[0].attr("path", utils.linePath(
+			pos.x + radius, pos.y,
+			pos.x + 2 * radius, pos.y
+		));
+		this.body[1].attr("path", utils.linePath(
+			pos.x + 2 * radius, pos.y,
+			pos.x + 2 * radius, pos.y - 2 * radius
+		));
+		this.body[2].attr("path", utils.linePath(
+			pos.x + 2 * radius, pos.y - 2 * radius,
+			pos.x, pos.y - 2 * radius
+		));
+		this.body[3].attr("path", utils.linePath(
+			pos.x, pos.y - 2 * radius,
+			pos.x, pos.y - radius
+		));
+	}
+
+	// Renders a curved body.
+	private curve(canvas: RaphaelPaper, origin: Point, target: Point): void {
+		let dx = target.x - origin.x;
+		let dy = target.y - origin.y;
+
+		let hypot = Math.sqrt(dx * dx + dy * dy);
+
+		// A normalized vector that is perpendicular to the
+		// line joining the origin and the target.
+		let perpVector: Point = {
+			x: dy / hypot,
+			y: -dx / hypot
+		};
+
+		let distance = 30;
+		let offsets = {
+			x: distance * perpVector.x,
+			y: distance * perpVector.y
+		};
+
+		if (this.adjustBodyLength(canvas, 3)) {
+			for (let elem of this.body) {
+				elem.attr("stroke-width", Settings.edgeArrowThickness);
+			}
+		}
+
+		this.body[0].attr("path", utils.linePath(
+			origin.x, origin.y,
+			origin.x + offsets.x + dx * 0.125, origin.y + offsets.y + dy * 0.125
+		));
+
+		this.body[1].attr("path", utils.linePath(
+			origin.x + offsets.x + dx * 0.125, origin.y + offsets.y + dy * 0.125,
+			origin.x + offsets.x + dx * 0.875, origin.y + offsets.y + dy * 0.875
+		));
+
+		this.body[2].attr("path", utils.linePath(
+			origin.x + offsets.x + dx * 0.875, origin.y + offsets.y + dy * 0.875,
+			target.x, target.y
+		));
+	}
+
+	// Renders a normal body (i.e a straight line)
+	private normal(canvas: RaphaelPaper, origin: Point, target: Point): void {
+		if (this.adjustBodyLength(canvas, 1)) {
+			for (let elem of this.body) {
+				elem.attr("stroke-width", Settings.edgeArrowThickness);
+			}
+		}
+		this.body[0].attr("path", utils.linePath(
+			origin.x, origin.y,
+			target.x, target.y
+		));
 	}
 
 	private renderHead(canvas: RaphaelPaper): void {
@@ -312,6 +317,19 @@ export class Edge {
 
 			dx = 0;
 			dy = radius;
+		} else if (this.isCurved()) {
+			let path = this.body[2].attr("path");
+			origin = {
+				x: path[0][1],
+				y: path[0][2],
+			};
+			target = {
+				x: path[1][1],
+				y: path[1][2]
+			};
+
+			dx = target.x - origin.x;
+			dy = target.y - origin.y;
 		} else {
 			// Non-loop case
 			origin = this.origin.getPosition();
@@ -342,28 +360,23 @@ export class Edge {
 		let p2 = utils.rotatePoint(ref, target, -alpha);
 
 		if (!this.head.length) {
-			this.head.push(utils.line(canvas,
-				p1.x, p1.y,
-				target.x, target.y));
-
-			this.head.push(utils.line(canvas,
-				p2.x, p2.y,
-				target.x, target.y));
+			this.head.push(utils.line(canvas, 0, 0, 0, 0));
+			this.head.push(utils.line(canvas, 0, 0, 0, 0));
 
 			for (let elem of this.head) {
 				elem.attr("stroke-width", Settings.edgeArrowThickness);
 			}
-		} else {
-			this.head[0].attr("path", utils.linePath(
-				p1.x, p1.y,
-				target.x, target.y
-			));
-
-			this.head[1].attr("path", utils.linePath(
-				p2.x, p2.y,
-				target.x, target.y
-			));
 		}
+
+		this.head[0].attr("path", utils.linePath(
+			p1.x, p1.y,
+			target.x, target.y
+		));
+
+		this.head[1].attr("path", utils.linePath(
+			p2.x, p2.y,
+			target.x, target.y
+		));
 	}
 
 	private preparedText(): string {
@@ -383,8 +396,15 @@ export class Edge {
 			let radius = Settings.stateRadius;
 			x = origin.x + radius;
 			y = origin.y - 2 * radius;
+		} else if (this.isCurved()) {
+			// Curved case
+			let path = this.body[1].attr("path");
+			let first = path[0][2];
+			let second = path[1][2];
+			x = (origin.x + target.x) / 2;
+			y = (first + second) / 2;
 		} else {
-			// Non-loop case
+			// Normal case
 			x = (origin.x + target.x) / 2;
 			y = (origin.y + target.y) / 2;
 		}
@@ -442,6 +462,10 @@ export class Edge {
 	// precisely define this transition
 	private dataList: string[][] = [];
 
+	// Is this a curved edge?
+	private curved: boolean = false;
+
+	// The color-related properties of this edge.
 	private defaultColor = Settings.edgeStrokeColor;
 	private color: string = this.defaultColor;
 

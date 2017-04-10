@@ -11,6 +11,28 @@ export class AutomatonRenderer {
 	}
 
 	public render(): void {
+		// let q0 = this.newState("q0");
+		// q0.setPosition(200, 200);
+
+		// let q1 = this.newState("q1");
+		// q1.setPosition(400, 200);
+
+		// let e1 = new Edge();
+		// e1.setOrigin(q0);
+		// e1.setTarget(q1);
+		// e1.setCurveFlag(true);
+		// this.addEdgeData(e1, ["a"]);
+		// this.edgeList.push(e1);
+
+		// let e2 = new Edge();
+		// e2.setOrigin(q1);
+		// e2.setTarget(q0);
+		// e2.setCurveFlag(true);
+		// this.addEdgeData(e2, ["b"]);
+		// this.edgeList.push(e2);
+
+		// this.updateEdges();
+
 		let q0 = this.newState("q0");
 		q0.setPosition(100, 200);
 
@@ -54,7 +76,6 @@ export class AutomatonRenderer {
 
 		this.setInitialState(q0);
 		this.changeFinalFlag(q3, true);
-
 
 
 		this.bindEvents();
