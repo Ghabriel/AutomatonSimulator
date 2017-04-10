@@ -40,6 +40,7 @@ export class Edge {
 	}
 
 	public setCurveFlag(flag: boolean): void {
+		this.forcedRender = this.forcedRender || (this.curved != flag);
 		this.curved = flag;
 	}
 
@@ -90,8 +91,9 @@ export class Edge {
 											  this.target.getPosition());
 
 		// Don't re-render this edge if neither the origin nor the target
-		// states have moved since we last rendered this edge.
-		if (!preservedOrigin || !preservedTarget) {
+		// states have moved since we last rendered this edge, unless
+		// the forced re-render is active.
+		if (!preservedOrigin || !preservedTarget || this.forcedRender) {
 			this.renderBody(canvas);
 			this.renderHead(canvas);
 
@@ -102,6 +104,8 @@ export class Edge {
 			if (this.target) {
 				this.prevTargetPosition = this.target.getPosition();
 			}
+
+			this.forcedRender = false;
 		}
 
 		for (let elem of this.body) {
@@ -464,6 +468,9 @@ export class Edge {
 
 	// Is this a curved edge?
 	private curved: boolean = false;
+
+	// Should this edge be re-rendered regardless if its position changed?
+	private forcedRender: boolean = false;
 
 	// The color-related properties of this edge.
 	private defaultColor = Settings.edgeStrokeColor;

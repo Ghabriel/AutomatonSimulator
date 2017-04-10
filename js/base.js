@@ -1146,6 +1146,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             this.textList = [];
             this.dataList = [];
             this.curved = false;
+            this.forcedRender = false;
             this.defaultColor = Settings_4.Settings.edgeStrokeColor;
             this.color = this.defaultColor;
             this.body = [];
@@ -1180,6 +1181,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             return this.dataList;
         };
         Edge.prototype.setCurveFlag = function (flag) {
+            this.forcedRender = this.forcedRender || (this.curved != flag);
             this.curved = flag;
         };
         Edge.prototype.isCurved = function () {
@@ -1221,7 +1223,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 && Utils_4.utils.samePoint(this.prevOriginPosition, this.origin.getPosition());
             var preservedTarget = this.target
                 && Utils_4.utils.samePoint(this.prevTargetPosition, this.target.getPosition());
-            if (!preservedOrigin || !preservedTarget) {
+            if (!preservedOrigin || !preservedTarget || this.forcedRender) {
                 this.renderBody(canvas);
                 this.renderHead(canvas);
                 if (this.origin) {
@@ -1230,6 +1232,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 if (this.target) {
                     this.prevTargetPosition = this.target.getPosition();
                 }
+                this.forcedRender = false;
             }
             for (var _i = 0, _a = this.body; _i < _a.length; _i++) {
                 var elem = _a[_i];
@@ -1548,15 +1551,8 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             var e1 = new Edge_1.Edge();
             e1.setOrigin(q0);
             e1.setTarget(q1);
-            e1.setCurveFlag(true);
             this.addEdgeData(e1, ["a"]);
             this.edgeList.push(e1);
-            var e2 = new Edge_1.Edge();
-            e2.setOrigin(q1);
-            e2.setTarget(q0);
-            e2.setCurveFlag(true);
-            this.addEdgeData(e2, ["b"]);
-            this.edgeList.push(e2);
             this.updateEdges();
             this.bindEvents();
             this.bindShortcuts();
@@ -1862,6 +1858,40 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             container.appendChild(table.html());
             return container;
         };
+        AutomatonRenderer.prototype.fixEdgeConsistency = function (newEdge) {
+            var origin = newEdge.getOrigin();
+            var target = newEdge.getTarget();
+            var oppositeEdge = null;
+            for (var _i = 0, _a = this.edgeList; _i < _a.length; _i++) {
+                var edge = _a[_i];
+                if (edge.getOrigin() == origin && edge.getTarget() == target
+                    && edge != newEdge) {
+                    var dataList = newEdge.getDataList();
+                    var textList = newEdge.getTextList();
+                    var length_2 = dataList.length;
+                    for (var i = 0; i < length_2; i++) {
+                        edge.addData(dataList[i]);
+                        edge.addText(textList[i]);
+                    }
+                    edge.render(this.canvas);
+                    console.log(edge);
+                    return;
+                }
+                else if (edge.getOrigin() == target && edge.getTarget() == origin) {
+                    oppositeEdge = edge;
+                }
+            }
+            if (oppositeEdge) {
+                oppositeEdge.setCurveFlag(true);
+                oppositeEdge.render(this.canvas);
+                newEdge.setCurveFlag(true);
+                newEdge.render(this.canvas);
+            }
+            else {
+                newEdge.setCurveFlag(false);
+                newEdge.render(this.canvas);
+            }
+        };
         AutomatonRenderer.prototype.showEditableEdge = function (edge) {
             var container = Utils_6.utils.create("div");
             var table = new Table_1.Table(5, 3);
@@ -1871,11 +1901,12 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 type: "button",
                 value: Settings_5.Strings.CHANGE_PROPERTY,
                 click: function () {
-                    var newOrigin = prompt("gimme new origin pl0x");
+                    var newOrigin = prompt("Enter a new origin");
                     for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
                         var state = _a[_i];
                         if (state.getName() == newOrigin) {
                             edge.setOrigin(state);
+                            self.fixEdgeConsistency(edge);
                         }
                     }
                     edge.render(canvas);
@@ -1886,11 +1917,12 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 type: "button",
                 value: Settings_5.Strings.CHANGE_PROPERTY,
                 click: function () {
-                    var newTarget = prompt("gimme new target pl0x");
+                    var newTarget = prompt("Enter a new target");
                     for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
                         var state = _a[_i];
                         if (state.getName() == newTarget) {
                             edge.setTarget(state);
+                            self.fixEdgeConsistency(edge);
                         }
                     }
                     edge.render(canvas);
@@ -2049,6 +2081,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 }, fallback);
             };
             var self = this;
+            var oppositeEdge = null;
             var clearCurrentEdge = function () {
                 self.currentEdge.remove();
                 self.currentEdge = null;
@@ -2063,11 +2096,19 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     }, clearCurrentEdge);
                     return { value: void 0 };
                 }
+                else if (edge.getOrigin() == state && edge.getTarget() == origin) {
+                    oppositeEdge = edge;
+                }
             };
             for (var _i = 0, _a = this.edgeList; _i < _a.length; _i++) {
                 var edge = _a[_i];
                 var state_1 = _loop_1(edge);
                 if (typeof state_1 === "object") return state_1.value;
+            }
+            if (oppositeEdge) {
+                oppositeEdge.setCurveFlag(true);
+                oppositeEdge.render(this.canvas);
+                this.currentEdge.setCurveFlag(true);
             }
             this.currentEdge.setTarget(state);
             this.currentEdge.render(this.canvas);
@@ -2078,7 +2119,13 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 self.currentEdge.render(self.canvas);
                 self.edgeList.push(self.currentEdge);
                 self.currentEdge = null;
-            }, clearCurrentEdge);
+            }, function () {
+                clearCurrentEdge();
+                if (oppositeEdge) {
+                    oppositeEdge.setCurveFlag(false);
+                    oppositeEdge.render(self.canvas);
+                }
+            });
         };
         AutomatonRenderer.prototype.adjustEdge = function (elem, e) {
             var target = {

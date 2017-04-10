@@ -11,18 +11,18 @@ export class AutomatonRenderer {
 	}
 
 	public render(): void {
-		// let q0 = this.newState("q0");
-		// q0.setPosition(200, 200);
+		let q0 = this.newState("q0");
+		q0.setPosition(200, 200);
 
-		// let q1 = this.newState("q1");
-		// q1.setPosition(400, 200);
+		let q1 = this.newState("q1");
+		q1.setPosition(400, 200);
 
-		// let e1 = new Edge();
-		// e1.setOrigin(q0);
-		// e1.setTarget(q1);
+		let e1 = new Edge();
+		e1.setOrigin(q0);
+		e1.setTarget(q1);
 		// e1.setCurveFlag(true);
-		// this.addEdgeData(e1, ["a"]);
-		// this.edgeList.push(e1);
+		this.addEdgeData(e1, ["a"]);
+		this.edgeList.push(e1);
 
 		// let e2 = new Edge();
 		// e2.setOrigin(q1);
@@ -31,51 +31,51 @@ export class AutomatonRenderer {
 		// this.addEdgeData(e2, ["b"]);
 		// this.edgeList.push(e2);
 
-		// this.updateEdges();
-
-		let q0 = this.newState("q0");
-		q0.setPosition(100, 200);
-
-		let q1 = this.newState("q1");
-		q1.setPosition(250, 350);
-
-		let q2 = this.newState("q2");
-		q2.setPosition(450, 350);
-
-		let q3 = this.newState("q3");
-		q3.setPosition(650, 350);
-
-		let e1 = new Edge();
-		e1.setOrigin(q0);
-		e1.setTarget(q0);
-		this.addEdgeData(e1, ["0"]);
-		this.addEdgeData(e1, ["1"]);
-		this.edgeList.push(e1);
-
-		let e2 = new Edge();
-		e2.setOrigin(q0);
-		e2.setTarget(q1);
-		this.addEdgeData(e2, ["1"]);
-		this.edgeList.push(e2);
-
-		let e3 = new Edge();
-		e3.setOrigin(q1);
-		e3.setTarget(q2);
-		this.addEdgeData(e3, ["0"]);
-		this.addEdgeData(e3, ["1"]);
-		this.edgeList.push(e3);
-
-		let e4 = new Edge();
-		e4.setOrigin(q2);
-		e4.setTarget(q3);
-		this.addEdgeData(e4, ["0"]);
-		this.addEdgeData(e4, ["1"]);
-		this.edgeList.push(e4);
-
 		this.updateEdges();
 
-		this.setInitialState(q0);
-		this.changeFinalFlag(q3, true);
+		// let q0 = this.newState("q0");
+		// q0.setPosition(100, 200);
+
+		// let q1 = this.newState("q1");
+		// q1.setPosition(250, 350);
+
+		// let q2 = this.newState("q2");
+		// q2.setPosition(450, 350);
+
+		// let q3 = this.newState("q3");
+		// q3.setPosition(650, 350);
+
+		// let e1 = new Edge();
+		// e1.setOrigin(q0);
+		// e1.setTarget(q0);
+		// this.addEdgeData(e1, ["0"]);
+		// this.addEdgeData(e1, ["1"]);
+		// this.edgeList.push(e1);
+
+		// let e2 = new Edge();
+		// e2.setOrigin(q0);
+		// e2.setTarget(q1);
+		// this.addEdgeData(e2, ["1"]);
+		// this.edgeList.push(e2);
+
+		// let e3 = new Edge();
+		// e3.setOrigin(q1);
+		// e3.setTarget(q2);
+		// this.addEdgeData(e3, ["0"]);
+		// this.addEdgeData(e3, ["1"]);
+		// this.edgeList.push(e3);
+
+		// let e4 = new Edge();
+		// e4.setOrigin(q2);
+		// e4.setTarget(q3);
+		// this.addEdgeData(e4, ["0"]);
+		// this.addEdgeData(e4, ["1"]);
+		// this.edgeList.push(e4);
+
+		// this.updateEdges();
+
+		// this.setInitialState(q0);
+		// this.changeFinalFlag(q3, true);
 
 
 		this.bindEvents();
@@ -423,6 +423,48 @@ export class AutomatonRenderer {
 		return container;
 	}
 
+	// After an edge is edited, this method makes sure that curved flags
+	// are correctly turned on/off and same origin/target edges are properly
+	// merged. Receives as input the edge that has just been edited.
+	// TODO: avoid code duplication (see finishEdge())
+	private fixEdgeConsistency(newEdge: Edge): void {
+		let origin = newEdge.getOrigin();
+		let target = newEdge.getTarget();
+
+		let oppositeEdge: Edge = null;
+		for (let edge of this.edgeList) {
+			if (edge.getOrigin() == origin && edge.getTarget() == target
+			 && edge != newEdge) {
+				// Add the edge's text to it instead and delete the new edge.
+				let dataList = newEdge.getDataList();
+				let textList = newEdge.getTextList();
+				let length = dataList.length;
+				for (let i = 0; i < length; i++) {
+					edge.addData(dataList[i]);
+					edge.addText(textList[i]);
+				}
+				edge.render(this.canvas);
+				console.log(edge);
+				return;
+			} else if (edge.getOrigin() == target && edge.getTarget() == origin) {
+				oppositeEdge = edge;
+			}
+		}
+
+		if (oppositeEdge) {
+			// Both edges should become curved.
+			oppositeEdge.setCurveFlag(true);
+			oppositeEdge.render(this.canvas);
+
+			newEdge.setCurveFlag(true);
+			newEdge.render(this.canvas);
+		} else {
+			newEdge.setCurveFlag(false);
+			newEdge.render(this.canvas);
+			// TODO: 'un-curve' edges that no longer have an opposite
+		}
+	}
+
 	private showEditableEdge(edge: Edge): HTMLDivElement {
 		let container = <HTMLDivElement> utils.create("div");
 		let table = new Table(5, 3);
@@ -433,10 +475,11 @@ export class AutomatonRenderer {
 			type: "button",
 			value: Strings.CHANGE_PROPERTY,
 			click: function() {
-				let newOrigin = prompt("gimme new origin pl0x");
+				let newOrigin = prompt("Enter a new origin");
 				for (let state of self.stateList) {
 					if (state.getName() == newOrigin) {
 						edge.setOrigin(state);
+						self.fixEdgeConsistency(edge);
 					}
 				}
 				edge.render(canvas);
@@ -447,10 +490,11 @@ export class AutomatonRenderer {
 			type: "button",
 			value: Strings.CHANGE_PROPERTY,
 			click: function() {
-				let newTarget = prompt("gimme new target pl0x");
+				let newTarget = prompt("Enter a new target");
 				for (let state of self.stateList) {
 					if (state.getName() == newTarget) {
 						edge.setTarget(state);
+						self.fixEdgeConsistency(edge);
 					}
 				}
 				edge.render(canvas);
@@ -624,12 +668,17 @@ export class AutomatonRenderer {
 
 		let self = this;
 
+		let oppositeEdge: Edge = null;
+
 		let clearCurrentEdge = function() {
 			self.currentEdge.remove();
 			self.currentEdge = null;
 		};
 
-		// Checks if there's already an edge linking the origin and target states
+
+		// Checks if there's already an edge linking the origin and target
+		// states in either direction (to make the new edge a curved one if
+		// there's an edge in the opposite direction)
 		for (let edge of this.edgeList) {
 			if (edge.getOrigin() == origin && edge.getTarget() == state) {
 				edgeText(function(data, text) {
@@ -640,12 +689,20 @@ export class AutomatonRenderer {
 					clearCurrentEdge();
 				}, clearCurrentEdge);
 				return;
+			} else if (edge.getOrigin() == state && edge.getTarget() == origin) {
+				oppositeEdge = edge;
 			}
 		}
 
 		// There's no such edge yet, so continue the configure the new one.
+		if (oppositeEdge) {
+			// Makes the opposite edge a curved one as well.
+			oppositeEdge.setCurveFlag(true);
+			oppositeEdge.render(this.canvas);
+			this.currentEdge.setCurveFlag(true);
+		}
 		this.currentEdge.setTarget(state);
-		// Renders the edge here to show it already attached to the target state
+		// Renders the edge here to show it already attached to the target state.
 		this.currentEdge.render(this.canvas);
 
 		edgeText(function(data, text) {
@@ -656,7 +713,16 @@ export class AutomatonRenderer {
 			self.currentEdge.render(self.canvas);
 			self.edgeList.push(self.currentEdge);
 			self.currentEdge = null;
-		}, clearCurrentEdge);
+		}, function() {
+			clearCurrentEdge();
+
+			// We might have set the opposite edge curve flag, so
+			// we need to unset it here.
+			if (oppositeEdge) {
+				oppositeEdge.setCurveFlag(false);
+				oppositeEdge.render(self.canvas);
+			}
+		});
 	}
 
 	private adjustEdge(elem: HTMLElement, e): void {
