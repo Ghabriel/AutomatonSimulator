@@ -48,11 +48,20 @@ export class Edge {
 		return this.curved;
 	}
 
+	public removed(): boolean {
+		return this.deleted;
+	}
+
 	public addClickHandler(callback: () => void): void {
 		let self = this;
 		for (let elem of this.body) {
 			elem.click(function(e) {
-				callback.call(self);
+				// Only call the callback if this edge is visible
+				// (in particular, this disables events for removed edges).
+				// TODO: currently removed this restriction, is it necessary?
+				// if (self.body.length > 0) {
+					callback.call(self);
+				// }
 			});
 		}
 	}
@@ -72,6 +81,8 @@ export class Edge {
 			this.textContainer.remove();
 			this.textContainer = null;
 		}
+
+		this.deleted = true;
 	}
 
 	public setCustomColor(color: string): void {
@@ -471,6 +482,9 @@ export class Edge {
 
 	// Should this edge be re-rendered regardless if its position changed?
 	private forcedRender: boolean = false;
+
+	// Was this edge previously removed?
+	private deleted: boolean = false;
 
 	// The color-related properties of this edge.
 	private defaultColor = Settings.edgeStrokeColor;

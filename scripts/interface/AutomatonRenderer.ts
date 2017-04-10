@@ -17,6 +17,9 @@ export class AutomatonRenderer {
 		let q1 = this.newState("q1");
 		q1.setPosition(400, 200);
 
+		let q2 = this.newState("q2");
+		q2.setPosition(400, 400);
+
 		let e1 = new Edge();
 		e1.setOrigin(q0);
 		e1.setTarget(q1);
@@ -24,12 +27,12 @@ export class AutomatonRenderer {
 		this.addEdgeData(e1, ["a"]);
 		this.edgeList.push(e1);
 
-		// let e2 = new Edge();
-		// e2.setOrigin(q1);
-		// e2.setTarget(q0);
+		let e2 = new Edge();
+		e2.setOrigin(q0);
+		e2.setTarget(q2);
 		// e2.setCurveFlag(true);
-		// this.addEdgeData(e2, ["b"]);
-		// this.edgeList.push(e2);
+		this.addEdgeData(e2, ["b"]);
+		this.edgeList.push(e2);
 
 		this.updateEdges();
 
@@ -432,23 +435,33 @@ export class AutomatonRenderer {
 		let target = newEdge.getTarget();
 
 		let oppositeEdge: Edge = null;
+		let mergedEdge: Edge = null;
+		let edgeIndex: number = -1;
+		let pendingRemoval: boolean = false;
+
+		let i = 0;
 		for (let edge of this.edgeList) {
-			if (edge.getOrigin() == origin && edge.getTarget() == target
-			 && edge != newEdge) {
-				// Add the edge's text to it instead and delete the new edge.
-				let dataList = newEdge.getDataList();
-				let textList = newEdge.getTextList();
-				let length = dataList.length;
-				for (let i = 0; i < length; i++) {
-					edge.addData(dataList[i]);
-					edge.addText(textList[i]);
+			if (edge.getOrigin() == origin && edge.getTarget() == target) {
+				if (edge != newEdge) {
+					// Add the edge's text to it instead and delete the new edge.
+					let dataList = newEdge.getDataList();
+					let textList = newEdge.getTextList();
+					let length = dataList.length;
+					for (let i = 0; i < length; i++) {
+						edge.addData(dataList[i]);
+						edge.addText(textList[i]);
+					}
+					edge.render(this.canvas);
+
+					mergedEdge = edge;
+					pendingRemoval = true;
+				} else {
+					edgeIndex = i;
 				}
-				edge.render(this.canvas);
-				console.log(edge);
-				return;
 			} else if (edge.getOrigin() == target && edge.getTarget() == origin) {
 				oppositeEdge = edge;
 			}
+			i++;
 		}
 
 		if (oppositeEdge) {
@@ -463,6 +476,14 @@ export class AutomatonRenderer {
 			newEdge.render(this.canvas);
 			// TODO: 'un-curve' edges that no longer have an opposite
 		}
+
+		if (pendingRemoval && edgeIndex > -1) {
+			if (this.highlightedEdge == newEdge) {
+				this.selectEdge(mergedEdge);
+			}
+			newEdge.remove();
+			this.edgeList.splice(edgeIndex, 1);
+		}
 	}
 
 	private showEditableEdge(edge: Edge): HTMLDivElement {
@@ -470,7 +491,6 @@ export class AutomatonRenderer {
 		let table = new Table(5, 3);
 		let canvas = this.canvas;
 		let self = this;
-		// TODO: check for already existing edges after changing origin/target
 		let changeOriginButton = utils.create("input", {
 			type: "button",
 			value: Strings.CHANGE_PROPERTY,
@@ -482,7 +502,10 @@ export class AutomatonRenderer {
 						self.fixEdgeConsistency(edge);
 					}
 				}
-				edge.render(canvas);
+
+				if (!edge.removed()) {
+					edge.render(canvas);
+				}
 				$("#entity_origin").html(newOrigin);
 			}
 		});
@@ -497,7 +520,10 @@ export class AutomatonRenderer {
 						self.fixEdgeConsistency(edge);
 					}
 				}
-				edge.render(canvas);
+
+				if (!edge.removed()) {
+					edge.render(canvas);
+				}
 				$("#entity_target").html(newTarget);
 			}
 		});

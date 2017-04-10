@@ -1147,6 +1147,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             this.dataList = [];
             this.curved = false;
             this.forcedRender = false;
+            this.deleted = false;
             this.defaultColor = Settings_4.Settings.edgeStrokeColor;
             this.color = this.defaultColor;
             this.body = [];
@@ -1187,6 +1188,9 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
         Edge.prototype.isCurved = function () {
             return this.curved;
         };
+        Edge.prototype.removed = function () {
+            return this.deleted;
+        };
         Edge.prototype.addClickHandler = function (callback) {
             var self = this;
             for (var _i = 0, _a = this.body; _i < _a.length; _i++) {
@@ -1211,6 +1215,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 this.textContainer.remove();
                 this.textContainer = null;
             }
+            this.deleted = true;
         };
         Edge.prototype.setCustomColor = function (color) {
             this.color = color;
@@ -1548,11 +1553,18 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             q0.setPosition(200, 200);
             var q1 = this.newState("q1");
             q1.setPosition(400, 200);
+            var q2 = this.newState("q2");
+            q2.setPosition(400, 400);
             var e1 = new Edge_1.Edge();
             e1.setOrigin(q0);
             e1.setTarget(q1);
             this.addEdgeData(e1, ["a"]);
             this.edgeList.push(e1);
+            var e2 = new Edge_1.Edge();
+            e2.setOrigin(q0);
+            e2.setTarget(q2);
+            this.addEdgeData(e2, ["b"]);
+            this.edgeList.push(e2);
             this.updateEdges();
             this.bindEvents();
             this.bindShortcuts();
@@ -1862,24 +1874,33 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             var origin = newEdge.getOrigin();
             var target = newEdge.getTarget();
             var oppositeEdge = null;
+            var mergedEdge = null;
+            var edgeIndex = -1;
+            var pendingRemoval = false;
+            var i = 0;
             for (var _i = 0, _a = this.edgeList; _i < _a.length; _i++) {
                 var edge = _a[_i];
-                if (edge.getOrigin() == origin && edge.getTarget() == target
-                    && edge != newEdge) {
-                    var dataList = newEdge.getDataList();
-                    var textList = newEdge.getTextList();
-                    var length_2 = dataList.length;
-                    for (var i = 0; i < length_2; i++) {
-                        edge.addData(dataList[i]);
-                        edge.addText(textList[i]);
+                if (edge.getOrigin() == origin && edge.getTarget() == target) {
+                    if (edge != newEdge) {
+                        var dataList = newEdge.getDataList();
+                        var textList = newEdge.getTextList();
+                        var length_2 = dataList.length;
+                        for (var i_1 = 0; i_1 < length_2; i_1++) {
+                            edge.addData(dataList[i_1]);
+                            edge.addText(textList[i_1]);
+                        }
+                        edge.render(this.canvas);
+                        mergedEdge = edge;
+                        pendingRemoval = true;
                     }
-                    edge.render(this.canvas);
-                    console.log(edge);
-                    return;
+                    else {
+                        edgeIndex = i;
+                    }
                 }
                 else if (edge.getOrigin() == target && edge.getTarget() == origin) {
                     oppositeEdge = edge;
                 }
+                i++;
             }
             if (oppositeEdge) {
                 oppositeEdge.setCurveFlag(true);
@@ -1890,6 +1911,13 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             else {
                 newEdge.setCurveFlag(false);
                 newEdge.render(this.canvas);
+            }
+            if (pendingRemoval && edgeIndex > -1) {
+                if (this.highlightedEdge == newEdge) {
+                    this.selectEdge(mergedEdge);
+                }
+                newEdge.remove();
+                this.edgeList.splice(edgeIndex, 1);
             }
         };
         AutomatonRenderer.prototype.showEditableEdge = function (edge) {
@@ -1909,7 +1937,9 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                             self.fixEdgeConsistency(edge);
                         }
                     }
-                    edge.render(canvas);
+                    if (!edge.removed()) {
+                        edge.render(canvas);
+                    }
                     $("#entity_origin").html(newOrigin);
                 }
             });
@@ -1925,7 +1955,9 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                             self.fixEdgeConsistency(edge);
                         }
                     }
-                    edge.render(canvas);
+                    if (!edge.removed()) {
+                        edge.render(canvas);
+                    }
                     $("#entity_target").html(newTarget);
                 }
             });
