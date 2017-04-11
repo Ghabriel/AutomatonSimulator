@@ -1,4 +1,6 @@
 import {Edge} from "./Edge"
+import {EdgeUtils} from "./EdgeUtils"
+import {Persistence} from "../Persistence"
 import {Settings, Strings} from "../Settings"
 import {State} from "./State"
 import {Point, utils} from "../Utils"
@@ -24,14 +26,14 @@ export class AutomatonRenderer {
 		e1.setOrigin(q0);
 		e1.setTarget(q1);
 		// e1.setCurveFlag(true);
-		this.addEdgeData(e1, ["a"]);
+		EdgeUtils.addEdgeData(e1, ["a"]);
 		this.edgeList.push(e1);
 
 		let e2 = new Edge();
 		e2.setOrigin(q0);
 		e2.setTarget(q2);
 		// e2.setCurveFlag(true);
-		this.addEdgeData(e2, ["b"]);
+		EdgeUtils.addEdgeData(e2, ["b"]);
 		this.edgeList.push(e2);
 
 		this.updateEdges();
@@ -51,28 +53,28 @@ export class AutomatonRenderer {
 		// let e1 = new Edge();
 		// e1.setOrigin(q0);
 		// e1.setTarget(q0);
-		// this.addEdgeData(e1, ["0"]);
-		// this.addEdgeData(e1, ["1"]);
+		// EdgeUtils.addEdgeData(e1, ["0"]);
+		// EdgeUtils.addEdgeData(e1, ["1"]);
 		// this.edgeList.push(e1);
 
 		// let e2 = new Edge();
 		// e2.setOrigin(q0);
 		// e2.setTarget(q1);
-		// this.addEdgeData(e2, ["1"]);
+		// EdgeUtils.addEdgeData(e2, ["1"]);
 		// this.edgeList.push(e2);
 
 		// let e3 = new Edge();
 		// e3.setOrigin(q1);
 		// e3.setTarget(q2);
-		// this.addEdgeData(e3, ["0"]);
-		// this.addEdgeData(e3, ["1"]);
+		// EdgeUtils.addEdgeData(e3, ["0"]);
+		// EdgeUtils.addEdgeData(e3, ["1"]);
 		// this.edgeList.push(e3);
 
 		// let e4 = new Edge();
 		// e4.setOrigin(q2);
 		// e4.setTarget(q3);
-		// this.addEdgeData(e4, ["0"]);
-		// this.addEdgeData(e4, ["1"]);
+		// EdgeUtils.addEdgeData(e4, ["0"]);
+		// EdgeUtils.addEdgeData(e4, ["1"]);
 		// this.edgeList.push(e4);
 
 		// this.updateEdges();
@@ -109,107 +111,19 @@ export class AutomatonRenderer {
 	}
 
 	public save(): string {
-		let result: any = [
-			Settings.Machine[Settings.currentMachine], // automaton type
-			[], // state list
-			[], // edge list
-			-1  // initial state index
-		];
-
-		let i = 0;
-		for (let state of this.stateList) {
-			let position = state.getPosition();
-			result[1].push([
-				state.getName(),
-				state.isFinal() ? 1 : 0,
-				position.x,
-				position.y
-			]);
-
-			if (state == this.initialState) {
-				result[3] = i;
-			}
-
-			i++;
-		}
-
-		for (let edge of this.edgeList) {
-			result[2].push([
-				edge.getOrigin().getName(),
-				edge.getTarget().getName(),
-				edge.getDataList()
-			]);
-		}
-
-		return JSON.stringify(result);
+		return Persistence.save(this.stateList, this.edgeList, this.initialState);
 	}
 
 	public load(content: string): void {
-		let self = this;
-		let error = function() {
-			self.clear();
+		let loadedData = Persistence.load(content);
+		if (loadedData.error) {
 			alert("Invalid file");
-		};
-
-		let obj: any = [];
-		try {
-			obj = JSON.parse(content);
-		} catch (e) {
-			error();
 			return;
 		}
 
-		let machineType = Settings.Machine[Settings.currentMachine];
-		let validation = obj[0] == machineType
-					  && obj[1] instanceof Array
-					  && obj[2] instanceof Array
-					  && typeof obj[3] == "number"
-					  && obj.length == 4;
-
-		if (!validation) {
-			error();
-			return;
-		}
-
-		let nameToIndex: {[n: string]: number} = {};
-		let controller = Settings.controller();
-
-		let i = 0;
-		for (let data of obj[1]) {
-			let isInitial = (obj[3] == i);
-			let state = new State();
-			state.setName(data[0]);
-			state.setInitial(isInitial);
-			state.setFinal(!!data[1]);
-			state.setPosition(data[2], data[3]);
-
-			if (isInitial) {
-				this.initialState = state;
-			}
-
-			nameToIndex[data[0]] = i;
-			this.stateList.push(state);
-			controller.createState(state);
-			i++;
-		}
-
-		let states = this.stateList;
-		for (let edgeData of obj[2]) {
-			if (edgeData.length != 3) {
-				error();
-				return;
-			}
-			let edge = new Edge();
-			let origin = states[nameToIndex[edgeData[0]]];
-			let target = states[nameToIndex[edgeData[1]]];
-			edge.setOrigin(origin);
-			edge.setTarget(target);
-			for (let data of edgeData[2]) {
-				this.addEdgeData(edge, data);
-			}
-
-			this.edgeList.push(edge);
-		}
+		this.stateList = loadedData.stateList;
+		this.edgeList = loadedData.edgeList;
+		this.initialState = loadedData.initialState;
 
 		// Traverses through the state/edge lists to render them.
 		// We shouldn't render them during creation because, if
@@ -225,6 +139,7 @@ export class AutomatonRenderer {
 
 		for (let edge of this.edgeList) {
 			edge.render(this.canvas);
+			this.bindEdgeEvents(edge);
 		}
 	}
 
@@ -496,17 +411,19 @@ export class AutomatonRenderer {
 			value: Strings.CHANGE_PROPERTY,
 			click: function() {
 				let newOrigin = prompt("Enter a new origin");
-				for (let state of self.stateList) {
-					if (state.getName() == newOrigin) {
-						edge.setOrigin(state);
-						self.fixEdgeConsistency(edge);
+				if (newOrigin !== null) {
+					for (let state of self.stateList) {
+						if (state.getName() == newOrigin) {
+							edge.setOrigin(state);
+							self.fixEdgeConsistency(edge);
+						}
 					}
-				}
 
-				if (!edge.removed()) {
-					edge.render(canvas);
+					if (!edge.removed()) {
+						edge.render(canvas);
+					}
+					$("#entity_origin").html(newOrigin);
 				}
-				$("#entity_origin").html(newOrigin);
 			}
 		});
 		let changeTargetButton = utils.create("input", {
@@ -514,17 +431,19 @@ export class AutomatonRenderer {
 			value: Strings.CHANGE_PROPERTY,
 			click: function() {
 				let newTarget = prompt("Enter a new target");
-				for (let state of self.stateList) {
-					if (state.getName() == newTarget) {
-						edge.setTarget(state);
-						self.fixEdgeConsistency(edge);
+				if (newTarget !== null) {
+					for (let state of self.stateList) {
+						if (state.getName() == newTarget) {
+							edge.setTarget(state);
+							self.fixEdgeConsistency(edge);
+						}
 					}
-				}
 
-				if (!edge.removed()) {
-					edge.render(canvas);
+					if (!edge.removed()) {
+						edge.render(canvas);
+					}
+					$("#entity_target").html(newTarget);
 				}
-				$("#entity_target").html(newTarget);
 			}
 		});
 		let changeTransitionButton = utils.create("input", {
@@ -841,13 +760,6 @@ export class AutomatonRenderer {
 	private changeFinalFlag(state: State, value: boolean): void {
 		state.setFinal(value);
 		Settings.controller().changeFinalFlag(state);
-	}
-
-	private addEdgeData(edge: Edge, data: string[]): void {
-		let controller = Settings.controller();
-		edge.addText(controller.edgeDataToText(data));
-		edge.addData(data);
-		controller.createEdge(edge.getOrigin(), edge.getTarget(), data);
 	}
 
 	private deleteState(state: State): void {
