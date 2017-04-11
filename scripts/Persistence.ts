@@ -2,8 +2,10 @@ import {Edge} from "./interface/Edge"
 import {EdgeUtils} from "./interface/EdgeUtils"
 import {Settings} from "./Settings"
 import {State} from "./interface/State"
+import {UnorderedSet} from "./datastructures/UnorderedSet"
 
 type StateNameMapping = {[n: string]: number};
+type ConnectionMapping = {[n: string]: {[m: string]: Edge}};
 
 interface AutomatonSummary {
 	error: boolean,
@@ -78,9 +80,11 @@ export namespace Persistence {
 			return loadedData;
 		}
 
-
-		let nameToIndex = loadStates(obj, loadedData);
-		if (!loadEdges(obj, loadedData, nameToIndex)) {
+		let connections: ConnectionMapping = {};
+		let nameToIndex = loadStates(obj, loadedData, function(state: State) {
+			connections[state.getName()] = {};
+		});
+		if (!loadEdges(obj, loadedData, nameToIndex, connections)) {
 			loadedData.error = true;
 			return loadedData;
 		}
@@ -88,7 +92,8 @@ export namespace Persistence {
 		return loadedData;
 	}
 
-	function loadStates(dataObj: any, result: AutomatonSummary): StateNameMapping {
+	function loadStates(dataObj: any, result: AutomatonSummary,
+						callback: (State) => void): StateNameMapping {
 		let nameToIndex: StateNameMapping = {};
 		let controller = Settings.controller();
 
@@ -106,6 +111,7 @@ export namespace Persistence {
 			}
 
 			nameToIndex[data[0]] = i;
+			callback(state);
 			result.stateList.push(state);
 			controller.createState(state);
 			i++;
@@ -114,23 +120,31 @@ export namespace Persistence {
 		return nameToIndex;
 	}
 
-	
 	function loadEdges(data: any, result: AutomatonSummary,
-					   nameToIndex: StateNameMapping): boolean {
+					   nameToIndex: StateNameMapping,
+					   connections: ConnectionMapping): boolean {
 		let states = result.stateList;
 		for (let edgeData of data[2]) {
 			if (edgeData.length != 3) {
 				return false;
 			}
 			let edge = new Edge();
-			let origin = states[nameToIndex[edgeData[0]]];
-			let target = states[nameToIndex[edgeData[1]]];
+			let originName = edgeData[0];
+			let targetName = edgeData[1];
+			let origin = states[nameToIndex[originName]];
+			let target = states[nameToIndex[targetName]];
 			edge.setOrigin(origin);
 			edge.setTarget(target);
+			if (connections[targetName].hasOwnProperty(originName)) {
+				let opposite = connections[targetName][originName];
+				opposite.setCurveFlag(true);
+				edge.setCurveFlag(true);
+			}
 			for (let data of edgeData[2]) {
 				EdgeUtils.addEdgeData(edge, data);
 			}
 
+			connections[originName][targetName] = edge;
 			result.edgeList.push(edge);
 		}
 

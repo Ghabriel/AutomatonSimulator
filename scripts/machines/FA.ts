@@ -11,7 +11,7 @@ export class FA {
 		this.stateList.push(name);
 		let index = this.numStates() - 1;
 		this.transitions[index] = {};
-		this.epsilonTransitions[index] = new UnorderedSet();
+		this.epsilonTransitions[index] = new UnorderedSet<Index>();
 		if (this.initialState == -1) {
 			this.initialState = index;
 			this.reset();
@@ -55,7 +55,7 @@ export class FA {
 			this.epsilonTransitions[source].insert(target);
 		} else {
 			if (!transitions.hasOwnProperty(input)) {
-				transitions[input] = new UnorderedSet();
+				transitions[input] = new UnorderedSet<Index>();
 			}
 			transitions[input].insert(target);
 		}
@@ -104,7 +104,8 @@ export class FA {
 	// Returns all accepting states
 	// TODO: maybe this should return a State[]?
 	public getAcceptingStates(): Index[] {
-		return this.finalStates.asList();
+		// TODO: fix this uglyness
+		return <Index[]> this.finalStates.asList();
 	}
 
 	// Returns a list containing all the states that this FA is in.
@@ -126,7 +127,7 @@ export class FA {
 
 	// Reads a character, triggering state changes to this FA.
 	public read(input: string): void {
-		let newStates = new UnorderedSet();
+		let newStates = new UnorderedSet<Index>();
 		let self = this;
 		this.currentStates.forEach(function(index) {
 			let output = self.transition(index, input);
@@ -182,12 +183,12 @@ export class FA {
 
 	// Returns all states that a given state transitions to
 	// with a given input.
-	private transition(state: Index, input: string): UnorderedSet {
+	private transition(state: Index, input: string): UnorderedSet<Index> {
 		return this.transitions[state][input];
 	}
 
 	// Expands all epsilon-transitions into a given state list.
-	private expandSpontaneous(stateList: UnorderedSet): void {
+	private expandSpontaneous(stateList: UnorderedSet<Index>): void {
 		let queue = new Queue<Index>();
 		stateList.forEach(function(state) {
 			queue.push(state);
@@ -208,14 +209,14 @@ export class FA {
 	private stateList: State[] = [];
 	private transitions: {
 		[index: number]: {
-			[input: string]: UnorderedSet
+			[input: string]: UnorderedSet<Index>
 		}
 	} = {};
 	private epsilonTransitions: {
-		[index: number]: UnorderedSet
+		[index: number]: UnorderedSet<Index>
 	} = {};
 	private initialState: Index = -1;
-	private finalStates = new UnorderedSet();
+	private finalStates = new UnorderedSet<Index>();
 
-	private currentStates = new UnorderedSet();
+	private currentStates = new UnorderedSet<Index>();
 }

@@ -752,6 +752,7 @@ define("datastructures/UnorderedSet", ["require", "exports"], function (require,
                 this.count++;
             }
             this.data[value] = true;
+            this.type = typeof value;
         };
         UnorderedSet.prototype.erase = function (value) {
             if (this.contains(value)) {
@@ -775,7 +776,11 @@ define("datastructures/UnorderedSet", ["require", "exports"], function (require,
         UnorderedSet.prototype.forEach = function (callback) {
             for (var value in this.data) {
                 if (this.data.hasOwnProperty(value)) {
-                    if (callback(parseFloat(value)) === false) {
+                    var val = value;
+                    if (this.type == "number") {
+                        val = parseFloat(value);
+                    }
+                    if (callback(val) === false) {
                         break;
                     }
                 }
@@ -1560,15 +1565,18 @@ define("Persistence", ["require", "exports", "interface/Edge", "interface/EdgeUt
                 loadedData.error = true;
                 return loadedData;
             }
-            var nameToIndex = loadStates(obj, loadedData);
-            if (!loadEdges(obj, loadedData, nameToIndex)) {
+            var connections = {};
+            var nameToIndex = loadStates(obj, loadedData, function (state) {
+                connections[state.getName()] = {};
+            });
+            if (!loadEdges(obj, loadedData, nameToIndex, connections)) {
                 loadedData.error = true;
                 return loadedData;
             }
             return loadedData;
         }
         Persistence.load = load;
-        function loadStates(dataObj, result) {
+        function loadStates(dataObj, result, callback) {
             var nameToIndex = {};
             var controller = Settings_6.Settings.controller();
             var i = 0;
@@ -1584,13 +1592,14 @@ define("Persistence", ["require", "exports", "interface/Edge", "interface/EdgeUt
                     result.initialState = state;
                 }
                 nameToIndex[data[0]] = i;
+                callback(state);
                 result.stateList.push(state);
                 controller.createState(state);
                 i++;
             }
             return nameToIndex;
         }
-        function loadEdges(data, result, nameToIndex) {
+        function loadEdges(data, result, nameToIndex, connections) {
             var states = result.stateList;
             for (var _i = 0, _a = data[2]; _i < _a.length; _i++) {
                 var edgeData = _a[_i];
@@ -1598,14 +1607,22 @@ define("Persistence", ["require", "exports", "interface/Edge", "interface/EdgeUt
                     return false;
                 }
                 var edge = new Edge_1.Edge();
-                var origin = states[nameToIndex[edgeData[0]]];
-                var target = states[nameToIndex[edgeData[1]]];
+                var originName = edgeData[0];
+                var targetName = edgeData[1];
+                var origin = states[nameToIndex[originName]];
+                var target = states[nameToIndex[targetName]];
                 edge.setOrigin(origin);
                 edge.setTarget(target);
+                if (connections[targetName].hasOwnProperty(originName)) {
+                    var opposite = connections[targetName][originName];
+                    opposite.setCurveFlag(true);
+                    edge.setCurveFlag(true);
+                }
                 for (var _b = 0, _c = edgeData[2]; _b < _c.length; _b++) {
                     var data_1 = _c[_b];
                     EdgeUtils_1.EdgeUtils.addEdgeData(edge, data_1);
                 }
+                connections[originName][targetName] = edge;
                 result.edgeList.push(edge);
             }
             return true;
