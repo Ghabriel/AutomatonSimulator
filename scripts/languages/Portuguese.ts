@@ -24,6 +24,7 @@ export namespace portuguese {
 		DELETE_ALL_TRANSITIONS: "Remover todas as transições",
 		YES: "sim",
 		NO: "não",
+		FORMAL_DEFINITION: "Definição Formal",
 		SELECT_MACHINE: "Seleção de Máquina",
 		ACTION_LIST: "Ações",
 		CREATE_STATE: "Criar estado",

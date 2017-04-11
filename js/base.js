@@ -115,6 +115,7 @@ define("languages/Portuguese", ["require", "exports"], function (require, export
             DELETE_ALL_TRANSITIONS: "Remover todas as transições",
             YES: "sim",
             NO: "não",
+            FORMAL_DEFINITION: "Definição Formal",
             SELECT_MACHINE: "Seleção de Máquina",
             ACTION_LIST: "Ações",
             CREATE_STATE: "Criar estado",
@@ -169,6 +170,7 @@ define("languages/English", ["require", "exports"], function (require, exports) 
             DELETE_ALL_TRANSITIONS: "Delete all transitions",
             YES: "yes",
             NO: "no",
+            FORMAL_DEFINITION: "Formal Definition",
             SELECT_MACHINE: "Machine Selection",
             ACTION_LIST: "Actions",
             CREATE_STATE: "Create state",
@@ -969,7 +971,6 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Settin
             this.stateMapping = {};
             this.stepIndex = -1;
             this.machine = new FA_1.FA();
-            window["machine"] = this.machine;
         }
         FAController.prototype.edgePrompt = function (callback, fallback) {
             var self = this;
@@ -1063,6 +1064,20 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Settin
         FAController.prototype.accepts = function () {
             return this.machine.accepts();
         };
+        FAController.prototype.formalDefinition = function () {
+            var machine = this.machine;
+            var result = {
+                parameterSequence: ["Q", "Sigma", "Delta", "q0", "F"],
+                parameterValues: {
+                    "Q": machine.getStates(),
+                    "Sigma": machine.alphabet(),
+                    "Delta": "TODO",
+                    "q0": machine.getInitialState(),
+                    "F": machine.getAcceptingStates()
+                }
+            };
+            return result;
+        };
         FAController.prototype.index = function (state) {
             return this.stateMapping[state.getName()];
         };
@@ -1103,6 +1118,7 @@ define("controllers/PDAController", ["require", "exports", "Utils"], function (r
         PDAController.prototype.stepPosition = function () { return -1; };
         PDAController.prototype.currentStates = function () { return []; };
         PDAController.prototype.accepts = function () { return false; };
+        PDAController.prototype.formalDefinition = function () { return null; };
         return PDAController;
     }());
     exports.PDAController = PDAController;
@@ -1131,6 +1147,7 @@ define("controllers/LBAController", ["require", "exports"], function (require, e
         LBAController.prototype.stepPosition = function () { return -1; };
         LBAController.prototype.currentStates = function () { return []; };
         LBAController.prototype.accepts = function () { return false; };
+        LBAController.prototype.formalDefinition = function () { return null; };
         return LBAController;
     }());
     exports.LBAController = LBAController;
@@ -2949,6 +2966,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 languageSelection: new Menu_2.Menu(Settings_11.Strings.SELECT_LANGUAGE),
                 fileManipulation: new Menu_2.Menu(Settings_11.Strings.FILE_MENUBAR),
                 selectedEntity: new Menu_2.Menu(Settings_11.Strings.SELECTED_ENTITY),
+                formalDefinition: new Menu_2.Menu(Settings_11.Strings.FORMAL_DEFINITION),
                 machineSelection: new Menu_2.Menu(Settings_11.Strings.SELECT_MACHINE),
                 actionMenu: new Menu_2.Menu(Settings_11.Strings.ACTION_LIST)
             };
@@ -2972,6 +2990,11 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 node.removeChild(node.children[node.children.length - 1]);
             }
             $(node.querySelector(".none")).show();
+        };
+        Sidebar.prototype.updateFormalDefinition = function (content) {
+            var node = this.mainMenus.formalDefinition.content();
+            node.innerHTML = "";
+            node.appendchild(content);
         };
         Sidebar.prototype.onBind = function () {
             var self = this;

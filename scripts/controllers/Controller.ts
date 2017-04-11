@@ -1,5 +1,10 @@
 import {State} from "../interface/State"
 
+export interface FormalDefinition {
+	parameterSequence: string[]; // e.g [Q, sigma, delta, q0, F]
+	parameterValues: {[p: string]: any}; // values of each parameter
+}
+
 export interface Controller {
 	edgePrompt(callback: (data: string[], text: string) => void,
 			   fallback?: () => void): void;
@@ -23,4 +28,5 @@ export interface Controller {
 
 	currentStates(): string[];
 	accepts(): boolean;
+	formalDefinition(): FormalDefinition;
 }

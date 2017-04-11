@@ -20,6 +20,7 @@ export class Sidebar extends Renderer {
 			languageSelection: new Menu(Strings.SELECT_LANGUAGE),
 			fileManipulation: new Menu(Strings.FILE_MENUBAR),
 			selectedEntity: new Menu(Strings.SELECTED_ENTITY),
+			formalDefinition: new Menu(Strings.FORMAL_DEFINITION),
 			machineSelection: new Menu(Strings.SELECT_MACHINE),
 			actionMenu: new Menu(Strings.ACTION_LIST),
 		};
@@ -49,6 +50,12 @@ export class Sidebar extends Renderer {
 			node.removeChild(node.children[node.children.length - 1]);
 		}
 		$(node.querySelector(".none")).show();
+	}
+
+	public updateFormalDefinition(content: HTMLElement): void {
+		let node = this.mainMenus.formalDefinition.content();
+		node.innerHTML = "";
+		node.appendchild(content);
 	}
 
 	protected onBind(): void {
@@ -280,13 +287,6 @@ export class Sidebar extends Renderer {
 		actionMenu.add(tableElement);
 	}
 
-	// private mainMenus = {
-	// 	languageSelection: new Menu(Strings.SELECT_LANGUAGE),
-	// 	fileManipulation: new Menu(Strings.FILE_MENUBAR),
-	// 	selectedEntity: new Menu(Strings.SELECTED_ENTITY),
-	// 	machineSelection: new Menu(Strings.SELECT_MACHINE),
-	// 	actionMenu: new Menu("Actions"),
-	// };
 	private mainMenus;
 	private otherMenus: Menu[] = [];
 }

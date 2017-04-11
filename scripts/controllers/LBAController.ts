@@ -1,4 +1,4 @@
-import {Controller} from "./Controller"
+import {Controller, FormalDefinition} from "./Controller"
 import {State} from "../interface/State"
 import {utils} from "../Utils"
 
@@ -27,4 +27,5 @@ export class LBAController implements Controller {
 
 	public currentStates(): string[] { return []; }
 	public accepts(): boolean { return false; }
+	public formalDefinition(): FormalDefinition { return null; }
 }

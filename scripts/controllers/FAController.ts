@@ -1,4 +1,4 @@
-import {Controller} from "./Controller"
+import {Controller, FormalDefinition} from "./Controller"
 import {FA} from "../machines/FA"
 import {State} from "../interface/State"
 import {Strings} from "../Settings"
@@ -7,7 +7,6 @@ import {utils} from "../Utils"
 export class FAController implements Controller {
 	constructor() {
 		this.machine = new FA();
-		window["machine"] = this.machine;
 	}
 
 	public edgePrompt(callback: (data: string[], text: string) => void,
@@ -121,6 +120,23 @@ export class FAController implements Controller {
 
 	public accepts(): boolean {
 		return this.machine.accepts();
+	}
+
+	public formalDefinition(): FormalDefinition {
+		// TODO: use the actual symbols
+		let machine = this.machine;
+		let result: FormalDefinition = {
+			parameterSequence: ["Q", "Sigma", "Delta", "q0", "F"],
+			parameterValues: {
+				"Q": machine.getStates(),
+				"Sigma": machine.alphabet(),
+				"Delta": "TODO",
+				"q0": machine.getInitialState(),
+				"F": machine.getAcceptingStates()
+			}
+		};
+
+		return result;
 	}
 
 	private index(state: State): number {
