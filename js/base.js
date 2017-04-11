@@ -349,6 +349,10 @@ define("Utils", ["require", "exports", "Keyboard", "Settings", "System"], functi
             setTimeout(callback, 0);
         }
         utils.async = async;
+        function printShortcut(keys) {
+            return keys.join(" ").toLowerCase();
+        }
+        utils.printShortcut = printShortcut;
         function prompt(message, numFields, success, fail) {
             var blocker = this.create("div", {
                 className: "click_blocker"
@@ -575,7 +579,7 @@ define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"]
         };
         State.prototype.updateInitialMarkOffsets = function () {
             if (this.initialMarkOffsets.length) {
-                return this.initialMarkOffsets;
+                return;
             }
             var length = Settings_2.Settings.stateInitialMarkLength;
             var x = this.x - this.radius;
@@ -925,6 +929,7 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
                     found = true;
                     return false;
                 }
+                return true;
             });
             return found;
         };
@@ -2076,6 +2081,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 }
             });
             var deleteAllButton = Utils_6.utils.create("input", {
+                title: Utils_6.utils.printShortcut(Settings_7.Settings.shortcuts.deleteEntity),
                 type: "button",
                 value: Settings_7.Strings.DELETE_ALL_TRANSITIONS,
                 click: function () {
@@ -2375,7 +2381,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 self.dimState();
                 self.dimEdge();
             }, group);
-            Utils_6.utils.bindShortcut(Settings_7.Settings.shortcuts.deleteState, function () {
+            Utils_6.utils.bindShortcut(Settings_7.Settings.shortcuts.deleteEntity, function () {
                 var highlightedState = self.highlightedState;
                 var highlightedEdge = self.highlightedEdge;
                 if (highlightedState) {
@@ -2791,7 +2797,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
             toggleInitial: ["I"],
             toggleFinal: ["F"],
             dimSelection: ["ESC"],
-            deleteState: ["DELETE"],
+            deleteEntity: ["DELETE"],
             clearMachine: ["C"],
             left: ["LEFT"],
             right: ["RIGHT"],
@@ -3146,7 +3152,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             });
             table.add(createEdge);
             var clearMachine = Utils_11.utils.create("input", {
-                title: Settings_10.Settings.shortcuts.clearMachine.join(" "),
+                title: Utils_11.utils.printShortcut(Settings_10.Settings.shortcuts.clearMachine),
                 type: "button",
                 value: Settings_11.Strings.CLEAR_MACHINE,
                 click: function () {
@@ -3155,7 +3161,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             });
             table.add(clearMachine);
             var undo = Utils_11.utils.create("input", {
-                title: Settings_10.Settings.shortcuts.undo.join(" "),
+                title: Utils_11.utils.printShortcut(Settings_10.Settings.shortcuts.undo),
                 type: "button",
                 value: Settings_11.Strings.UNDO,
                 click: function () {
@@ -3357,6 +3363,7 @@ define("main", ["require", "exports", "Settings", "System", "interface/UI"], fun
             if (document.activeElement.tagName.toLowerCase() != "input") {
                 return System_4.System.keyEvent(e);
             }
+            return true;
         });
     });
 });

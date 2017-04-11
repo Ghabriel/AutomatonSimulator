@@ -23,7 +23,7 @@ LANGFILES    :=$(basename $(notdir $(wildcard $(TS)/$(LANGFOLDER)/*.ts)))
 all: dirs libs languages
 	@echo "[.ts ⟶ .js]"
 ifneq ("$(TSFILES)", "")
-	@tsc --removeComments --module amd --outFile $(JS)/$(JSBASE) $(TSFILES)
+	@tsc --removeComments --noImplicitReturns --module amd --outFile $(JS)/$(JSBASE) $(TSFILES)
 else
 	@touch $(JS)/$(JSBASE)
 	@cat /dev/null > $(JS)/$(JSBASE)
@@ -52,7 +52,8 @@ disable_compress:
 raw: disable_compress all
 
 simple:
-	@tsc --module amd --outFile $(JS)/$(JSBASE) $(TSFILES); cp $(JS)/$(JSBASE) $(JS)/$(JSCOMPRESSED)
+	@tsc --module amd --outFile $(JS)/$(JSBASE) $(TSFILES)
+	@cp $(JS)/$(JSBASE) $(JS)/$(JSCOMPRESSED)
 
 $(CSS) $(JS) $(LIB) $(TS):
 	@echo "[  mkdir  ] $@"

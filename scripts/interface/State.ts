@@ -192,9 +192,9 @@ export class State {
 		this.body.attr("stroke-width", this.strokeWidth());
 	}
 
-	private updateInitialMarkOffsets() {
+	private updateInitialMarkOffsets(): void {
 		if (this.initialMarkOffsets.length) {
-			return this.initialMarkOffsets;
+			return;
 		}
 
 		let length = Settings.stateInitialMarkLength;

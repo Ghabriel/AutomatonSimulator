@@ -495,6 +495,7 @@ export class AutomatonRenderer {
 			}
 		});
 		let deleteAllButton = utils.create("input", {
+			title: utils.printShortcut(Settings.shortcuts.deleteEntity),
 			type: "button",
 			value: Strings.DELETE_ALL_TRANSITIONS,
 			click: function() {
@@ -836,7 +837,7 @@ export class AutomatonRenderer {
 			self.dimEdge();
 		}, group);
 
-		utils.bindShortcut(Settings.shortcuts.deleteState, function() {
+		utils.bindShortcut(Settings.shortcuts.deleteEntity, function() {
 			let highlightedState = self.highlightedState;
 			let highlightedEdge = self.highlightedEdge;
 			if (highlightedState) {

@@ -88,7 +88,7 @@ export namespace Settings {
 		toggleInitial: ["I"],
 		toggleFinal: ["F"],
 		dimSelection: ["ESC"],
-		deleteState: ["DELETE"],
+		deleteEntity: ["DELETE"],
 		clearMachine: ["C"],
 		left: ["LEFT"],
 		right: ["RIGHT"],

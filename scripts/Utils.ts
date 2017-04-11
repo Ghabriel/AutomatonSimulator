@@ -44,7 +44,7 @@ export namespace utils {
 	}
 
 	export function isRightClick(event: any): boolean {
-		if ("which" in event) { // Gecko (Firefox), WebKit (Safari/Chrome), Opera
+		if ("which" in event) { // Gecko (Firefox), WebKit (Chrome/Safari), Opera
 			return event.which == 3;
 		} else if ("button" in event) { // IE, Opera
 			return event.button == 2;
@@ -54,7 +54,7 @@ export namespace utils {
 		return false;
 	}
 
-	export function linePath(x1: number, y1: number, x2: number, y2: number) {
+	export function linePath(x1: number, y1: number, x2: number, y2: number): string {
 		return "M" + x1 + " " + y1 + " L" + x2 + " " + y2;
 	}
 
@@ -65,17 +65,18 @@ export namespace utils {
 		return line;
 	}
 
-	export function toRadians(angle: number) {
+	export function toRadians(angle: number): number {
 		return angle * Math.PI / 180;
 	}
 
-	export function toDegrees(angle: number) {
+	export function toDegrees(angle: number): number {
 		return angle * 180 / Math.PI;
 	}
 
+	// Rotates a point around an axis by a given angle.
 	export function rotatePoint(point: Point,
 								center: Point,
-								angle: number) {
+								angle: number): Point {
 		let sin = Math.sin(angle);
 		let cos = Math.cos(angle);
 		let copy = {
@@ -101,15 +102,17 @@ export namespace utils {
 		return p1 && p2 && p1.x == p2.x && p1.y == p2.y;
 	}
 
-	// Adds a keyboard shortcut to the page.
+	// Binds a keyboard shortcut to the page.
 	export function bindShortcut(keys: string[], callback: () => void, group?: string): void {
 		System.addKeyObserver(keys, callback, group);
 	}
 
+	// Disables all shortcuts in a given shortcut group.
 	export function lockShortcutGroup(group: string): void {
 		System.lockShortcutGroup(group);
 	}
 
+	// Enables all shortcuts in a given shortcut group.
 	export function unlockShortcutGroup(group: string): void {
 		System.unlockShortcutGroup(group);
 	}
@@ -119,6 +122,13 @@ export namespace utils {
 		setTimeout(callback, 0);
 	}
 
+	// Returns a string representation of a keyboard shortcut
+	export function printShortcut(keys: string[]): string {
+		return keys.join(" ").toLowerCase();
+	}
+
+	// Creates an input prompt with a given message, a given number
+	// of input fields and given callbacks for success and failure.
 	// TODO: make this more flexible (regarding the input fields)
 	// (maybe also move it to System?)
 	export function prompt(message: string, numFields: number,

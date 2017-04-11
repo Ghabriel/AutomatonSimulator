@@ -6,7 +6,7 @@ export namespace Browser {
 
 	function info() {
 		let ua = navigator.userAgent.toLowerCase();
-		let test = function(regex) {
+		let test = function(regex: RegExp) {
 			return regex.test(ua);
 		};
 

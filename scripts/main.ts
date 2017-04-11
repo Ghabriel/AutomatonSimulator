@@ -22,5 +22,6 @@ $(document).ready(function() {
 		if (document.activeElement.tagName.toLowerCase() != "input") {
 			return System.keyEvent(e);
 		}
+		return true;
 	});
 });

@@ -255,7 +255,7 @@ export class Sidebar extends Renderer {
 		table.add(createEdge);
 
 		let clearMachine = <HTMLInputElement> utils.create("input", {
-			title: Settings.shortcuts.clearMachine.join(" "),
+			title: utils.printShortcut(Settings.shortcuts.clearMachine),
 			type: "button",
 			value: Strings.CLEAR_MACHINE,
 			click: function() {
@@ -265,7 +265,7 @@ export class Sidebar extends Renderer {
 		table.add(clearMachine);
 
 		let undo = <HTMLInputElement> utils.create("input", {
-			title: Settings.shortcuts.undo.join(" "),
+			title: utils.printShortcut(Settings.shortcuts.undo),
 			type: "button",
 			value: Strings.UNDO,
 			click: function() {

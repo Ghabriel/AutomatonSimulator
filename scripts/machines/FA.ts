@@ -167,6 +167,7 @@ export class FA {
 				found = true;
 				return false;
 			}
+			return true;
 		});
 		return found;
 	}
