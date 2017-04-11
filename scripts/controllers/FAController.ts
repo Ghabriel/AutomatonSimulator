@@ -1,5 +1,6 @@
 import {Controller, FormalDefinition} from "./Controller"
 import {FA} from "../machines/FA"
+import {Keyboard} from "../Keyboard"
 import {State} from "../interface/State"
 import {Strings} from "../Settings"
 import {utils} from "../Utils"
@@ -19,7 +20,7 @@ export class FAController implements Controller {
 	}
 
 	public edgeDataToText(data: string[]): string {
-		let epsilon = "ε";
+		let epsilon = Keyboard.symbols.epsilon;
 		return data[0] || epsilon;
 	}
 
@@ -115,7 +116,7 @@ export class FAController implements Controller {
 	}
 
 	public currentStates(): string[] {
-		return this.machine.getStates();
+		return this.machine.getCurrentStates();
 	}
 
 	public accepts(): boolean {
@@ -125,16 +126,19 @@ export class FAController implements Controller {
 	public formalDefinition(): FormalDefinition {
 		// TODO: use the actual symbols
 		let machine = this.machine;
+		let delta = Keyboard.symbols.delta;
+		let sigma = Keyboard.symbols.sigma;
 		let result: FormalDefinition = {
-			parameterSequence: ["Q", "Sigma", "Delta", "q0", "F"],
-			parameterValues: {
-				"Q": machine.getStates(),
-				"Sigma": machine.alphabet(),
-				"Delta": "TODO",
-				"q0": machine.getInitialState(),
-				"F": machine.getAcceptingStates()
-			}
+			parameterSequence: ["Q", sigma, delta, "q0", "F"],
+			parameterValues: {}
 		};
+
+		let values = result.parameterValues;
+		values["Q"] = machine.getStates();
+		values[sigma] = machine.alphabet();
+		values[delta] = "TODO";
+		values["q0"] = machine.getInitialState();
+		values["F"] = machine.getAcceptingStates();
 
 		return result;
 	}

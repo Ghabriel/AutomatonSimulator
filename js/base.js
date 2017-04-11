@@ -56,6 +56,11 @@ define("Keyboard", ["require", "exports"], function (require, exports) {
             "+": 61,
             "-": 173
         };
+        Keyboard.symbols = {
+            delta: "δ",
+            epsilon: "ε",
+            sigma: "Σ"
+        };
     })(Keyboard = exports.Keyboard || (exports.Keyboard = {}));
 });
 define("lists/MachineList", ["require", "exports"], function (require, exports) {
@@ -812,6 +817,7 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             this.epsilonTransitions = {};
             this.initialState = -1;
             this.finalStates = new UnorderedSet_1.UnorderedSet();
+            this.numRemovedStates = 0;
             this.currentStates = new UnorderedSet_1.UnorderedSet();
         }
         FA.prototype.addState = function (name) {
@@ -842,6 +848,8 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             if (this.transitions.hasOwnProperty(index + "")) {
                 delete this.transitions[index];
             }
+            this.stateList[index] = undefined;
+            this.numRemovedStates++;
         };
         FA.prototype.addTransition = function (source, target, input) {
             var transitions = this.transitions[source];
@@ -884,13 +892,16 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
         FA.prototype.getAcceptingStates = function () {
             return this.finalStates.asList();
         };
-        FA.prototype.getStates = function () {
+        FA.prototype.getCurrentStates = function () {
             var result = [];
             var self = this;
             this.currentStates.forEach(function (index) {
                 result.push(self.stateList[index]);
             });
             return result;
+        };
+        FA.prototype.getStates = function () {
+            return this.stateList;
         };
         FA.prototype.alphabet = function () {
             var result = [];
@@ -939,7 +950,7 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             return this.currentStates.size() == 0;
         };
         FA.prototype.numStates = function () {
-            return this.stateList.length;
+            return this.stateList.length - this.numRemovedStates;
         };
         FA.prototype.transition = function (state, input) {
             return this.transitions[state][input];
@@ -964,7 +975,7 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
     }());
     exports.FA = FA;
 });
-define("controllers/FAController", ["require", "exports", "machines/FA", "Settings", "Utils"], function (require, exports, FA_1, Settings_3, Utils_2) {
+define("controllers/FAController", ["require", "exports", "machines/FA", "Keyboard", "Settings", "Utils"], function (require, exports, FA_1, Keyboard_2, Settings_3, Utils_2) {
     "use strict";
     var FAController = (function () {
         function FAController() {
@@ -979,7 +990,7 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Settin
             }, fallback);
         };
         FAController.prototype.edgeDataToText = function (data) {
-            var epsilon = "ε";
+            var epsilon = Keyboard_2.Keyboard.symbols.epsilon;
             return data[0] || epsilon;
         };
         FAController.prototype.createState = function (state) {
@@ -1059,23 +1070,25 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Settin
             return this.stepIndex;
         };
         FAController.prototype.currentStates = function () {
-            return this.machine.getStates();
+            return this.machine.getCurrentStates();
         };
         FAController.prototype.accepts = function () {
             return this.machine.accepts();
         };
         FAController.prototype.formalDefinition = function () {
             var machine = this.machine;
+            var delta = Keyboard_2.Keyboard.symbols.delta;
+            var sigma = Keyboard_2.Keyboard.symbols.sigma;
             var result = {
-                parameterSequence: ["Q", "Sigma", "Delta", "q0", "F"],
-                parameterValues: {
-                    "Q": machine.getStates(),
-                    "Sigma": machine.alphabet(),
-                    "Delta": "TODO",
-                    "q0": machine.getInitialState(),
-                    "F": machine.getAcceptingStates()
-                }
+                parameterSequence: ["Q", sigma, delta, "q0", "F"],
+                parameterValues: {}
             };
+            var values = result.parameterValues;
+            values["Q"] = machine.getStates();
+            values[sigma] = machine.alphabet();
+            values[delta] = "TODO";
+            values["q0"] = machine.getInitialState();
+            values["F"] = machine.getAcceptingStates();
             return result;
         };
         FAController.prototype.index = function (state) {
@@ -2519,7 +2532,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
     }());
     exports.AutomatonRenderer = AutomatonRenderer;
 });
-define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "Utils"], function (require, exports, Keyboard_2, Menu_1, Settings_8, Utils_7) {
+define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "Utils"], function (require, exports, Keyboard_3, Menu_1, Settings_8, Utils_7) {
     "use strict";
     var initFA;
     (function (initFA) {
@@ -2703,7 +2716,7 @@ define("initializers/initFA", ["require", "exports", "Keyboard", "interface/Menu
                 boundShortcuts = true;
             }
             testCaseInput.addEventListener("keydown", function (e) {
-                if (e.keyCode == Keyboard_2.Keyboard.keys[Settings_8.Settings.shortcuts.dimTestCase[0]]) {
+                if (e.keyCode == Keyboard_3.Keyboard.keys[Settings_8.Settings.shortcuts.dimTestCase[0]]) {
                     if (testCaseInput == document.activeElement) {
                         testCaseInput.blur();
                     }
@@ -3201,7 +3214,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
     }(Renderer_3.Renderer));
     exports.Sidebar = Sidebar;
 });
-define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], function (require, exports, Keyboard_3, Settings_12, Utils_12) {
+define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], function (require, exports, Keyboard_4, Settings_12, Utils_12) {
     "use strict";
     var modifiers = ["alt", "ctrl", "shift"];
     function propertyName(type) {
@@ -3236,7 +3249,7 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
                     event[propertyName(key)] = true;
                 }
                 else {
-                    event["keyCode"] = Keyboard_3.Keyboard.keys[key.toUpperCase()];
+                    event["keyCode"] = Keyboard_4.Keyboard.keys[key.toUpperCase()];
                 }
             }
             this.keyEvent(event);
@@ -3289,7 +3302,7 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
                         return false;
                     }
                 }
-                else if (event.keyCode != Keyboard_3.Keyboard.keys[key]) {
+                else if (event.keyCode != Keyboard_4.Keyboard.keys[key]) {
                     return false;
                 }
             }

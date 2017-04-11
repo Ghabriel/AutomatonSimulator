@@ -44,6 +44,8 @@ export class FA {
 		// Doing so would require changes to numStates() and possibly
 		// other methods. Maybe replacing it by some kind of "invalid entry"
 		// is a better solution.
+		this.stateList[index] = undefined;
+		this.numRemovedStates++;
 	}
 
 	// Adds a transition to this FA. An empty input adds an
@@ -109,13 +111,19 @@ export class FA {
 	}
 
 	// Returns a list containing all the states that this FA is in.
-	public getStates(): State[] {
+	public getCurrentStates(): State[] {
 		let result: State[] = [];
 		let self = this;
 		this.currentStates.forEach(function(index) {
 			result.push(self.stateList[index]);
 		});
 		return result;
+	}
+
+	// Returns a list containing all the states of this FA.
+	// TODO: handle removed states
+	public getStates(): State[] {
+		return this.stateList;
 	}
 
 	// Returns the alphabet of this FA.
@@ -179,7 +187,7 @@ export class FA {
 
 	// Returns the number of states of this FA.
 	public numStates(): number {
-		return this.stateList.length;
+		return this.stateList.length - this.numRemovedStates;
 	}
 
 	// Returns all states that a given state transitions to
@@ -219,5 +227,6 @@ export class FA {
 	private initialState: Index = -1;
 	private finalStates = new UnorderedSet<Index>();
 
+	private numRemovedStates: number = 0;
 	private currentStates = new UnorderedSet<Index>();
 }

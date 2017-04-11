@@ -19,9 +19,6 @@ export class AutomatonRenderer {
 		let q1 = this.newState("q1");
 		q1.setPosition(400, 200);
 
-		// let q2 = this.newState("q2");
-		// q2.setPosition(400, 400);
-
 		let e1 = new Edge();
 		e1.setOrigin(q0);
 		e1.setTarget(q1);
@@ -37,6 +34,7 @@ export class AutomatonRenderer {
 		this.edgeList.push(e2);
 
 		this.updateEdges();
+
 
 		// let q0 = this.newState("q0");
 		// q0.setPosition(100, 200);

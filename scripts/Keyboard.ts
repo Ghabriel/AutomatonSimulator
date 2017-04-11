@@ -48,4 +48,10 @@ export namespace Keyboard {
 		"+": 61,
 		"-": 173
 	};
+
+	export const symbols = {
+		delta: "δ",
+		epsilon: "ε",
+		sigma: "Σ",
+	};
 }
