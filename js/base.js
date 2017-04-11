@@ -1454,10 +1454,12 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             }
             else if (this.isCurved()) {
                 var path = this.body[1].attr("path");
-                var first = path[0][2];
-                var second = path[1][2];
-                x = (origin.x + target.x) / 2;
-                y = (first + second) / 2;
+                var x1 = path[0][1];
+                var y1 = path[0][2];
+                var x2 = path[1][1];
+                var y2 = path[1][2];
+                x = (x1 + x2) / 2;
+                y = (y1 + y2) / 2;
             }
             else {
                 x = (origin.x + target.x) / 2;
@@ -1697,16 +1699,16 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             q0.setPosition(200, 200);
             var q1 = this.newState("q1");
             q1.setPosition(400, 200);
-            var q2 = this.newState("q2");
-            q2.setPosition(400, 400);
             var e1 = new Edge_2.Edge();
             e1.setOrigin(q0);
             e1.setTarget(q1);
+            e1.setCurveFlag(true);
             EdgeUtils_2.EdgeUtils.addEdgeData(e1, ["a"]);
             this.edgeList.push(e1);
             var e2 = new Edge_2.Edge();
-            e2.setOrigin(q0);
-            e2.setTarget(q2);
+            e2.setOrigin(q1);
+            e2.setTarget(q0);
+            e2.setCurveFlag(true);
             EdgeUtils_2.EdgeUtils.addEdgeData(e2, ["b"]);
             this.edgeList.push(e2);
             this.updateEdges();
@@ -2375,10 +2377,14 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             }, group);
             Utils_6.utils.bindShortcut(Settings_7.Settings.shortcuts.deleteState, function () {
                 var highlightedState = self.highlightedState;
+                var highlightedEdge = self.highlightedEdge;
                 if (highlightedState) {
                     self.deleteState(highlightedState);
-                    self.clearSelection();
                 }
+                else if (highlightedEdge) {
+                    self.deleteEdge(highlightedEdge);
+                }
+                self.clearSelection();
             }, group);
             Utils_6.utils.bindShortcut(Settings_7.Settings.shortcuts.clearMachine, function () {
                 var confirmation = confirm(Settings_7.Strings.CLEAR_CONFIRMATION);

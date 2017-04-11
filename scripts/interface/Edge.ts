@@ -414,10 +414,12 @@ export class Edge {
 		} else if (this.isCurved()) {
 			// Curved case
 			let path = this.body[1].attr("path");
-			let first = path[0][2];
-			let second = path[1][2];
-			x = (origin.x + target.x) / 2;
-			y = (first + second) / 2;
+			let x1 = path[0][1];
+			let y1 = path[0][2];
+			let x2 = path[1][1];
+			let y2 = path[1][2];
+			x = (x1 + x2) / 2;
+			y = (y1 + y2) / 2;
 		} else {
 			// Normal case
 			x = (origin.x + target.x) / 2;

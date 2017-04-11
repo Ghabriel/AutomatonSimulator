@@ -19,20 +19,20 @@ export class AutomatonRenderer {
 		let q1 = this.newState("q1");
 		q1.setPosition(400, 200);
 
-		let q2 = this.newState("q2");
-		q2.setPosition(400, 400);
+		// let q2 = this.newState("q2");
+		// q2.setPosition(400, 400);
 
 		let e1 = new Edge();
 		e1.setOrigin(q0);
 		e1.setTarget(q1);
-		// e1.setCurveFlag(true);
+		e1.setCurveFlag(true);
 		EdgeUtils.addEdgeData(e1, ["a"]);
 		this.edgeList.push(e1);
 
 		let e2 = new Edge();
-		e2.setOrigin(q0);
-		e2.setTarget(q2);
-		// e2.setCurveFlag(true);
+		e2.setOrigin(q1);
+		e2.setTarget(q0);
+		e2.setCurveFlag(true);
 		EdgeUtils.addEdgeData(e2, ["b"]);
 		this.edgeList.push(e2);
 
@@ -838,10 +838,13 @@ export class AutomatonRenderer {
 
 		utils.bindShortcut(Settings.shortcuts.deleteState, function() {
 			let highlightedState = self.highlightedState;
+			let highlightedEdge = self.highlightedEdge;
 			if (highlightedState) {
 				self.deleteState(highlightedState);
-				self.clearSelection();
+			} else if (highlightedEdge) {
+				self.deleteEdge(highlightedEdge);
 			}
+			self.clearSelection();
 		}, group);
 
 		utils.bindShortcut(Settings.shortcuts.clearMachine, function() {
