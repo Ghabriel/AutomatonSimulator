@@ -14,6 +14,7 @@ export class LBAController implements Controller {
 	public createEdge(origin: State, target: State, data: string[]): void {}
 	public changeInitialFlag(state: State): void {}
 	public changeFinalFlag(state: State): void {}
+	public renameState(state: State, newName: string): void {}
 	public deleteState(state: State): void {}
 	public deleteEdge(origin: State, target: State, data: string[]): void {}
 	public clear(): void {}

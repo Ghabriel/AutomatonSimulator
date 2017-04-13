@@ -48,6 +48,11 @@ export class FA {
 		this.numRemovedStates++;
 	}
 
+	// Renames a state of this FA.
+	public renameState(index: Index, newName: State): void {
+		this.stateList[index] = newName;
+	}
+
 	// Adds a transition to this FA. An empty input adds an
 	// epsilon-transition.
 	// TODO: maybe create a different method for adding epsilon-transitions?
@@ -98,9 +103,8 @@ export class FA {
 	}
 
 	// Returns the index of the initial state.
-	// TODO: maybe this should return a State?
-	public getInitialState(): Index {
-		return this.initialState;
+	public getInitialState(): State {
+		return this.stateList[this.initialState];
 	}
 
 	// Marks a state as final.
@@ -114,10 +118,13 @@ export class FA {
 	}
 
 	// Returns all accepting states
-	// TODO: maybe this should return a State[]?
-	public getAcceptingStates(): Index[] {
-		// TODO: fix this uglyness
-		return <Index[]> this.finalStates.asList();
+	public getAcceptingStates(): State[] {
+		let result: State[] = [];
+		let self = this;
+		this.finalStates.forEach(function(index) {
+			result.push(self.stateList[index]);
+		});
+		return result;
 	}
 
 	// Returns a list containing all the states that this FA is in.

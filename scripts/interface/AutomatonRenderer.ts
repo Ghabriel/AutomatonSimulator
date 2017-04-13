@@ -316,6 +316,7 @@ export class AutomatonRenderer {
 			click: function() {
 				let newName = prompt("gimme new name pl0x");
 				// TODO: check if the chosen name is already in use
+				Settings.controller().renameState(state, newName);
 				state.setName(newName);
 				state.render(canvas);
 				$("#entity_name").html(newName);

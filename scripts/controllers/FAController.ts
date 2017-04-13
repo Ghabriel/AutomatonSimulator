@@ -69,6 +69,14 @@ export class FAController implements Controller {
 		this.editingCallback();
 	}
 
+	public renameState(state: State, newName: string): void {
+		let index = this.index(state);
+		delete this.stateMapping[state.getName()];
+		this.stateMapping[newName] = index;
+		this.machine.renameState(index, newName);
+		this.editingCallback();
+	}
+
 	public deleteState(state: State): void {
 		this.machine.removeState(this.index(state));
 		this.editingCallback();

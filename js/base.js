@@ -852,6 +852,9 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             this.stateList[index] = undefined;
             this.numRemovedStates++;
         };
+        FA.prototype.renameState = function (index, newName) {
+            this.stateList[index] = newName;
+        };
         FA.prototype.addTransition = function (source, target, input) {
             var transitions = this.transitions[source];
             if (input == "") {
@@ -890,7 +893,7 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             this.initialState = -1;
         };
         FA.prototype.getInitialState = function () {
-            return this.initialState;
+            return this.stateList[this.initialState];
         };
         FA.prototype.addAcceptingState = function (index) {
             this.finalStates.insert(index);
@@ -899,7 +902,12 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             this.finalStates.erase(index);
         };
         FA.prototype.getAcceptingStates = function () {
-            return this.finalStates.asList();
+            var result = [];
+            var self = this;
+            this.finalStates.forEach(function (index) {
+                result.push(self.stateList[index]);
+            });
+            return result;
         };
         FA.prototype.getCurrentStates = function () {
             var result = [];
@@ -1046,6 +1054,13 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Keyboa
             }
             this.editingCallback();
         };
+        FAController.prototype.renameState = function (state, newName) {
+            var index = this.index(state);
+            delete this.stateMapping[state.getName()];
+            this.stateMapping[newName] = index;
+            this.machine.renameState(index, newName);
+            this.editingCallback();
+        };
         FAController.prototype.deleteState = function (state) {
             this.machine.removeState(this.index(state));
             this.editingCallback();
@@ -1145,6 +1160,7 @@ define("controllers/PDAController", ["require", "exports", "Utils"], function (r
         PDAController.prototype.createEdge = function (origin, target, data) { };
         PDAController.prototype.changeInitialFlag = function (state) { };
         PDAController.prototype.changeFinalFlag = function (state) { };
+        PDAController.prototype.renameState = function (state, newName) { };
         PDAController.prototype.deleteState = function (state) { };
         PDAController.prototype.deleteEdge = function (origin, target, data) { };
         PDAController.prototype.clear = function () { };
@@ -1175,6 +1191,7 @@ define("controllers/LBAController", ["require", "exports"], function (require, e
         LBAController.prototype.createEdge = function (origin, target, data) { };
         LBAController.prototype.changeInitialFlag = function (state) { };
         LBAController.prototype.changeFinalFlag = function (state) { };
+        LBAController.prototype.renameState = function (state, newName) { };
         LBAController.prototype.deleteState = function (state) { };
         LBAController.prototype.deleteEdge = function (origin, target, data) { };
         LBAController.prototype.clear = function () { };
@@ -1957,6 +1974,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 value: Settings_7.Strings.RENAME_STATE,
                 click: function () {
                     var newName = prompt("gimme new name pl0x");
+                    Settings_7.Settings.controller().renameState(state, newName);
                     state.setName(newName);
                     state.render(canvas);
                     $("#entity_name").html(newName);
