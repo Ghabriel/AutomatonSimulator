@@ -6,6 +6,8 @@ import {State} from "./State"
 import {Point, utils} from "../Utils"
 import {Table} from "./Table"
 
+import {Prompt} from "../Prompt"
+
 export class AutomatonRenderer {
 	constructor(canvas: RaphaelPaper, node: Element) {
 		this.canvas = canvas;
@@ -314,12 +316,21 @@ export class AutomatonRenderer {
 			type: "button",
 			value: Strings.RENAME_STATE,
 			click: function() {
-				let newName = prompt("gimme new name pl0x");
-				// TODO: check if the chosen name is already in use
-				Settings.controller().renameState(state, newName);
-				state.setName(newName);
-				state.render(canvas);
-				$("#entity_name").html(newName);
+				// utils.prompt("Enter the new state name:", 1, function(data) {
+				// 	let newName = data[0];
+				// 	// TODO: check if the chosen name is already in use
+				// 	Settings.controller().renameState(state, newName);
+				// 	state.setName(newName);
+				// 	state.render(canvas);
+				// 	$("#entity_name").html(newName);
+				// });
+				let message = new Prompt("Enter the new state name:");
+				message.addInput({
+					validator: function(content) {
+						return content.length <= 6;
+					}
+				});
+				message.show();
 			}
 		});
 		let toggleInitialButton = utils.create("input", {
