@@ -36,6 +36,8 @@ export class FAController implements Controller {
 		if (state.isFinal()) {
 			this.machine.addAcceptingState(index);
 		}
+
+		this.editingCallback();
 	}
 
 	public createEdge(origin: State, target: State, data: string[]): void {
@@ -43,6 +45,7 @@ export class FAController implements Controller {
 		let indexTarget = this.index(target);
 		let edgeText = this.edgeDataToText(data);
 		this.machine.addTransition(indexOrigin, indexTarget, edgeText);
+		this.editingCallback();
 	}
 
 	public changeInitialFlag(state: State): void {
@@ -51,6 +54,8 @@ export class FAController implements Controller {
 		} else {
 			this.machine.unsetInitialState();
 		}
+
+		this.editingCallback();
 	}
 
 	public changeFinalFlag(state: State): void {
@@ -60,10 +65,13 @@ export class FAController implements Controller {
 		} else {
 			this.machine.removeAcceptingState(index);
 		}
+
+		this.editingCallback();
 	}
 
 	public deleteState(state: State): void {
 		this.machine.removeState(this.index(state));
+		this.editingCallback();
 	}
 
 	public deleteEdge(origin: State, target: State, data: string[]): void {
@@ -71,10 +79,12 @@ export class FAController implements Controller {
 		let indexTarget = this.index(target);
 		let edgeText = this.edgeDataToText(data);
 		this.machine.removeTransition(indexOrigin, indexTarget, edgeText);
+		this.editingCallback();
 	}
 
 	public clear(): void {
 		this.machine.clear();
+		this.editingCallback();
 	}
 
 	public fastForward(input: string): void {
@@ -143,6 +153,10 @@ export class FAController implements Controller {
 		return result;
 	}
 
+	public setEditingCallback(callback: () => void): void {
+		this.editingCallback = callback;
+	}
+
 	private index(state: State): number {
 		return this.stateMapping[state.getName()];
 	}
@@ -150,4 +164,5 @@ export class FAController implements Controller {
 	private machine: FA;
 	private stateMapping: {[name: string]: number} = {};
 	private stepIndex: number = -1;
+	private editingCallback: () => void = function() {};
 }

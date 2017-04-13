@@ -25,6 +25,8 @@ export class LBAController implements Controller {
 	public isStopped(): boolean { return true; }
 	public stepPosition(): number { return -1; }
 
+	public setEditingCallback(callback: () => void): void {}
+
 	public currentStates(): string[] { return []; }
 	public accepts(): boolean { return false; }
 	public formalDefinition(): FormalDefinition { return null; }

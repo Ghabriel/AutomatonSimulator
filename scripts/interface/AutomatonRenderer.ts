@@ -13,27 +13,27 @@ export class AutomatonRenderer {
 	}
 
 	public render(): void {
-		let q0 = this.newState("q0");
-		q0.setPosition(200, 200);
+		// let q0 = this.newState("q0");
+		// q0.setPosition(200, 200);
 
-		let q1 = this.newState("q1");
-		q1.setPosition(400, 200);
+		// let q1 = this.newState("q1");
+		// q1.setPosition(400, 200);
 
-		let e1 = new Edge();
-		e1.setOrigin(q0);
-		e1.setTarget(q1);
-		e1.setCurveFlag(true);
-		EdgeUtils.addEdgeData(e1, ["a"]);
-		this.edgeList.push(e1);
+		// let e1 = new Edge();
+		// e1.setOrigin(q0);
+		// e1.setTarget(q1);
+		// e1.setCurveFlag(true);
+		// EdgeUtils.addEdgeData(e1, ["a"]);
+		// this.edgeList.push(e1);
 
-		let e2 = new Edge();
-		e2.setOrigin(q1);
-		e2.setTarget(q0);
-		e2.setCurveFlag(true);
-		EdgeUtils.addEdgeData(e2, ["b"]);
-		this.edgeList.push(e2);
+		// let e2 = new Edge();
+		// e2.setOrigin(q1);
+		// e2.setTarget(q0);
+		// e2.setCurveFlag(true);
+		// EdgeUtils.addEdgeData(e2, ["b"]);
+		// this.edgeList.push(e2);
 
-		this.updateEdges();
+		// this.updateEdges();
 
 
 		// let q0 = this.newState("q0");
@@ -83,6 +83,7 @@ export class AutomatonRenderer {
 
 		this.bindEvents();
 		this.bindShortcuts();
+		this.bindFormalDefinitionListener();
 	}
 
 	public clear(): void {
@@ -205,6 +206,39 @@ export class AutomatonRenderer {
 				}
 			});
 		}
+	}
+
+	private bindFormalDefinitionListener(): void {
+		// TODO: this will probably not work properly when the user
+		// changes the automaton type (might not even work if he
+		// changes the system language)
+		let definitionContainer: HTMLDivElement = null;
+		let controller = Settings.controller();
+		controller.setEditingCallback(function() {
+			if (!definitionContainer) {
+				definitionContainer = <HTMLDivElement> utils.create("div");
+				Settings.sidebar.updateFormalDefinition(definitionContainer);
+			}
+
+			let formalDefinition = controller.formalDefinition();
+			// TODO: render the formal definition properly
+			let paramSequence = formalDefinition.parameterSequence;
+			let content = "M = (" + paramSequence.join(", ") + "), where:<br>";
+			for (let parameter of paramSequence) {
+				let value = formalDefinition.parameterValues[parameter];
+				let type = typeof value;
+				content += parameter + " = ";
+				if (type == "number" || type == "string") {
+					content += value;
+				} else if (value instanceof Array) {
+					content += "{" + value.join(", ") + "}";
+				} else {
+					content += "wtf? (AutomatonRenderer:235)";
+				}
+				content += "<br>";
+			}
+			definitionContainer.innerHTML = content;
+		});
 	}
 
 	private selectState(state: State) {

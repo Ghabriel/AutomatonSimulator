@@ -981,6 +981,7 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Keyboa
         function FAController() {
             this.stateMapping = {};
             this.stepIndex = -1;
+            this.editingCallback = function () { };
             this.machine = new FA_1.FA();
         }
         FAController.prototype.edgePrompt = function (callback, fallback) {
@@ -1003,12 +1004,14 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Keyboa
             if (state.isFinal()) {
                 this.machine.addAcceptingState(index);
             }
+            this.editingCallback();
         };
         FAController.prototype.createEdge = function (origin, target, data) {
             var indexOrigin = this.index(origin);
             var indexTarget = this.index(target);
             var edgeText = this.edgeDataToText(data);
             this.machine.addTransition(indexOrigin, indexTarget, edgeText);
+            this.editingCallback();
         };
         FAController.prototype.changeInitialFlag = function (state) {
             if (state.isInitial()) {
@@ -1017,6 +1020,7 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Keyboa
             else {
                 this.machine.unsetInitialState();
             }
+            this.editingCallback();
         };
         FAController.prototype.changeFinalFlag = function (state) {
             var index = this.index(state);
@@ -1026,18 +1030,22 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Keyboa
             else {
                 this.machine.removeAcceptingState(index);
             }
+            this.editingCallback();
         };
         FAController.prototype.deleteState = function (state) {
             this.machine.removeState(this.index(state));
+            this.editingCallback();
         };
         FAController.prototype.deleteEdge = function (origin, target, data) {
             var indexOrigin = this.index(origin);
             var indexTarget = this.index(target);
             var edgeText = this.edgeDataToText(data);
             this.machine.removeTransition(indexOrigin, indexTarget, edgeText);
+            this.editingCallback();
         };
         FAController.prototype.clear = function () {
             this.machine.clear();
+            this.editingCallback();
         };
         FAController.prototype.fastForward = function (input) {
             this.machine.reset();
@@ -1091,6 +1099,9 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Keyboa
             values["F"] = machine.getAcceptingStates();
             return result;
         };
+        FAController.prototype.setEditingCallback = function (callback) {
+            this.editingCallback = callback;
+        };
         FAController.prototype.index = function (state) {
             return this.stateMapping[state.getName()];
         };
@@ -1129,6 +1140,7 @@ define("controllers/PDAController", ["require", "exports", "Utils"], function (r
         PDAController.prototype.finished = function (input) { return true; };
         PDAController.prototype.isStopped = function () { return true; };
         PDAController.prototype.stepPosition = function () { return -1; };
+        PDAController.prototype.setEditingCallback = function (callback) { };
         PDAController.prototype.currentStates = function () { return []; };
         PDAController.prototype.accepts = function () { return false; };
         PDAController.prototype.formalDefinition = function () { return null; };
@@ -1158,6 +1170,7 @@ define("controllers/LBAController", ["require", "exports"], function (require, e
         LBAController.prototype.finished = function (input) { return true; };
         LBAController.prototype.isStopped = function () { return true; };
         LBAController.prototype.stepPosition = function () { return -1; };
+        LBAController.prototype.setEditingCallback = function (callback) { };
         LBAController.prototype.currentStates = function () { return []; };
         LBAController.prototype.accepts = function () { return false; };
         LBAController.prototype.formalDefinition = function () { return null; };
@@ -1712,7 +1725,7 @@ define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"],
     }(Renderer_1.Renderer));
     exports.Table = Table;
 });
-define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "interface/EdgeUtils", "Persistence", "Settings", "interface/State", "Utils", "interface/Table"], function (require, exports, Edge_2, EdgeUtils_2, Persistence_1, Settings_7, State_2, Utils_6, Table_1) {
+define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "Persistence", "Settings", "interface/State", "Utils", "interface/Table"], function (require, exports, Edge_2, Persistence_1, Settings_7, State_2, Utils_6, Table_1) {
     "use strict";
     var AutomatonRenderer = (function () {
         function AutomatonRenderer(canvas, node) {
@@ -1730,25 +1743,9 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.node = node;
         }
         AutomatonRenderer.prototype.render = function () {
-            var q0 = this.newState("q0");
-            q0.setPosition(200, 200);
-            var q1 = this.newState("q1");
-            q1.setPosition(400, 200);
-            var e1 = new Edge_2.Edge();
-            e1.setOrigin(q0);
-            e1.setTarget(q1);
-            e1.setCurveFlag(true);
-            EdgeUtils_2.EdgeUtils.addEdgeData(e1, ["a"]);
-            this.edgeList.push(e1);
-            var e2 = new Edge_2.Edge();
-            e2.setOrigin(q1);
-            e2.setTarget(q0);
-            e2.setCurveFlag(true);
-            EdgeUtils_2.EdgeUtils.addEdgeData(e2, ["b"]);
-            this.edgeList.push(e2);
-            this.updateEdges();
             this.bindEvents();
             this.bindShortcuts();
+            this.bindFormalDefinitionListener();
         };
         AutomatonRenderer.prototype.clear = function () {
             for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
@@ -1851,6 +1848,36 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     }
                 });
             }
+        };
+        AutomatonRenderer.prototype.bindFormalDefinitionListener = function () {
+            var definitionContainer = null;
+            var controller = Settings_7.Settings.controller();
+            controller.setEditingCallback(function () {
+                if (!definitionContainer) {
+                    definitionContainer = Utils_6.utils.create("div");
+                    Settings_7.Settings.sidebar.updateFormalDefinition(definitionContainer);
+                }
+                var formalDefinition = controller.formalDefinition();
+                var paramSequence = formalDefinition.parameterSequence;
+                var content = "M = (" + paramSequence.join(", ") + "), where:<br>";
+                for (var _i = 0, paramSequence_1 = paramSequence; _i < paramSequence_1.length; _i++) {
+                    var parameter = paramSequence_1[_i];
+                    var value = formalDefinition.parameterValues[parameter];
+                    var type = typeof value;
+                    content += parameter + " = ";
+                    if (type == "number" || type == "string") {
+                        content += value;
+                    }
+                    else if (value instanceof Array) {
+                        content += "{" + value.join(", ") + "}";
+                    }
+                    else {
+                        content += "wtf? (AutomatonRenderer:235)";
+                    }
+                    content += "<br>";
+                }
+                definitionContainer.innerHTML = content;
+            });
         };
         AutomatonRenderer.prototype.selectState = function (state) {
             if (!this.locked) {
@@ -3007,7 +3034,9 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
         Sidebar.prototype.updateFormalDefinition = function (content) {
             var node = this.mainMenus.formalDefinition.content();
             node.innerHTML = "";
-            node.appendchild(content);
+            if (content) {
+                node.appendChild(content);
+            }
         };
         Sidebar.prototype.onBind = function () {
             var self = this;

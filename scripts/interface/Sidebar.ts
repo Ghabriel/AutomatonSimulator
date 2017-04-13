@@ -52,10 +52,12 @@ export class Sidebar extends Renderer {
 		$(node.querySelector(".none")).show();
 	}
 
-	public updateFormalDefinition(content: HTMLElement): void {
+	public updateFormalDefinition(content?: HTMLElement): void {
 		let node = this.mainMenus.formalDefinition.content();
 		node.innerHTML = "";
-		node.appendchild(content);
+		if (content) {
+			node.appendChild(content);
+		}
 	}
 
 	protected onBind(): void {
