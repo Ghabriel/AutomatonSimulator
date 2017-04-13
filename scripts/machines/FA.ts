@@ -60,6 +60,11 @@ export class FA {
 				transitions[input] = new UnorderedSet<Index>();
 			}
 			transitions[input].insert(target);
+
+			if (!this.alphabetSet.hasOwnProperty(input)) {
+				this.alphabetSet[input] = 0;
+			}
+			this.alphabetSet[input]++;
 		}
 	}
 
@@ -72,6 +77,11 @@ export class FA {
 			this.epsilonTransitions[source].erase(target);
 		} else if (transitions.hasOwnProperty(input)) {
 			transitions[input].erase(target);
+
+			this.alphabetSet[input]--;
+			if (this.alphabetSet[input] == 0) {
+				delete this.alphabetSet[input];
+			}
 		}
 	}
 
@@ -128,8 +138,12 @@ export class FA {
 
 	// Returns the alphabet of this FA.
 	public alphabet(): string[] {
-		let result: string[] = [];
-		// TODO
+		let result = [];
+		for (let member in this.alphabetSet) {
+			if (this.alphabetSet.hasOwnProperty(member)) {
+				result.push(member);
+			}
+		}
 		return result;
 	}
 
@@ -216,6 +230,7 @@ export class FA {
 	}
 
 	private stateList: State[] = [];
+	private alphabetSet: {[i: string]: number} = {};
 	private transitions: {
 		[index: number]: {
 			[input: string]: UnorderedSet<Index>

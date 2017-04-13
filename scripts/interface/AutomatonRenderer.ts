@@ -825,6 +825,14 @@ export class AutomatonRenderer {
 			if (this.edgeList[i] == edge) {
 				edge.remove();
 				this.edgeList.splice(i, 1);
+
+				let origin = edge.getOrigin();
+				let target = edge.getTarget();
+				let dataLists = edge.getDataList();
+				let controller = Settings.controller();
+				for (let data of dataLists) {
+					controller.deleteEdge(origin, target, data);
+				}
 				break;
 			}
 		}

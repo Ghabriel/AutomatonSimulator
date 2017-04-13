@@ -813,6 +813,7 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
     var FA = (function () {
         function FA() {
             this.stateList = [];
+            this.alphabetSet = {};
             this.transitions = {};
             this.epsilonTransitions = {};
             this.initialState = -1;
@@ -861,6 +862,10 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
                     transitions[input] = new UnorderedSet_1.UnorderedSet();
                 }
                 transitions[input].insert(target);
+                if (!this.alphabetSet.hasOwnProperty(input)) {
+                    this.alphabetSet[input] = 0;
+                }
+                this.alphabetSet[input]++;
             }
         };
         FA.prototype.removeTransition = function (source, target, input) {
@@ -870,6 +875,10 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
             }
             else if (transitions.hasOwnProperty(input)) {
                 transitions[input].erase(target);
+                this.alphabetSet[input]--;
+                if (this.alphabetSet[input] == 0) {
+                    delete this.alphabetSet[input];
+                }
             }
         };
         FA.prototype.setInitialState = function (index) {
@@ -905,6 +914,11 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
         };
         FA.prototype.alphabet = function () {
             var result = [];
+            for (var member in this.alphabetSet) {
+                if (this.alphabetSet.hasOwnProperty(member)) {
+                    result.push(member);
+                }
+            }
             return result;
         };
         FA.prototype.read = function (input) {
@@ -2402,6 +2416,14 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 if (this.edgeList[i] == edge) {
                     edge.remove();
                     this.edgeList.splice(i, 1);
+                    var origin = edge.getOrigin();
+                    var target = edge.getTarget();
+                    var dataLists = edge.getDataList();
+                    var controller = Settings_7.Settings.controller();
+                    for (var _i = 0, dataLists_1 = dataLists; _i < dataLists_1.length; _i++) {
+                        var data = dataLists_1[_i];
+                        controller.deleteEdge(origin, target, data);
+                    }
                     break;
                 }
             }
