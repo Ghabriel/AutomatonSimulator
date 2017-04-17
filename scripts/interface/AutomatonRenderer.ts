@@ -16,72 +16,81 @@ export class AutomatonRenderer {
 	}
 
 	public render(): void {
-		// let q0 = this.newState("q0");
-		// q0.setPosition(200, 200);
+/*		let self = this;
+		let newState = function(name: string): State {
+			let state = new State();
+			state.setName(name);
+			self.stateList.push(state);
+			Settings.controller().createState(state);
+			return state;
+		};
 
-		// let q1 = this.newState("q1");
-		// q1.setPosition(400, 200);
+		let q0 = newState("q0");
+		q0.setPosition(200, 200);
 
-		// let e1 = new Edge();
-		// e1.setOrigin(q0);
-		// e1.setTarget(q1);
-		// e1.setCurveFlag(true);
-		// EdgeUtils.addEdgeData(e1, ["a"]);
-		// this.edgeList.push(e1);
+		let q1 = newState("q1");
+		q1.setPosition(400, 200);
 
-		// let e2 = new Edge();
-		// e2.setOrigin(q1);
-		// e2.setTarget(q0);
-		// e2.setCurveFlag(true);
-		// EdgeUtils.addEdgeData(e2, ["b"]);
-		// this.edgeList.push(e2);
+		let e1 = new Edge();
+		e1.setOrigin(q0);
+		e1.setTarget(q1);
+		e1.setCurveFlag(true);
+		EdgeUtils.addEdgeData(e1, ["a"]);
+		this.edgeList.push(e1);
 
-		// this.updateEdges();
+		let e2 = new Edge();
+		e2.setOrigin(q1);
+		e2.setTarget(q0);
+		e2.setCurveFlag(true);
+		EdgeUtils.addEdgeData(e2, ["b"]);
+		this.edgeList.push(e2);
+
+		this.updateEdges();
 
 
-		// let q0 = this.newState("q0");
-		// q0.setPosition(100, 200);
+		let q0 = newState("q0");
+		q0.setPosition(100, 200);
 
-		// let q1 = this.newState("q1");
-		// q1.setPosition(250, 350);
+		let q1 = newState("q1");
+		q1.setPosition(250, 350);
 
-		// let q2 = this.newState("q2");
-		// q2.setPosition(450, 350);
+		let q2 = newState("q2");
+		q2.setPosition(450, 350);
 
-		// let q3 = this.newState("q3");
-		// q3.setPosition(650, 350);
+		let q3 = newState("q3");
+		q3.setPosition(650, 350);
 
-		// let e1 = new Edge();
-		// e1.setOrigin(q0);
-		// e1.setTarget(q0);
-		// EdgeUtils.addEdgeData(e1, ["0"]);
-		// EdgeUtils.addEdgeData(e1, ["1"]);
-		// this.edgeList.push(e1);
+		let e1 = new Edge();
+		e1.setOrigin(q0);
+		e1.setTarget(q0);
+		EdgeUtils.addEdgeData(e1, ["0"]);
+		EdgeUtils.addEdgeData(e1, ["1"]);
+		this.edgeList.push(e1);
 
-		// let e2 = new Edge();
-		// e2.setOrigin(q0);
-		// e2.setTarget(q1);
-		// EdgeUtils.addEdgeData(e2, ["1"]);
-		// this.edgeList.push(e2);
+		let e2 = new Edge();
+		e2.setOrigin(q0);
+		e2.setTarget(q1);
+		EdgeUtils.addEdgeData(e2, ["1"]);
+		this.edgeList.push(e2);
 
-		// let e3 = new Edge();
-		// e3.setOrigin(q1);
-		// e3.setTarget(q2);
-		// EdgeUtils.addEdgeData(e3, ["0"]);
-		// EdgeUtils.addEdgeData(e3, ["1"]);
-		// this.edgeList.push(e3);
+		let e3 = new Edge();
+		e3.setOrigin(q1);
+		e3.setTarget(q2);
+		EdgeUtils.addEdgeData(e3, ["0"]);
+		EdgeUtils.addEdgeData(e3, ["1"]);
+		this.edgeList.push(e3);
 
-		// let e4 = new Edge();
-		// e4.setOrigin(q2);
-		// e4.setTarget(q3);
-		// EdgeUtils.addEdgeData(e4, ["0"]);
-		// EdgeUtils.addEdgeData(e4, ["1"]);
-		// this.edgeList.push(e4);
+		let e4 = new Edge();
+		e4.setOrigin(q2);
+		e4.setTarget(q3);
+		EdgeUtils.addEdgeData(e4, ["0"]);
+		EdgeUtils.addEdgeData(e4, ["1"]);
+		this.edgeList.push(e4);
 
-		// this.updateEdges();
+		this.updateEdges();
 
-		// this.setInitialState(q0);
-		// this.changeFinalFlag(q3, true);
+		this.setInitialState(q0);
+		this.changeFinalFlag(q3, true);*/
 
 
 		this.bindEvents();
@@ -219,8 +228,7 @@ export class AutomatonRenderer {
 
 	private bindFormalDefinitionListener(): void {
 		// TODO: this will probably not work properly when the user
-		// changes the automaton type (might not even work if he
-		// changes the system language)
+		// changes the automaton type
 		let definitionContainer: HTMLDivElement = null;
 		let controller = Settings.controller();
 		let callback = function() {
@@ -777,10 +785,8 @@ export class AutomatonRenderer {
 						}
 					}
 
-					self.stateList.push(state);
 					state.setName(name);
-					state.render(self.canvas);
-					Settings.controller().createState(state);
+					self.onStateCreation(state);
 					self.updateEditableState(state);
 				}, function() {
 					self.highlightedState = null;
@@ -793,12 +799,16 @@ export class AutomatonRenderer {
 		}
 	}
 
-	private newState(name: string): State {
-		let state = new State();
-		state.setName(name);
+	private onStateCreation(state: State): void {
+		if (this.stateList.length == 0) {
+			// The first state should be initial
+			state.setInitial(true);
+			this.initialState = state;
+		}
+
+		state.render(this.canvas);
 		this.stateList.push(state);
 		Settings.controller().createState(state);
-		return state;
 	}
 
 	private setInitialState(state: State): void {
@@ -874,6 +884,7 @@ export class AutomatonRenderer {
 		if (highlightedState) {
 			this.setInitialState(highlightedState);
 			highlightedState.render(this.canvas);
+			this.updateEditableState(highlightedState);
 		}
 	}
 
@@ -883,6 +894,7 @@ export class AutomatonRenderer {
 		if (highlightedState) {
 			this.changeFinalFlag(highlightedState, !highlightedState.isFinal());
 			highlightedState.render(this.canvas);
+			this.updateEditableState(highlightedState);
 		}
 	}
 

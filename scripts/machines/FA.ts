@@ -172,8 +172,10 @@ export class FA {
 	// Resets this FA, making it return to its initial state.
 	public reset(): void {
 		this.currentStates.clear();
-		this.currentStates.insert(this.initialState);
-		this.expandSpontaneous(this.currentStates);
+		if (this.initialState != -1) {
+			this.currentStates.insert(this.initialState);
+			this.expandSpontaneous(this.currentStates);
+		}
 	}
 
 	// Clears this FA, making it effectively equal to new FA().

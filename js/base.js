@@ -949,8 +949,10 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
         };
         FA.prototype.reset = function () {
             this.currentStates.clear();
-            this.currentStates.insert(this.initialState);
-            this.expandSpontaneous(this.currentStates);
+            if (this.initialState != -1) {
+                this.currentStates.insert(this.initialState);
+                this.expandSpontaneous(this.currentStates);
+            }
         };
         FA.prototype.clear = function () {
             this.stateList = [];
@@ -1009,7 +1011,6 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Keyboa
             this.stepIndex = -1;
             this.editingCallback = function () { };
             this.machine = new FA_1.FA();
-            window["potato"] = this.machine;
         }
         FAController.prototype.edgePrompt = function (callback, fallback) {
             var self = this;
@@ -2500,10 +2501,8 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                                 return stateNamePrompt_1();
                             }
                         }
-                        self_2.stateList.push(state_2);
                         state_2.setName(name);
-                        state_2.render(self_2.canvas);
-                        Settings_8.Settings.controller().createState(state_2);
+                        self_2.onStateCreation(state_2);
                         self_2.updateEditableState(state_2);
                     }, function () {
                         self_2.highlightedState = null;
@@ -2514,12 +2513,14 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 stateNamePrompt_1();
             }
         };
-        AutomatonRenderer.prototype.newState = function (name) {
-            var state = new State_2.State();
-            state.setName(name);
+        AutomatonRenderer.prototype.onStateCreation = function (state) {
+            if (this.stateList.length == 0) {
+                state.setInitial(true);
+                this.initialState = state;
+            }
+            state.render(this.canvas);
             this.stateList.push(state);
             Settings_8.Settings.controller().createState(state);
-            return state;
         };
         AutomatonRenderer.prototype.setInitialState = function (state) {
             var controller = Settings_8.Settings.controller();
@@ -2586,6 +2587,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             if (highlightedState) {
                 this.setInitialState(highlightedState);
                 highlightedState.render(this.canvas);
+                this.updateEditableState(highlightedState);
             }
         };
         AutomatonRenderer.prototype.toggleFinal = function () {
@@ -2593,6 +2595,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             if (highlightedState) {
                 this.changeFinalFlag(highlightedState, !highlightedState.isFinal());
                 highlightedState.render(this.canvas);
+                this.updateEditableState(highlightedState);
             }
         };
         AutomatonRenderer.prototype.bindShortcuts = function () {
