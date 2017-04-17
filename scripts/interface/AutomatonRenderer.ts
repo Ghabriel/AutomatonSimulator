@@ -5,6 +5,7 @@ import {Settings, Strings} from "../Settings"
 import {State} from "./State"
 import {Point, utils} from "../Utils"
 import {Table} from "./Table"
+import {System} from "../System"
 
 import {Prompt} from "../Prompt"
 
@@ -86,6 +87,7 @@ export class AutomatonRenderer {
 		this.bindEvents();
 		this.bindShortcuts();
 		this.bindFormalDefinitionListener();
+		System.addLanguageChangeObserver(this);
 	}
 
 	public clear(): void {
@@ -210,13 +212,18 @@ export class AutomatonRenderer {
 		}
 	}
 
+	// Called when the system language is changed.
+	public onLanguageChange(): void {
+		this.bindFormalDefinitionListener();
+	}
+
 	private bindFormalDefinitionListener(): void {
 		// TODO: this will probably not work properly when the user
 		// changes the automaton type (might not even work if he
 		// changes the system language)
 		let definitionContainer: HTMLDivElement = null;
 		let controller = Settings.controller();
-		controller.setEditingCallback(function() {
+		let callback = function() {
 			if (!definitionContainer) {
 				definitionContainer = <HTMLDivElement> utils.create("div");
 				Settings.sidebar.updateFormalDefinition(definitionContainer);
@@ -225,7 +232,8 @@ export class AutomatonRenderer {
 			let formalDefinition = controller.formalDefinition();
 			// TODO: render the formal definition properly
 			let paramSequence = formalDefinition.parameterSequence;
-			let content = "M = (" + paramSequence.join(", ") + "), where:<br>";
+			let content = "M = (" + paramSequence.join(", ") + ")";
+			content += Strings.DEFINITION_WHERE_SUFFIX + "<br>";
 			for (let parameter of paramSequence) {
 				let value = formalDefinition.parameterValues[parameter];
 				let type = typeof value;
@@ -234,13 +242,23 @@ export class AutomatonRenderer {
 					content += value;
 				} else if (value instanceof Array) {
 					content += "{" + value.join(", ") + "}";
+				} else if (type == "undefined") {
+					content += "<span class='none'>";
+					content += Strings.NO_INITIAL_STATE;
+					content += "</span>";
 				} else {
 					content += "wtf? (AutomatonRenderer:235)";
 				}
 				content += "<br>";
 			}
 			definitionContainer.innerHTML = content;
-		});
+		};
+
+		controller.setEditingCallback(callback);
+
+		// Calls the callback to display the initial formal definition
+		// (normally the formal definition of an empty automaton)
+		callback();
 	}
 
 	private selectState(state: State) {

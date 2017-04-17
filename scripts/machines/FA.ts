@@ -1,5 +1,6 @@
 import {Queue} from "../datastructures/Queue"
 import {UnorderedSet} from "../datastructures/UnorderedSet"
+import {utils} from "../Utils"
 
 type State = string;
 type Index = number;
@@ -21,24 +22,21 @@ export class FA {
 
 	// Removes a state from this FA.
 	public removeState(index: Index): void {
-		for (let originIndex in this.transitions) {
+		let self = this;
+		utils.foreach(this.transitions, function(originIndex, transitions) {
 			let origin = parseInt(originIndex);
-			if (this.transitions.hasOwnProperty(originIndex) && origin != index) {
-				let transitions = this.transitions[origin];
-				for (let input in transitions) {
-					if (transitions.hasOwnProperty(input)) {
-						if (transitions[input].contains(index)) {
-							this.removeTransition(origin, index, input);
-						}
-					}
+			utils.foreach(transitions, function(input) {
+				if (transitions[input].contains(index)) {
+					this.removeTransition(origin, index, input);
 				}
-			}
-		}
 
-		if (this.transitions.hasOwnProperty(index + "")) {
-			// Don't delete if the index exists but is not a proper property
-			delete this.transitions[index];
-		}
+				if (origin == index) {
+					transitions[input].forEach(function(target) {
+						self.removeTransition(index, target, input);
+					});
+				}
+			});
+		});
 
 		// TODO: do we really need to remove the state from the state list?
 		// Doing so would require changes to numStates() and possibly
@@ -138,9 +136,10 @@ export class FA {
 	}
 
 	// Returns a list containing all the states of this FA.
-	// TODO: handle removed states
 	public getStates(): State[] {
-		return this.stateList;
+		return this.stateList.filter(function(value) {
+			return value !== undefined;
+		});
 	}
 
 	// Returns the alphabet of this FA.

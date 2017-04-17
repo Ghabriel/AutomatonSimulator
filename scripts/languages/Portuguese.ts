@@ -25,6 +25,8 @@ export namespace portuguese {
 		YES: "sim",
 		NO: "não",
 		FORMAL_DEFINITION: "Definição Formal",
+		DEFINITION_WHERE_SUFFIX: ", onde:",
+		NO_INITIAL_STATE: "nenhum",
 		SELECT_MACHINE: "Seleção de Máquina",
 		ACTION_LIST: "Ações",
 		CREATE_STATE: "Criar estado",

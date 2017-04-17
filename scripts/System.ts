@@ -17,6 +17,10 @@ interface KeyboardKeyPress {
 	preventDefault: () => void;
 }
 
+interface LanguageChangeObserver {
+	onLanguageChange: () => void;
+}
+
 const modifiers = ["alt", "ctrl", "shift"];
 
 function propertyName(type) {
@@ -27,6 +31,9 @@ export class System {
 	static changeLanguage(language): void {
 		Settings.changeLanguage(language);
 		this.reload();
+		for (let listener of this.languageChangeObservers) {
+			listener.onLanguageChange();
+		}
 	}
 
 	static reload(): void {
@@ -37,6 +44,10 @@ export class System {
 
 	static bindSidebar(sidebar: Sidebar): void {
 		this.sidebar = sidebar;
+	}
+
+	static addLanguageChangeObserver(observer: LanguageChangeObserver): void {
+		this.languageChangeObservers.push(observer);
 	}
 
 	static emitKeyEvent(keys: string[]): void {
@@ -135,6 +146,7 @@ export class System {
 	}
 
 	private static keyboardObservers: KeyboardObserver[] = [];
+	private static languageChangeObservers: LanguageChangeObserver[] = [];
 	private static sidebar: Sidebar;
 	private static eventBlock: boolean = false;
 	private static lockedGroups: {[g: string]: boolean} = {};

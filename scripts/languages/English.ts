@@ -25,6 +25,8 @@ export namespace english {
 		YES: "yes",
 		NO: "no",
 		FORMAL_DEFINITION: "Formal Definition",
+		DEFINITION_WHERE_SUFFIX: ", where:",
+		NO_INITIAL_STATE: "none",
 		SELECT_MACHINE: "Machine Selection",
 		ACTION_LIST: "Actions",
 		CREATE_STATE: "Create state",
