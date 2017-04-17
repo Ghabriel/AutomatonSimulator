@@ -68,6 +68,7 @@ export namespace Settings {
 	};
 
 	export const edgeStrokeColor = "black";
+	export const edgeHighlightColor = "red";
 
 	export const edgeArrowThickness = 2;
 	export const edgeArrowLength = 30;

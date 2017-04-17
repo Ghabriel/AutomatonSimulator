@@ -102,6 +102,7 @@ define("languages/Portuguese", ["require", "exports"], function (require, export
             FILE_MENUBAR: "Manipulação de Arquivos",
             SAVE: "Salvar",
             OPEN: "Abrir",
+            INVALID_FILE: "Arquivo inválido",
             PROMPT_CONFIRM: "Confirmar",
             PROMPT_CANCEL: "Cancelar",
             SELECTED_ENTITY: "Entidade selecionada",
@@ -132,6 +133,9 @@ define("languages/Portuguese", ["require", "exports"], function (require, export
             UNDO: "Desfazer",
             CREATE_STATE_INSTRUCTIONS: "clique duplo no local alvo",
             CREATE_EDGE_INSTRUCTIONS: "clique direito na origem e então clique no destino",
+            STATE_MANUAL_CREATION: "Digite o nome do estado:",
+            EDGE_MANUAL_CREATION: "Escolha a origem e o destino:",
+            DUPLICATE_STATE_NAME: "Nome do estado já em uso",
             FA: "Autômato Finito",
             PDA: "Autômato de Pilha",
             LBA: "Autômato Linearmente Limitado",
@@ -159,6 +163,7 @@ define("languages/English", ["require", "exports"], function (require, exports) 
             FILE_MENUBAR: "File Manipulation",
             SAVE: "Save",
             OPEN: "Open",
+            INVALID_FILE: "Invalid file",
             PROMPT_CONFIRM: "Confirm",
             PROMPT_CANCEL: "Cancel",
             SELECTED_ENTITY: "Selected entity",
@@ -189,6 +194,9 @@ define("languages/English", ["require", "exports"], function (require, exports) 
             UNDO: "Undo",
             CREATE_STATE_INSTRUCTIONS: "double click on target position",
             CREATE_EDGE_INSTRUCTIONS: "right click on origin then click on target",
+            STATE_MANUAL_CREATION: "Enter the state name:",
+            EDGE_MANUAL_CREATION: "Choose the origin and destination",
+            DUPLICATE_STATE_NAME: "State name already in use",
             FA: "Finite Automaton",
             PDA: "Pushdown Automaton",
             LBA: "Linearly Bounded Automaton",
@@ -1925,7 +1933,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         AutomatonRenderer.prototype.load = function (content) {
             var loadedData = Persistence_1.Persistence.load(content);
             if (loadedData.error) {
-                alert("Invalid file");
+                alert(Settings_8.Strings.INVALID_FILE);
                 return;
             }
             this.stateList = loadedData.stateList;
@@ -1981,7 +1989,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         AutomatonRenderer.prototype.edgeManualCreation = function () {
             if (!this.locked) {
                 var self_1 = this;
-                Utils_8.utils.prompt("Choose the origin and destination", 2, function (data) {
+                Utils_8.utils.prompt(Settings_8.Strings.EDGE_MANUAL_CREATION, 2, function (data) {
                     var edge = new Edge_2.Edge();
                     for (var _i = 0, _a = self_1.stateList; _i < _a.length; _i++) {
                         var state = _a[_i];
@@ -2492,12 +2500,12 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 this.bindStateEvents(state_2);
                 var self_2 = this;
                 var stateNamePrompt_1 = function () {
-                    Utils_8.utils.prompt("Enter the state name:", 1, function (data) {
+                    Utils_8.utils.prompt(Settings_8.Strings.STATE_MANUAL_CREATION, 1, function (data) {
                         var name = data[0];
                         for (var _i = 0, _a = self_2.stateList; _i < _a.length; _i++) {
                             var state_3 = _a[_i];
                             if (state_3.getName() == name) {
-                                alert("State name already in use");
+                                alert(Settings_8.Strings.DUPLICATE_STATE_NAME);
                                 return stateNamePrompt_1();
                             }
                         }

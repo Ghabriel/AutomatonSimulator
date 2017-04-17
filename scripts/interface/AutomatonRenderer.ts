@@ -129,7 +129,7 @@ export class AutomatonRenderer {
 	public load(content: string): void {
 		let loadedData = Persistence.load(content);
 		if (loadedData.error) {
-			alert("Invalid file");
+			alert(Strings.INVALID_FILE);
 			return;
 		}
 
@@ -198,7 +198,7 @@ export class AutomatonRenderer {
 	public edgeManualCreation(): void {
 		if (!this.locked) {
 			let self = this;
-			utils.prompt("Choose the origin and destination", 2, function(data) {
+			utils.prompt(Strings.EDGE_MANUAL_CREATION, 2, function(data) {
 				let edge = new Edge();
 				for (let state of self.stateList) {
 					let name = state.getName();
@@ -301,7 +301,7 @@ export class AutomatonRenderer {
 				this.highlightedEdge.removeCustomColor();
 				this.highlightedEdge.render(this.canvas);
 			}
-			edge.setCustomColor("red");
+			edge.setCustomColor(Settings.edgeHighlightColor);
 			this.highlightedEdge = edge;
 			edge.render(this.canvas);
 
@@ -350,7 +350,7 @@ export class AutomatonRenderer {
 				// 	state.render(canvas);
 				// 	$("#entity_name").html(newName);
 				// });
-				let message = new Prompt("Enter the new state name:");
+				let message = new Prompt(Strings.STATE_RENAME_ACTION);
 				message.addInput({
 					validator: function(content) {
 						return content.length <= 6;
@@ -480,7 +480,7 @@ export class AutomatonRenderer {
 			type: "button",
 			value: Strings.CHANGE_PROPERTY,
 			click: function() {
-				let newOrigin = prompt("Enter a new origin");
+				let newOrigin = prompt(Strings.EDGE_ENTER_NEW_ORIGIN);
 				if (newOrigin !== null) {
 					for (let state of self.stateList) {
 						if (state.getName() == newOrigin) {
@@ -500,7 +500,7 @@ export class AutomatonRenderer {
 			type: "button",
 			value: Strings.CHANGE_PROPERTY,
 			click: function() {
-				let newTarget = prompt("Enter a new target");
+				let newTarget = prompt(Strings.EDGE_ENTER_NEW_TARGET);
 				if (newTarget !== null) {
 					for (let state of self.stateList) {
 						if (state.getName() == newTarget) {
@@ -776,11 +776,11 @@ export class AutomatonRenderer {
 
 			let self = this;
 			let stateNamePrompt = function() {
-				utils.prompt("Enter the state name:", 1, function(data) {
+				utils.prompt(Strings.STATE_MANUAL_CREATION, 1, function(data) {
 					let name = data[0];
 					for (let state of self.stateList) {
 						if (state.getName() == name) {
-							alert("State name already in use");
+							alert(Strings.DUPLICATE_STATE_NAME);
 							return stateNamePrompt();
 						}
 					}
