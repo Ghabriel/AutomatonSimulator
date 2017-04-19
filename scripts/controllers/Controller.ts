@@ -1,8 +1,14 @@
 import {State} from "../interface/State"
 
 export interface FormalDefinition {
-	parameterSequence: string[]; // e.g [Q, sigma, delta, q0, F]
-	parameterValues: {[p: string]: any}; // values of each parameter
+	// Order of the parameters displayed in M = (...)
+	tupleSequence: string[]; // e.g [Q, sigma, delta, q0, F]
+
+	// Order of the parameters displayed below M = (...)
+	parameterSequence: string[];
+
+	// Values of each parameter
+	parameterValues: {[p: string]: any};
 }
 
 export interface Controller {

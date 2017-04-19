@@ -136,6 +136,9 @@ define("languages/Portuguese", ["require", "exports"], function (require, export
             STATE_MANUAL_CREATION: "Digite o nome do estado:",
             EDGE_MANUAL_CREATION: "Escolha a origem e o destino:",
             DUPLICATE_STATE_NAME: "Nome do estado já em uso",
+            STATE_RENAME_ACTION: "Digite o novo nome do estado:",
+            EDGE_ENTER_NEW_ORIGIN: "Digite a nova origem:",
+            EDGE_ENTER_NEW_TARGET: "Digite o novo destino:",
             FA: "Autômato Finito",
             PDA: "Autômato de Pilha",
             LBA: "Autômato Linearmente Limitado",
@@ -197,6 +200,9 @@ define("languages/English", ["require", "exports"], function (require, exports) 
             STATE_MANUAL_CREATION: "Enter the state name:",
             EDGE_MANUAL_CREATION: "Choose the origin and destination",
             DUPLICATE_STATE_NAME: "State name already in use",
+            STATE_RENAME_ACTION: "Enter the new state name:",
+            EDGE_ENTER_NEW_ORIGIN: "Enter a new origin:",
+            EDGE_ENTER_NEW_TARGET: "Enter a new target:",
             FA: "Finite Automaton",
             PDA: "Pushdown Automaton",
             LBA: "Linearly Bounded Automaton",
@@ -1131,7 +1137,8 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Keyboa
             var delta = Keyboard_2.Keyboard.symbols.delta;
             var sigma = Keyboard_2.Keyboard.symbols.sigma;
             var result = {
-                parameterSequence: ["Q", sigma, delta, "q0", "F"],
+                tupleSequence: ["Q", sigma, delta, "q0", "F"],
+                parameterSequence: ["Q", sigma, "q0", "F", delta],
                 parameterValues: {}
             };
             var values = result.parameterValues;
@@ -2023,11 +2030,11 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     Settings_8.Settings.sidebar.updateFormalDefinition(definitionContainer);
                 }
                 var formalDefinition = controller.formalDefinition();
-                var paramSequence = formalDefinition.parameterSequence;
-                var content = "M = (" + paramSequence.join(", ") + ")";
+                var tupleSequence = formalDefinition.tupleSequence;
+                var content = "M = (" + tupleSequence.join(", ") + ")";
                 content += Settings_8.Strings.DEFINITION_WHERE_SUFFIX + "<br>";
-                for (var _i = 0, paramSequence_1 = paramSequence; _i < paramSequence_1.length; _i++) {
-                    var parameter = paramSequence_1[_i];
+                for (var _i = 0, _a = formalDefinition.parameterSequence; _i < _a.length; _i++) {
+                    var parameter = _a[_i];
                     var value = formalDefinition.parameterValues[parameter];
                     var type = typeof value;
                     content += parameter + " = ";
@@ -2080,7 +2087,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     this.highlightedEdge.removeCustomColor();
                     this.highlightedEdge.render(this.canvas);
                 }
-                edge.setCustomColor("red");
+                edge.setCustomColor(Settings_8.Settings.edgeHighlightColor);
                 this.highlightedEdge = edge;
                 edge.render(this.canvas);
                 this.updateEditableEdge(edge);
@@ -2115,7 +2122,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 type: "button",
                 value: Settings_8.Strings.RENAME_STATE,
                 click: function () {
-                    var message = new Prompt_1.Prompt("Enter the new state name:");
+                    var message = new Prompt_1.Prompt(Settings_8.Strings.STATE_RENAME_ACTION);
                     message.addInput({
                         validator: function (content) {
                             return content.length <= 6;
@@ -2233,7 +2240,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 type: "button",
                 value: Settings_8.Strings.CHANGE_PROPERTY,
                 click: function () {
-                    var newOrigin = prompt("Enter a new origin");
+                    var newOrigin = prompt(Settings_8.Strings.EDGE_ENTER_NEW_ORIGIN);
                     if (newOrigin !== null) {
                         for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
                             var state = _a[_i];
@@ -2253,7 +2260,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 type: "button",
                 value: Settings_8.Strings.CHANGE_PROPERTY,
                 click: function () {
-                    var newTarget = prompt("Enter a new target");
+                    var newTarget = prompt(Settings_8.Strings.EDGE_ENTER_NEW_TARGET);
                     if (newTarget !== null) {
                         for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
                             var state = _a[_i];
@@ -3026,6 +3033,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
             ringStrokeWidth: 2
         };
         Settings.edgeStrokeColor = "black";
+        Settings.edgeHighlightColor = "red";
         Settings.edgeArrowThickness = 2;
         Settings.edgeArrowLength = 30;
         Settings.edgeArrowAngle = Utils_11.utils.toRadians(30);

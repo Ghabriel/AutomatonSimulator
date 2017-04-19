@@ -239,10 +239,10 @@ export class AutomatonRenderer {
 
 			let formalDefinition = controller.formalDefinition();
 			// TODO: render the formal definition properly
-			let paramSequence = formalDefinition.parameterSequence;
-			let content = "M = (" + paramSequence.join(", ") + ")";
+			let tupleSequence = formalDefinition.tupleSequence;
+			let content = "M = (" + tupleSequence.join(", ") + ")";
 			content += Strings.DEFINITION_WHERE_SUFFIX + "<br>";
-			for (let parameter of paramSequence) {
+			for (let parameter of formalDefinition.parameterSequence) {
 				let value = formalDefinition.parameterValues[parameter];
 				let type = typeof value;
 				content += parameter + " = ";

@@ -147,7 +147,8 @@ export class FAController implements Controller {
 		let delta = Keyboard.symbols.delta;
 		let sigma = Keyboard.symbols.sigma;
 		let result: FormalDefinition = {
-			parameterSequence: ["Q", sigma, delta, "q0", "F"],
+			tupleSequence: ["Q", sigma, delta, "q0", "F"],
+			parameterSequence: ["Q", sigma, "q0", "F", delta],
 			parameterValues: {}
 		};
 
