@@ -263,7 +263,7 @@ export class AutomatonRenderer {
 					content += Strings.NO_INITIAL_STATE;
 					content += "</span>";
 				} else {
-					content += "wtf? (AutomatonRenderer:235)";
+					content += "unspecified type (AutomatonRenderer:266)";
 				}
 				content += "<br>";
 			}
