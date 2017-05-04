@@ -7,7 +7,7 @@ import {UnorderedSet} from "./datastructures/UnorderedSet"
 type StateNameMapping = {[n: string]: number};
 type ConnectionMapping = {[n: string]: {[m: string]: Edge}};
 
-interface AutomatonSummary {
+export interface AutomatonSummary {
 	error: boolean,
 	initialState: State,
 	stateList: State[],

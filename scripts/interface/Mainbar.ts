@@ -2,6 +2,7 @@
 /// <reference path="../defs/jQuery.d.ts" />
 
 import {AutomatonRenderer} from "./AutomatonRenderer"
+import {Memento} from "../Memento"
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
 
@@ -30,7 +31,13 @@ export class Mainbar extends Renderer {
 		// 0x0 is a placeholder size: resizeCanvas() calculates the true size.
 		this.canvas = Raphael(<HTMLElement> this.node, 0, 0);
 		this.resizeCanvas();
-		this.automatonRenderer = new AutomatonRenderer(this.canvas, this.node);
+
+		let canvas = this.canvas;
+		let node = this.node;
+		let memento = new Memento<string>(function() {
+			return Settings.undoMaxAmount;
+		});
+		this.automatonRenderer = new AutomatonRenderer(canvas, node, memento);
 		Settings.automatonRenderer = this.automatonRenderer;
 	}
 

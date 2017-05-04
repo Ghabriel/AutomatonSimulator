@@ -1611,6 +1611,34 @@ define("interface/EdgeUtils", ["require", "exports", "Settings"], function (requ
         EdgeUtils.addEdgeData = addEdgeData;
     })(EdgeUtils = exports.EdgeUtils || (exports.EdgeUtils = {}));
 });
+define("Memento", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var Memento = (function () {
+        function Memento(limit) {
+            this.bottomIndex = 0;
+            this.topIndex = -1;
+            this.states = {};
+            this.limit = limit;
+        }
+        Memento.prototype.push = function (state) {
+            console.log("push", state);
+            var limit = this.limit() + 1;
+            if (this.topIndex - this.bottomIndex + 1 == limit) {
+                delete this.states[this.bottomIndex];
+                this.bottomIndex++;
+            }
+            this.topIndex++;
+            this.states[this.topIndex] = state;
+        };
+        Memento.prototype.pop = function () {
+            var data = this.states[this.topIndex - 1];
+            this.topIndex--;
+            return data;
+        };
+        return Memento;
+    }());
+    exports.Memento = Memento;
+});
 define("Persistence", ["require", "exports", "interface/Edge", "interface/EdgeUtils", "Settings", "interface/State"], function (require, exports, Edge_1, EdgeUtils_1, Settings_6, State_1) {
     "use strict";
     var Persistence;
@@ -1902,7 +1930,7 @@ define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils
 define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "Persistence", "Settings", "interface/State", "Utils", "interface/Table", "System", "Prompt"], function (require, exports, Edge_2, Persistence_1, Settings_8, State_2, Utils_8, Table_1, System_3, Prompt_1) {
     "use strict";
     var AutomatonRenderer = (function () {
-        function AutomatonRenderer(canvas, node) {
+        function AutomatonRenderer(canvas, node, memento) {
             this.canvas = null;
             this.node = null;
             this.stateList = [];
@@ -1913,7 +1941,9 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.edgeMode = false;
             this.currentEdge = null;
             this.locked = false;
+            this.memento = null;
             this.canvas = canvas;
+            this.memento = memento;
             this.node = node;
         }
         AutomatonRenderer.prototype.render = function () {
@@ -2030,7 +2060,9 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         AutomatonRenderer.prototype.bindFormalDefinitionListener = function () {
             var definitionContainer = null;
             var controller = Settings_8.Settings.controller();
+            var self = this;
             var callback = function () {
+                self.memento.push(self.save());
                 if (!definitionContainer) {
                     definitionContainer = Utils_8.utils.create("div");
                     Settings_8.Settings.sidebar.updateFormalDefinition(definitionContainer);
@@ -2619,6 +2651,14 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 this.updateEditableState(highlightedState);
             }
         };
+        AutomatonRenderer.prototype.undo = function () {
+            this.clear();
+            var data = this.memento.pop();
+            console.log("undo", data);
+            if (data) {
+                this.load(data);
+            }
+        };
         AutomatonRenderer.prototype.bindShortcuts = function () {
             var self = this;
             var group = Settings_8.Settings.canvasShortcutID;
@@ -2731,7 +2771,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 });
             }, group);
             Utils_8.utils.bindShortcut(Settings_8.Settings.shortcuts.undo, function () {
-                alert("TODO: undo");
+                self.undo();
             }, group);
         };
         AutomatonRenderer.prototype.selectionThreshold = function () {
@@ -3591,7 +3631,7 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
     }());
     exports.System = System;
 });
-define("interface/Mainbar", ["require", "exports", "interface/AutomatonRenderer", "interface/Renderer", "Settings"], function (require, exports, AutomatonRenderer_1, Renderer_4, Settings_14) {
+define("interface/Mainbar", ["require", "exports", "interface/AutomatonRenderer", "Memento", "interface/Renderer", "Settings"], function (require, exports, AutomatonRenderer_1, Memento_1, Renderer_4, Settings_14) {
     "use strict";
     var Mainbar = (function (_super) {
         __extends(Mainbar, _super);
@@ -3617,7 +3657,12 @@ define("interface/Mainbar", ["require", "exports", "interface/AutomatonRenderer"
         Mainbar.prototype.onBind = function () {
             this.canvas = Raphael(this.node, 0, 0);
             this.resizeCanvas();
-            this.automatonRenderer = new AutomatonRenderer_1.AutomatonRenderer(this.canvas, this.node);
+            var canvas = this.canvas;
+            var node = this.node;
+            var memento = new Memento_1.Memento(function () {
+                return Settings_14.Settings.undoMaxAmount;
+            });
+            this.automatonRenderer = new AutomatonRenderer_1.AutomatonRenderer(canvas, node, memento);
             Settings_14.Settings.automatonRenderer = this.automatonRenderer;
         };
         Mainbar.prototype.onRender = function () {

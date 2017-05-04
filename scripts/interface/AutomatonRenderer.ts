@@ -1,5 +1,6 @@
 import {Edge} from "./Edge"
 import {EdgeUtils} from "./EdgeUtils"
+import {Memento} from "../Memento"
 import {Persistence} from "../Persistence"
 import {Settings, Strings} from "../Settings"
 import {State} from "./State"
@@ -10,8 +11,9 @@ import {System} from "../System"
 import {Prompt} from "../Prompt"
 
 export class AutomatonRenderer {
-	constructor(canvas: RaphaelPaper, node: Element) {
+	constructor(canvas: RaphaelPaper, node: Element, memento: Memento<string>) {
 		this.canvas = canvas;
+		this.memento = memento;
 		this.node = node;
 	}
 
@@ -226,12 +228,18 @@ export class AutomatonRenderer {
 		this.bindFormalDefinitionListener();
 	}
 
+	// TODO: find a better name for this method
+	// (since it also handles saving the current state)
 	private bindFormalDefinitionListener(): void {
 		// TODO: this will probably not work properly when the user
 		// changes the automaton type
 		let definitionContainer: HTMLDivElement = null;
 		let controller = Settings.controller();
+		let self = this;
 		let callback = function() {
+			// Saves the current state to the memento
+			self.memento.push(self.save());
+
 			if (!definitionContainer) {
 				definitionContainer = <HTMLDivElement> utils.create("div");
 				Settings.sidebar.updateFormalDefinition(definitionContainer);
@@ -898,6 +906,15 @@ export class AutomatonRenderer {
 		}
 	}
 
+	private undo(): void {
+		this.clear();
+		let data = this.memento.pop();
+		console.log("undo", data);
+		if (data) {
+			this.load(data);
+		}
+	}
+
 	private bindShortcuts(): void {
 		let self = this;
 		let group = Settings.canvasShortcutID;
@@ -1031,8 +1048,7 @@ export class AutomatonRenderer {
 		}, group);
 
 		utils.bindShortcut(Settings.shortcuts.undo, function() {
-			// TODO
-			alert("TODO: undo");
+			self.undo();
 		}, group);
 	}
 
@@ -1072,4 +1088,5 @@ export class AutomatonRenderer {
 	private currentEdge: Edge = null;
 
 	private locked: boolean = false;
+	private memento: Memento<string> = null;
 }
