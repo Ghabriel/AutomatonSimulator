@@ -1,8 +1,11 @@
 export namespace english {
 	export const strings = {
 		LANGUAGE_NAME: "English",
-		SELECT_LANGUAGE: "System Language",
+		SETTINGS: "System Settings",
 		CHANGE_LANGUAGE: "Change the language to \"%\"?",
+		SYSTEM_LANGUAGE: "System language",
+		UNDO_MAX_COUNT: "Undo max count",
+		MEMORY_CONSUMPTION_WARNING: "Increasing the history size increases the memory consumption. Do you wish to continue?",
 		FILE_MENUBAR: "File Manipulation",
 		SAVE: "Save",
 		OPEN: "Open",

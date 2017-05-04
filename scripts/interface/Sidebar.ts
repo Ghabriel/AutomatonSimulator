@@ -17,7 +17,7 @@ export class Sidebar extends Renderer {
 
 	public build(): void {
 		this.mainMenus = {
-			languageSelection: new Menu(Strings.SELECT_LANGUAGE),
+			settings: new Menu(Strings.SETTINGS),
 			fileManipulation: new Menu(Strings.FILE_MENUBAR),
 			selectedEntity: new Menu(Strings.SELECTED_ENTITY),
 			formalDefinition: new Menu(Strings.FORMAL_DEFINITION),
@@ -25,7 +25,7 @@ export class Sidebar extends Renderer {
 			actionMenu: new Menu(Strings.ACTION_LIST),
 		};
 
-		this.buildLanguageSelection();
+		this.buildSettings();
 		this.buildFileManipulation();
 		this.buildSelectedEntityArea();
 		this.buildMachineSelection();
@@ -99,7 +99,43 @@ export class Sidebar extends Renderer {
 		// console.log(Settings.machines[Settings.currentMachine].name);
 	}
 
-	private buildLanguageSelection(): void {
+	private buildSettings(): void {
+		let settings = this.mainMenus.settings;
+		settings.clear();
+
+		let table = new Table(2, 2);
+
+		let undoMaxAmountInput = utils.create("input", {
+			className: "property_value",
+			type: "text",
+			value: Settings.undoMaxAmount
+		});
+
+		let originalMaxCount;
+		undoMaxAmountInput.addEventListener("focus", function() {
+			originalMaxCount = this.value;
+		});
+
+		undoMaxAmountInput.addEventListener("blur", function() {
+			let value = parseInt(this.value);
+			if (!isNaN(value) && value >= 1) {
+				if (originalMaxCount >= value
+				 || confirm(Strings.MEMORY_CONSUMPTION_WARNING)) {
+					Settings.undoMaxAmount = value;
+				}
+				this.value = Settings.undoMaxAmount;
+			}
+		});
+
+		this.buildLanguageSelection(table);
+		table.add(utils.create("span", { innerHTML: Strings.UNDO_MAX_COUNT + ":" }));
+		table.add(undoMaxAmountInput);
+		settings.add(table.html());
+
+		settings.toggle();
+	}
+
+	private buildLanguageSelection(table: Table): void {
 		let select = <HTMLSelectElement> utils.create("select");
 		let languages = Settings.languages;
 		let languageTable = {};
@@ -116,14 +152,9 @@ export class Sidebar extends Renderer {
 			i++;
 		});
 
-		let languageSelection = this.mainMenus.languageSelection;
-		languageSelection.clear();
-		languageSelection.add(select);
-		languageSelection.toggle();
-
 		select.addEventListener("change", function(e) {
 			let node = <HTMLSelectElement> this;
-			let option = node.options[node.selectedIndex];
+			let option = <HTMLOptionElement> node.options[node.selectedIndex];
 			let index = option.value;
 			let name = option.innerHTML;
 			let confirmation = confirm(Strings.CHANGE_LANGUAGE.replace("%", name));
@@ -131,6 +162,9 @@ export class Sidebar extends Renderer {
 				System.changeLanguage(languages[languageTable[index]]);
 			}
 		});
+
+		table.add(utils.create("span", { innerHTML: Strings.SYSTEM_LANGUAGE + ":" }));
+		table.add(select);
 	}
 
 	private buildFileManipulation(): void {

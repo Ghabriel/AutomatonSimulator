@@ -80,6 +80,11 @@ svg {
 	font-weight: bold;
 }
 
+.menu .content input.property_value {
+	width: 50px;
+	text-align: center;
+}
+
 .menu .content input[type="button"].change_property {
 	margin-left: 20px;
 }

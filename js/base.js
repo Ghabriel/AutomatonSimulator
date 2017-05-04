@@ -97,8 +97,11 @@ define("languages/Portuguese", ["require", "exports"], function (require, export
     (function (portuguese) {
         portuguese.strings = {
             LANGUAGE_NAME: "Português",
-            SELECT_LANGUAGE: "Idioma do Sistema",
+            SETTINGS: "Configurações do Sistema",
             CHANGE_LANGUAGE: "Mudar o idioma para \"%\"?",
+            SYSTEM_LANGUAGE: "Idioma do sistema",
+            UNDO_MAX_COUNT: "Quantidade de 'desfazer'",
+            MEMORY_CONSUMPTION_WARNING: "Aumentar o tamanho do histórico aumenta o consumo de memória. Deseja continuar?",
             FILE_MENUBAR: "Manipulação de Arquivos",
             SAVE: "Salvar",
             OPEN: "Abrir",
@@ -161,8 +164,11 @@ define("languages/English", ["require", "exports"], function (require, exports) 
     (function (english) {
         english.strings = {
             LANGUAGE_NAME: "English",
-            SELECT_LANGUAGE: "System Language",
+            SETTINGS: "System Settings",
             CHANGE_LANGUAGE: "Change the language to \"%\"?",
+            SYSTEM_LANGUAGE: "System language",
+            UNDO_MAX_COUNT: "Undo max count",
+            MEMORY_CONSUMPTION_WARNING: "Increasing the history size increases the memory consumption. Do you wish to continue?",
             FILE_MENUBAR: "File Manipulation",
             SAVE: "Save",
             OPEN: "Open",
@@ -2999,6 +3005,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.mainbarID = "mainbar";
         Settings.disabledButtonClass = "disabled";
         Settings.canvasShortcutID = "canvas";
+        Settings.undoMaxAmount = 1;
         Settings.menuSlideInterval = 300;
         Settings.promptSlideInterval = 200;
         Settings.machineSelRows = 3;
@@ -3197,14 +3204,14 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
         }
         Sidebar.prototype.build = function () {
             this.mainMenus = {
-                languageSelection: new Menu_2.Menu(Settings_12.Strings.SELECT_LANGUAGE),
+                settings: new Menu_2.Menu(Settings_12.Strings.SETTINGS),
                 fileManipulation: new Menu_2.Menu(Settings_12.Strings.FILE_MENUBAR),
                 selectedEntity: new Menu_2.Menu(Settings_12.Strings.SELECTED_ENTITY),
                 formalDefinition: new Menu_2.Menu(Settings_12.Strings.FORMAL_DEFINITION),
                 machineSelection: new Menu_2.Menu(Settings_12.Strings.SELECT_MACHINE),
                 actionMenu: new Menu_2.Menu(Settings_12.Strings.ACTION_LIST)
             };
-            this.buildLanguageSelection();
+            this.buildSettings();
             this.buildFileManipulation();
             this.buildSelectedEntityArea();
             this.buildMachineSelection();
@@ -3266,7 +3273,36 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 menu.bind(this.node);
             }
         };
-        Sidebar.prototype.buildLanguageSelection = function () {
+        Sidebar.prototype.buildSettings = function () {
+            var settings = this.mainMenus.settings;
+            settings.clear();
+            var table = new Table_2.Table(2, 2);
+            var undoMaxAmountInput = Utils_13.utils.create("input", {
+                className: "property_value",
+                type: "text",
+                value: Settings_11.Settings.undoMaxAmount
+            });
+            var originalMaxCount;
+            undoMaxAmountInput.addEventListener("focus", function () {
+                originalMaxCount = this.value;
+            });
+            undoMaxAmountInput.addEventListener("blur", function () {
+                var value = parseInt(this.value);
+                if (!isNaN(value) && value >= 1) {
+                    if (originalMaxCount >= value
+                        || confirm(Settings_12.Strings.MEMORY_CONSUMPTION_WARNING)) {
+                        Settings_11.Settings.undoMaxAmount = value;
+                    }
+                    this.value = Settings_11.Settings.undoMaxAmount;
+                }
+            });
+            this.buildLanguageSelection(table);
+            table.add(Utils_13.utils.create("span", { innerHTML: Settings_12.Strings.UNDO_MAX_COUNT + ":" }));
+            table.add(undoMaxAmountInput);
+            settings.add(table.html());
+            settings.toggle();
+        };
+        Sidebar.prototype.buildLanguageSelection = function (table) {
             var select = Utils_13.utils.create("select");
             var languages = Settings_11.Settings.languages;
             var languageTable = {};
@@ -3282,10 +3318,6 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 }
                 i++;
             });
-            var languageSelection = this.mainMenus.languageSelection;
-            languageSelection.clear();
-            languageSelection.add(select);
-            languageSelection.toggle();
             select.addEventListener("change", function (e) {
                 var node = this;
                 var option = node.options[node.selectedIndex];
@@ -3296,6 +3328,8 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                     System_4.System.changeLanguage(languages[languageTable[index]]);
                 }
             });
+            table.add(Utils_13.utils.create("span", { innerHTML: Settings_12.Strings.SYSTEM_LANGUAGE + ":" }));
+            table.add(select);
         };
         Sidebar.prototype.buildFileManipulation = function () {
             var fileManipulation = this.mainMenus.fileManipulation;

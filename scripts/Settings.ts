@@ -28,6 +28,8 @@ export namespace Settings {
 
 	export const canvasShortcutID = "canvas";
 
+	export var undoMaxAmount = 1;
+
 	export const menuSlideInterval = 300;
 	export const promptSlideInterval = 200;
 	export const machineSelRows = 3;

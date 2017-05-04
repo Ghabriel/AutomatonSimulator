@@ -1,8 +1,11 @@
 export namespace portuguese {
 	export const strings = {
 		LANGUAGE_NAME: "Português",
-		SELECT_LANGUAGE: "Idioma do Sistema",
+		SETTINGS: "Configurações do Sistema",
 		CHANGE_LANGUAGE: "Mudar o idioma para \"%\"?",
+		SYSTEM_LANGUAGE: "Idioma do sistema",
+		UNDO_MAX_COUNT: "Quantidade de 'desfazer'",
+		MEMORY_CONSUMPTION_WARNING: "Aumentar o tamanho do histórico aumenta o consumo de memória. Deseja continuar?",
 		FILE_MENUBAR: "Manipulação de Arquivos",
 		SAVE: "Salvar",
 		OPEN: "Abrir",
