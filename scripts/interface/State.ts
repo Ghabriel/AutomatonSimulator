@@ -114,9 +114,9 @@ export class State {
 			return null;
 		};
 
-		// Used to optimize the dragging process. The "callbackFrequency"
-		// variable controls the frequency in which dragging pixels
-		// actually trigger the move callback.
+		// This is used to optimize the dragging process. The
+		// "callbackFrequency" variable controls the frequency in
+		// which dragging pixels actually trigger the move callback.
 		let moveController = 0;
 		let callbackFrequency: number;
 		// TODO: check the performance in other browsers

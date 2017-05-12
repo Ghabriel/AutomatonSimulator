@@ -138,9 +138,13 @@ export class AutomatonRenderer {
 			return;
 		}
 
-		this.stateList = loadedData.stateList;
-		this.edgeList = loadedData.edgeList;
-		this.initialState = loadedData.initialState;
+		this.stateList = this.stateList.concat(loadedData.stateList);
+		this.edgeList = this.edgeList.concat(loadedData.edgeList);
+		// Only changes the initial state if the current automaton
+		// doesn't have one
+		if (this.initialState === null) {
+			this.initialState = loadedData.initialState;
+		}
 
 		// Traverses through the state/edge lists to render them.
 		// We shouldn't render them during creation because, if

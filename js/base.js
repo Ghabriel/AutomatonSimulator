@@ -1956,6 +1956,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             System_3.System.addLanguageChangeObserver(this);
         };
         AutomatonRenderer.prototype.clear = function () {
+            var i = 0;
             for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
                 var state = _a[_i];
                 state.remove();
@@ -1984,9 +1985,11 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 alert(Settings_8.Strings.INVALID_FILE);
                 return;
             }
-            this.stateList = loadedData.stateList;
-            this.edgeList = loadedData.edgeList;
-            this.initialState = loadedData.initialState;
+            this.stateList = this.stateList.concat(loadedData.stateList);
+            this.edgeList = this.edgeList.concat(loadedData.edgeList);
+            if (this.initialState === null) {
+                this.initialState = loadedData.initialState;
+            }
             for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
                 var state = _a[_i];
                 state.render(this.canvas);
