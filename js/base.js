@@ -1956,7 +1956,6 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             System_3.System.addLanguageChangeObserver(this);
         };
         AutomatonRenderer.prototype.clear = function () {
-            var i = 0;
             for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
                 var state = _a[_i];
                 state.remove();
@@ -2464,6 +2463,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     }
                     return false;
                 }
+                self.memento.push(self.save());
                 return true;
             });
         };

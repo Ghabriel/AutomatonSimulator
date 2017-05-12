@@ -685,6 +685,10 @@ export class AutomatonRenderer {
 				}
 				return false;
 			}
+
+			// Saves the post-drag state to the memento
+			// to allow the user to undo it
+			self.memento.push(self.save());
 			return true;
 		});
 	}
