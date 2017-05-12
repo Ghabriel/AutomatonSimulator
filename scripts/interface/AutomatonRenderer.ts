@@ -128,7 +128,10 @@ export class AutomatonRenderer {
 		return Persistence.save(this.stateList, this.edgeList, this.initialState);
 	}
 
-	public load(content: string): void {
+	public load(content: string, pushResult: boolean = true): void {
+		// Blocks changes to the memento until the load process is complete
+		this.frozenMemento = true;
+
 		let loadedData = Persistence.load(content);
 		if (loadedData.error) {
 			alert(Strings.INVALID_FILE);
@@ -154,6 +157,14 @@ export class AutomatonRenderer {
 		for (let edge of this.edgeList) {
 			edge.render(this.canvas);
 			this.bindEdgeEvents(edge);
+		}
+
+		this.frozenMemento = false;
+
+		if (pushResult) {
+			// Saves the resulting state
+			this.memento.push(this.save());
+			console.log(this.memento["states"]);
 		}
 	}
 
@@ -237,8 +248,11 @@ export class AutomatonRenderer {
 		let controller = Settings.controller();
 		let self = this;
 		let callback = function() {
-			// Saves the current state to the memento
-			self.memento.push(self.save());
+			// Saves the current state to the memento if it's not frozen
+			if (!self.frozenMemento) {
+				self.memento.push(self.save());
+				console.log(self.memento["states"]);
+			}
 
 			if (!definitionContainer) {
 				definitionContainer = <HTMLDivElement> utils.create("div");
@@ -907,12 +921,19 @@ export class AutomatonRenderer {
 	}
 
 	private undo(): void {
+		// Blocks changes to the memento until the undo process is complete
+		this.frozenMemento = true;
+
 		this.clear();
 		let data = this.memento.pop();
 		console.log("undo", data);
+		console.log(this.memento["states"]);
+		let self = this;
 		if (data) {
-			this.load(data);
+			this.load(data, false);
 		}
+
+		// this.frozenMemento = false;
 	}
 
 	private bindShortcuts(): void {
@@ -1089,4 +1110,5 @@ export class AutomatonRenderer {
 
 	private locked: boolean = false;
 	private memento: Memento<string> = null;
+	private frozenMemento: boolean = false;
 }

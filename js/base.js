@@ -976,6 +976,7 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
         };
         FA.prototype.clear = function () {
             this.stateList = [];
+            this.alphabetSet = {};
             this.transitions = {};
             this.epsilonTransitions = {};
             this.unsetInitialState();
@@ -1632,6 +1633,7 @@ define("Memento", ["require", "exports"], function (require, exports) {
         };
         Memento.prototype.pop = function () {
             var data = this.states[this.topIndex - 1];
+            delete this.states[this.topIndex];
             this.topIndex--;
             return data;
         };
@@ -1942,6 +1944,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.currentEdge = null;
             this.locked = false;
             this.memento = null;
+            this.frozenMemento = false;
             this.canvas = canvas;
             this.memento = memento;
             this.node = node;
@@ -1973,7 +1976,9 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         AutomatonRenderer.prototype.save = function () {
             return Persistence_1.Persistence.save(this.stateList, this.edgeList, this.initialState);
         };
-        AutomatonRenderer.prototype.load = function (content) {
+        AutomatonRenderer.prototype.load = function (content, pushResult) {
+            if (pushResult === void 0) { pushResult = true; }
+            this.frozenMemento = true;
             var loadedData = Persistence_1.Persistence.load(content);
             if (loadedData.error) {
                 alert(Settings_8.Strings.INVALID_FILE);
@@ -1991,6 +1996,11 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 var edge = _c[_b];
                 edge.render(this.canvas);
                 this.bindEdgeEvents(edge);
+            }
+            this.frozenMemento = false;
+            if (pushResult) {
+                this.memento.push(this.save());
+                console.log(this.memento["states"]);
             }
         };
         AutomatonRenderer.prototype.recognitionHighlight = function (stateNames) {
@@ -2062,7 +2072,10 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             var controller = Settings_8.Settings.controller();
             var self = this;
             var callback = function () {
-                self.memento.push(self.save());
+                if (!self.frozenMemento) {
+                    self.memento.push(self.save());
+                    console.log(self.memento["states"]);
+                }
                 if (!definitionContainer) {
                     definitionContainer = Utils_8.utils.create("div");
                     Settings_8.Settings.sidebar.updateFormalDefinition(definitionContainer);
@@ -2088,7 +2101,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                         content += "</span>";
                     }
                     else {
-                        content += "wtf? (AutomatonRenderer:235)";
+                        content += "unspecified type (AutomatonRenderer:266)";
                     }
                     content += "<br>";
                 }
@@ -2652,11 +2665,14 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             }
         };
         AutomatonRenderer.prototype.undo = function () {
+            this.frozenMemento = true;
             this.clear();
             var data = this.memento.pop();
             console.log("undo", data);
+            console.log(this.memento["states"]);
+            var self = this;
             if (data) {
-                this.load(data);
+                this.load(data, false);
             }
         };
         AutomatonRenderer.prototype.bindShortcuts = function () {
@@ -3045,7 +3061,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.mainbarID = "mainbar";
         Settings.disabledButtonClass = "disabled";
         Settings.canvasShortcutID = "canvas";
-        Settings.undoMaxAmount = 1;
+        Settings.undoMaxAmount = 2;
         Settings.menuSlideInterval = 300;
         Settings.promptSlideInterval = 200;
         Settings.machineSelRows = 3;

@@ -181,6 +181,7 @@ export class FA {
 	// Clears this FA, making it effectively equal to new FA().
 	public clear(): void {
 		this.stateList = [];
+		this.alphabetSet = {};
 		this.transitions = {};
 		this.epsilonTransitions = {};
 		this.unsetInitialState();

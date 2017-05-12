@@ -18,6 +18,7 @@ export class Memento<T> {
 	public pop(): T {
 		// Ignores the current state
 		let data = this.states[this.topIndex - 1];
+		delete this.states[this.topIndex];
 		this.topIndex--;
 		return data;
 	}
