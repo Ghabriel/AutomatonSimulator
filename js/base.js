@@ -66,9 +66,9 @@ define("Keyboard", ["require", "exports"], function (require, exports) {
 define("lists/MachineList", ["require", "exports"], function (require, exports) {
     "use strict";
     (function (Machine) {
-        Machine[Machine["LBA"] = 0] = "LBA";
+        Machine[Machine["FA"] = 0] = "FA";
         Machine[Machine["PDA"] = 1] = "PDA";
-        Machine[Machine["FA"] = 2] = "FA";
+        Machine[Machine["LBA"] = 2] = "LBA";
     })(exports.Machine || (exports.Machine = {}));
     var Machine = exports.Machine;
 });
@@ -739,77 +739,6 @@ define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"]
 define("Controller", ["require", "exports"], function (require, exports) {
     "use strict";
 });
-define("machines/LBA/LBAController", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var LBAController = (function () {
-        function LBAController() {
-        }
-        LBAController.prototype.edgePrompt = function (callback, fallback) {
-            console.log("[TODO] LBAController::edgePrompt()");
-        };
-        LBAController.prototype.edgeDataToText = function (data) { return "TODO"; };
-        LBAController.prototype.createState = function (state) { };
-        LBAController.prototype.createEdge = function (origin, target, data) { };
-        LBAController.prototype.changeInitialFlag = function (state) { };
-        LBAController.prototype.changeFinalFlag = function (state) { };
-        LBAController.prototype.renameState = function (state, newName) { };
-        LBAController.prototype.deleteState = function (state) { };
-        LBAController.prototype.deleteEdge = function (origin, target, data) { };
-        LBAController.prototype.clear = function () { };
-        LBAController.prototype.fastForward = function (input) { };
-        LBAController.prototype.step = function (input) { };
-        LBAController.prototype.stop = function () { };
-        LBAController.prototype.finished = function (input) { return true; };
-        LBAController.prototype.isStopped = function () { return true; };
-        LBAController.prototype.stepPosition = function () { return -1; };
-        LBAController.prototype.setEditingCallback = function (callback) { };
-        LBAController.prototype.currentStates = function () { return []; };
-        LBAController.prototype.accepts = function () { return false; };
-        LBAController.prototype.formalDefinition = function () { return null; };
-        return LBAController;
-    }());
-    exports.LBAController = LBAController;
-});
-define("machines/PDA/PDAController", ["require", "exports", "Utils"], function (require, exports, Utils_2) {
-    "use strict";
-    var PDAController = (function () {
-        function PDAController() {
-        }
-        PDAController.prototype.edgePrompt = function (callback, fallback) {
-            var self = this;
-            Utils_2.utils.prompt("Enter the edge content:", 3, function (data) {
-                callback(data, self.edgeDataToText(data));
-            }, fallback);
-        };
-        PDAController.prototype.edgeDataToText = function (data) {
-            var epsilon = "ε";
-            var input = data[0] || epsilon;
-            var stackRead = data[1] || epsilon;
-            var stackWrite = data[2] || epsilon;
-            return input + "," + stackRead + " → " + stackWrite;
-        };
-        PDAController.prototype.createState = function (state) { };
-        PDAController.prototype.createEdge = function (origin, target, data) { };
-        PDAController.prototype.changeInitialFlag = function (state) { };
-        PDAController.prototype.changeFinalFlag = function (state) { };
-        PDAController.prototype.renameState = function (state, newName) { };
-        PDAController.prototype.deleteState = function (state) { };
-        PDAController.prototype.deleteEdge = function (origin, target, data) { };
-        PDAController.prototype.clear = function () { };
-        PDAController.prototype.fastForward = function (input) { };
-        PDAController.prototype.step = function (input) { };
-        PDAController.prototype.stop = function () { };
-        PDAController.prototype.finished = function (input) { return true; };
-        PDAController.prototype.isStopped = function () { return true; };
-        PDAController.prototype.stepPosition = function () { return -1; };
-        PDAController.prototype.setEditingCallback = function (callback) { };
-        PDAController.prototype.currentStates = function () { return []; };
-        PDAController.prototype.accepts = function () { return false; };
-        PDAController.prototype.formalDefinition = function () { return null; };
-        return PDAController;
-    }());
-    exports.PDAController = PDAController;
-});
 define("datastructures/Queue", ["require", "exports"], function (require, exports) {
     "use strict";
     var Queue = (function () {
@@ -903,7 +832,7 @@ define("datastructures/UnorderedSet", ["require", "exports"], function (require,
     }());
     exports.UnorderedSet = UnorderedSet;
 });
-define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastructures/UnorderedSet", "Utils"], function (require, exports, Queue_1, UnorderedSet_1, Utils_3) {
+define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastructures/UnorderedSet", "Utils"], function (require, exports, Queue_1, UnorderedSet_1, Utils_2) {
     "use strict";
     var FA = (function () {
         function FA() {
@@ -929,9 +858,9 @@ define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastr
         };
         FA.prototype.removeState = function (index) {
             var self = this;
-            Utils_3.utils.foreach(this.transitions, function (originIndex, transitions) {
+            Utils_2.utils.foreach(this.transitions, function (originIndex, transitions) {
                 var origin = parseInt(originIndex);
-                Utils_3.utils.foreach(transitions, function (input) {
+                Utils_2.utils.foreach(transitions, function (input) {
                     if (transitions[input].contains(index)) {
                         this.removeTransition(origin, index, input);
                     }
@@ -1133,7 +1062,7 @@ define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastr
     }());
     exports.FA = FA;
 });
-define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Keyboard", "Settings", "Utils"], function (require, exports, FA_1, Keyboard_2, Settings_3, Utils_4) {
+define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Keyboard", "Settings", "Utils"], function (require, exports, FA_1, Keyboard_2, Settings_3, Utils_3) {
     "use strict";
     var FAController = (function () {
         function FAController() {
@@ -1144,7 +1073,7 @@ define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Key
         }
         FAController.prototype.edgePrompt = function (callback, fallback) {
             var self = this;
-            Utils_4.utils.prompt(Settings_3.Strings.FA_ENTER_EDGE_CONTENT, 1, function (data) {
+            Utils_3.utils.prompt(Settings_3.Strings.FA_ENTER_EDGE_CONTENT, 1, function (data) {
                 callback(data, self.edgeDataToText(data));
             }, fallback);
         };
@@ -1283,14 +1212,85 @@ define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Key
     }());
     exports.FAController = FAController;
 });
-define("lists/ControllerList", ["require", "exports", "machines/LBA/LBAController", "machines/PDA/PDAController", "machines/FA/FAController"], function (require, exports, LBAController_1, PDAController_1, FAController_1) {
+define("machines/PDA/PDAController", ["require", "exports", "Utils"], function (require, exports, Utils_4) {
+    "use strict";
+    var PDAController = (function () {
+        function PDAController() {
+        }
+        PDAController.prototype.edgePrompt = function (callback, fallback) {
+            var self = this;
+            Utils_4.utils.prompt("Enter the edge content:", 3, function (data) {
+                callback(data, self.edgeDataToText(data));
+            }, fallback);
+        };
+        PDAController.prototype.edgeDataToText = function (data) {
+            var epsilon = "ε";
+            var input = data[0] || epsilon;
+            var stackRead = data[1] || epsilon;
+            var stackWrite = data[2] || epsilon;
+            return input + "," + stackRead + " → " + stackWrite;
+        };
+        PDAController.prototype.createState = function (state) { };
+        PDAController.prototype.createEdge = function (origin, target, data) { };
+        PDAController.prototype.changeInitialFlag = function (state) { };
+        PDAController.prototype.changeFinalFlag = function (state) { };
+        PDAController.prototype.renameState = function (state, newName) { };
+        PDAController.prototype.deleteState = function (state) { };
+        PDAController.prototype.deleteEdge = function (origin, target, data) { };
+        PDAController.prototype.clear = function () { };
+        PDAController.prototype.fastForward = function (input) { };
+        PDAController.prototype.step = function (input) { };
+        PDAController.prototype.stop = function () { };
+        PDAController.prototype.finished = function (input) { return true; };
+        PDAController.prototype.isStopped = function () { return true; };
+        PDAController.prototype.stepPosition = function () { return -1; };
+        PDAController.prototype.setEditingCallback = function (callback) { };
+        PDAController.prototype.currentStates = function () { return []; };
+        PDAController.prototype.accepts = function () { return false; };
+        PDAController.prototype.formalDefinition = function () { return null; };
+        return PDAController;
+    }());
+    exports.PDAController = PDAController;
+});
+define("machines/LBA/LBAController", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var LBAController = (function () {
+        function LBAController() {
+        }
+        LBAController.prototype.edgePrompt = function (callback, fallback) {
+            console.log("[TODO] LBAController::edgePrompt()");
+        };
+        LBAController.prototype.edgeDataToText = function (data) { return "TODO"; };
+        LBAController.prototype.createState = function (state) { };
+        LBAController.prototype.createEdge = function (origin, target, data) { };
+        LBAController.prototype.changeInitialFlag = function (state) { };
+        LBAController.prototype.changeFinalFlag = function (state) { };
+        LBAController.prototype.renameState = function (state, newName) { };
+        LBAController.prototype.deleteState = function (state) { };
+        LBAController.prototype.deleteEdge = function (origin, target, data) { };
+        LBAController.prototype.clear = function () { };
+        LBAController.prototype.fastForward = function (input) { };
+        LBAController.prototype.step = function (input) { };
+        LBAController.prototype.stop = function () { };
+        LBAController.prototype.finished = function (input) { return true; };
+        LBAController.prototype.isStopped = function () { return true; };
+        LBAController.prototype.stepPosition = function () { return -1; };
+        LBAController.prototype.setEditingCallback = function (callback) { };
+        LBAController.prototype.currentStates = function () { return []; };
+        LBAController.prototype.accepts = function () { return false; };
+        LBAController.prototype.formalDefinition = function () { return null; };
+        return LBAController;
+    }());
+    exports.LBAController = LBAController;
+});
+define("lists/ControllerList", ["require", "exports", "machines/FA/FAController", "machines/PDA/PDAController", "machines/LBA/LBAController"], function (require, exports, FAController_1, PDAController_1, LBAController_1) {
     "use strict";
     function __export(m) {
         for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
     }
-    __export(LBAController_1);
-    __export(PDAController_1);
     __export(FAController_1);
+    __export(PDAController_1);
+    __export(LBAController_1);
 });
 define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_4, Utils_5) {
     "use strict";
@@ -2858,26 +2858,6 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
     }());
     exports.AutomatonRenderer = AutomatonRenderer;
 });
-define("machines/LBA/initializer", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var initLBA;
-    (function (initLBA) {
-        function init() {
-            console.log("[INIT] LBA");
-        }
-        initLBA.init = init;
-    })(initLBA = exports.initLBA || (exports.initLBA = {}));
-});
-define("machines/PDA/initializer", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var initPDA;
-    (function (initPDA) {
-        function init() {
-            console.log("[INIT] PDA");
-        }
-        initPDA.init = init;
-    })(initPDA = exports.initPDA || (exports.initPDA = {}));
-});
 define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "Utils"], function (require, exports, Keyboard_4, Menu_1, Settings_9, Utils_9) {
     "use strict";
     var initializer;
@@ -3071,7 +3051,27 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
         }
     })(initializer = exports.initializer || (exports.initializer = {}));
 });
-define("lists/InitializerList", ["require", "exports", "machines/LBA/initializer", "machines/PDA/initializer", "machines/FA/initializer"], function (require, exports, initializer_1, initializer_2, initializer_3) {
+define("machines/PDA/initializer", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var initPDA;
+    (function (initPDA) {
+        function init() {
+            console.log("[INIT] PDA");
+        }
+        initPDA.init = init;
+    })(initPDA = exports.initPDA || (exports.initPDA = {}));
+});
+define("machines/LBA/initializer", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var initLBA;
+    (function (initLBA) {
+        function init() {
+            console.log("[INIT] LBA");
+        }
+        initLBA.init = init;
+    })(initLBA = exports.initLBA || (exports.initLBA = {}));
+});
+define("lists/InitializerList", ["require", "exports", "machines/FA/initializer", "machines/PDA/initializer", "machines/LBA/initializer"], function (require, exports, initializer_1, initializer_2, initializer_3) {
     "use strict";
     function __export(m) {
         for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
@@ -3171,7 +3171,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.languages = lang;
         Settings.Machine = automata.Machine;
         Settings.language = lang.english;
-        Settings.currentMachine = 2;
+        Settings.currentMachine = 0;
         Settings.machines = {};
         Settings.controllerMap = {};
         Settings.sidebar = null;

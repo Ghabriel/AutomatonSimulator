@@ -22,17 +22,12 @@ LIBNAMES        :=$(patsubst %, $(LIB)/%, $(ORIGNAMES))
 TSFILES         :=$(wildcard $(TS)/*.ts)
 LANGFILES       :=$(basename $(notdir $(wildcard $(TS)/$(LANGFOLDER)/*.ts)))
 MACHINE_NAMES   :=$(notdir $(shell find $(TS)/$(MACHINES) -mindepth 1 -maxdepth 1 -type d))
-
 PRIORITY        :=$(shell cat $(TS)/$(MACHINES)/priority.txt)
 
-.PHONY: all dirs libs languages raw simple
+PRIORITY        :=$(filter-out $(filter-out $(MACHINE_NAMES),$(PRIORITY)),$(PRIORITY))
+PRIORITY        :=$(PRIORITY) $(filter-out $(PRIORITY),$(MACHINE_NAMES))
 
-# all:
-# 	@for name in $(PRIORITY); do \
-# 		if [ -d "$(TS)/$(MACHINES)/$$name" ]; then \
-# 			echo $$name; \
-# 		fi \
-# 	done
+.PHONY: all dirs libs languages raw simple
 
 all: dirs libs languages machines
 	@echo "[.ts ⟶ .js]"
@@ -67,7 +62,7 @@ machines:
 	@truncate -s 0 $(MACHINELIST)
 
 	@printf "export enum Machine {\n\t" >> $(MACHINELIST);
-	@for name in $(MACHINE_NAMES); do \
+	@for name in $(PRIORITY); do \
 		echo "export * from \"../$(MACHINES)/$$name/$${name}Controller\"" >> $(CONTROLLERLIST); \
 		echo "export * from \"../$(MACHINES)/$$name/initializer\"" >> $(INITLIST); \
 		printf "$$name, " >> $(MACHINELIST); \

@@ -114,7 +114,7 @@ export namespace Settings {
 
 	// The current machine being operated on. Defaults to the first machine
 	// of the Machine enum (unless changed, that means FA)
-	export var currentMachine = 2;
+	export var currentMachine = 0;
 
 	export var machines: {[m: number]: MachineTraits} = {};
 
