@@ -100,7 +100,7 @@ export class FA {
 		this.initialState = -1;
 	}
 
-	// Returns the index of the initial state.
+	// Returns the name of the initial state.
 	public getInitialState(): State {
 		return this.stateList[this.initialState];
 	}
@@ -140,6 +140,50 @@ export class FA {
 		return this.stateList.filter(function(value) {
 			return value !== undefined;
 		});
+	}
+
+	// Executes a callback function for every transition (including
+	// epsilon transitions) of this FA.
+	public transitionIteration(
+		callback: (source: State, target: State, input: string) => void): void {
+
+/*
+	private transitions: {
+		[index: number]: {
+			[input: string]: UnorderedSet<Index>
+		}
+	} = {};
+	private epsilonTransitions: {
+		[index: number]: UnorderedSet<Index>
+	} = {};
+*/
+
+		let self = this;
+		for (let index in this.transitions) {
+			if (this.transitions.hasOwnProperty(index)) {
+				let sourceState = self.stateList[index];
+				let stateTransitions = this.transitions[index];
+				for (let input in stateTransitions) {
+					if (stateTransitions.hasOwnProperty(input)) {
+						stateTransitions[input].forEach(function(target: Index) {
+							let targetState = self.stateList[target];
+							callback(sourceState, targetState, input);
+						});
+					}
+				}
+			}
+		}
+
+		for (let index in this.epsilonTransitions) {
+			if (this.transitions.hasOwnProperty(index)) {
+				let sourceState = self.stateList[index];
+				let stateTransitions = this.epsilonTransitions[index];
+				stateTransitions.forEach(function(target: Index) {
+					let targetState = self.stateList[target];
+					callback(sourceState, targetState, "");
+				});
+			}
+		}
 	}
 
 	// Returns the alphabet of this FA.

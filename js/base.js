@@ -944,6 +944,44 @@ define("machines/FA", ["require", "exports", "datastructures/Queue", "datastruct
                 return value !== undefined;
             });
         };
+        FA.prototype.transitionIteration = function (callback) {
+            var self = this;
+            var _loop_1 = function(index) {
+                if (this_1.transitions.hasOwnProperty(index)) {
+                    var sourceState_1 = self.stateList[index];
+                    var stateTransitions = this_1.transitions[index];
+                    var _loop_2 = function(input) {
+                        if (stateTransitions.hasOwnProperty(input)) {
+                            stateTransitions[input].forEach(function (target) {
+                                var targetState = self.stateList[target];
+                                callback(sourceState_1, targetState, input);
+                            });
+                        }
+                    };
+                    for (var input in stateTransitions) {
+                        _loop_2(input);
+                    }
+                }
+            };
+            var this_1 = this;
+            for (var index in this.transitions) {
+                _loop_1(index);
+            }
+            var _loop_3 = function(index) {
+                if (this_2.transitions.hasOwnProperty(index)) {
+                    var sourceState_2 = self.stateList[index];
+                    var stateTransitions = this_2.epsilonTransitions[index];
+                    stateTransitions.forEach(function (target) {
+                        var targetState = self.stateList[target];
+                        callback(sourceState_2, targetState, "");
+                    });
+                }
+            };
+            var this_2 = this;
+            for (var index in this.epsilonTransitions) {
+                _loop_3(index);
+            }
+        };
         FA.prototype.alphabet = function () {
             var result = [];
             for (var member in this.alphabetSet) {
@@ -1151,7 +1189,7 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Keyboa
             var values = result.parameterValues;
             values["Q"] = machine.getStates();
             values[sigma] = machine.alphabet();
-            values[delta] = "TODO";
+            values[delta] = this.transitionTable();
             values["q0"] = machine.getInitialState();
             values["F"] = machine.getAcceptingStates();
             return result;
@@ -1161,6 +1199,14 @@ define("controllers/FAController", ["require", "exports", "machines/FA", "Keyboa
         };
         FAController.prototype.index = function (state) {
             return this.stateMapping[state.getName()];
+        };
+        FAController.prototype.transitionTable = function () {
+            var transitions = [];
+            var callback = function (source, target, input) {
+                transitions.push([source, target, input]);
+            };
+            this.machine.transitionIteration(callback);
+            return transitions;
         };
         return FAController;
     }());
@@ -2488,7 +2534,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 self.currentEdge.remove();
                 self.currentEdge = null;
             };
-            var _loop_1 = function(edge) {
+            var _loop_4 = function(edge) {
                 if (edge.getOrigin() == origin && edge.getTarget() == state) {
                     edgeText(function (data, text) {
                         edge.addText(text);
@@ -2504,8 +2550,8 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             };
             for (var _i = 0, _a = this.edgeList; _i < _a.length; _i++) {
                 var edge = _a[_i];
-                var state_1 = _loop_1(edge);
-                if (typeof state_1 === "object") return state_1.value;
+                var state_4 = _loop_4(edge);
+                if (typeof state_4 === "object") return state_4.value;
             }
             if (oppositeEdge) {
                 oppositeEdge.setCurveFlag(true);
@@ -2555,27 +2601,27 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         };
         AutomatonRenderer.prototype.newStateAt = function (x, y) {
             if (!this.locked) {
-                var state_2 = new State_2.State();
-                state_2.setPosition(x, y);
-                this.selectState(state_2);
-                this.bindStateEvents(state_2);
+                var state_5 = new State_2.State();
+                state_5.setPosition(x, y);
+                this.selectState(state_5);
+                this.bindStateEvents(state_5);
                 var self_2 = this;
                 var stateNamePrompt_1 = function () {
                     Utils_8.utils.prompt(Settings_8.Strings.STATE_MANUAL_CREATION, 1, function (data) {
                         var name = data[0];
                         for (var _i = 0, _a = self_2.stateList; _i < _a.length; _i++) {
-                            var state_3 = _a[_i];
-                            if (state_3.getName() == name) {
+                            var state_6 = _a[_i];
+                            if (state_6.getName() == name) {
                                 alert(Settings_8.Strings.DUPLICATE_STATE_NAME);
                                 return stateNamePrompt_1();
                             }
                         }
-                        state_2.setName(name);
-                        self_2.onStateCreation(state_2);
-                        self_2.updateEditableState(state_2);
+                        state_5.setName(name);
+                        self_2.onStateCreation(state_5);
+                        self_2.updateEditableState(state_5);
                     }, function () {
                         self_2.highlightedState = null;
-                        state_2.remove();
+                        state_5.remove();
                         self_2.updateEditableState(null);
                     });
                 };

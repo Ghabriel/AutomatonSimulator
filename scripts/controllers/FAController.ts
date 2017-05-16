@@ -142,7 +142,6 @@ export class FAController implements Controller {
 	}
 
 	public formalDefinition(): FormalDefinition {
-		// TODO: use the actual symbols
 		let machine = this.machine;
 		let delta = Keyboard.symbols.delta;
 		let sigma = Keyboard.symbols.sigma;
@@ -155,7 +154,7 @@ export class FAController implements Controller {
 		let values = result.parameterValues;
 		values["Q"] = machine.getStates();
 		values[sigma] = machine.alphabet();
-		values[delta] = "TODO";
+		values[delta] = this.transitionTable();
 		values["q0"] = machine.getInitialState();
 		values["F"] = machine.getAcceptingStates();
 
@@ -168,6 +167,15 @@ export class FAController implements Controller {
 
 	private index(state: State): number {
 		return this.stateMapping[state.getName()];
+	}
+
+	private transitionTable(): [string, string, string][] {
+		let transitions = [];
+		let callback = function(source: string, target: string, input: string) {
+			transitions.push([source, target, input]);
+		};
+		this.machine.transitionIteration(callback);
+		return transitions;
 	}
 
 	private machine: FA;
