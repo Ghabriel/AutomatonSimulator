@@ -1,4 +1,4 @@
-import {State} from "../interface/State"
+import {State} from "./interface/State"
 
 export interface FormalDefinition {
 	// Order of the parameters displayed in M = (...)

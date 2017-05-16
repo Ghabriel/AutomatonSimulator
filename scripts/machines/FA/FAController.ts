@@ -1,9 +1,9 @@
-import {Controller, FormalDefinition} from "./Controller"
-import {FA} from "../machines/FA"
-import {Keyboard} from "../Keyboard"
-import {State} from "../interface/State"
-import {Strings} from "../Settings"
-import {utils} from "../Utils"
+import {Controller, FormalDefinition} from "../../Controller"
+import {FA} from "./FA"
+import {Keyboard} from "../../Keyboard"
+import {State} from "../../interface/State"
+import {Strings} from "../../Settings"
+import {utils} from "../../Utils"
 
 export class FAController implements Controller {
 	constructor() {

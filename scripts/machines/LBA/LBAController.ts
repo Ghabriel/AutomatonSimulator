@@ -1,24 +1,14 @@
-import {Controller, FormalDefinition} from "./Controller"
-import {State} from "../interface/State"
-import {utils} from "../Utils"
+import {Controller, FormalDefinition} from "../../Controller"
+import {State} from "../../interface/State"
+import {utils} from "../../Utils"
 
-export class PDAController implements Controller {
+export class LBAController implements Controller {
 	public edgePrompt(callback: (data: string[], text: string) => void,
 					  fallback?: () => void): void {
-
-		let self = this;
-		utils.prompt("Enter the edge content:", 3, function(data) {
-			callback(data, self.edgeDataToText(data));
-		}, fallback);
+		console.log("[TODO] LBAController::edgePrompt()");
 	}
 
-	public edgeDataToText(data: string[]): string {
-		let epsilon = "ε";
-		let input = data[0] || epsilon;
-		let stackRead = data[1] || epsilon;
-		let stackWrite = data[2] || epsilon;
-		return input + "," + stackRead + " → " + stackWrite;
-	}
+	public edgeDataToText(data: string[]): string { return "TODO"; }
 
 	public createState(state: State): void {}
 	public createEdge(origin: State, target: State, data: string[]): void {}

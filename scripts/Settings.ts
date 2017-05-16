@@ -4,8 +4,7 @@ import * as controllers from "./lists/ControllerList"
 
 // import {Regex} from "./misc/Regex"
 import {AutomatonRenderer} from "./interface/AutomatonRenderer"
-import {Controller} from "./controllers/Controller"
-import {FA} from "./machines/FA"
+import {Controller} from "./Controller"
 import {Initializer} from "./Initializer"
 import {Renderer} from "./interface/Renderer"
 import {Sidebar} from "./interface/Sidebar"
@@ -115,7 +114,7 @@ export namespace Settings {
 
 	// The current machine being operated on. Defaults to the first machine
 	// of the Machine enum (unless changed, that means FA)
-	export var currentMachine = 0;
+	export var currentMachine = 2;
 
 	export var machines: {[m: number]: MachineTraits} = {};
 

@@ -1,9 +1,9 @@
-import {Keyboard} from "../Keyboard"
-import {Menu} from "../interface/Menu"
-import {Settings, Strings} from "../Settings"
-import {utils} from "../Utils"
+import {Keyboard} from "../../Keyboard"
+import {Menu} from "../../interface/Menu"
+import {Settings, Strings} from "../../Settings"
+import {utils} from "../../Utils"
 
-export namespace initFA {
+export namespace initializer {
 	export function init() {
 		let menuList: Menu[] = [];
 

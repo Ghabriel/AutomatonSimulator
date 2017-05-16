@@ -1,39 +1,54 @@
 # Copyright 2016 Ghabriel Nunes <ghabriel.nunes@gmail.com>
 
-CSS          :=css
-JS           :=js
-LIB          :=lib
-TS           :=scripts
-INDEX        :=index.html
-LIBSFILE     :=libs.txt
-LANGFOLDER   :=languages
-LANGLIST     :=$(TS)/lists/LanguageList.ts
-JSBASE       :=base.js
-JSCOMPRESSED :=main.js
-COMPRESS     :=1
+CSS             :=css
+JS              :=js
+LIB             :=lib
+TS              :=scripts
+INDEX           :=index.html
+LIBSFILE        :=libs.txt
+LISTS           :=$(TS)/lists
+LANGFOLDER      :=languages
+LANGLIST        :=$(LISTS)/LanguageList.ts
+CONTROLLERLIST  :=$(LISTS)/ControllerList.ts
+INITLIST        :=$(LISTS)/InitializerList.ts
+MACHINELIST     :=$(LISTS)/MachineList.ts
+MACHINES        :=machines
+JSBASE          :=base.js
+JSCOMPRESSED    :=main.js
+COMPRESS        :=1
 
-ORIGNAMES    :=$(shell cat $(LIBSFILE) | sed "s/^\([^:]\+\): \(.*\)/\1/")
-LIBNAMES     :=$(patsubst %, $(LIB)/%, $(ORIGNAMES))
-TSFILES      :=$(wildcard $(TS)/*.ts)
-LANGFILES    :=$(basename $(notdir $(wildcard $(TS)/$(LANGFOLDER)/*.ts)))
+ORIGNAMES       :=$(shell cat $(LIBSFILE) | sed "s/^\([^:]\+\): \(.*\)/\1/")
+LIBNAMES        :=$(patsubst %, $(LIB)/%, $(ORIGNAMES))
+TSFILES         :=$(wildcard $(TS)/*.ts)
+LANGFILES       :=$(basename $(notdir $(wildcard $(TS)/$(LANGFOLDER)/*.ts)))
+MACHINE_NAMES   :=$(notdir $(shell find $(TS)/$(MACHINES) -mindepth 1 -maxdepth 1 -type d))
 
+PRIORITY        :=$(shell cat $(TS)/$(MACHINES)/priority.txt)
 
-.PHONY: all dirs libs languages disable_compress raw simple
+.PHONY: all dirs libs languages raw simple
 
-all: dirs libs languages
+# all:
+# 	@for name in $(PRIORITY); do \
+# 		if [ -d "$(TS)/$(MACHINES)/$$name" ]; then \
+# 			echo $$name; \
+# 		fi \
+# 	done
+
+all: dirs libs languages machines
 	@echo "[.ts ⟶ .js]"
-ifneq ("$(TSFILES)", "")
-	@tsc --removeComments --noImplicitReturns --module amd --outFile $(JS)/$(JSBASE) $(TSFILES)
-else
-	@touch $(JS)/$(JSBASE)
-	@cat /dev/null > $(JS)/$(JSBASE)
-endif
-	@if [ "$(COMPRESS)" = "1" ]; then \
-		echo "[minifying] $(JS)/$(JSBASE) ⟶ $(JS)/$(JSCOMPRESSED)";\
-		uglifyjs $(JS)/$(JSBASE) --compress --mangle > $(JS)/$(JSCOMPRESSED) 2> /dev/null;\
+	@if [ "$(TSFILES)" = "" ]; then \
+		touch $(JS)/$(JSBASE); \
+		truncate -s 0 $(JS)/$(JSBASE); \
 	else\
-		echo "[ copying ] $(JS)/$(JSBASE) ⟶ $(JS)/$(JSCOMPRESSED)";\
-		cp $(JS)/$(JSBASE) $(JS)/$(JSCOMPRESSED);\
+		tsc --removeComments --noImplicitReturns --module amd --outFile $(JS)/$(JSBASE) $(TSFILES); \
+	fi
+
+	@if [ "$(COMPRESS)" = "1" ]; then \
+		echo "[minifying] $(JS)/$(JSBASE) ⟶ $(JS)/$(JSCOMPRESSED)"; \
+		uglifyjs $(JS)/$(JSBASE) --compress --mangle > $(JS)/$(JSCOMPRESSED) 2> /dev/null; \
+	else\
+		echo "[ copying ] $(JS)/$(JSBASE) ⟶ $(JS)/$(JSCOMPRESSED)"; \
+		cp $(JS)/$(JSBASE) $(JS)/$(JSCOMPRESSED); \
 	fi
 
 dirs: | $(CSS) $(JS) $(LIB) $(TS) $(INDEX)
@@ -46,10 +61,21 @@ languages:
 		echo "export * from \"../$(LANGFOLDER)/$$file\"" >> $(LANGLIST); \
 	done
 
-disable_compress:
-	$(eval COMPRESS :=0)
+machines:
+	@truncate -s 0 $(CONTROLLERLIST)
+	@truncate -s 0 $(INITLIST)
+	@truncate -s 0 $(MACHINELIST)
 
-raw: disable_compress all
+	@printf "export enum Machine {\n\t" >> $(MACHINELIST);
+	@for name in $(MACHINE_NAMES); do \
+		echo "export * from \"../$(MACHINES)/$$name/$${name}Controller\"" >> $(CONTROLLERLIST); \
+		echo "export * from \"../$(MACHINES)/$$name/initializer\"" >> $(INITLIST); \
+		printf "$$name, " >> $(MACHINELIST); \
+	done
+	@printf "\n}\n" >> $(MACHINELIST)
+
+raw: COMPRESS := 0
+raw: all
 
 simple:
 	@tsc --module amd --outFile $(JS)/$(JSBASE) $(TSFILES)

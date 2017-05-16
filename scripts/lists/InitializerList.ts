@@ -1,3 +1,3 @@
-export * from "../initializers/initFA"
-export * from "../initializers/initPDA"
-export * from "../initializers/initLBA"
+export * from "../machines/LBA/initializer"
+export * from "../machines/PDA/initializer"
+export * from "../machines/FA/initializer"

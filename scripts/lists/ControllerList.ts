@@ -1,3 +1,3 @@
-export * from "../controllers/FAController"
-export * from "../controllers/PDAController"
-export * from "../controllers/LBAController"
+export * from "../machines/LBA/LBAController"
+export * from "../machines/PDA/PDAController"
+export * from "../machines/FA/FAController"

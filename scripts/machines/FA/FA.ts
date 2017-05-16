@@ -1,6 +1,6 @@
-import {Queue} from "../datastructures/Queue"
-import {UnorderedSet} from "../datastructures/UnorderedSet"
-import {utils} from "../Utils"
+import {Queue} from "../../datastructures/Queue"
+import {UnorderedSet} from "../../datastructures/UnorderedSet"
+import {utils} from "../../Utils"
 
 type State = string;
 type Index = number;

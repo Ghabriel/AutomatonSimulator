@@ -1,4 +1,3 @@
-
 export enum Machine {
-	FA, PDA, LBA
+	LBA, PDA, FA, 
 }
