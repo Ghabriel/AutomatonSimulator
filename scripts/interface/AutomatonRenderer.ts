@@ -168,7 +168,6 @@ export class AutomatonRenderer {
 		if (pushResult) {
 			// Saves the resulting state
 			this.memento.push(this.save());
-			console.log(this.memento["states"]);
 		}
 	}
 
@@ -255,7 +254,6 @@ export class AutomatonRenderer {
 			// Saves the current state to the memento if it's not frozen
 			if (!self.frozenMemento) {
 				self.memento.push(self.save());
-				console.log(self.memento["states"]);
 			}
 
 			if (!definitionContainer) {
@@ -934,8 +932,6 @@ export class AutomatonRenderer {
 
 		this.clear();
 		let data = this.memento.pop();
-		console.log("undo", data);
-		console.log(this.memento["states"]);
 		let self = this;
 		if (data) {
 			this.load(data, false);

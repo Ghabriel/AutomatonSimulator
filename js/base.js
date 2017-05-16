@@ -1668,7 +1668,6 @@ define("Memento", ["require", "exports"], function (require, exports) {
             this.limit = limit;
         }
         Memento.prototype.push = function (state) {
-            console.log("push", state);
             var limit = this.limit() + 1;
             if (this.topIndex - this.bottomIndex + 1 == limit) {
                 delete this.states[this.bottomIndex];
@@ -2048,7 +2047,6 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.frozenMemento = false;
             if (pushResult) {
                 this.memento.push(this.save());
-                console.log(this.memento["states"]);
             }
         };
         AutomatonRenderer.prototype.recognitionHighlight = function (stateNames) {
@@ -2122,7 +2120,6 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             var callback = function () {
                 if (!self.frozenMemento) {
                     self.memento.push(self.save());
-                    console.log(self.memento["states"]);
                 }
                 if (!definitionContainer) {
                     definitionContainer = Utils_8.utils.create("div");
@@ -2717,8 +2714,6 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.frozenMemento = true;
             this.clear();
             var data = this.memento.pop();
-            console.log("undo", data);
-            console.log(this.memento["states"]);
             var self = this;
             if (data) {
                 this.load(data, false);

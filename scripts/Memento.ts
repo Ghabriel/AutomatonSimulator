@@ -4,7 +4,6 @@ export class Memento<T> {
 	}
 
 	public push(state: T): void {
-		console.log("push", state);
 		// '+ 1' to store the current state as well
 		let limit = this.limit() + 1;
 		if (this.topIndex - this.bottomIndex + 1 == limit) {
