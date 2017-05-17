@@ -161,3 +161,8 @@ span.none {
 #machine_actions input[type="button"] {
 	width: 100%;
 }
+
+#transition_table td {
+	border: 1px solid black;
+	padding: 5px;
+}

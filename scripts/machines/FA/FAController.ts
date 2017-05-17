@@ -169,10 +169,12 @@ export class FAController implements Controller {
 		return this.stateMapping[state.getName()];
 	}
 
-	private transitionTable(): [string, string, string][] {
-		let transitions = [];
+	private transitionTable(): any {
+		let transitions = {
+			list: []
+		};
 		let callback = function(source: string, target: string, input: string) {
-			transitions.push([source, target, input]);
+			transitions.list.push([source, target, input]);
 		};
 		this.machine.transitionIteration(callback);
 		return transitions;

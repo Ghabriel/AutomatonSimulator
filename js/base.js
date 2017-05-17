@@ -1201,9 +1201,11 @@ define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Key
             return this.stateMapping[state.getName()];
         };
         FAController.prototype.transitionTable = function () {
-            var transitions = [];
+            var transitions = {
+                list: []
+            };
             var callback = function (source, target, input) {
-                transitions.push([source, target, input]);
+                transitions.list.push([source, target, input]);
             };
             this.machine.transitionIteration(callback);
             return transitions;
@@ -2144,6 +2146,18 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                         content += "<span class='none'>";
                         content += Settings_8.Strings.NO_INITIAL_STATE;
                         content += "</span>";
+                    }
+                    else if (value.hasOwnProperty("list")) {
+                        var list = value.list;
+                        var table = new Table_1.Table(list.length, 3);
+                        for (var i = 0; i < list.length; i++) {
+                            for (var j = 0; j < list[i].length; j++) {
+                                table.add(Utils_8.utils.create("span", {
+                                    innerHTML: list[i][j]
+                                }));
+                            }
+                        }
+                        content += "<table id='transition_table'>" + table.html().innerHTML + "</table>";
                     }
                     else {
                         content += "unspecified type (AutomatonRenderer:266)";
