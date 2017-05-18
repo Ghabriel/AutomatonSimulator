@@ -3773,10 +3773,47 @@ define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "
     }());
     exports.UI = UI;
 });
-define("main", ["require", "exports", "Settings", "System", "interface/UI"], function (require, exports, Settings_16, System_6, UI_1) {
+define("tests/FAtests", ["require", "exports", "machines/FA/FA"], function (require, exports, FA_2) {
+    "use strict";
+    var Test = (function () {
+        function Test() {
+        }
+        Test.runTests = function (plan) {
+            var testNames = plan.testNames();
+            for (var _i = 0, testNames_1 = testNames; _i < testNames_1.length; _i++) {
+                var method = testNames_1[_i];
+                var status_1 = void 0;
+                if (plan[method]()) {
+                    status_1 = " OK ";
+                }
+                else {
+                    status_1 = "FAIL";
+                }
+                console.log("[" + status_1 + "] " + method);
+            }
+        };
+        return Test;
+    }());
+    exports.Test = Test;
+    var FATests = (function () {
+        function FATests() {
+        }
+        FATests.prototype.testNames = function () {
+            return ["something"];
+        };
+        FATests.prototype.something = function () {
+            var fa = new FA_2.FA();
+            return fa.error();
+        };
+        return FATests;
+    }());
+    exports.FATests = FATests;
+});
+define("main", ["require", "exports", "Settings", "System", "interface/UI", "tests/FAtests"], function (require, exports, Settings_16, System_6, UI_1, FAtests_1) {
     "use strict";
     Settings_16.Settings.update();
     $(document).ready(function () {
+        FAtests_1.Test.runTests(new FAtests_1.FATests());
         var ui = new UI_1.UI();
         ui.render();
         document.body.addEventListener("keydown", function (e) {
