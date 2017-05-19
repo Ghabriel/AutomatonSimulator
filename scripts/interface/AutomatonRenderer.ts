@@ -280,15 +280,21 @@ export class AutomatonRenderer {
 					content += "</span>";
 				} else if (value.hasOwnProperty("list")) {
 					let list: [string, string, string][] = value.list;
-					let table = new Table(list.length, 3);
-					for (let i = 0; i < list.length; i++) {
-						for (let j = 0; j < list[i].length; j++) {
-							table.add(utils.create("span", {
-								innerHTML: list[i][j]
-							}));
+					if (list.length > 0) {
+						let table = new Table(list.length, 3);
+						for (let i = 0; i < list.length; i++) {
+							for (let j = 0; j < list[i].length; j++) {
+								table.add(utils.create("span", {
+									innerHTML: list[i][j]
+								}));
+							}
 						}
+						content += "<table id='transition_table'>" + table.html().innerHTML + "</table>";
+					} else {
+						content += "<span class='none'>";
+						content += Strings.NO_TRANSITIONS;
+						content += "</span>";
 					}
-					content += "<table id='transition_table'>" + table.html().innerHTML + "</table>";
 				} else {
 					content += "unspecified type (AutomatonRenderer:266)";
 				}

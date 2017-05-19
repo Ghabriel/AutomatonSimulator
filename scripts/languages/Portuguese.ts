@@ -31,6 +31,7 @@ export namespace portuguese {
 		FORMAL_DEFINITION: "Definição Formal",
 		DEFINITION_WHERE_SUFFIX: ", onde:",
 		NO_INITIAL_STATE: "nenhum",
+		NO_TRANSITIONS: "nenhuma transição",
 		SELECT_MACHINE: "Seleção de Máquina",
 		ACTION_LIST: "Ações",
 		CREATE_STATE: "Criar estado",

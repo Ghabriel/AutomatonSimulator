@@ -3,7 +3,6 @@
 import {Settings} from "./Settings"
 import {System} from "./System"
 import {UI} from "./interface/UI"
-import {Test, FATests} from "./tests/FAtests"
 
 // Allows the Settings to trigger the machine initializers.
 // This can't be in the Settings file itself because then
@@ -15,8 +14,6 @@ import {Test, FATests} from "./tests/FAtests"
 Settings.update();
 
 $(document).ready(function() {
-	Test.runTests(new FATests());
-
 	let ui = new UI();
 	ui.render();
 
