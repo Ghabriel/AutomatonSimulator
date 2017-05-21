@@ -214,7 +214,7 @@ export class AutomatonRenderer {
 	public edgeManualCreation(): void {
 		if (!this.locked) {
 			let self = this;
-			utils.prompt(Strings.EDGE_MANUAL_CREATION, 2, function(data) {
+			Prompt.simple(Strings.EDGE_MANUAL_CREATION, 2, function(data) {
 				let edge = new Edge();
 				for (let state of self.stateList) {
 					let name = state.getName();
@@ -383,7 +383,7 @@ export class AutomatonRenderer {
 			type: "button",
 			value: Strings.RENAME_STATE,
 			click: function() {
-				// utils.prompt("Enter the new state name:", 1, function(data) {
+				// Prompt.simple("Enter the new state name:", 1, function(data) {
 				// 	let newName = data[0];
 				// 	// TODO: check if the chosen name is already in use
 				// 	Settings.controller().renameState(state, newName);
@@ -821,7 +821,7 @@ export class AutomatonRenderer {
 
 			let self = this;
 			let stateNamePrompt = function() {
-				utils.prompt(Strings.STATE_MANUAL_CREATION, 1, function(data) {
+				Prompt.simple(Strings.STATE_MANUAL_CREATION, 1, function(data) {
 					let name = data[0];
 					for (let state of self.stateList) {
 						if (state.getName() == name) {

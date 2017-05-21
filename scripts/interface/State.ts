@@ -3,14 +3,8 @@
 import {Browser} from "../Browser"
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
+import {StatePalette} from "../StatePalette"
 import {utils} from "../Utils"
-
-export interface StatePalette {
-	fillColor: string;
-	strokeColor: string;
-	strokeWidth: number;
-	ringStrokeWidth: number;
-}
 
 export class State {
 	constructor() {

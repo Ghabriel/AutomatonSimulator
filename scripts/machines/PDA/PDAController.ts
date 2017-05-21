@@ -1,13 +1,13 @@
 import {Controller, FormalDefinition} from "../../Controller"
+import {Prompt} from "../../Prompt"
 import {State} from "../../interface/State"
-import {utils} from "../../Utils"
 
 export class PDAController implements Controller {
 	public edgePrompt(callback: (data: string[], text: string) => void,
 					  fallback?: () => void): void {
 
 		let self = this;
-		utils.prompt("Enter the edge content:", 3, function(data) {
+		Prompt.simple("Enter the edge content:", 3, function(data) {
 			callback(data, self.edgeDataToText(data));
 		}, fallback);
 	}

@@ -22,7 +22,7 @@ JSBASE          :=base.js
 JSCOMPRESSED    :=main.js
 JSTESTS         :=tests.js
 
-COMPRESS        :=0
+COMPRESS        :=1
 
 TSFILES         :=$(wildcard $(TS)/*.ts)
 TSTESTFILES     :=$(wildcard $(TESTS)/*.ts)

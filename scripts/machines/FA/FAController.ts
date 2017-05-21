@@ -1,9 +1,9 @@
 import {Controller, FormalDefinition} from "../../Controller"
 import {FA} from "./FA"
 import {Keyboard} from "../../Keyboard"
+import {Prompt} from "../../Prompt"
 import {State} from "../../interface/State"
 import {Strings} from "../../Settings"
-import {utils} from "../../Utils"
 
 export class FAController implements Controller {
 	constructor() {
@@ -14,7 +14,7 @@ export class FAController implements Controller {
 					  fallback?: () => void): void {
 
 		let self = this;
-		utils.prompt(Strings.FA_ENTER_EDGE_CONTENT, 1, function(data) {
+		Prompt.simple(Strings.FA_ENTER_EDGE_CONTENT, 1, function(data) {
 			callback(data, self.edgeDataToText(data));
 		}, fallback);
 	}

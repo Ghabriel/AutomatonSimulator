@@ -3,12 +3,12 @@ import * as automata from "./lists/MachineList"
 import * as controllers from "./lists/ControllerList"
 
 // import {Regex} from "./misc/Regex"
-import {AutomatonRenderer} from "./interface/AutomatonRenderer"
+// import {AutomatonRenderer} from "./interface/AutomatonRenderer"
 import {Controller} from "./Controller"
 import {Initializer} from "./Initializer"
 import {Renderer} from "./interface/Renderer"
-import {Sidebar} from "./interface/Sidebar"
-import {StatePalette} from "./interface/State"
+// import {Sidebar} from "./interface/Sidebar"
+import {StatePalette} from "./StatePalette"
 import {utils} from "./Utils"
 
 interface MachineTraits {
@@ -120,8 +120,10 @@ export namespace Settings {
 
 	export var controllerMap: {[m: number]: Controller} = {};
 
-	export var sidebar: Sidebar = null;
-	export var automatonRenderer: AutomatonRenderer = null;
+	// export var sidebar: Sidebar = null;
+	// export var automatonRenderer: AutomatonRenderer = null;
+	export var sidebar = null;
+	export var automatonRenderer = null;
 
 	export function controller(): Controller {
 		return this.machines[this.currentMachine].controller;

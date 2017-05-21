@@ -1,7 +1,6 @@
 /// <reference path="defs/jQuery.d.ts" />
 
 import {Keyboard} from "./Keyboard"
-import {Settings, Strings} from "./Settings"
 import {System} from "./System"
 
 export interface Point {
@@ -125,96 +124,5 @@ export namespace utils {
 	// Returns a string representation of a keyboard shortcut
 	export function printShortcut(keys: string[]): string {
 		return keys.join(" ").toLowerCase();
-	}
-
-	// Creates an input prompt with a given message, a given number
-	// of input fields and given callbacks for success and failure.
-	// TODO: make this more flexible (regarding the input fields)
-	// (maybe also move it to System?)
-	export function prompt(message: string, numFields: number,
-						   success: (t: string[]) => void,
-						   fail?: () => void): void {
-
-		let blocker = this.create("div", {
-			className: "click_blocker"
-		});
-
-		let container = this.create("div", {
-			id: "system_prompt"
-		});
-		container.innerHTML = message + "<br>";
-
-		let mainbar = this.id(Settings.mainbarID);
-
-		let dismiss = function() {
-			// Removes the click blocker from the page
-			document.body.removeChild(blocker);
-
-			// Removes the keyboard block
-			System.unblockEvents();
-
-			$(container).slideUp(Settings.promptSlideInterval, function() {
-				mainbar.removeChild(container);
-			});
-		};
-
-		let inputs: HTMLInputElement[] = [];
-
-		let ok = this.create("input", {
-			type: "button",
-			value: Strings.PROMPT_CONFIRM,
-			click: function() {
-				let contents: string[] = [];
-				for (let input of inputs) {
-					contents.push(input.value);
-				}
-				dismiss();
-				success(contents);
-			}
-		});
-
-		let cancel = this.create("input", {
-			type: "button",
-			value: Strings.PROMPT_CANCEL,
-			click: function() {
-				dismiss();
-				if (fail) {
-					fail();
-				}
-			}
-		});
-
-		for (let i = 0; i < numFields; i++) {
-			let input = <HTMLInputElement> this.create("input", {
-				type: "text"
-			});
-
-			input.addEventListener("keydown", function(e) {
-				if (e.keyCode == Keyboard.keys.ENTER) {
-					ok.click();
-				} else if (e.keyCode == Keyboard.keys.ESC) {
-					cancel.click();
-				}
-			});
-
-			inputs.push(input);
-			container.appendChild(input);
-		}
-
-		container.appendChild(ok);
-		container.appendChild(cancel);
-
-		// Adds the "click blocker" to the page
-		document.body.insertBefore(blocker, document.body.children[0]);
-
-		// Sets up a keyboard block
-		System.blockEvents();
-
-		$(container).toggle();
-		// Adds the prompt to the page
-		mainbar.insertBefore(container, mainbar.children[0]);
-		$(container).slideDown(Settings.promptSlideInterval, function() {
-			inputs[0].focus();
-		});
 	}
 }

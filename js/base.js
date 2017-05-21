@@ -217,6 +217,9 @@ define("interface/Renderer", ["require", "exports"], function (require, exports)
     }());
     exports.Renderer = Renderer;
 });
+define("StatePalette", ["require", "exports"], function (require, exports) {
+    "use strict";
+});
 define("Keyboard", ["require", "exports"], function (require, exports) {
     "use strict";
     var Keyboard;
@@ -799,7 +802,7 @@ define("System", ["require", "exports", "Keyboard", "Settings", "Utils"], functi
     }());
     exports.System = System;
 });
-define("Utils", ["require", "exports", "Keyboard", "Settings", "System"], function (require, exports, Keyboard_2, Settings_5, System_2) {
+define("Utils", ["require", "exports", "System"], function (require, exports, System_2) {
     "use strict";
     var utils;
     (function (utils) {
@@ -908,75 +911,9 @@ define("Utils", ["require", "exports", "Keyboard", "Settings", "System"], functi
             return keys.join(" ").toLowerCase();
         }
         utils.printShortcut = printShortcut;
-        function prompt(message, numFields, success, fail) {
-            var blocker = this.create("div", {
-                className: "click_blocker"
-            });
-            var container = this.create("div", {
-                id: "system_prompt"
-            });
-            container.innerHTML = message + "<br>";
-            var mainbar = this.id(Settings_5.Settings.mainbarID);
-            var dismiss = function () {
-                document.body.removeChild(blocker);
-                System_2.System.unblockEvents();
-                $(container).slideUp(Settings_5.Settings.promptSlideInterval, function () {
-                    mainbar.removeChild(container);
-                });
-            };
-            var inputs = [];
-            var ok = this.create("input", {
-                type: "button",
-                value: Settings_5.Strings.PROMPT_CONFIRM,
-                click: function () {
-                    var contents = [];
-                    for (var _i = 0, inputs_1 = inputs; _i < inputs_1.length; _i++) {
-                        var input = inputs_1[_i];
-                        contents.push(input.value);
-                    }
-                    dismiss();
-                    success(contents);
-                }
-            });
-            var cancel = this.create("input", {
-                type: "button",
-                value: Settings_5.Strings.PROMPT_CANCEL,
-                click: function () {
-                    dismiss();
-                    if (fail) {
-                        fail();
-                    }
-                }
-            });
-            for (var i = 0; i < numFields; i++) {
-                var input = this.create("input", {
-                    type: "text"
-                });
-                input.addEventListener("keydown", function (e) {
-                    if (e.keyCode == Keyboard_2.Keyboard.keys.ENTER) {
-                        ok.click();
-                    }
-                    else if (e.keyCode == Keyboard_2.Keyboard.keys.ESC) {
-                        cancel.click();
-                    }
-                });
-                inputs.push(input);
-                container.appendChild(input);
-            }
-            container.appendChild(ok);
-            container.appendChild(cancel);
-            document.body.insertBefore(blocker, document.body.children[0]);
-            System_2.System.blockEvents();
-            $(container).toggle();
-            mainbar.insertBefore(container, mainbar.children[0]);
-            $(container).slideDown(Settings_5.Settings.promptSlideInterval, function () {
-                inputs[0].focus();
-            });
-        }
-        utils.prompt = prompt;
     })(utils = exports.utils || (exports.utils = {}));
 });
-define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"], function (require, exports, Browser_1, Settings_6, Utils_5) {
+define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"], function (require, exports, Browser_1, Settings_5, Utils_5) {
     "use strict";
     var State = (function () {
         function State() {
@@ -985,17 +922,17 @@ define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"]
             this.name = "";
             this.initialMarkOffsets = [];
             this.defaultPalette = {
-                fillColor: Settings_6.Settings.stateFillColor,
-                strokeColor: Settings_6.Settings.stateStrokeColor,
-                strokeWidth: Settings_6.Settings.stateStrokeWidth,
-                ringStrokeWidth: Settings_6.Settings.stateRingStrokeWidth
+                fillColor: Settings_5.Settings.stateFillColor,
+                strokeColor: Settings_5.Settings.stateStrokeColor,
+                strokeWidth: Settings_5.Settings.stateStrokeWidth,
+                ringStrokeWidth: Settings_5.Settings.stateRingStrokeWidth
             };
             this.palette = this.defaultPalette;
             this.body = null;
             this.ring = null;
             this.arrowParts = [];
             this.textContainer = null;
-            this.radius = Settings_6.Settings.stateRadius;
+            this.radius = Settings_5.Settings.stateRadius;
         }
         State.prototype.setPosition = function (x, y) {
             this.x = x;
@@ -1136,11 +1073,11 @@ define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"]
             if (this.initialMarkOffsets.length) {
                 return;
             }
-            var length = Settings_6.Settings.stateInitialMarkLength;
+            var length = Settings_5.Settings.stateInitialMarkLength;
             var x = this.x - this.radius;
             var y = this.y;
-            var arrowLength = Settings_6.Settings.stateInitialMarkHeadLength;
-            var alpha = Settings_6.Settings.stateInitialMarkAngle;
+            var arrowLength = Settings_5.Settings.stateInitialMarkHeadLength;
+            var alpha = Settings_5.Settings.stateInitialMarkAngle;
             var u = 1 - arrowLength / length;
             var ref = {
                 x: x - length + u * length,
@@ -1162,7 +1099,7 @@ define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"]
         };
         State.prototype.renderInitialMark = function (canvas) {
             if (this.initial) {
-                var length_1 = Settings_6.Settings.stateInitialMarkLength;
+                var length_1 = Settings_5.Settings.stateInitialMarkLength;
                 var x = this.x - this.radius;
                 var y = this.y;
                 if (this.arrowParts.length) {
@@ -1178,8 +1115,8 @@ define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"]
                     bottomLine.attr("path", Utils_5.utils.linePath(botOffsets.x + x, botOffsets.y + y, x, y));
                 }
                 else {
-                    var strokeColor = Settings_6.Settings.stateInitialMarkColor;
-                    var strokeWidth = Settings_6.Settings.stateInitialMarkThickness;
+                    var strokeColor = Settings_5.Settings.stateInitialMarkColor;
+                    var strokeWidth = Settings_5.Settings.stateInitialMarkThickness;
                     var body = Utils_5.utils.line(canvas, x - length_1, y, x, y);
                     body.attr("stroke", strokeColor);
                     body.attr("stroke-width", strokeWidth);
@@ -1209,7 +1146,7 @@ define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"]
         State.prototype.renderFinalMark = function (canvas) {
             if (this.final) {
                 if (!this.ring) {
-                    this.ring = canvas.circle(this.x, this.y, Settings_6.Settings.stateRingRadius);
+                    this.ring = canvas.circle(this.x, this.y, Settings_5.Settings.stateRingRadius);
                 }
                 else {
                     this.ring.attr({
@@ -1228,10 +1165,10 @@ define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"]
         State.prototype.renderText = function (canvas) {
             if (!this.textContainer) {
                 this.textContainer = canvas.text(this.x, this.y, this.name);
-                this.textContainer.attr("font-family", Settings_6.Settings.stateLabelFontFamily);
-                this.textContainer.attr("font-size", Settings_6.Settings.stateLabelFontSize);
-                this.textContainer.attr("stroke", Settings_6.Settings.stateLabelFontColor);
-                this.textContainer.attr("fill", Settings_6.Settings.stateLabelFontColor);
+                this.textContainer.attr("font-family", Settings_5.Settings.stateLabelFontFamily);
+                this.textContainer.attr("font-size", Settings_5.Settings.stateLabelFontSize);
+                this.textContainer.attr("stroke", Settings_5.Settings.stateLabelFontColor);
+                this.textContainer.attr("fill", Settings_5.Settings.stateLabelFontColor);
             }
             else {
                 this.textContainer.attr("x", this.x);
@@ -1586,7 +1523,188 @@ define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastr
     }());
     exports.FA = FA;
 });
-define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Keyboard", "Settings", "Utils"], function (require, exports, FA_1, Keyboard_3, Settings_7, Utils_7) {
+define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils"], function (require, exports, Keyboard_2, Settings_6, System_3, Utils_7) {
+    "use strict";
+    var Prompt = (function () {
+        function Prompt(message) {
+            this.inputs = [];
+            this.successCallback = null;
+            this.abortCallback = null;
+            this.message = message;
+        }
+        Prompt.prototype.addInput = function (properties) {
+            this.inputs.push(properties);
+        };
+        Prompt.prototype.onSuccess = function (callback) {
+            this.successCallback = callback;
+        };
+        Prompt.prototype.onAbort = function (callback) {
+            this.abortCallback = callback;
+        };
+        Prompt.prototype.show = function () {
+            var blocker = Utils_7.utils.create("div", {
+                className: "click_blocker"
+            });
+            var container = Utils_7.utils.create("div", {
+                id: "system_prompt"
+            });
+            container.innerHTML = this.message + "<br>";
+            var mainbar = Utils_7.utils.id(Settings_6.Settings.mainbarID);
+            var inputIdPrefix = "system_prompt_input_";
+            var dismiss = function () {
+                document.body.removeChild(blocker);
+                System_3.System.unblockEvents();
+                $(container).slideUp(Settings_6.Settings.promptSlideInterval, function () {
+                    mainbar.removeChild(container);
+                });
+            };
+            var inputs = [];
+            var self = this;
+            var allInputsValid = function () {
+                for (var _i = 0, inputs_1 = inputs; _i < inputs_1.length; _i++) {
+                    var input = inputs_1[_i];
+                    var index = input.id.replace(inputIdPrefix, "");
+                    var validator = self.inputs[index].validator;
+                    console.log(index);
+                    console.log(validator.toString());
+                    console.log(input.value);
+                    console.log("---------------");
+                    if (validator && !validator(input.value)) {
+                        return false;
+                    }
+                }
+                return true;
+            };
+            var ok = Utils_7.utils.create("input", {
+                type: "button",
+                value: Settings_6.Strings.PROMPT_CONFIRM,
+                click: function () {
+                    var allValid = true;
+                    var contents = [];
+                    for (var _i = 0, inputs_2 = inputs; _i < inputs_2.length; _i++) {
+                        var input = inputs_2[_i];
+                        var index = input.id.replace(inputIdPrefix, "");
+                        var validator = self.inputs[index].validator;
+                        if (validator && !validator(input.value)) {
+                            allValid = false;
+                            break;
+                        }
+                        contents.push(input.value);
+                    }
+                    dismiss();
+                    self.successCallback(contents);
+                }
+            });
+            var cancel = Utils_7.utils.create("input", {
+                type: "button",
+                value: Settings_6.Strings.PROMPT_CANCEL,
+                click: function () {
+                    dismiss();
+                    if (self.abortCallback) {
+                        self.abortCallback();
+                    }
+                }
+            });
+            for (var i = 0; i < this.inputs.length; i++) {
+                var input = Utils_7.utils.create("input", {
+                    id: inputIdPrefix + i,
+                    type: "text",
+                    placeholder: this.inputs[i].placeholder || ""
+                });
+                input.addEventListener("keydown", function (e) {
+                    if (e.keyCode == Keyboard_2.Keyboard.keys.ENTER) {
+                        ok.click();
+                    }
+                    else if (e.keyCode == Keyboard_2.Keyboard.keys.ESC) {
+                        cancel.click();
+                    }
+                    else {
+                        ok.disabled = !allInputsValid();
+                    }
+                });
+                inputs.push(input);
+                container.appendChild(input);
+            }
+            container.appendChild(ok);
+            container.appendChild(cancel);
+            document.body.insertBefore(blocker, document.body.children[0]);
+            System_3.System.blockEvents();
+            $(container).toggle();
+            mainbar.insertBefore(container, mainbar.children[0]);
+            $(container).slideDown(Settings_6.Settings.promptSlideInterval, function () {
+                inputs[0].focus();
+            });
+        };
+        Prompt.simple = function (message, numFields, success, fail) {
+            var blocker = Utils_7.utils.create("div", {
+                className: "click_blocker"
+            });
+            var container = Utils_7.utils.create("div", {
+                id: "system_prompt"
+            });
+            container.innerHTML = message + "<br>";
+            var mainbar = Utils_7.utils.id(Settings_6.Settings.mainbarID);
+            var dismiss = function () {
+                document.body.removeChild(blocker);
+                System_3.System.unblockEvents();
+                $(container).slideUp(Settings_6.Settings.promptSlideInterval, function () {
+                    mainbar.removeChild(container);
+                });
+            };
+            var inputs = [];
+            var ok = Utils_7.utils.create("input", {
+                type: "button",
+                value: Settings_6.Strings.PROMPT_CONFIRM,
+                click: function () {
+                    var contents = [];
+                    for (var _i = 0, inputs_3 = inputs; _i < inputs_3.length; _i++) {
+                        var input = inputs_3[_i];
+                        contents.push(input.value);
+                    }
+                    dismiss();
+                    success(contents);
+                }
+            });
+            var cancel = Utils_7.utils.create("input", {
+                type: "button",
+                value: Settings_6.Strings.PROMPT_CANCEL,
+                click: function () {
+                    dismiss();
+                    if (fail) {
+                        fail();
+                    }
+                }
+            });
+            for (var i = 0; i < numFields; i++) {
+                var input = Utils_7.utils.create("input", {
+                    type: "text"
+                });
+                input.addEventListener("keydown", function (e) {
+                    if (e.keyCode == Keyboard_2.Keyboard.keys.ENTER) {
+                        ok.click();
+                    }
+                    else if (e.keyCode == Keyboard_2.Keyboard.keys.ESC) {
+                        cancel.click();
+                    }
+                });
+                inputs.push(input);
+                container.appendChild(input);
+            }
+            container.appendChild(ok);
+            container.appendChild(cancel);
+            document.body.insertBefore(blocker, document.body.children[0]);
+            System_3.System.blockEvents();
+            $(container).toggle();
+            mainbar.insertBefore(container, mainbar.children[0]);
+            $(container).slideDown(Settings_6.Settings.promptSlideInterval, function () {
+                inputs[0].focus();
+            });
+        };
+        return Prompt;
+    }());
+    exports.Prompt = Prompt;
+});
+define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Keyboard", "Prompt", "Settings"], function (require, exports, FA_1, Keyboard_3, Prompt_1, Settings_7) {
     "use strict";
     var FAController = (function () {
         function FAController() {
@@ -1597,7 +1715,7 @@ define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Key
         }
         FAController.prototype.edgePrompt = function (callback, fallback) {
             var self = this;
-            Utils_7.utils.prompt(Settings_7.Strings.FA_ENTER_EDGE_CONTENT, 1, function (data) {
+            Prompt_1.Prompt.simple(Settings_7.Strings.FA_ENTER_EDGE_CONTENT, 1, function (data) {
                 callback(data, self.edgeDataToText(data));
             }, fallback);
         };
@@ -1738,14 +1856,14 @@ define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Key
     }());
     exports.FAController = FAController;
 });
-define("machines/PDA/PDAController", ["require", "exports", "Utils"], function (require, exports, Utils_8) {
+define("machines/PDA/PDAController", ["require", "exports", "Prompt"], function (require, exports, Prompt_2) {
     "use strict";
     var PDAController = (function () {
         function PDAController() {
         }
         PDAController.prototype.edgePrompt = function (callback, fallback) {
             var self = this;
-            Utils_8.utils.prompt("Enter the edge content:", 3, function (data) {
+            Prompt_2.Prompt.simple("Enter the edge content:", 3, function (data) {
                 callback(data, self.edgeDataToText(data));
             }, fallback);
         };
@@ -1818,1073 +1936,13 @@ define("lists/ControllerList", ["require", "exports", "machines/FA/FAController"
     __export(PDAController_1);
     __export(LBAController_1);
 });
-define("interface/EdgeUtils", ["require", "exports", "Settings"], function (require, exports, Settings_8) {
-    "use strict";
-    var EdgeUtils;
-    (function (EdgeUtils) {
-        function addEdgeData(edge, data) {
-            var controller = Settings_8.Settings.controller();
-            edge.addText(controller.edgeDataToText(data));
-            edge.addData(data);
-            controller.createEdge(edge.getOrigin(), edge.getTarget(), data);
-        }
-        EdgeUtils.addEdgeData = addEdgeData;
-    })(EdgeUtils = exports.EdgeUtils || (exports.EdgeUtils = {}));
-});
-define("Memento", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var Memento = (function () {
-        function Memento(limit) {
-            this.bottomIndex = 0;
-            this.topIndex = -1;
-            this.states = {};
-            this.limit = limit;
-        }
-        Memento.prototype.push = function (state) {
-            var limit = this.limit() + 1;
-            if (this.topIndex - this.bottomIndex + 1 == limit) {
-                delete this.states[this.bottomIndex];
-                this.bottomIndex++;
-            }
-            this.topIndex++;
-            this.states[this.topIndex] = state;
-        };
-        Memento.prototype.pop = function () {
-            var data = this.states[this.topIndex - 1];
-            delete this.states[this.topIndex];
-            this.topIndex--;
-            return data;
-        };
-        return Memento;
-    }());
-    exports.Memento = Memento;
-});
-define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils"], function (require, exports, Keyboard_4, Settings_9, System_3, Utils_9) {
-    "use strict";
-    var Prompt = (function () {
-        function Prompt(message) {
-            this.inputs = [];
-            this.successCallback = null;
-            this.abortCallback = null;
-            this.message = message;
-        }
-        Prompt.prototype.addInput = function (properties) {
-            this.inputs.push(properties);
-        };
-        Prompt.prototype.onSuccess = function (callback) {
-            this.successCallback = callback;
-        };
-        Prompt.prototype.onAbort = function (callback) {
-            this.abortCallback = callback;
-        };
-        Prompt.prototype.show = function () {
-            var blocker = Utils_9.utils.create("div", {
-                className: "click_blocker"
-            });
-            var container = Utils_9.utils.create("div", {
-                id: "system_prompt"
-            });
-            container.innerHTML = this.message + "<br>";
-            var mainbar = Utils_9.utils.id(Settings_9.Settings.mainbarID);
-            var inputIdPrefix = "system_prompt_input_";
-            var dismiss = function () {
-                document.body.removeChild(blocker);
-                System_3.System.unblockEvents();
-                $(container).slideUp(Settings_9.Settings.promptSlideInterval, function () {
-                    mainbar.removeChild(container);
-                });
-            };
-            var inputs = [];
-            var self = this;
-            var allInputsValid = function () {
-                for (var _i = 0, inputs_2 = inputs; _i < inputs_2.length; _i++) {
-                    var input = inputs_2[_i];
-                    var index = input.id.replace(inputIdPrefix, "");
-                    var validator = self.inputs[index].validator;
-                    console.log(index);
-                    console.log(validator.toString());
-                    console.log(input.value);
-                    console.log("---------------");
-                    if (validator && !validator(input.value)) {
-                        return false;
-                    }
-                }
-                return true;
-            };
-            var ok = Utils_9.utils.create("input", {
-                type: "button",
-                value: Settings_9.Strings.PROMPT_CONFIRM,
-                click: function () {
-                    var allValid = true;
-                    var contents = [];
-                    for (var _i = 0, inputs_3 = inputs; _i < inputs_3.length; _i++) {
-                        var input = inputs_3[_i];
-                        var index = input.id.replace(inputIdPrefix, "");
-                        var validator = self.inputs[index].validator;
-                        if (validator && !validator(input.value)) {
-                            allValid = false;
-                            break;
-                        }
-                        contents.push(input.value);
-                    }
-                    dismiss();
-                    self.successCallback(contents);
-                }
-            });
-            var cancel = Utils_9.utils.create("input", {
-                type: "button",
-                value: Settings_9.Strings.PROMPT_CANCEL,
-                click: function () {
-                    dismiss();
-                    if (self.abortCallback) {
-                        self.abortCallback();
-                    }
-                }
-            });
-            for (var i = 0; i < this.inputs.length; i++) {
-                var input = Utils_9.utils.create("input", {
-                    id: inputIdPrefix + i,
-                    type: "text",
-                    placeholder: this.inputs[i].placeholder || ""
-                });
-                input.addEventListener("keydown", function (e) {
-                    if (e.keyCode == Keyboard_4.Keyboard.keys.ENTER) {
-                        ok.click();
-                    }
-                    else if (e.keyCode == Keyboard_4.Keyboard.keys.ESC) {
-                        cancel.click();
-                    }
-                    else {
-                        ok.disabled = !allInputsValid();
-                    }
-                });
-                inputs.push(input);
-                container.appendChild(input);
-            }
-            container.appendChild(ok);
-            container.appendChild(cancel);
-            document.body.insertBefore(blocker, document.body.children[0]);
-            System_3.System.blockEvents();
-            $(container).toggle();
-            mainbar.insertBefore(container, mainbar.children[0]);
-            $(container).slideDown(Settings_9.Settings.promptSlideInterval, function () {
-                inputs[0].focus();
-            });
-        };
-        return Prompt;
-    }());
-    exports.Prompt = Prompt;
-});
-define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "Persistence", "Settings", "interface/State", "Utils", "interface/Table", "System", "Prompt"], function (require, exports, Edge_1, Persistence_1, Settings_10, State_1, Utils_10, Table_2, System_4, Prompt_1) {
-    "use strict";
-    var AutomatonRenderer = (function () {
-        function AutomatonRenderer(canvas, node, memento) {
-            this.canvas = null;
-            this.node = null;
-            this.stateList = [];
-            this.edgeList = [];
-            this.highlightedState = null;
-            this.highlightedEdge = null;
-            this.initialState = null;
-            this.edgeMode = false;
-            this.currentEdge = null;
-            this.locked = false;
-            this.memento = null;
-            this.frozenMemento = false;
-            this.canvas = canvas;
-            this.memento = memento;
-            this.node = node;
-        }
-        AutomatonRenderer.prototype.render = function () {
-            this.bindEvents();
-            this.bindShortcuts();
-            this.bindFormalDefinitionListener();
-            System_4.System.addLanguageChangeObserver(this);
-        };
-        AutomatonRenderer.prototype.clear = function () {
-            for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
-                var state = _a[_i];
-                state.remove();
-            }
-            this.stateList = [];
-            for (var _b = 0, _c = this.edgeList; _b < _c.length; _b++) {
-                var edge = _c[_b];
-                edge.remove();
-            }
-            this.edgeList = [];
-            this.initialState = null;
-            this.clearSelection();
-            Settings_10.Settings.controller().clear();
-        };
-        AutomatonRenderer.prototype.empty = function () {
-            return this.stateList.length == 0;
-        };
-        AutomatonRenderer.prototype.save = function () {
-            return Persistence_1.Persistence.save(this.stateList, this.edgeList, this.initialState);
-        };
-        AutomatonRenderer.prototype.load = function (content, pushResult) {
-            if (pushResult === void 0) { pushResult = true; }
-            this.frozenMemento = true;
-            var loadedData = Persistence_1.Persistence.load(content);
-            if (loadedData.error) {
-                alert(Settings_10.Strings.INVALID_FILE);
-                return;
-            }
-            this.stateList = this.stateList.concat(loadedData.stateList);
-            this.edgeList = this.edgeList.concat(loadedData.edgeList);
-            if (this.initialState === null) {
-                this.initialState = loadedData.initialState;
-            }
-            for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
-                var state = _a[_i];
-                state.render(this.canvas);
-                this.bindStateEvents(state);
-            }
-            for (var _b = 0, _c = this.edgeList; _b < _c.length; _b++) {
-                var edge = _c[_b];
-                edge.render(this.canvas);
-                this.bindEdgeEvents(edge);
-            }
-            this.frozenMemento = false;
-            if (pushResult) {
-                this.memento.push(this.save());
-            }
-        };
-        AutomatonRenderer.prototype.recognitionHighlight = function (stateNames) {
-            var nameMapping = {};
-            for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
-                var state = _a[_i];
-                nameMapping[state.getName()] = state;
-                state.removePalette();
-            }
-            for (var _b = 0, stateNames_1 = stateNames; _b < stateNames_1.length; _b++) {
-                var name_2 = stateNames_1[_b];
-                nameMapping[name_2].applyPalette(Settings_10.Settings.stateRecognitionPalette);
-            }
-            for (var _c = 0, _d = this.stateList; _c < _d.length; _c++) {
-                var state = _d[_c];
-                state.render(this.canvas);
-            }
-        };
-        AutomatonRenderer.prototype.recognitionDim = function () {
-            for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
-                var state = _a[_i];
-                state.removePalette();
-                state.render(this.canvas);
-            }
-            this.highlightedState = null;
-        };
-        AutomatonRenderer.prototype.lock = function () {
-            Utils_10.utils.lockShortcutGroup(Settings_10.Settings.canvasShortcutID);
-            this.locked = true;
-        };
-        AutomatonRenderer.prototype.unlock = function () {
-            Utils_10.utils.unlockShortcutGroup(Settings_10.Settings.canvasShortcutID);
-            this.locked = false;
-        };
-        AutomatonRenderer.prototype.stateManualCreation = function () {
-            var stateRadius = Settings_10.Settings.stateRadius;
-            this.newStateAt(stateRadius, stateRadius);
-        };
-        AutomatonRenderer.prototype.edgeManualCreation = function () {
-            if (!this.locked) {
-                var self_1 = this;
-                Utils_10.utils.prompt(Settings_10.Strings.EDGE_MANUAL_CREATION, 2, function (data) {
-                    var edge = new Edge_1.Edge();
-                    for (var _i = 0, _a = self_1.stateList; _i < _a.length; _i++) {
-                        var state = _a[_i];
-                        var name_3 = state.getName();
-                        if (name_3 == data[0]) {
-                            edge.setOrigin(state);
-                        }
-                        if (name_3 == data[1]) {
-                            edge.setTarget(state);
-                        }
-                    }
-                    if (edge.getOrigin() && edge.getTarget()) {
-                        self_1.currentEdge = edge;
-                        self_1.finishEdge(edge.getTarget());
-                    }
-                    else {
-                        alert(Settings_10.Strings.ERROR_INVALID_STATE_NAME);
-                    }
-                });
-            }
-        };
-        AutomatonRenderer.prototype.onLanguageChange = function () {
-            this.bindFormalDefinitionListener();
-        };
-        AutomatonRenderer.prototype.bindFormalDefinitionListener = function () {
-            var definitionContainer = null;
-            var controller = Settings_10.Settings.controller();
-            var self = this;
-            var callback = function () {
-                if (!self.frozenMemento) {
-                    self.memento.push(self.save());
-                }
-                if (!definitionContainer) {
-                    definitionContainer = Utils_10.utils.create("div");
-                    Settings_10.Settings.sidebar.updateFormalDefinition(definitionContainer);
-                }
-                var formalDefinition = controller.formalDefinition();
-                var tupleSequence = formalDefinition.tupleSequence;
-                var content = "M = (" + tupleSequence.join(", ") + ")";
-                content += Settings_10.Strings.DEFINITION_WHERE_SUFFIX + "<br>";
-                for (var _i = 0, _a = formalDefinition.parameterSequence; _i < _a.length; _i++) {
-                    var parameter = _a[_i];
-                    var value = formalDefinition.parameterValues[parameter];
-                    var type = typeof value;
-                    content += parameter + " = ";
-                    if (type == "number" || type == "string") {
-                        content += value;
-                    }
-                    else if (value instanceof Array) {
-                        content += "{" + value.join(", ") + "}";
-                    }
-                    else if (type == "undefined") {
-                        content += "<span class='none'>";
-                        content += Settings_10.Strings.NO_INITIAL_STATE;
-                        content += "</span>";
-                    }
-                    else if (value.hasOwnProperty("list")) {
-                        var list = value.list;
-                        if (list.length > 0) {
-                            var table = new Table_2.Table(list.length, 3);
-                            for (var i = 0; i < list.length; i++) {
-                                for (var j = 0; j < list[i].length; j++) {
-                                    table.add(Utils_10.utils.create("span", {
-                                        innerHTML: list[i][j]
-                                    }));
-                                }
-                            }
-                            content += "<table id='transition_table'>" + table.html().innerHTML + "</table>";
-                        }
-                        else {
-                            content += "<span class='none'>";
-                            content += Settings_10.Strings.NO_TRANSITIONS;
-                            content += "</span>";
-                        }
-                    }
-                    else {
-                        content += "unspecified type (AutomatonRenderer:266)";
-                    }
-                    content += "<br>";
-                }
-                definitionContainer.innerHTML = content;
-            };
-            controller.setEditingCallback(callback);
-            callback();
-        };
-        AutomatonRenderer.prototype.selectState = function (state) {
-            if (!this.locked) {
-                this.dimEdge();
-                if (this.highlightedState) {
-                    this.highlightedState.removePalette();
-                    this.highlightedState.render(this.canvas);
-                }
-                state.applyPalette(Settings_10.Settings.stateHighlightPalette);
-                this.highlightedState = state;
-                state.render(this.canvas);
-                this.updateEditableState(state);
-            }
-        };
-        AutomatonRenderer.prototype.dimState = function () {
-            if (!this.locked && this.highlightedState) {
-                this.highlightedState.removePalette();
-                this.highlightedState.render(this.canvas);
-                this.highlightedState = null;
-                Settings_10.Settings.sidebar.unsetSelectedEntityContent();
-            }
-        };
-        AutomatonRenderer.prototype.selectEdge = function (edge) {
-            if (!this.locked) {
-                this.dimState();
-                if (this.highlightedEdge) {
-                    this.highlightedEdge.removeCustomColor();
-                    this.highlightedEdge.render(this.canvas);
-                }
-                edge.setCustomColor(Settings_10.Settings.edgeHighlightColor);
-                this.highlightedEdge = edge;
-                edge.render(this.canvas);
-                this.updateEditableEdge(edge);
-            }
-        };
-        AutomatonRenderer.prototype.dimEdge = function () {
-            if (!this.locked && this.highlightedEdge) {
-                this.highlightedEdge.removeCustomColor();
-                this.highlightedEdge.render(this.canvas);
-                this.highlightedEdge = null;
-                Settings_10.Settings.sidebar.unsetSelectedEntityContent();
-            }
-        };
-        AutomatonRenderer.prototype.updateEditableState = function (state) {
-            Settings_10.Settings.sidebar.unsetSelectedEntityContent();
-            if (state) {
-                Settings_10.Settings.sidebar.setSelectedEntityContent(this.showEditableState(state));
-            }
-        };
-        AutomatonRenderer.prototype.updateEditableEdge = function (edge) {
-            Settings_10.Settings.sidebar.unsetSelectedEntityContent();
-            if (edge) {
-                Settings_10.Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
-            }
-        };
-        AutomatonRenderer.prototype.showEditableState = function (state) {
-            var container = Utils_10.utils.create("div");
-            var table = new Table_2.Table(4, 3);
-            var canvas = this.canvas;
-            var self = this;
-            var renameButton = Utils_10.utils.create("input", {
-                type: "button",
-                value: Settings_10.Strings.RENAME_STATE,
-                click: function () {
-                    var message = new Prompt_1.Prompt(Settings_10.Strings.STATE_RENAME_ACTION);
-                    message.addInput({
-                        validator: function (content) {
-                            return content.length <= 6;
-                        }
-                    });
-                    message.show();
-                }
-            });
-            var toggleInitialButton = Utils_10.utils.create("input", {
-                type: "button",
-                value: Settings_10.Strings.TOGGLE_PROPERTY,
-                click: function () {
-                    self.setInitialState(state);
-                    state.render(canvas);
-                    $("#entity_initial").html(state.isInitial() ? Settings_10.Strings.YES
-                        : Settings_10.Strings.NO);
-                }
-            });
-            var toggleFinalButton = Utils_10.utils.create("input", {
-                type: "button",
-                value: Settings_10.Strings.TOGGLE_PROPERTY,
-                click: function () {
-                    self.changeFinalFlag(state, !state.isFinal());
-                    state.render(canvas);
-                    $("#entity_final").html(state.isFinal() ? Settings_10.Strings.YES
-                        : Settings_10.Strings.NO);
-                }
-            });
-            var deleteButton = Utils_10.utils.create("input", {
-                type: "button",
-                value: Settings_10.Strings.DELETE_STATE,
-                click: function () {
-                    self.deleteState(state);
-                    self.clearSelection();
-                    Settings_10.Settings.sidebar.unsetSelectedEntityContent();
-                }
-            });
-            table.add(Utils_10.utils.create("span", { innerHTML: Settings_10.Strings.STATE_NAME + ":" }));
-            table.add(Utils_10.utils.create("span", { innerHTML: state.getName(),
-                className: "property_value",
-                id: "entity_name" }));
-            table.add(renameButton);
-            table.add(Utils_10.utils.create("span", { innerHTML: Settings_10.Strings.STATE_IS_INITIAL + ":" }));
-            table.add(Utils_10.utils.create("span", { innerHTML: state.isInitial() ? Settings_10.Strings.YES
-                    : Settings_10.Strings.NO,
-                className: "property_value",
-                id: "entity_initial" }));
-            table.add(toggleInitialButton);
-            table.add(Utils_10.utils.create("span", { innerHTML: Settings_10.Strings.STATE_IS_FINAL + ":" }));
-            table.add(Utils_10.utils.create("span", { innerHTML: state.isFinal() ? Settings_10.Strings.YES
-                    : Settings_10.Strings.NO,
-                className: "property_value",
-                id: "entity_final" }));
-            table.add(toggleFinalButton);
-            table.add(deleteButton, 3);
-            container.appendChild(table.html());
-            return container;
-        };
-        AutomatonRenderer.prototype.fixEdgeConsistency = function (newEdge) {
-            var origin = newEdge.getOrigin();
-            var target = newEdge.getTarget();
-            var oppositeEdge = null;
-            var mergedEdge = null;
-            var edgeIndex = -1;
-            var pendingRemoval = false;
-            var i = 0;
-            for (var _i = 0, _a = this.edgeList; _i < _a.length; _i++) {
-                var edge = _a[_i];
-                if (edge.getOrigin() == origin && edge.getTarget() == target) {
-                    if (edge != newEdge) {
-                        var dataList = newEdge.getDataList();
-                        var textList = newEdge.getTextList();
-                        var length_2 = dataList.length;
-                        for (var i_1 = 0; i_1 < length_2; i_1++) {
-                            edge.addData(dataList[i_1]);
-                            edge.addText(textList[i_1]);
-                        }
-                        edge.render(this.canvas);
-                        mergedEdge = edge;
-                        pendingRemoval = true;
-                    }
-                    else {
-                        edgeIndex = i;
-                    }
-                }
-                else if (edge.getOrigin() == target && edge.getTarget() == origin) {
-                    oppositeEdge = edge;
-                }
-                i++;
-            }
-            if (oppositeEdge) {
-                oppositeEdge.setCurveFlag(true);
-                oppositeEdge.render(this.canvas);
-                newEdge.setCurveFlag(true);
-                newEdge.render(this.canvas);
-            }
-            else {
-                newEdge.setCurveFlag(false);
-                newEdge.render(this.canvas);
-            }
-            if (pendingRemoval && edgeIndex > -1) {
-                if (this.highlightedEdge == newEdge) {
-                    this.selectEdge(mergedEdge);
-                }
-                newEdge.remove();
-                this.edgeList.splice(edgeIndex, 1);
-            }
-        };
-        AutomatonRenderer.prototype.showEditableEdge = function (edge) {
-            var container = Utils_10.utils.create("div");
-            var table = new Table_2.Table(5, 3);
-            var canvas = this.canvas;
-            var self = this;
-            var changeOriginButton = Utils_10.utils.create("input", {
-                type: "button",
-                value: Settings_10.Strings.CHANGE_PROPERTY,
-                click: function () {
-                    var newOrigin = prompt(Settings_10.Strings.EDGE_ENTER_NEW_ORIGIN);
-                    if (newOrigin !== null) {
-                        for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
-                            var state = _a[_i];
-                            if (state.getName() == newOrigin) {
-                                edge.setOrigin(state);
-                                self.fixEdgeConsistency(edge);
-                            }
-                        }
-                        if (!edge.removed()) {
-                            edge.render(canvas);
-                        }
-                        $("#entity_origin").html(newOrigin);
-                    }
-                }
-            });
-            var changeTargetButton = Utils_10.utils.create("input", {
-                type: "button",
-                value: Settings_10.Strings.CHANGE_PROPERTY,
-                click: function () {
-                    var newTarget = prompt(Settings_10.Strings.EDGE_ENTER_NEW_TARGET);
-                    if (newTarget !== null) {
-                        for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
-                            var state = _a[_i];
-                            if (state.getName() == newTarget) {
-                                edge.setTarget(state);
-                                self.fixEdgeConsistency(edge);
-                            }
-                        }
-                        if (!edge.removed()) {
-                            edge.render(canvas);
-                        }
-                        $("#entity_target").html(newTarget);
-                    }
-                }
-            });
-            var changeTransitionButton = Utils_10.utils.create("input", {
-                type: "button",
-                value: Settings_10.Strings.CHANGE_PROPERTY,
-                click: function () {
-                    var transitionSelector = $("#entity_transition_list").get(0);
-                    var selectedIndex = transitionSelector.selectedIndex;
-                    var controller = Settings_10.Settings.controller();
-                    controller.edgePrompt(function (data, content) {
-                        var origin = edge.getOrigin();
-                        var target = edge.getTarget();
-                        var dataList = edge.getDataList();
-                        controller.deleteEdge(origin, target, dataList[selectedIndex]);
-                        edge.getDataList()[selectedIndex] = data;
-                        edge.getTextList()[selectedIndex] = content;
-                        edge.render(self.canvas);
-                        controller.createEdge(origin, target, data);
-                        self.updateEditableEdge(edge);
-                    });
-                }
-            });
-            var deleteTransitionButton = Utils_10.utils.create("input", {
-                type: "button",
-                value: Settings_10.Strings.DELETE_SELECTED_TRANSITION,
-                click: function () {
-                    var transitionSelector = $("#entity_transition_list").get(0);
-                    var selectedIndex = transitionSelector.selectedIndex;
-                    var controller = Settings_10.Settings.controller();
-                    var origin = edge.getOrigin();
-                    var target = edge.getTarget();
-                    var dataList = edge.getDataList();
-                    controller.deleteEdge(origin, target, dataList[selectedIndex]);
-                    edge.getDataList().splice(selectedIndex, 1);
-                    edge.getTextList().splice(selectedIndex, 1);
-                    if (dataList.length == 0) {
-                        self.deleteEdge(edge);
-                        self.clearSelection();
-                        Settings_10.Settings.sidebar.unsetSelectedEntityContent();
-                    }
-                    else {
-                        edge.render(self.canvas);
-                        self.updateEditableEdge(edge);
-                    }
-                }
-            });
-            var deleteAllButton = Utils_10.utils.create("input", {
-                title: Utils_10.utils.printShortcut(Settings_10.Settings.shortcuts.deleteEntity),
-                type: "button",
-                value: Settings_10.Strings.DELETE_ALL_TRANSITIONS,
-                click: function () {
-                    self.deleteEdge(edge);
-                    self.clearSelection();
-                    Settings_10.Settings.sidebar.unsetSelectedEntityContent();
-                }
-            });
-            table.add(Utils_10.utils.create("span", { innerHTML: Settings_10.Strings.ORIGIN + ":" }));
-            table.add(Utils_10.utils.create("span", { innerHTML: edge.getOrigin().getName(),
-                className: "property_value",
-                id: "entity_origin" }));
-            table.add(changeOriginButton);
-            table.add(Utils_10.utils.create("span", { innerHTML: Settings_10.Strings.TARGET + ":" }));
-            table.add(Utils_10.utils.create("span", { innerHTML: edge.getTarget().getName(),
-                className: "property_value",
-                id: "entity_target" }));
-            table.add(changeTargetButton);
-            var textSelector = Utils_10.utils.create("select", {
-                id: "entity_transition_list"
-            });
-            var textList = edge.getTextList();
-            var i = 0;
-            for (var _i = 0, textList_1 = textList; _i < textList_1.length; _i++) {
-                var text = textList_1[_i];
-                var option = Utils_10.utils.create("option", { value: i, innerHTML: text });
-                textSelector.appendChild(option);
-                i++;
-            }
-            table.add(Utils_10.utils.create("span", { innerHTML: Settings_10.Strings.TRANSITIONS + ":" }));
-            table.add(textSelector);
-            table.add(changeTransitionButton);
-            table.add(deleteTransitionButton, 3);
-            table.add(deleteAllButton, 3);
-            container.appendChild(table.html());
-            return container;
-        };
-        AutomatonRenderer.prototype.bindEvents = function () {
-            for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
-                var state = _a[_i];
-                state.render(this.canvas);
-                this.bindStateEvents(state);
-            }
-            for (var _b = 0, _c = this.edgeList; _b < _c.length; _b++) {
-                var edge = _c[_b];
-                this.bindEdgeEvents(edge);
-            }
-            var self = this;
-            $(this.node).dblclick(function (e) {
-                self.newStateAt(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
-            });
-            $(this.node).contextmenu(function (e) {
-                e.preventDefault();
-                return false;
-            });
-            $(this.node).mousemove(function (e) {
-                if (self.edgeMode) {
-                    self.adjustEdge(this, e);
-                }
-            });
-        };
-        AutomatonRenderer.prototype.bindEdgeEvents = function (edge) {
-            var self = this;
-            edge.addClickHandler(function () {
-                self.selectEdge(this);
-            });
-        };
-        AutomatonRenderer.prototype.bindStateEvents = function (state) {
-            var canvas = this.canvas;
-            var self = this;
-            state.drag(function () {
-                self.updateEdges();
-            }, function (distanceSquared, event) {
-                if (!self.locked && distanceSquared <= Settings_10.Settings.stateDragTolerance) {
-                    if (self.edgeMode) {
-                        self.finishEdge(state);
-                    }
-                    else if (Utils_10.utils.isRightClick(event)) {
-                        self.beginEdge(state);
-                    }
-                    else if (state == self.highlightedState) {
-                        self.dimState();
-                    }
-                    else {
-                        self.selectState(state);
-                    }
-                    return false;
-                }
-                self.memento.push(self.save());
-                return true;
-            });
-        };
-        AutomatonRenderer.prototype.beginEdge = function (state) {
-            this.edgeMode = true;
-            this.currentEdge = new Edge_1.Edge();
-            this.currentEdge.setOrigin(state);
-        };
-        AutomatonRenderer.prototype.finishEdge = function (state) {
-            this.edgeMode = false;
-            var origin = this.currentEdge.getOrigin();
-            var edgeText = function (callback, fallback) {
-                var controller = Settings_10.Settings.controller();
-                controller.edgePrompt(function (data, content) {
-                    controller.createEdge(origin, state, data);
-                    callback(data, content);
-                }, fallback);
-            };
-            var self = this;
-            var oppositeEdge = null;
-            var clearCurrentEdge = function () {
-                self.currentEdge.remove();
-                self.currentEdge = null;
-            };
-            var _loop_4 = function(edge) {
-                if (edge.getOrigin() == origin && edge.getTarget() == state) {
-                    edgeText(function (data, text) {
-                        edge.addText(text);
-                        edge.addData(data);
-                        edge.render(self.canvas);
-                        clearCurrentEdge();
-                    }, clearCurrentEdge);
-                    return { value: void 0 };
-                }
-                else if (edge.getOrigin() == state && edge.getTarget() == origin) {
-                    oppositeEdge = edge;
-                }
-            };
-            for (var _i = 0, _a = this.edgeList; _i < _a.length; _i++) {
-                var edge = _a[_i];
-                var state_4 = _loop_4(edge);
-                if (typeof state_4 === "object") return state_4.value;
-            }
-            if (oppositeEdge) {
-                oppositeEdge.setCurveFlag(true);
-                oppositeEdge.render(this.canvas);
-                this.currentEdge.setCurveFlag(true);
-            }
-            this.currentEdge.setTarget(state);
-            this.currentEdge.render(this.canvas);
-            edgeText(function (data, text) {
-                self.currentEdge.addText(text);
-                self.currentEdge.addData(data);
-                self.bindEdgeEvents(self.currentEdge);
-                self.currentEdge.render(self.canvas);
-                self.edgeList.push(self.currentEdge);
-                self.currentEdge = null;
-            }, function () {
-                clearCurrentEdge();
-                if (oppositeEdge) {
-                    oppositeEdge.setCurveFlag(false);
-                    oppositeEdge.render(self.canvas);
-                }
-            });
-        };
-        AutomatonRenderer.prototype.adjustEdge = function (elem, e) {
-            var target = {
-                x: e.pageX - elem.offsetLeft,
-                y: e.pageY - elem.offsetTop
-            };
-            this.currentEdge.setVirtualTarget(target);
-            this.currentEdge.render(this.canvas);
-        };
-        AutomatonRenderer.prototype.updateEdges = function () {
-            for (var _i = 0, _a = this.edgeList; _i < _a.length; _i++) {
-                var edge = _a[_i];
-                edge.render(this.canvas);
-            }
-        };
-        AutomatonRenderer.prototype.clearSelection = function () {
-            this.highlightedState = null;
-            this.highlightedEdge = null;
-            Settings_10.Settings.sidebar.unsetSelectedEntityContent();
-            if (this.edgeMode) {
-                this.edgeMode = false;
-                this.currentEdge.remove();
-                this.currentEdge = null;
-            }
-        };
-        AutomatonRenderer.prototype.newStateAt = function (x, y) {
-            if (!this.locked) {
-                var state_5 = new State_1.State();
-                state_5.setPosition(x, y);
-                this.selectState(state_5);
-                this.bindStateEvents(state_5);
-                var self_2 = this;
-                var stateNamePrompt_1 = function () {
-                    Utils_10.utils.prompt(Settings_10.Strings.STATE_MANUAL_CREATION, 1, function (data) {
-                        var name = data[0];
-                        for (var _i = 0, _a = self_2.stateList; _i < _a.length; _i++) {
-                            var state_6 = _a[_i];
-                            if (state_6.getName() == name) {
-                                alert(Settings_10.Strings.DUPLICATE_STATE_NAME);
-                                return stateNamePrompt_1();
-                            }
-                        }
-                        state_5.setName(name);
-                        self_2.onStateCreation(state_5);
-                        self_2.updateEditableState(state_5);
-                    }, function () {
-                        self_2.highlightedState = null;
-                        state_5.remove();
-                        self_2.updateEditableState(null);
-                    });
-                };
-                stateNamePrompt_1();
-            }
-        };
-        AutomatonRenderer.prototype.onStateCreation = function (state) {
-            if (this.stateList.length == 0) {
-                state.setInitial(true);
-                this.initialState = state;
-            }
-            state.render(this.canvas);
-            this.stateList.push(state);
-            Settings_10.Settings.controller().createState(state);
-        };
-        AutomatonRenderer.prototype.setInitialState = function (state) {
-            var controller = Settings_10.Settings.controller();
-            if (state == this.initialState) {
-                state.setInitial(false);
-                controller.changeInitialFlag(state);
-                this.initialState = null;
-            }
-            else {
-                if (this.initialState) {
-                    this.initialState.setInitial(false);
-                    controller.changeInitialFlag(this.initialState);
-                    this.initialState.render(this.canvas);
-                }
-                state.setInitial(true);
-                controller.changeInitialFlag(state);
-                this.initialState = state;
-            }
-        };
-        AutomatonRenderer.prototype.changeFinalFlag = function (state, value) {
-            state.setFinal(value);
-            Settings_10.Settings.controller().changeFinalFlag(state);
-        };
-        AutomatonRenderer.prototype.deleteState = function (state) {
-            for (var i = 0; i < this.edgeList.length; i++) {
-                var edge = this.edgeList[i];
-                var origin = edge.getOrigin();
-                var target = edge.getTarget();
-                if (origin == state || target == state) {
-                    edge.remove();
-                    this.edgeList.splice(i, 1);
-                    i--;
-                }
-            }
-            state.remove();
-            var states = this.stateList;
-            for (var i = 0; i < states.length; i++) {
-                if (states[i] == state) {
-                    states.splice(i, 1);
-                    break;
-                }
-            }
-            Settings_10.Settings.controller().deleteState(state);
-        };
-        AutomatonRenderer.prototype.deleteEdge = function (edge) {
-            for (var i = 0; i < this.edgeList.length; i++) {
-                if (this.edgeList[i] == edge) {
-                    edge.remove();
-                    this.edgeList.splice(i, 1);
-                    var origin = edge.getOrigin();
-                    var target = edge.getTarget();
-                    var dataLists = edge.getDataList();
-                    var controller = Settings_10.Settings.controller();
-                    for (var _i = 0, dataLists_1 = dataLists; _i < dataLists_1.length; _i++) {
-                        var data = dataLists_1[_i];
-                        controller.deleteEdge(origin, target, data);
-                    }
-                    break;
-                }
-            }
-        };
-        AutomatonRenderer.prototype.toggleInitial = function () {
-            var highlightedState = this.highlightedState;
-            if (highlightedState) {
-                this.setInitialState(highlightedState);
-                highlightedState.render(this.canvas);
-                this.updateEditableState(highlightedState);
-            }
-        };
-        AutomatonRenderer.prototype.toggleFinal = function () {
-            var highlightedState = this.highlightedState;
-            if (highlightedState) {
-                this.changeFinalFlag(highlightedState, !highlightedState.isFinal());
-                highlightedState.render(this.canvas);
-                this.updateEditableState(highlightedState);
-            }
-        };
-        AutomatonRenderer.prototype.undo = function () {
-            this.frozenMemento = true;
-            this.clear();
-            var data = this.memento.pop();
-            var self = this;
-            if (data) {
-                this.load(data, false);
-            }
-        };
-        AutomatonRenderer.prototype.bindShortcuts = function () {
-            var self = this;
-            var group = Settings_10.Settings.canvasShortcutID;
-            Utils_10.utils.bindShortcut(Settings_10.Settings.shortcuts.toggleInitial, function () {
-                self.toggleInitial();
-            }, group);
-            Utils_10.utils.bindShortcut(Settings_10.Settings.shortcuts.toggleFinal, function () {
-                self.toggleFinal();
-            }, group);
-            Utils_10.utils.bindShortcut(Settings_10.Settings.shortcuts.dimSelection, function () {
-                if (self.edgeMode) {
-                    self.edgeMode = false;
-                    self.currentEdge.remove();
-                    self.currentEdge = null;
-                }
-                self.dimState();
-                self.dimEdge();
-            }, group);
-            Utils_10.utils.bindShortcut(Settings_10.Settings.shortcuts.deleteEntity, function () {
-                var highlightedState = self.highlightedState;
-                var highlightedEdge = self.highlightedEdge;
-                if (highlightedState) {
-                    self.deleteState(highlightedState);
-                }
-                else if (highlightedEdge) {
-                    self.deleteEdge(highlightedEdge);
-                }
-                self.clearSelection();
-            }, group);
-            Utils_10.utils.bindShortcut(Settings_10.Settings.shortcuts.clearMachine, function () {
-                var confirmation = confirm(Settings_10.Strings.CLEAR_CONFIRMATION);
-                if (confirmation) {
-                    self.clear();
-                }
-            }, group);
-            Utils_10.utils.bindShortcut(Settings_10.Settings.shortcuts.left, function () {
-                self.moveStateSelection(function (attempt, highlighted) {
-                    return attempt.getPosition().x < highlighted.getPosition().x;
-                }, function (attempt, currBest, highlighted) {
-                    if (!currBest) {
-                        return true;
-                    }
-                    var reference = highlighted.getPosition();
-                    var position = attempt.getPosition();
-                    var dy = Math.abs(position.y - reference.y);
-                    var targetPosition = currBest.getPosition();
-                    var targetDy = Math.abs(targetPosition.y - reference.y);
-                    var threshold = self.selectionThreshold();
-                    if (dy < threshold) {
-                        return targetDy >= threshold || position.x > targetPosition.x;
-                    }
-                    return dy < targetDy;
-                });
-            }, group);
-            Utils_10.utils.bindShortcut(Settings_10.Settings.shortcuts.right, function () {
-                self.moveStateSelection(function (attempt, highlighted) {
-                    return attempt.getPosition().x > highlighted.getPosition().x;
-                }, function (attempt, currBest, highlighted) {
-                    if (!currBest) {
-                        return true;
-                    }
-                    var reference = highlighted.getPosition();
-                    var position = attempt.getPosition();
-                    var dy = Math.abs(position.y - reference.y);
-                    var targetPosition = currBest.getPosition();
-                    var targetDy = Math.abs(targetPosition.y - reference.y);
-                    var threshold = self.selectionThreshold();
-                    if (dy < threshold) {
-                        return targetDy >= threshold || position.x < targetPosition.x;
-                    }
-                    return dy < targetDy;
-                });
-            }, group);
-            Utils_10.utils.bindShortcut(Settings_10.Settings.shortcuts.up, function () {
-                self.moveStateSelection(function (attempt, highlighted) {
-                    return attempt.getPosition().y < highlighted.getPosition().y;
-                }, function (attempt, currBest, highlighted) {
-                    if (!currBest) {
-                        return true;
-                    }
-                    var reference = highlighted.getPosition();
-                    var position = attempt.getPosition();
-                    var dx = Math.abs(position.x - reference.x);
-                    var targetPosition = currBest.getPosition();
-                    var targetDx = Math.abs(targetPosition.x - reference.x);
-                    var threshold = self.selectionThreshold();
-                    if (dx < threshold) {
-                        return targetDx >= threshold || position.y > targetPosition.y;
-                    }
-                    return dx < targetDx;
-                });
-            }, group);
-            Utils_10.utils.bindShortcut(Settings_10.Settings.shortcuts.down, function () {
-                self.moveStateSelection(function (attempt, highlighted) {
-                    return attempt.getPosition().y > highlighted.getPosition().y;
-                }, function (attempt, currBest, highlighted) {
-                    if (!currBest) {
-                        return true;
-                    }
-                    var reference = highlighted.getPosition();
-                    var position = attempt.getPosition();
-                    var dx = Math.abs(position.x - reference.x);
-                    var targetPosition = currBest.getPosition();
-                    var targetDx = Math.abs(targetPosition.x - reference.x);
-                    var threshold = self.selectionThreshold();
-                    if (dx < self.selectionThreshold()) {
-                        return targetDx >= threshold || position.y < targetPosition.y;
-                    }
-                    return dx < targetDx;
-                });
-            }, group);
-            Utils_10.utils.bindShortcut(Settings_10.Settings.shortcuts.undo, function () {
-                self.undo();
-            }, group);
-        };
-        AutomatonRenderer.prototype.selectionThreshold = function () {
-            return 2 * Settings_10.Settings.stateRadius;
-        };
-        AutomatonRenderer.prototype.moveStateSelection = function (isViable, isBetterCandidate) {
-            var highlightedState = this.highlightedState;
-            if (highlightedState) {
-                var target = null;
-                for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
-                    var state = _a[_i];
-                    if (isViable(state, highlightedState)) {
-                        if (isBetterCandidate(state, target, highlightedState)) {
-                            target = state;
-                        }
-                    }
-                }
-                if (target) {
-                    this.selectState(target);
-                }
-            }
-        };
-        return AutomatonRenderer;
-    }());
-    exports.AutomatonRenderer = AutomatonRenderer;
-});
-define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "Utils"], function (require, exports, Keyboard_5, Menu_2, Settings_11, Utils_11) {
+define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "Utils"], function (require, exports, Keyboard_4, Menu_2, Settings_8, Utils_8) {
     "use strict";
     var initializer;
     (function (initializer) {
         function init() {
             var menuList = [];
-            var menu = new Menu_2.Menu(Settings_11.Strings.RECOGNITION);
+            var menu = new Menu_2.Menu(Settings_8.Strings.RECOGNITION);
             var rows = [];
             buildTestCaseInput(rows);
             buildRecognitionControls(rows);
@@ -2893,7 +1951,7 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
             bindShortcuts();
             for (var _i = 0, rows_1 = rows; _i < rows_1.length; _i++) {
                 var row = rows_1[_i];
-                var div = Utils_11.utils.create("div", {
+                var div = Utils_8.utils.create("div", {
                     className: "row"
                 });
                 for (var _a = 0, row_1 = row; _a < row_1.length; _a++) {
@@ -2903,7 +1961,7 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
                 menu.add(div);
             }
             menuList.push(menu);
-            Settings_11.Settings.machines[Settings_11.Settings.Machine.FA].sidebar = menuList;
+            Settings_8.Settings.machines[Settings_8.Settings.Machine.FA].sidebar = menuList;
         }
         initializer.init = init;
         var boundShortcuts = false;
@@ -2916,56 +1974,56 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
             return testCaseInput.value;
         }
         function buildTestCaseInput(container) {
-            var input = Utils_11.utils.create("input", {
+            var input = Utils_8.utils.create("input", {
                 type: "text",
-                placeholder: Settings_11.Strings.TEST_CASE
+                placeholder: Settings_8.Strings.TEST_CASE
             });
             container.push([input]);
             testCaseInput = input;
         }
         function highlightCurrentStates() {
-            var states = Settings_11.Settings.controller().currentStates();
-            Settings_11.Settings.automatonRenderer.recognitionHighlight(states);
+            var states = Settings_8.Settings.controller().currentStates();
+            Settings_8.Settings.automatonRenderer.recognitionHighlight(states);
         }
         function buildRecognitionControls(container) {
-            var disabledClass = Settings_11.Settings.disabledButtonClass;
-            fastRecognition = Utils_11.utils.create("img", {
+            var disabledClass = Settings_8.Settings.disabledButtonClass;
+            fastRecognition = Utils_8.utils.create("img", {
                 className: "image_button",
                 src: "images/fastforward.svg",
-                title: Settings_11.Strings.FAST_RECOGNITION
+                title: Settings_8.Strings.FAST_RECOGNITION
             });
-            stopRecognition = Utils_11.utils.create("img", {
+            stopRecognition = Utils_8.utils.create("img", {
                 className: "image_button " + disabledClass,
                 src: "images/stop.svg",
-                title: Settings_11.Strings.STOP_RECOGNITION
+                title: Settings_8.Strings.STOP_RECOGNITION
             });
-            stepRecognition = Utils_11.utils.create("img", {
+            stepRecognition = Utils_8.utils.create("img", {
                 className: "image_button",
                 src: "images/play.svg",
-                title: Settings_11.Strings.STEP_RECOGNITION
+                title: Settings_8.Strings.STEP_RECOGNITION
             });
             container.push([fastRecognition, stepRecognition,
                 stopRecognition]);
         }
         function buildRecognitionProgress(container) {
-            progressContainer = Utils_11.utils.create("div", {
+            progressContainer = Utils_8.utils.create("div", {
                 id: "recognition_progress"
             });
             progressContainer.style.display = "none";
             container.push([progressContainer]);
         }
         function showAcceptanceStatus() {
-            if (Settings_11.Settings.controller().accepts()) {
-                progressContainer.style.color = Settings_11.Settings.acceptedTestCaseColor;
-                progressContainer.innerHTML = Settings_11.Strings.INPUT_ACCEPTED;
+            if (Settings_8.Settings.controller().accepts()) {
+                progressContainer.style.color = Settings_8.Settings.acceptedTestCaseColor;
+                progressContainer.innerHTML = Settings_8.Strings.INPUT_ACCEPTED;
             }
             else {
-                progressContainer.style.color = Settings_11.Settings.rejectedTestCaseColor;
-                progressContainer.innerHTML = Settings_11.Strings.INPUT_REJECTED;
+                progressContainer.style.color = Settings_8.Settings.rejectedTestCaseColor;
+                progressContainer.innerHTML = Settings_8.Strings.INPUT_REJECTED;
             }
         }
         function bindRecognitionEvents() {
-            var disabledClass = Settings_11.Settings.disabledButtonClass;
+            var disabledClass = Settings_8.Settings.disabledButtonClass;
             var fastForwardEnabled = true;
             var stepEnabled = true;
             var stopEnabled = false;
@@ -2983,9 +2041,9 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
             };
             fastRecognition.addEventListener("click", function () {
                 if (fastForwardEnabled) {
-                    Settings_11.Settings.automatonRenderer.lock();
+                    Settings_8.Settings.automatonRenderer.lock();
                     var input = testCase();
-                    var controller = Settings_11.Settings.controller();
+                    var controller = Settings_8.Settings.controller();
                     controller.fastForward(input);
                     highlightCurrentStates();
                     progressContainer.style.display = "";
@@ -2998,9 +2056,9 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
             });
             stopRecognition.addEventListener("click", function () {
                 if (stopEnabled) {
-                    Settings_11.Settings.controller().stop();
-                    Settings_11.Settings.automatonRenderer.recognitionDim();
-                    Settings_11.Settings.automatonRenderer.unlock();
+                    Settings_8.Settings.controller().stop();
+                    Settings_8.Settings.automatonRenderer.recognitionDim();
+                    Settings_8.Settings.automatonRenderer.unlock();
                     progressContainer.style.color = "black";
                     progressContainer.style.display = "none";
                     fastForwardStatus(true);
@@ -3015,11 +2073,11 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
                     stopStatus(true);
                     testCaseInput.disabled = true;
                     var input = testCase();
-                    var controller = Settings_11.Settings.controller();
+                    var controller = Settings_8.Settings.controller();
                     if (controller.isStopped()) {
-                        Settings_11.Settings.automatonRenderer.lock();
+                        Settings_8.Settings.automatonRenderer.lock();
                         progressContainer.style.display = "";
-                        var sidebar = Utils_11.utils.id(Settings_11.Settings.sidebarID);
+                        var sidebar = Utils_8.utils.id(Settings_8.Settings.sidebarID);
                         var width = sidebar.offsetWidth;
                         width -= 10;
                         width -= 1;
@@ -3047,22 +2105,22 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
         }
         function bindShortcuts() {
             if (!boundShortcuts) {
-                Utils_11.utils.bindShortcut(Settings_11.Settings.shortcuts.focusTestCase, function () {
+                Utils_8.utils.bindShortcut(Settings_8.Settings.shortcuts.focusTestCase, function () {
                     testCaseInput.focus();
                 });
-                Utils_11.utils.bindShortcut(Settings_11.Settings.shortcuts.fastForward, function () {
+                Utils_8.utils.bindShortcut(Settings_8.Settings.shortcuts.fastForward, function () {
                     fastRecognition.click();
                 });
-                Utils_11.utils.bindShortcut(Settings_11.Settings.shortcuts.step, function () {
+                Utils_8.utils.bindShortcut(Settings_8.Settings.shortcuts.step, function () {
                     stepRecognition.click();
                 });
-                Utils_11.utils.bindShortcut(Settings_11.Settings.shortcuts.stop, function () {
+                Utils_8.utils.bindShortcut(Settings_8.Settings.shortcuts.stop, function () {
                     stopRecognition.click();
                 });
                 boundShortcuts = true;
             }
             testCaseInput.addEventListener("keydown", function (e) {
-                if (e.keyCode == Keyboard_5.Keyboard.keys[Settings_11.Settings.shortcuts.dimTestCase[0]]) {
+                if (e.keyCode == Keyboard_4.Keyboard.keys[Settings_8.Settings.shortcuts.dimTestCase[0]]) {
                     if (testCaseInput == document.activeElement) {
                         testCaseInput.blur();
                     }
@@ -3100,7 +2158,7 @@ define("lists/InitializerList", ["require", "exports", "machines/FA/initializer"
     __export(initializer_2);
     __export(initializer_3);
 });
-define("Initializer", ["require", "exports", "lists/InitializerList", "Utils"], function (require, exports, init, Utils_12) {
+define("Initializer", ["require", "exports", "lists/InitializerList", "Utils"], function (require, exports, init, Utils_9) {
     "use strict";
     var Initializer = (function () {
         function Initializer() {
@@ -3109,7 +2167,7 @@ define("Initializer", ["require", "exports", "lists/InitializerList", "Utils"], 
             this.initSidebars();
         };
         Initializer.initSidebars = function () {
-            Utils_12.utils.foreach(init, function (moduleName, obj) {
+            Utils_9.utils.foreach(init, function (moduleName, obj) {
                 obj.init();
             });
         };
@@ -3117,7 +2175,7 @@ define("Initializer", ["require", "exports", "lists/InitializerList", "Utils"], 
     }());
     exports.Initializer = Initializer;
 });
-define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineList", "lists/ControllerList", "Initializer", "Utils"], function (require, exports, lang, automata, controllers, Initializer_1, Utils_13) {
+define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineList", "lists/ControllerList", "Initializer", "Utils"], function (require, exports, lang, automata, controllers, Initializer_1, Utils_10) {
     "use strict";
     var Settings;
     (function (Settings) {
@@ -3144,7 +2202,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.stateLabelFontColor = "black";
         Settings.stateInitialMarkLength = 40;
         Settings.stateInitialMarkHeadLength = 15;
-        Settings.stateInitialMarkAngle = Utils_13.utils.toRadians(20);
+        Settings.stateInitialMarkAngle = Utils_10.utils.toRadians(20);
         Settings.stateInitialMarkColor = "blue";
         Settings.stateInitialMarkThickness = 2;
         Settings.stateHighlightPalette = {
@@ -3163,7 +2221,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.edgeHighlightColor = "red";
         Settings.edgeArrowThickness = 2;
         Settings.edgeArrowLength = 30;
-        Settings.edgeArrowAngle = Utils_13.utils.toRadians(30);
+        Settings.edgeArrowAngle = Utils_10.utils.toRadians(30);
         Settings.edgeTextFontFamily = "arial";
         Settings.edgeTextFontSize = 20;
         Settings.edgeTextFontColor = "black";
@@ -3219,7 +2277,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
                     };
                 }
             }
-            Utils_13.utils.foreach(machineList, function (key, value) {
+            Utils_10.utils.foreach(machineList, function (key, value) {
                 Settings.machines[key] = value;
             });
             firstUpdate = false;
@@ -3235,7 +2293,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
     })(Settings = exports.Settings || (exports.Settings = {}));
     exports.Strings = Settings.language.strings;
 });
-define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_12, Utils_14) {
+define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_9, Utils_11) {
     "use strict";
     var Edge = (function () {
         function Edge() {
@@ -3249,7 +2307,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             this.curved = false;
             this.forcedRender = false;
             this.deleted = false;
-            this.defaultColor = Settings_12.Settings.edgeStrokeColor;
+            this.defaultColor = Settings_9.Settings.edgeStrokeColor;
             this.color = this.defaultColor;
             this.body = [];
             this.head = [];
@@ -3326,9 +2384,9 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
         };
         Edge.prototype.render = function (canvas) {
             var preservedOrigin = this.origin
-                && Utils_14.utils.samePoint(this.prevOriginPosition, this.origin.getPosition());
+                && Utils_11.utils.samePoint(this.prevOriginPosition, this.origin.getPosition());
             var preservedTarget = this.target
-                && Utils_14.utils.samePoint(this.prevTargetPosition, this.target.getPosition());
+                && Utils_11.utils.samePoint(this.prevTargetPosition, this.target.getPosition());
             if (!preservedOrigin || !preservedTarget || this.forcedRender) {
                 this.renderBody(canvas);
                 this.renderHead(canvas);
@@ -3359,8 +2417,8 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             var angle = Math.atan2(dy, dx);
             var sin = Math.sin(angle);
             var cos = Math.cos(angle);
-            var offsetX = Settings_12.Settings.stateRadius * cos;
-            var offsetY = Settings_12.Settings.stateRadius * sin;
+            var offsetX = Settings_9.Settings.stateRadius * cos;
+            var offsetY = Settings_9.Settings.stateRadius * sin;
             return {
                 x: offsetX,
                 y: offsetY
@@ -3389,7 +2447,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             }
             var dx = target.x - origin.x;
             var dy = target.y - origin.y;
-            var radius = Settings_12.Settings.stateRadius;
+            var radius = Settings_9.Settings.stateRadius;
             var offsets = this.stateCenterOffsets(dx, dy);
             if (dx * dx + dy * dy > radius * radius) {
                 origin.x += offsets.x;
@@ -3418,23 +2476,23 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 this.body.pop();
             }
             while (this.body.length < length) {
-                this.body.push(Utils_14.utils.line(canvas, 0, 0, 0, 0));
+                this.body.push(Utils_11.utils.line(canvas, 0, 0, 0, 0));
             }
             return true;
         };
         Edge.prototype.loop = function (canvas) {
-            var radius = Settings_12.Settings.stateRadius;
+            var radius = Settings_9.Settings.stateRadius;
             var pos = this.origin.getPosition();
             if (this.adjustBodyLength(canvas, 4)) {
                 for (var _i = 0, _a = this.body; _i < _a.length; _i++) {
                     var elem = _a[_i];
-                    elem.attr("stroke-width", Settings_12.Settings.edgeArrowThickness);
+                    elem.attr("stroke-width", Settings_9.Settings.edgeArrowThickness);
                 }
             }
-            this.body[0].attr("path", Utils_14.utils.linePath(pos.x + radius, pos.y, pos.x + 2 * radius, pos.y));
-            this.body[1].attr("path", Utils_14.utils.linePath(pos.x + 2 * radius, pos.y, pos.x + 2 * radius, pos.y - 2 * radius));
-            this.body[2].attr("path", Utils_14.utils.linePath(pos.x + 2 * radius, pos.y - 2 * radius, pos.x, pos.y - 2 * radius));
-            this.body[3].attr("path", Utils_14.utils.linePath(pos.x, pos.y - 2 * radius, pos.x, pos.y - radius));
+            this.body[0].attr("path", Utils_11.utils.linePath(pos.x + radius, pos.y, pos.x + 2 * radius, pos.y));
+            this.body[1].attr("path", Utils_11.utils.linePath(pos.x + 2 * radius, pos.y, pos.x + 2 * radius, pos.y - 2 * radius));
+            this.body[2].attr("path", Utils_11.utils.linePath(pos.x + 2 * radius, pos.y - 2 * radius, pos.x, pos.y - 2 * radius));
+            this.body[3].attr("path", Utils_11.utils.linePath(pos.x, pos.y - 2 * radius, pos.x, pos.y - radius));
         };
         Edge.prototype.curve = function (canvas, origin, target) {
             var dx = target.x - origin.x;
@@ -3452,21 +2510,21 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             if (this.adjustBodyLength(canvas, 3)) {
                 for (var _i = 0, _a = this.body; _i < _a.length; _i++) {
                     var elem = _a[_i];
-                    elem.attr("stroke-width", Settings_12.Settings.edgeArrowThickness);
+                    elem.attr("stroke-width", Settings_9.Settings.edgeArrowThickness);
                 }
             }
-            this.body[0].attr("path", Utils_14.utils.linePath(origin.x, origin.y, origin.x + offsets.x + dx * 0.125, origin.y + offsets.y + dy * 0.125));
-            this.body[1].attr("path", Utils_14.utils.linePath(origin.x + offsets.x + dx * 0.125, origin.y + offsets.y + dy * 0.125, origin.x + offsets.x + dx * 0.875, origin.y + offsets.y + dy * 0.875));
-            this.body[2].attr("path", Utils_14.utils.linePath(origin.x + offsets.x + dx * 0.875, origin.y + offsets.y + dy * 0.875, target.x, target.y));
+            this.body[0].attr("path", Utils_11.utils.linePath(origin.x, origin.y, origin.x + offsets.x + dx * 0.125, origin.y + offsets.y + dy * 0.125));
+            this.body[1].attr("path", Utils_11.utils.linePath(origin.x + offsets.x + dx * 0.125, origin.y + offsets.y + dy * 0.125, origin.x + offsets.x + dx * 0.875, origin.y + offsets.y + dy * 0.875));
+            this.body[2].attr("path", Utils_11.utils.linePath(origin.x + offsets.x + dx * 0.875, origin.y + offsets.y + dy * 0.875, target.x, target.y));
         };
         Edge.prototype.normal = function (canvas, origin, target) {
             if (this.adjustBodyLength(canvas, 1)) {
                 for (var _i = 0, _a = this.body; _i < _a.length; _i++) {
                     var elem = _a[_i];
-                    elem.attr("stroke-width", Settings_12.Settings.edgeArrowThickness);
+                    elem.attr("stroke-width", Settings_9.Settings.edgeArrowThickness);
                 }
             }
-            this.body[0].attr("path", Utils_14.utils.linePath(origin.x, origin.y, target.x, target.y));
+            this.body[0].attr("path", Utils_11.utils.linePath(origin.x, origin.y, target.x, target.y));
         };
         Edge.prototype.renderHead = function (canvas) {
             if (!this.target) {
@@ -3478,7 +2536,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             var dy;
             if (this.origin == this.target) {
                 var pos = this.origin.getPosition();
-                var radius = Settings_12.Settings.stateRadius;
+                var radius = Settings_9.Settings.stateRadius;
                 origin = {
                     x: pos.x,
                     y: pos.y - 2 * radius
@@ -3514,26 +2572,26 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 dx -= offsets.x;
                 dy -= offsets.y;
             }
-            var arrowLength = Settings_12.Settings.edgeArrowLength;
-            var alpha = Settings_12.Settings.edgeArrowAngle;
+            var arrowLength = Settings_9.Settings.edgeArrowLength;
+            var alpha = Settings_9.Settings.edgeArrowAngle;
             var edgeLength = Math.sqrt(dx * dx + dy * dy);
             var u = 1 - arrowLength / edgeLength;
             var ref = {
                 x: origin.x + u * dx,
                 y: origin.y + u * dy
             };
-            var p1 = Utils_14.utils.rotatePoint(ref, target, alpha);
-            var p2 = Utils_14.utils.rotatePoint(ref, target, -alpha);
+            var p1 = Utils_11.utils.rotatePoint(ref, target, alpha);
+            var p2 = Utils_11.utils.rotatePoint(ref, target, -alpha);
             if (!this.head.length) {
-                this.head.push(Utils_14.utils.line(canvas, 0, 0, 0, 0));
-                this.head.push(Utils_14.utils.line(canvas, 0, 0, 0, 0));
+                this.head.push(Utils_11.utils.line(canvas, 0, 0, 0, 0));
+                this.head.push(Utils_11.utils.line(canvas, 0, 0, 0, 0));
                 for (var _i = 0, _a = this.head; _i < _a.length; _i++) {
                     var elem = _a[_i];
-                    elem.attr("stroke-width", Settings_12.Settings.edgeArrowThickness);
+                    elem.attr("stroke-width", Settings_9.Settings.edgeArrowThickness);
                 }
             }
-            this.head[0].attr("path", Utils_14.utils.linePath(p1.x, p1.y, target.x, target.y));
-            this.head[1].attr("path", Utils_14.utils.linePath(p2.x, p2.y, target.x, target.y));
+            this.head[0].attr("path", Utils_11.utils.linePath(p1.x, p1.y, target.x, target.y));
+            this.head[1].attr("path", Utils_11.utils.linePath(p2.x, p2.y, target.x, target.y));
         };
         Edge.prototype.preparedText = function () {
             return this.textList.join("\n");
@@ -3544,7 +2602,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             var x;
             var y;
             if (this.origin == this.target) {
-                var radius = Settings_12.Settings.stateRadius;
+                var radius = Settings_9.Settings.stateRadius;
                 x = origin.x + radius;
                 y = origin.y - 2 * radius;
             }
@@ -3563,10 +2621,10 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             }
             if (!this.textContainer) {
                 this.textContainer = canvas.text(x, y, this.preparedText());
-                this.textContainer.attr("font-family", Settings_12.Settings.edgeTextFontFamily);
-                this.textContainer.attr("font-size", Settings_12.Settings.edgeTextFontSize);
-                this.textContainer.attr("stroke", Settings_12.Settings.edgeTextFontColor);
-                this.textContainer.attr("fill", Settings_12.Settings.edgeTextFontColor);
+                this.textContainer.attr("font-family", Settings_9.Settings.edgeTextFontFamily);
+                this.textContainer.attr("font-size", Settings_9.Settings.edgeTextFontSize);
+                this.textContainer.attr("stroke", Settings_9.Settings.edgeTextFontColor);
+                this.textContainer.attr("fill", Settings_9.Settings.edgeTextFontColor);
             }
             else {
                 this.textContainer.attr("x", x);
@@ -3575,26 +2633,39 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 this.textContainer.transform("");
             }
             var angleRad = Math.atan2(target.y - origin.y, target.x - origin.x);
-            var angle = Utils_14.utils.toDegrees(angleRad);
+            var angle = Utils_11.utils.toDegrees(angleRad);
             if (angle < -90 || angle > 90) {
                 angle = (angle + 180) % 360;
             }
             this.textContainer.rotate(angle);
-            y -= Settings_12.Settings.edgeTextFontSize * .6;
-            y -= Settings_12.Settings.edgeTextFontSize * (this.textList.length - 1) * .7;
+            y -= Settings_9.Settings.edgeTextFontSize * .6;
+            y -= Settings_9.Settings.edgeTextFontSize * (this.textList.length - 1) * .7;
             this.textContainer.attr("y", y);
         };
         return Edge;
     }());
     exports.Edge = Edge;
 });
-define("Persistence", ["require", "exports", "interface/Edge", "interface/EdgeUtils", "Settings", "interface/State"], function (require, exports, Edge_2, EdgeUtils_1, Settings_13, State_2) {
+define("interface/EdgeUtils", ["require", "exports", "Settings"], function (require, exports, Settings_10) {
+    "use strict";
+    var EdgeUtils;
+    (function (EdgeUtils) {
+        function addEdgeData(edge, data) {
+            var controller = Settings_10.Settings.controller();
+            edge.addText(controller.edgeDataToText(data));
+            edge.addData(data);
+            controller.createEdge(edge.getOrigin(), edge.getTarget(), data);
+        }
+        EdgeUtils.addEdgeData = addEdgeData;
+    })(EdgeUtils = exports.EdgeUtils || (exports.EdgeUtils = {}));
+});
+define("Persistence", ["require", "exports", "interface/Edge", "interface/EdgeUtils", "Settings", "interface/State"], function (require, exports, Edge_1, EdgeUtils_1, Settings_11, State_1) {
     "use strict";
     var Persistence;
     (function (Persistence) {
         function save(stateList, edgeList, initialState) {
             var result = [
-                Settings_13.Settings.Machine[Settings_13.Settings.currentMachine],
+                Settings_11.Settings.Machine[Settings_11.Settings.currentMachine],
                 [],
                 [],
                 -1
@@ -3640,7 +2711,7 @@ define("Persistence", ["require", "exports", "interface/Edge", "interface/EdgeUt
                 loadedData.error = true;
                 return loadedData;
             }
-            var machineType = Settings_13.Settings.Machine[Settings_13.Settings.currentMachine];
+            var machineType = Settings_11.Settings.Machine[Settings_11.Settings.currentMachine];
             var validation = obj[0] == machineType
                 && obj[1] instanceof Array
                 && obj[2] instanceof Array
@@ -3663,12 +2734,12 @@ define("Persistence", ["require", "exports", "interface/Edge", "interface/EdgeUt
         Persistence.load = load;
         function loadStates(dataObj, result, callback) {
             var nameToIndex = {};
-            var controller = Settings_13.Settings.controller();
+            var controller = Settings_11.Settings.controller();
             var i = 0;
             for (var _i = 0, _a = dataObj[1]; _i < _a.length; _i++) {
                 var data = _a[_i];
                 var isInitial = (dataObj[3] == i);
-                var state = new State_2.State();
+                var state = new State_1.State();
                 state.setName(data[0]);
                 state.setInitial(isInitial);
                 state.setFinal(!!data[1]);
@@ -3691,7 +2762,7 @@ define("Persistence", ["require", "exports", "interface/Edge", "interface/EdgeUt
                 if (edgeData.length != 3) {
                     return false;
                 }
-                var edge = new Edge_2.Edge();
+                var edge = new Edge_1.Edge();
                 var originName = edgeData[0];
                 var targetName = edgeData[1];
                 var origin = states[nameToIndex[originName]];
@@ -3714,7 +2785,938 @@ define("Persistence", ["require", "exports", "interface/Edge", "interface/EdgeUt
         }
     })(Persistence = exports.Persistence || (exports.Persistence = {}));
 });
-define("interface/Mainbar", ["require", "exports", "interface/AutomatonRenderer", "Memento", "interface/Renderer", "Settings"], function (require, exports, AutomatonRenderer_1, Memento_1, Renderer_4, Settings_14) {
+define("Memento", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var Memento = (function () {
+        function Memento(limit) {
+            this.bottomIndex = 0;
+            this.topIndex = -1;
+            this.states = {};
+            this.limit = limit;
+        }
+        Memento.prototype.push = function (state) {
+            var limit = this.limit() + 1;
+            if (this.topIndex - this.bottomIndex + 1 == limit) {
+                delete this.states[this.bottomIndex];
+                this.bottomIndex++;
+            }
+            this.topIndex++;
+            this.states[this.topIndex] = state;
+        };
+        Memento.prototype.pop = function () {
+            var data = this.states[this.topIndex - 1];
+            delete this.states[this.topIndex];
+            this.topIndex--;
+            return data;
+        };
+        return Memento;
+    }());
+    exports.Memento = Memento;
+});
+define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "Persistence", "Settings", "interface/State", "Utils", "interface/Table", "System", "Prompt"], function (require, exports, Edge_2, Persistence_1, Settings_12, State_2, Utils_12, Table_2, System_4, Prompt_3) {
+    "use strict";
+    var AutomatonRenderer = (function () {
+        function AutomatonRenderer(canvas, node, memento) {
+            this.canvas = null;
+            this.node = null;
+            this.stateList = [];
+            this.edgeList = [];
+            this.highlightedState = null;
+            this.highlightedEdge = null;
+            this.initialState = null;
+            this.edgeMode = false;
+            this.currentEdge = null;
+            this.locked = false;
+            this.memento = null;
+            this.frozenMemento = false;
+            this.canvas = canvas;
+            this.memento = memento;
+            this.node = node;
+        }
+        AutomatonRenderer.prototype.render = function () {
+            this.bindEvents();
+            this.bindShortcuts();
+            this.bindFormalDefinitionListener();
+            System_4.System.addLanguageChangeObserver(this);
+        };
+        AutomatonRenderer.prototype.clear = function () {
+            for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
+                var state = _a[_i];
+                state.remove();
+            }
+            this.stateList = [];
+            for (var _b = 0, _c = this.edgeList; _b < _c.length; _b++) {
+                var edge = _c[_b];
+                edge.remove();
+            }
+            this.edgeList = [];
+            this.initialState = null;
+            this.clearSelection();
+            Settings_12.Settings.controller().clear();
+        };
+        AutomatonRenderer.prototype.empty = function () {
+            return this.stateList.length == 0;
+        };
+        AutomatonRenderer.prototype.save = function () {
+            return Persistence_1.Persistence.save(this.stateList, this.edgeList, this.initialState);
+        };
+        AutomatonRenderer.prototype.load = function (content, pushResult) {
+            if (pushResult === void 0) { pushResult = true; }
+            this.frozenMemento = true;
+            var loadedData = Persistence_1.Persistence.load(content);
+            if (loadedData.error) {
+                alert(Settings_12.Strings.INVALID_FILE);
+                return;
+            }
+            this.stateList = this.stateList.concat(loadedData.stateList);
+            this.edgeList = this.edgeList.concat(loadedData.edgeList);
+            if (this.initialState === null) {
+                this.initialState = loadedData.initialState;
+            }
+            for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
+                var state = _a[_i];
+                state.render(this.canvas);
+                this.bindStateEvents(state);
+            }
+            for (var _b = 0, _c = this.edgeList; _b < _c.length; _b++) {
+                var edge = _c[_b];
+                edge.render(this.canvas);
+                this.bindEdgeEvents(edge);
+            }
+            this.frozenMemento = false;
+            if (pushResult) {
+                this.memento.push(this.save());
+            }
+        };
+        AutomatonRenderer.prototype.recognitionHighlight = function (stateNames) {
+            var nameMapping = {};
+            for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
+                var state = _a[_i];
+                nameMapping[state.getName()] = state;
+                state.removePalette();
+            }
+            for (var _b = 0, stateNames_1 = stateNames; _b < stateNames_1.length; _b++) {
+                var name_2 = stateNames_1[_b];
+                nameMapping[name_2].applyPalette(Settings_12.Settings.stateRecognitionPalette);
+            }
+            for (var _c = 0, _d = this.stateList; _c < _d.length; _c++) {
+                var state = _d[_c];
+                state.render(this.canvas);
+            }
+        };
+        AutomatonRenderer.prototype.recognitionDim = function () {
+            for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
+                var state = _a[_i];
+                state.removePalette();
+                state.render(this.canvas);
+            }
+            this.highlightedState = null;
+        };
+        AutomatonRenderer.prototype.lock = function () {
+            Utils_12.utils.lockShortcutGroup(Settings_12.Settings.canvasShortcutID);
+            this.locked = true;
+        };
+        AutomatonRenderer.prototype.unlock = function () {
+            Utils_12.utils.unlockShortcutGroup(Settings_12.Settings.canvasShortcutID);
+            this.locked = false;
+        };
+        AutomatonRenderer.prototype.stateManualCreation = function () {
+            var stateRadius = Settings_12.Settings.stateRadius;
+            this.newStateAt(stateRadius, stateRadius);
+        };
+        AutomatonRenderer.prototype.edgeManualCreation = function () {
+            if (!this.locked) {
+                var self_1 = this;
+                Prompt_3.Prompt.simple(Settings_12.Strings.EDGE_MANUAL_CREATION, 2, function (data) {
+                    var edge = new Edge_2.Edge();
+                    for (var _i = 0, _a = self_1.stateList; _i < _a.length; _i++) {
+                        var state = _a[_i];
+                        var name_3 = state.getName();
+                        if (name_3 == data[0]) {
+                            edge.setOrigin(state);
+                        }
+                        if (name_3 == data[1]) {
+                            edge.setTarget(state);
+                        }
+                    }
+                    if (edge.getOrigin() && edge.getTarget()) {
+                        self_1.currentEdge = edge;
+                        self_1.finishEdge(edge.getTarget());
+                    }
+                    else {
+                        alert(Settings_12.Strings.ERROR_INVALID_STATE_NAME);
+                    }
+                });
+            }
+        };
+        AutomatonRenderer.prototype.onLanguageChange = function () {
+            this.bindFormalDefinitionListener();
+        };
+        AutomatonRenderer.prototype.bindFormalDefinitionListener = function () {
+            var definitionContainer = null;
+            var controller = Settings_12.Settings.controller();
+            var self = this;
+            var callback = function () {
+                if (!self.frozenMemento) {
+                    self.memento.push(self.save());
+                }
+                if (!definitionContainer) {
+                    definitionContainer = Utils_12.utils.create("div");
+                    Settings_12.Settings.sidebar.updateFormalDefinition(definitionContainer);
+                }
+                var formalDefinition = controller.formalDefinition();
+                var tupleSequence = formalDefinition.tupleSequence;
+                var content = "M = (" + tupleSequence.join(", ") + ")";
+                content += Settings_12.Strings.DEFINITION_WHERE_SUFFIX + "<br>";
+                for (var _i = 0, _a = formalDefinition.parameterSequence; _i < _a.length; _i++) {
+                    var parameter = _a[_i];
+                    var value = formalDefinition.parameterValues[parameter];
+                    var type = typeof value;
+                    content += parameter + " = ";
+                    if (type == "number" || type == "string") {
+                        content += value;
+                    }
+                    else if (value instanceof Array) {
+                        content += "{" + value.join(", ") + "}";
+                    }
+                    else if (type == "undefined") {
+                        content += "<span class='none'>";
+                        content += Settings_12.Strings.NO_INITIAL_STATE;
+                        content += "</span>";
+                    }
+                    else if (value.hasOwnProperty("list")) {
+                        var list = value.list;
+                        if (list.length > 0) {
+                            var table = new Table_2.Table(list.length, 3);
+                            for (var i = 0; i < list.length; i++) {
+                                for (var j = 0; j < list[i].length; j++) {
+                                    table.add(Utils_12.utils.create("span", {
+                                        innerHTML: list[i][j]
+                                    }));
+                                }
+                            }
+                            content += "<table id='transition_table'>" + table.html().innerHTML + "</table>";
+                        }
+                        else {
+                            content += "<span class='none'>";
+                            content += Settings_12.Strings.NO_TRANSITIONS;
+                            content += "</span>";
+                        }
+                    }
+                    else {
+                        content += "unspecified type (AutomatonRenderer:266)";
+                    }
+                    content += "<br>";
+                }
+                definitionContainer.innerHTML = content;
+            };
+            controller.setEditingCallback(callback);
+            callback();
+        };
+        AutomatonRenderer.prototype.selectState = function (state) {
+            if (!this.locked) {
+                this.dimEdge();
+                if (this.highlightedState) {
+                    this.highlightedState.removePalette();
+                    this.highlightedState.render(this.canvas);
+                }
+                state.applyPalette(Settings_12.Settings.stateHighlightPalette);
+                this.highlightedState = state;
+                state.render(this.canvas);
+                this.updateEditableState(state);
+            }
+        };
+        AutomatonRenderer.prototype.dimState = function () {
+            if (!this.locked && this.highlightedState) {
+                this.highlightedState.removePalette();
+                this.highlightedState.render(this.canvas);
+                this.highlightedState = null;
+                Settings_12.Settings.sidebar.unsetSelectedEntityContent();
+            }
+        };
+        AutomatonRenderer.prototype.selectEdge = function (edge) {
+            if (!this.locked) {
+                this.dimState();
+                if (this.highlightedEdge) {
+                    this.highlightedEdge.removeCustomColor();
+                    this.highlightedEdge.render(this.canvas);
+                }
+                edge.setCustomColor(Settings_12.Settings.edgeHighlightColor);
+                this.highlightedEdge = edge;
+                edge.render(this.canvas);
+                this.updateEditableEdge(edge);
+            }
+        };
+        AutomatonRenderer.prototype.dimEdge = function () {
+            if (!this.locked && this.highlightedEdge) {
+                this.highlightedEdge.removeCustomColor();
+                this.highlightedEdge.render(this.canvas);
+                this.highlightedEdge = null;
+                Settings_12.Settings.sidebar.unsetSelectedEntityContent();
+            }
+        };
+        AutomatonRenderer.prototype.updateEditableState = function (state) {
+            Settings_12.Settings.sidebar.unsetSelectedEntityContent();
+            if (state) {
+                Settings_12.Settings.sidebar.setSelectedEntityContent(this.showEditableState(state));
+            }
+        };
+        AutomatonRenderer.prototype.updateEditableEdge = function (edge) {
+            Settings_12.Settings.sidebar.unsetSelectedEntityContent();
+            if (edge) {
+                Settings_12.Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
+            }
+        };
+        AutomatonRenderer.prototype.showEditableState = function (state) {
+            var container = Utils_12.utils.create("div");
+            var table = new Table_2.Table(4, 3);
+            var canvas = this.canvas;
+            var self = this;
+            var renameButton = Utils_12.utils.create("input", {
+                type: "button",
+                value: Settings_12.Strings.RENAME_STATE,
+                click: function () {
+                    var message = new Prompt_3.Prompt(Settings_12.Strings.STATE_RENAME_ACTION);
+                    message.addInput({
+                        validator: function (content) {
+                            return content.length <= 6;
+                        }
+                    });
+                    message.show();
+                }
+            });
+            var toggleInitialButton = Utils_12.utils.create("input", {
+                type: "button",
+                value: Settings_12.Strings.TOGGLE_PROPERTY,
+                click: function () {
+                    self.setInitialState(state);
+                    state.render(canvas);
+                    $("#entity_initial").html(state.isInitial() ? Settings_12.Strings.YES
+                        : Settings_12.Strings.NO);
+                }
+            });
+            var toggleFinalButton = Utils_12.utils.create("input", {
+                type: "button",
+                value: Settings_12.Strings.TOGGLE_PROPERTY,
+                click: function () {
+                    self.changeFinalFlag(state, !state.isFinal());
+                    state.render(canvas);
+                    $("#entity_final").html(state.isFinal() ? Settings_12.Strings.YES
+                        : Settings_12.Strings.NO);
+                }
+            });
+            var deleteButton = Utils_12.utils.create("input", {
+                type: "button",
+                value: Settings_12.Strings.DELETE_STATE,
+                click: function () {
+                    self.deleteState(state);
+                    self.clearSelection();
+                    Settings_12.Settings.sidebar.unsetSelectedEntityContent();
+                }
+            });
+            table.add(Utils_12.utils.create("span", { innerHTML: Settings_12.Strings.STATE_NAME + ":" }));
+            table.add(Utils_12.utils.create("span", { innerHTML: state.getName(),
+                className: "property_value",
+                id: "entity_name" }));
+            table.add(renameButton);
+            table.add(Utils_12.utils.create("span", { innerHTML: Settings_12.Strings.STATE_IS_INITIAL + ":" }));
+            table.add(Utils_12.utils.create("span", { innerHTML: state.isInitial() ? Settings_12.Strings.YES
+                    : Settings_12.Strings.NO,
+                className: "property_value",
+                id: "entity_initial" }));
+            table.add(toggleInitialButton);
+            table.add(Utils_12.utils.create("span", { innerHTML: Settings_12.Strings.STATE_IS_FINAL + ":" }));
+            table.add(Utils_12.utils.create("span", { innerHTML: state.isFinal() ? Settings_12.Strings.YES
+                    : Settings_12.Strings.NO,
+                className: "property_value",
+                id: "entity_final" }));
+            table.add(toggleFinalButton);
+            table.add(deleteButton, 3);
+            container.appendChild(table.html());
+            return container;
+        };
+        AutomatonRenderer.prototype.fixEdgeConsistency = function (newEdge) {
+            var origin = newEdge.getOrigin();
+            var target = newEdge.getTarget();
+            var oppositeEdge = null;
+            var mergedEdge = null;
+            var edgeIndex = -1;
+            var pendingRemoval = false;
+            var i = 0;
+            for (var _i = 0, _a = this.edgeList; _i < _a.length; _i++) {
+                var edge = _a[_i];
+                if (edge.getOrigin() == origin && edge.getTarget() == target) {
+                    if (edge != newEdge) {
+                        var dataList = newEdge.getDataList();
+                        var textList = newEdge.getTextList();
+                        var length_2 = dataList.length;
+                        for (var i_1 = 0; i_1 < length_2; i_1++) {
+                            edge.addData(dataList[i_1]);
+                            edge.addText(textList[i_1]);
+                        }
+                        edge.render(this.canvas);
+                        mergedEdge = edge;
+                        pendingRemoval = true;
+                    }
+                    else {
+                        edgeIndex = i;
+                    }
+                }
+                else if (edge.getOrigin() == target && edge.getTarget() == origin) {
+                    oppositeEdge = edge;
+                }
+                i++;
+            }
+            if (oppositeEdge) {
+                oppositeEdge.setCurveFlag(true);
+                oppositeEdge.render(this.canvas);
+                newEdge.setCurveFlag(true);
+                newEdge.render(this.canvas);
+            }
+            else {
+                newEdge.setCurveFlag(false);
+                newEdge.render(this.canvas);
+            }
+            if (pendingRemoval && edgeIndex > -1) {
+                if (this.highlightedEdge == newEdge) {
+                    this.selectEdge(mergedEdge);
+                }
+                newEdge.remove();
+                this.edgeList.splice(edgeIndex, 1);
+            }
+        };
+        AutomatonRenderer.prototype.showEditableEdge = function (edge) {
+            var container = Utils_12.utils.create("div");
+            var table = new Table_2.Table(5, 3);
+            var canvas = this.canvas;
+            var self = this;
+            var changeOriginButton = Utils_12.utils.create("input", {
+                type: "button",
+                value: Settings_12.Strings.CHANGE_PROPERTY,
+                click: function () {
+                    var newOrigin = prompt(Settings_12.Strings.EDGE_ENTER_NEW_ORIGIN);
+                    if (newOrigin !== null) {
+                        for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
+                            var state = _a[_i];
+                            if (state.getName() == newOrigin) {
+                                edge.setOrigin(state);
+                                self.fixEdgeConsistency(edge);
+                            }
+                        }
+                        if (!edge.removed()) {
+                            edge.render(canvas);
+                        }
+                        $("#entity_origin").html(newOrigin);
+                    }
+                }
+            });
+            var changeTargetButton = Utils_12.utils.create("input", {
+                type: "button",
+                value: Settings_12.Strings.CHANGE_PROPERTY,
+                click: function () {
+                    var newTarget = prompt(Settings_12.Strings.EDGE_ENTER_NEW_TARGET);
+                    if (newTarget !== null) {
+                        for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
+                            var state = _a[_i];
+                            if (state.getName() == newTarget) {
+                                edge.setTarget(state);
+                                self.fixEdgeConsistency(edge);
+                            }
+                        }
+                        if (!edge.removed()) {
+                            edge.render(canvas);
+                        }
+                        $("#entity_target").html(newTarget);
+                    }
+                }
+            });
+            var changeTransitionButton = Utils_12.utils.create("input", {
+                type: "button",
+                value: Settings_12.Strings.CHANGE_PROPERTY,
+                click: function () {
+                    var transitionSelector = $("#entity_transition_list").get(0);
+                    var selectedIndex = transitionSelector.selectedIndex;
+                    var controller = Settings_12.Settings.controller();
+                    controller.edgePrompt(function (data, content) {
+                        var origin = edge.getOrigin();
+                        var target = edge.getTarget();
+                        var dataList = edge.getDataList();
+                        controller.deleteEdge(origin, target, dataList[selectedIndex]);
+                        edge.getDataList()[selectedIndex] = data;
+                        edge.getTextList()[selectedIndex] = content;
+                        edge.render(self.canvas);
+                        controller.createEdge(origin, target, data);
+                        self.updateEditableEdge(edge);
+                    });
+                }
+            });
+            var deleteTransitionButton = Utils_12.utils.create("input", {
+                type: "button",
+                value: Settings_12.Strings.DELETE_SELECTED_TRANSITION,
+                click: function () {
+                    var transitionSelector = $("#entity_transition_list").get(0);
+                    var selectedIndex = transitionSelector.selectedIndex;
+                    var controller = Settings_12.Settings.controller();
+                    var origin = edge.getOrigin();
+                    var target = edge.getTarget();
+                    var dataList = edge.getDataList();
+                    controller.deleteEdge(origin, target, dataList[selectedIndex]);
+                    edge.getDataList().splice(selectedIndex, 1);
+                    edge.getTextList().splice(selectedIndex, 1);
+                    if (dataList.length == 0) {
+                        self.deleteEdge(edge);
+                        self.clearSelection();
+                        Settings_12.Settings.sidebar.unsetSelectedEntityContent();
+                    }
+                    else {
+                        edge.render(self.canvas);
+                        self.updateEditableEdge(edge);
+                    }
+                }
+            });
+            var deleteAllButton = Utils_12.utils.create("input", {
+                title: Utils_12.utils.printShortcut(Settings_12.Settings.shortcuts.deleteEntity),
+                type: "button",
+                value: Settings_12.Strings.DELETE_ALL_TRANSITIONS,
+                click: function () {
+                    self.deleteEdge(edge);
+                    self.clearSelection();
+                    Settings_12.Settings.sidebar.unsetSelectedEntityContent();
+                }
+            });
+            table.add(Utils_12.utils.create("span", { innerHTML: Settings_12.Strings.ORIGIN + ":" }));
+            table.add(Utils_12.utils.create("span", { innerHTML: edge.getOrigin().getName(),
+                className: "property_value",
+                id: "entity_origin" }));
+            table.add(changeOriginButton);
+            table.add(Utils_12.utils.create("span", { innerHTML: Settings_12.Strings.TARGET + ":" }));
+            table.add(Utils_12.utils.create("span", { innerHTML: edge.getTarget().getName(),
+                className: "property_value",
+                id: "entity_target" }));
+            table.add(changeTargetButton);
+            var textSelector = Utils_12.utils.create("select", {
+                id: "entity_transition_list"
+            });
+            var textList = edge.getTextList();
+            var i = 0;
+            for (var _i = 0, textList_1 = textList; _i < textList_1.length; _i++) {
+                var text = textList_1[_i];
+                var option = Utils_12.utils.create("option", { value: i, innerHTML: text });
+                textSelector.appendChild(option);
+                i++;
+            }
+            table.add(Utils_12.utils.create("span", { innerHTML: Settings_12.Strings.TRANSITIONS + ":" }));
+            table.add(textSelector);
+            table.add(changeTransitionButton);
+            table.add(deleteTransitionButton, 3);
+            table.add(deleteAllButton, 3);
+            container.appendChild(table.html());
+            return container;
+        };
+        AutomatonRenderer.prototype.bindEvents = function () {
+            for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
+                var state = _a[_i];
+                state.render(this.canvas);
+                this.bindStateEvents(state);
+            }
+            for (var _b = 0, _c = this.edgeList; _b < _c.length; _b++) {
+                var edge = _c[_b];
+                this.bindEdgeEvents(edge);
+            }
+            var self = this;
+            $(this.node).dblclick(function (e) {
+                self.newStateAt(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
+            });
+            $(this.node).contextmenu(function (e) {
+                e.preventDefault();
+                return false;
+            });
+            $(this.node).mousemove(function (e) {
+                if (self.edgeMode) {
+                    self.adjustEdge(this, e);
+                }
+            });
+        };
+        AutomatonRenderer.prototype.bindEdgeEvents = function (edge) {
+            var self = this;
+            edge.addClickHandler(function () {
+                self.selectEdge(this);
+            });
+        };
+        AutomatonRenderer.prototype.bindStateEvents = function (state) {
+            var canvas = this.canvas;
+            var self = this;
+            state.drag(function () {
+                self.updateEdges();
+            }, function (distanceSquared, event) {
+                if (!self.locked && distanceSquared <= Settings_12.Settings.stateDragTolerance) {
+                    if (self.edgeMode) {
+                        self.finishEdge(state);
+                    }
+                    else if (Utils_12.utils.isRightClick(event)) {
+                        self.beginEdge(state);
+                    }
+                    else if (state == self.highlightedState) {
+                        self.dimState();
+                    }
+                    else {
+                        self.selectState(state);
+                    }
+                    return false;
+                }
+                self.memento.push(self.save());
+                return true;
+            });
+        };
+        AutomatonRenderer.prototype.beginEdge = function (state) {
+            this.edgeMode = true;
+            this.currentEdge = new Edge_2.Edge();
+            this.currentEdge.setOrigin(state);
+        };
+        AutomatonRenderer.prototype.finishEdge = function (state) {
+            this.edgeMode = false;
+            var origin = this.currentEdge.getOrigin();
+            var edgeText = function (callback, fallback) {
+                var controller = Settings_12.Settings.controller();
+                controller.edgePrompt(function (data, content) {
+                    controller.createEdge(origin, state, data);
+                    callback(data, content);
+                }, fallback);
+            };
+            var self = this;
+            var oppositeEdge = null;
+            var clearCurrentEdge = function () {
+                self.currentEdge.remove();
+                self.currentEdge = null;
+            };
+            var _loop_4 = function(edge) {
+                if (edge.getOrigin() == origin && edge.getTarget() == state) {
+                    edgeText(function (data, text) {
+                        edge.addText(text);
+                        edge.addData(data);
+                        edge.render(self.canvas);
+                        clearCurrentEdge();
+                    }, clearCurrentEdge);
+                    return { value: void 0 };
+                }
+                else if (edge.getOrigin() == state && edge.getTarget() == origin) {
+                    oppositeEdge = edge;
+                }
+            };
+            for (var _i = 0, _a = this.edgeList; _i < _a.length; _i++) {
+                var edge = _a[_i];
+                var state_4 = _loop_4(edge);
+                if (typeof state_4 === "object") return state_4.value;
+            }
+            if (oppositeEdge) {
+                oppositeEdge.setCurveFlag(true);
+                oppositeEdge.render(this.canvas);
+                this.currentEdge.setCurveFlag(true);
+            }
+            this.currentEdge.setTarget(state);
+            this.currentEdge.render(this.canvas);
+            edgeText(function (data, text) {
+                self.currentEdge.addText(text);
+                self.currentEdge.addData(data);
+                self.bindEdgeEvents(self.currentEdge);
+                self.currentEdge.render(self.canvas);
+                self.edgeList.push(self.currentEdge);
+                self.currentEdge = null;
+            }, function () {
+                clearCurrentEdge();
+                if (oppositeEdge) {
+                    oppositeEdge.setCurveFlag(false);
+                    oppositeEdge.render(self.canvas);
+                }
+            });
+        };
+        AutomatonRenderer.prototype.adjustEdge = function (elem, e) {
+            var target = {
+                x: e.pageX - elem.offsetLeft,
+                y: e.pageY - elem.offsetTop
+            };
+            this.currentEdge.setVirtualTarget(target);
+            this.currentEdge.render(this.canvas);
+        };
+        AutomatonRenderer.prototype.updateEdges = function () {
+            for (var _i = 0, _a = this.edgeList; _i < _a.length; _i++) {
+                var edge = _a[_i];
+                edge.render(this.canvas);
+            }
+        };
+        AutomatonRenderer.prototype.clearSelection = function () {
+            this.highlightedState = null;
+            this.highlightedEdge = null;
+            Settings_12.Settings.sidebar.unsetSelectedEntityContent();
+            if (this.edgeMode) {
+                this.edgeMode = false;
+                this.currentEdge.remove();
+                this.currentEdge = null;
+            }
+        };
+        AutomatonRenderer.prototype.newStateAt = function (x, y) {
+            if (!this.locked) {
+                var state_5 = new State_2.State();
+                state_5.setPosition(x, y);
+                this.selectState(state_5);
+                this.bindStateEvents(state_5);
+                var self_2 = this;
+                var stateNamePrompt_1 = function () {
+                    Prompt_3.Prompt.simple(Settings_12.Strings.STATE_MANUAL_CREATION, 1, function (data) {
+                        var name = data[0];
+                        for (var _i = 0, _a = self_2.stateList; _i < _a.length; _i++) {
+                            var state_6 = _a[_i];
+                            if (state_6.getName() == name) {
+                                alert(Settings_12.Strings.DUPLICATE_STATE_NAME);
+                                return stateNamePrompt_1();
+                            }
+                        }
+                        state_5.setName(name);
+                        self_2.onStateCreation(state_5);
+                        self_2.updateEditableState(state_5);
+                    }, function () {
+                        self_2.highlightedState = null;
+                        state_5.remove();
+                        self_2.updateEditableState(null);
+                    });
+                };
+                stateNamePrompt_1();
+            }
+        };
+        AutomatonRenderer.prototype.onStateCreation = function (state) {
+            if (this.stateList.length == 0) {
+                state.setInitial(true);
+                this.initialState = state;
+            }
+            state.render(this.canvas);
+            this.stateList.push(state);
+            Settings_12.Settings.controller().createState(state);
+        };
+        AutomatonRenderer.prototype.setInitialState = function (state) {
+            var controller = Settings_12.Settings.controller();
+            if (state == this.initialState) {
+                state.setInitial(false);
+                controller.changeInitialFlag(state);
+                this.initialState = null;
+            }
+            else {
+                if (this.initialState) {
+                    this.initialState.setInitial(false);
+                    controller.changeInitialFlag(this.initialState);
+                    this.initialState.render(this.canvas);
+                }
+                state.setInitial(true);
+                controller.changeInitialFlag(state);
+                this.initialState = state;
+            }
+        };
+        AutomatonRenderer.prototype.changeFinalFlag = function (state, value) {
+            state.setFinal(value);
+            Settings_12.Settings.controller().changeFinalFlag(state);
+        };
+        AutomatonRenderer.prototype.deleteState = function (state) {
+            for (var i = 0; i < this.edgeList.length; i++) {
+                var edge = this.edgeList[i];
+                var origin = edge.getOrigin();
+                var target = edge.getTarget();
+                if (origin == state || target == state) {
+                    edge.remove();
+                    this.edgeList.splice(i, 1);
+                    i--;
+                }
+            }
+            state.remove();
+            var states = this.stateList;
+            for (var i = 0; i < states.length; i++) {
+                if (states[i] == state) {
+                    states.splice(i, 1);
+                    break;
+                }
+            }
+            Settings_12.Settings.controller().deleteState(state);
+        };
+        AutomatonRenderer.prototype.deleteEdge = function (edge) {
+            for (var i = 0; i < this.edgeList.length; i++) {
+                if (this.edgeList[i] == edge) {
+                    edge.remove();
+                    this.edgeList.splice(i, 1);
+                    var origin = edge.getOrigin();
+                    var target = edge.getTarget();
+                    var dataLists = edge.getDataList();
+                    var controller = Settings_12.Settings.controller();
+                    for (var _i = 0, dataLists_1 = dataLists; _i < dataLists_1.length; _i++) {
+                        var data = dataLists_1[_i];
+                        controller.deleteEdge(origin, target, data);
+                    }
+                    break;
+                }
+            }
+        };
+        AutomatonRenderer.prototype.toggleInitial = function () {
+            var highlightedState = this.highlightedState;
+            if (highlightedState) {
+                this.setInitialState(highlightedState);
+                highlightedState.render(this.canvas);
+                this.updateEditableState(highlightedState);
+            }
+        };
+        AutomatonRenderer.prototype.toggleFinal = function () {
+            var highlightedState = this.highlightedState;
+            if (highlightedState) {
+                this.changeFinalFlag(highlightedState, !highlightedState.isFinal());
+                highlightedState.render(this.canvas);
+                this.updateEditableState(highlightedState);
+            }
+        };
+        AutomatonRenderer.prototype.undo = function () {
+            this.frozenMemento = true;
+            this.clear();
+            var data = this.memento.pop();
+            var self = this;
+            if (data) {
+                this.load(data, false);
+            }
+        };
+        AutomatonRenderer.prototype.bindShortcuts = function () {
+            var self = this;
+            var group = Settings_12.Settings.canvasShortcutID;
+            Utils_12.utils.bindShortcut(Settings_12.Settings.shortcuts.toggleInitial, function () {
+                self.toggleInitial();
+            }, group);
+            Utils_12.utils.bindShortcut(Settings_12.Settings.shortcuts.toggleFinal, function () {
+                self.toggleFinal();
+            }, group);
+            Utils_12.utils.bindShortcut(Settings_12.Settings.shortcuts.dimSelection, function () {
+                if (self.edgeMode) {
+                    self.edgeMode = false;
+                    self.currentEdge.remove();
+                    self.currentEdge = null;
+                }
+                self.dimState();
+                self.dimEdge();
+            }, group);
+            Utils_12.utils.bindShortcut(Settings_12.Settings.shortcuts.deleteEntity, function () {
+                var highlightedState = self.highlightedState;
+                var highlightedEdge = self.highlightedEdge;
+                if (highlightedState) {
+                    self.deleteState(highlightedState);
+                }
+                else if (highlightedEdge) {
+                    self.deleteEdge(highlightedEdge);
+                }
+                self.clearSelection();
+            }, group);
+            Utils_12.utils.bindShortcut(Settings_12.Settings.shortcuts.clearMachine, function () {
+                var confirmation = confirm(Settings_12.Strings.CLEAR_CONFIRMATION);
+                if (confirmation) {
+                    self.clear();
+                }
+            }, group);
+            Utils_12.utils.bindShortcut(Settings_12.Settings.shortcuts.left, function () {
+                self.moveStateSelection(function (attempt, highlighted) {
+                    return attempt.getPosition().x < highlighted.getPosition().x;
+                }, function (attempt, currBest, highlighted) {
+                    if (!currBest) {
+                        return true;
+                    }
+                    var reference = highlighted.getPosition();
+                    var position = attempt.getPosition();
+                    var dy = Math.abs(position.y - reference.y);
+                    var targetPosition = currBest.getPosition();
+                    var targetDy = Math.abs(targetPosition.y - reference.y);
+                    var threshold = self.selectionThreshold();
+                    if (dy < threshold) {
+                        return targetDy >= threshold || position.x > targetPosition.x;
+                    }
+                    return dy < targetDy;
+                });
+            }, group);
+            Utils_12.utils.bindShortcut(Settings_12.Settings.shortcuts.right, function () {
+                self.moveStateSelection(function (attempt, highlighted) {
+                    return attempt.getPosition().x > highlighted.getPosition().x;
+                }, function (attempt, currBest, highlighted) {
+                    if (!currBest) {
+                        return true;
+                    }
+                    var reference = highlighted.getPosition();
+                    var position = attempt.getPosition();
+                    var dy = Math.abs(position.y - reference.y);
+                    var targetPosition = currBest.getPosition();
+                    var targetDy = Math.abs(targetPosition.y - reference.y);
+                    var threshold = self.selectionThreshold();
+                    if (dy < threshold) {
+                        return targetDy >= threshold || position.x < targetPosition.x;
+                    }
+                    return dy < targetDy;
+                });
+            }, group);
+            Utils_12.utils.bindShortcut(Settings_12.Settings.shortcuts.up, function () {
+                self.moveStateSelection(function (attempt, highlighted) {
+                    return attempt.getPosition().y < highlighted.getPosition().y;
+                }, function (attempt, currBest, highlighted) {
+                    if (!currBest) {
+                        return true;
+                    }
+                    var reference = highlighted.getPosition();
+                    var position = attempt.getPosition();
+                    var dx = Math.abs(position.x - reference.x);
+                    var targetPosition = currBest.getPosition();
+                    var targetDx = Math.abs(targetPosition.x - reference.x);
+                    var threshold = self.selectionThreshold();
+                    if (dx < threshold) {
+                        return targetDx >= threshold || position.y > targetPosition.y;
+                    }
+                    return dx < targetDx;
+                });
+            }, group);
+            Utils_12.utils.bindShortcut(Settings_12.Settings.shortcuts.down, function () {
+                self.moveStateSelection(function (attempt, highlighted) {
+                    return attempt.getPosition().y > highlighted.getPosition().y;
+                }, function (attempt, currBest, highlighted) {
+                    if (!currBest) {
+                        return true;
+                    }
+                    var reference = highlighted.getPosition();
+                    var position = attempt.getPosition();
+                    var dx = Math.abs(position.x - reference.x);
+                    var targetPosition = currBest.getPosition();
+                    var targetDx = Math.abs(targetPosition.x - reference.x);
+                    var threshold = self.selectionThreshold();
+                    if (dx < self.selectionThreshold()) {
+                        return targetDx >= threshold || position.y < targetPosition.y;
+                    }
+                    return dx < targetDx;
+                });
+            }, group);
+            Utils_12.utils.bindShortcut(Settings_12.Settings.shortcuts.undo, function () {
+                self.undo();
+            }, group);
+        };
+        AutomatonRenderer.prototype.selectionThreshold = function () {
+            return 2 * Settings_12.Settings.stateRadius;
+        };
+        AutomatonRenderer.prototype.moveStateSelection = function (isViable, isBetterCandidate) {
+            var highlightedState = this.highlightedState;
+            if (highlightedState) {
+                var target = null;
+                for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
+                    var state = _a[_i];
+                    if (isViable(state, highlightedState)) {
+                        if (isBetterCandidate(state, target, highlightedState)) {
+                            target = state;
+                        }
+                    }
+                }
+                if (target) {
+                    this.selectState(target);
+                }
+            }
+        };
+        return AutomatonRenderer;
+    }());
+    exports.AutomatonRenderer = AutomatonRenderer;
+});
+define("interface/Mainbar", ["require", "exports", "interface/AutomatonRenderer", "Memento", "interface/Renderer", "Settings"], function (require, exports, AutomatonRenderer_1, Memento_1, Renderer_4, Settings_13) {
     "use strict";
     var Mainbar = (function (_super) {
         __extends(Mainbar, _super);
@@ -3743,10 +3745,10 @@ define("interface/Mainbar", ["require", "exports", "interface/AutomatonRenderer"
             var canvas = this.canvas;
             var node = this.node;
             var memento = new Memento_1.Memento(function () {
-                return Settings_14.Settings.undoMaxAmount;
+                return Settings_13.Settings.undoMaxAmount;
             });
             this.automatonRenderer = new AutomatonRenderer_1.AutomatonRenderer(canvas, node, memento);
-            Settings_14.Settings.automatonRenderer = this.automatonRenderer;
+            Settings_13.Settings.automatonRenderer = this.automatonRenderer;
         };
         Mainbar.prototype.onRender = function () {
             this.automatonRenderer.render();
@@ -3755,7 +3757,7 @@ define("interface/Mainbar", ["require", "exports", "interface/AutomatonRenderer"
     }(Renderer_4.Renderer));
     exports.Mainbar = Mainbar;
 });
-define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "interface/Sidebar", "System", "Utils"], function (require, exports, Mainbar_1, Settings_15, Sidebar_1, System_5, Utils_15) {
+define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "interface/Sidebar", "System", "Utils"], function (require, exports, Mainbar_1, Settings_14, Sidebar_1, System_5, Utils_13) {
     "use strict";
     var UI = (function () {
         function UI() {
@@ -3771,20 +3773,20 @@ define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "
             console.log("Interface ready.");
         };
         UI.prototype.bindSidebar = function (renderer) {
-            renderer.bind(Utils_15.utils.id(Settings_15.Settings.sidebarID));
+            renderer.bind(Utils_13.utils.id(Settings_14.Settings.sidebarID));
             this.sidebarRenderer = renderer;
         };
         UI.prototype.bindMain = function (renderer) {
-            renderer.bind(Utils_15.utils.id(Settings_15.Settings.mainbarID));
+            renderer.bind(Utils_13.utils.id(Settings_14.Settings.mainbarID));
             this.mainRenderer = renderer;
         };
         return UI;
     }());
     exports.UI = UI;
 });
-define("main", ["require", "exports", "Settings", "System", "interface/UI"], function (require, exports, Settings_16, System_6, UI_1) {
+define("main", ["require", "exports", "Settings", "System", "interface/UI"], function (require, exports, Settings_15, System_6, UI_1) {
     "use strict";
-    Settings_16.Settings.update();
+    Settings_15.Settings.update();
     $(document).ready(function () {
         var ui = new UI_1.UI();
         ui.render();
