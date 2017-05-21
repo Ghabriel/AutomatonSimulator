@@ -197,12 +197,12 @@ export class AutomatonRenderer {
 	}
 
 	public lock(): void {
-		utils.lockShortcutGroup(Settings.canvasShortcutID);
+		System.lockShortcutGroup(Settings.canvasShortcutID);
 		this.locked = true;
 	}
 
 	public unlock(): void {
-		utils.unlockShortcutGroup(Settings.canvasShortcutID);
+		System.unlockShortcutGroup(Settings.canvasShortcutID);
 		this.locked = false;
 	}
 
@@ -960,15 +960,15 @@ export class AutomatonRenderer {
 	private bindShortcuts(): void {
 		let self = this;
 		let group = Settings.canvasShortcutID;
-		utils.bindShortcut(Settings.shortcuts.toggleInitial, function() {
+		System.bindShortcut(Settings.shortcuts.toggleInitial, function() {
 			self.toggleInitial();
 		}, group);
 
-		utils.bindShortcut(Settings.shortcuts.toggleFinal, function() {
+		System.bindShortcut(Settings.shortcuts.toggleFinal, function() {
 			self.toggleFinal();
 		}, group);
 
-		utils.bindShortcut(Settings.shortcuts.dimSelection, function() {
+		System.bindShortcut(Settings.shortcuts.dimSelection, function() {
 			if (self.edgeMode) {
 				self.edgeMode = false;
 				self.currentEdge.remove();
@@ -978,7 +978,7 @@ export class AutomatonRenderer {
 			self.dimEdge();
 		}, group);
 
-		utils.bindShortcut(Settings.shortcuts.deleteEntity, function() {
+		System.bindShortcut(Settings.shortcuts.deleteEntity, function() {
 			let highlightedState = self.highlightedState;
 			let highlightedEdge = self.highlightedEdge;
 			if (highlightedState) {
@@ -989,7 +989,7 @@ export class AutomatonRenderer {
 			self.clearSelection();
 		}, group);
 
-		utils.bindShortcut(Settings.shortcuts.clearMachine, function() {
+		System.bindShortcut(Settings.shortcuts.clearMachine, function() {
 			let confirmation = confirm(Strings.CLEAR_CONFIRMATION);
 			if (confirmation) {
 				self.clear();
@@ -997,7 +997,7 @@ export class AutomatonRenderer {
 		}, group);
 
 		// TODO: try to reduce the redundancy
-		utils.bindShortcut(Settings.shortcuts.left, function() {
+		System.bindShortcut(Settings.shortcuts.left, function() {
 			self.moveStateSelection(function(attempt, highlighted) {
 				return attempt.getPosition().x < highlighted.getPosition().x;
 			}, function(attempt, currBest, highlighted) {
@@ -1020,7 +1020,7 @@ export class AutomatonRenderer {
 			});
 		}, group);
 
-		utils.bindShortcut(Settings.shortcuts.right, function() {
+		System.bindShortcut(Settings.shortcuts.right, function() {
 			self.moveStateSelection(function(attempt, highlighted) {
 				return attempt.getPosition().x > highlighted.getPosition().x;
 			}, function(attempt, currBest, highlighted) {
@@ -1043,7 +1043,7 @@ export class AutomatonRenderer {
 			});
 		}, group);
 
-		utils.bindShortcut(Settings.shortcuts.up, function() {
+		System.bindShortcut(Settings.shortcuts.up, function() {
 			self.moveStateSelection(function(attempt, highlighted) {
 				return attempt.getPosition().y < highlighted.getPosition().y;
 			}, function(attempt, currBest, highlighted) {
@@ -1066,7 +1066,7 @@ export class AutomatonRenderer {
 			});
 		}, group);
 
-		utils.bindShortcut(Settings.shortcuts.down, function() {
+		System.bindShortcut(Settings.shortcuts.down, function() {
 			self.moveStateSelection(function(attempt, highlighted) {
 				return attempt.getPosition().y > highlighted.getPosition().y;
 			}, function(attempt, currBest, highlighted) {
@@ -1089,7 +1089,7 @@ export class AutomatonRenderer {
 			});
 		}, group);
 
-		utils.bindShortcut(Settings.shortcuts.undo, function() {
+		System.bindShortcut(Settings.shortcuts.undo, function() {
 			self.undo();
 		}, group);
 	}

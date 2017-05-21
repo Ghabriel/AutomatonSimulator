@@ -1,6 +1,7 @@
 import {Keyboard} from "../../Keyboard"
 import {Menu} from "../../interface/Menu"
 import {Settings, Strings} from "../../Settings"
+import {System} from "../../System"
 import {utils} from "../../Utils"
 
 export namespace initializer {
@@ -201,19 +202,19 @@ export namespace initializer {
 		// these shortcuts be rebound, which would effectively make them
 		// trigger multiple times by one keystroke.
 		if (!boundShortcuts) {
-			utils.bindShortcut(Settings.shortcuts.focusTestCase, function() {
+			System.bindShortcut(Settings.shortcuts.focusTestCase, function() {
 				testCaseInput.focus();
 			});
 
-			utils.bindShortcut(Settings.shortcuts.fastForward, function() {
+			System.bindShortcut(Settings.shortcuts.fastForward, function() {
 				fastRecognition.click();
 			});
 
-			utils.bindShortcut(Settings.shortcuts.step, function() {
+			System.bindShortcut(Settings.shortcuts.step, function() {
 				stepRecognition.click();
 			});
 
-			utils.bindShortcut(Settings.shortcuts.stop, function() {
+			System.bindShortcut(Settings.shortcuts.stop, function() {
 				stopRecognition.click();
 			});
 

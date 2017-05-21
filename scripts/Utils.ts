@@ -1,7 +1,7 @@
 /// <reference path="defs/jQuery.d.ts" />
+/// <reference path="defs/raphael.d.ts" />
 
 import {Keyboard} from "./Keyboard"
-import {System} from "./System"
 
 export interface Point {
 	x: number;
@@ -99,21 +99,6 @@ export namespace utils {
 	// returns false.
 	export function samePoint(p1: Point, p2: Point) {
 		return p1 && p2 && p1.x == p2.x && p1.y == p2.y;
-	}
-
-	// Binds a keyboard shortcut to the page.
-	export function bindShortcut(keys: string[], callback: () => void, group?: string): void {
-		System.addKeyObserver(keys, callback, group);
-	}
-
-	// Disables all shortcuts in a given shortcut group.
-	export function lockShortcutGroup(group: string): void {
-		System.lockShortcutGroup(group);
-	}
-
-	// Enables all shortcuts in a given shortcut group.
-	export function unlockShortcutGroup(group: string): void {
-		System.unlockShortcutGroup(group);
 	}
 
 	// Calls a function asynchronously

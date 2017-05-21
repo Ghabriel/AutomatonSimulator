@@ -11,7 +11,6 @@ export class UI {
 		let mainbar = new Mainbar();
 		this.bindSidebar(sidebar);
 		this.bindMain(mainbar);
-		System.bindSidebar(sidebar);
 	}
 
 	render(): void {

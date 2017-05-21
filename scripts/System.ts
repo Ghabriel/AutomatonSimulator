@@ -1,7 +1,5 @@
 import {Keyboard} from "./Keyboard"
-import {Sidebar} from "./interface/Sidebar"
-import {Settings, Strings} from "./Settings"
-import {utils} from "./Utils"
+import {Settings} from "./Settings"
 
 interface KeyboardObserver {
 	keys: string[];
@@ -30,20 +28,9 @@ function propertyName(type) {
 export class System {
 	static changeLanguage(language): void {
 		Settings.changeLanguage(language);
-		this.reload();
 		for (let listener of this.languageChangeObservers) {
 			listener.onLanguageChange();
 		}
-	}
-
-	static reload(): void {
-		utils.id(Settings.sidebarID).innerHTML = "";
-		this.sidebar.build();
-		this.sidebar.render();
-	}
-
-	static bindSidebar(sidebar: Sidebar): void {
-		this.sidebar = sidebar;
 	}
 
 	static addLanguageChangeObserver(observer: LanguageChangeObserver): void {
@@ -87,7 +74,8 @@ export class System {
 		return true;
 	}
 
-	static addKeyObserver(keys: string[], callback: () => void, group?: string): void {
+	// Binds a keyboard shortcut to the page.
+	static bindShortcut(keys: string[], callback: () => void, group?: string): void {
 		this.keyboardObservers.push({
 			keys: keys,
 			callback: callback,
@@ -95,10 +83,12 @@ export class System {
 		});
 	}
 
+	// Disables all shortcuts in a given shortcut group.
 	static lockShortcutGroup(group: string): void {
 		this.lockedGroups[group] = true;
 	}
 
+	// Enables all shortcuts in a given shortcut group.
 	static unlockShortcutGroup(group: string): void {
 		delete this.lockedGroups[group];
 	}
@@ -147,7 +137,6 @@ export class System {
 
 	private static keyboardObservers: KeyboardObserver[] = [];
 	private static languageChangeObservers: LanguageChangeObserver[] = [];
-	private static sidebar: Sidebar;
 	private static eventBlock: boolean = false;
 	private static lockedGroups: {[g: string]: boolean} = {};
 }

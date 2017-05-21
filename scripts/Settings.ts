@@ -6,7 +6,7 @@ import * as controllers from "./lists/ControllerList"
 // import {AutomatonRenderer} from "./interface/AutomatonRenderer"
 import {Controller} from "./Controller"
 import {Initializer} from "./Initializer"
-import {Renderer} from "./interface/Renderer"
+// import {Renderer} from "./interface/Renderer"
 // import {Sidebar} from "./interface/Sidebar"
 import {StatePalette} from "./StatePalette"
 import {utils} from "./Utils"
@@ -17,8 +17,6 @@ interface MachineTraits {
 	controller: Controller;
 }
 
-// TODO: make it more flexible to add/remove machine types. See how
-// the internationalization was implemented for reference.
 export namespace Settings {
 	export const sidebarID = "sidebar";
 	export const mainbarID = "mainbar";

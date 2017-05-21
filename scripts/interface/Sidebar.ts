@@ -13,6 +13,15 @@ export class Sidebar extends Renderer {
 	constructor() {
 		super();
 		this.build();
+
+		let self = this;
+		System.addLanguageChangeObserver({
+			onLanguageChange: function() {
+				utils.id(Settings.sidebarID).innerHTML = "";
+				self.build();
+				self.render();
+			}
+		});
 	}
 
 	public build(): void {
@@ -180,7 +189,7 @@ export class Sidebar extends Renderer {
 				saveAs(blob, "file.txt");
 			}
 		});
-		utils.bindShortcut(Settings.shortcuts.save, function() {
+		System.bindShortcut(Settings.shortcuts.save, function() {
 			save.click();
 		});
 		fileManipulation.add(save);
@@ -215,7 +224,7 @@ export class Sidebar extends Renderer {
 				this.blur();
 			}
 		});
-		utils.bindShortcut(Settings.shortcuts.open, function() {
+		System.bindShortcut(Settings.shortcuts.open, function() {
 			open.click();
 		});
 		fileManipulation.add(open);
@@ -258,7 +267,7 @@ export class Sidebar extends Renderer {
 			machineButtonMapping[type] = button;
 		});
 
-		utils.bindShortcut(["M"], function() {
+		System.bindShortcut(["M"], function() {
 			let buttons = document.querySelectorAll(".machine_selection_btn");
 			for (let i = 0; i < buttons.length; i++) {
 				let button = <HTMLInputElement> buttons[i];
