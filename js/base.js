@@ -220,66 +220,6 @@ define("interface/Renderer", ["require", "exports"], function (require, exports)
 define("StatePalette", ["require", "exports"], function (require, exports) {
     "use strict";
 });
-define("Keyboard", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var Keyboard;
-    (function (Keyboard) {
-        Keyboard.keys = {
-            "A": 65,
-            "B": 66,
-            "C": 67,
-            "D": 68,
-            "E": 69,
-            "F": 70,
-            "G": 71,
-            "H": 72,
-            "I": 73,
-            "J": 74,
-            "K": 75,
-            "L": 76,
-            "M": 77,
-            "N": 78,
-            "O": 79,
-            "P": 80,
-            "Q": 81,
-            "R": 82,
-            "S": 83,
-            "T": 84,
-            "U": 85,
-            "V": 86,
-            "W": 87,
-            "X": 88,
-            "Y": 89,
-            "Z": 90,
-            "0": 48,
-            "1": 49,
-            "2": 50,
-            "3": 51,
-            "4": 52,
-            "5": 53,
-            "6": 54,
-            "7": 55,
-            "8": 56,
-            "9": 57,
-            "ENTER": 13,
-            "SHIFT": 16,
-            "SPACE": 32,
-            "ESC": 27,
-            "DELETE": 46,
-            "LEFT": 37,
-            "UP": 38,
-            "RIGHT": 39,
-            "DOWN": 40,
-            "+": 61,
-            "-": 173
-        };
-        Keyboard.symbols = {
-            delta: "δ",
-            epsilon: "ε",
-            sigma: "Σ"
-        };
-    })(Keyboard = exports.Keyboard || (exports.Keyboard = {}));
-});
 define("Utils", ["require", "exports"], function (require, exports) {
     "use strict";
     var utils;
@@ -988,6 +928,66 @@ define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastr
         return FA;
     }());
     exports.FA = FA;
+});
+define("Keyboard", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var Keyboard;
+    (function (Keyboard) {
+        Keyboard.keys = {
+            "A": 65,
+            "B": 66,
+            "C": 67,
+            "D": 68,
+            "E": 69,
+            "F": 70,
+            "G": 71,
+            "H": 72,
+            "I": 73,
+            "J": 74,
+            "K": 75,
+            "L": 76,
+            "M": 77,
+            "N": 78,
+            "O": 79,
+            "P": 80,
+            "Q": 81,
+            "R": 82,
+            "S": 83,
+            "T": 84,
+            "U": 85,
+            "V": 86,
+            "W": 87,
+            "X": 88,
+            "Y": 89,
+            "Z": 90,
+            "0": 48,
+            "1": 49,
+            "2": 50,
+            "3": 51,
+            "4": 52,
+            "5": 53,
+            "6": 54,
+            "7": 55,
+            "8": 56,
+            "9": 57,
+            "ENTER": 13,
+            "SHIFT": 16,
+            "SPACE": 32,
+            "ESC": 27,
+            "DELETE": 46,
+            "LEFT": 37,
+            "UP": 38,
+            "RIGHT": 39,
+            "DOWN": 40,
+            "+": 61,
+            "-": 173
+        };
+        Keyboard.symbols = {
+            delta: "δ",
+            epsilon: "ε",
+            sigma: "Σ"
+        };
+    })(Keyboard = exports.Keyboard || (exports.Keyboard = {}));
 });
 define("System", ["require", "exports", "Keyboard", "Settings"], function (require, exports, Keyboard_1, Settings_2) {
     "use strict";

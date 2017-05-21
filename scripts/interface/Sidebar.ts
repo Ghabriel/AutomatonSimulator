@@ -15,6 +15,7 @@ export class Sidebar extends Renderer {
 		this.build();
 
 		let self = this;
+		// Re-creates the sidebar when the system language is changed
 		System.addLanguageChangeObserver({
 			onLanguageChange: function() {
 				utils.id(Settings.sidebarID).innerHTML = "";
@@ -24,6 +25,7 @@ export class Sidebar extends Renderer {
 		});
 	}
 
+	// Constructs every menu that belongs to the sidebar.
 	public build(): void {
 		this.mainMenus = {
 			settings: new Menu(Strings.SETTINGS),
@@ -47,12 +49,14 @@ export class Sidebar extends Renderer {
 		}
 	}
 
+	// Sets the content of the "selected entity area".
 	public setSelectedEntityContent(content: HTMLElement): void {
 		let node = this.mainMenus.selectedEntity.content();
 		$(node.querySelector(".none")).hide();
 		node.appendChild(content);
 	}
 
+	// Clears the "selected entity area".
 	public unsetSelectedEntityContent(): void {
 		let node = this.mainMenus.selectedEntity.content();
 		while (node.children.length > 1) {
@@ -61,6 +65,7 @@ export class Sidebar extends Renderer {
 		$(node.querySelector(".none")).show();
 	}
 
+	// Sets/clears the "formal definition area".
 	public updateFormalDefinition(content?: HTMLElement): void {
 		let node = this.mainMenus.formalDefinition.content();
 		node.innerHTML = "";

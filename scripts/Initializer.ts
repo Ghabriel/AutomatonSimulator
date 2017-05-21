@@ -3,10 +3,6 @@ import {utils} from "./Utils"
 
 export class Initializer {
 	static exec(): void {
-		// if (this.initialized) {
-		// 	return;
-		// }
-		// this.initialized = true;
 		this.initSidebars();
 	}
 
@@ -15,6 +11,4 @@ export class Initializer {
 			obj.init();
 		});
 	}
-
-	// static initialized: boolean = false;
 }

@@ -1,8 +1,6 @@
 /// <reference path="defs/jQuery.d.ts" />
 /// <reference path="defs/raphael.d.ts" />
 
-import {Keyboard} from "./Keyboard"
-
 export interface Point {
 	x: number;
 	y: number;
@@ -17,6 +15,7 @@ export namespace utils {
 		return select("#" + selector);
 	}
 
+	// Creates a tag with a given name and optionally given properties.
 	export function create(tag: string, props?: Object): Element {
 		let result = document.createElement(tag);
 		if (props) {
@@ -32,6 +31,7 @@ export namespace utils {
 		return result;
 	}
 
+	// Iterates over an object, applying a callback to each property.
 	export function foreach(obj: Object, callback): void {
 		for (var i in obj) {
 			if (obj.hasOwnProperty(i)) {
@@ -42,6 +42,7 @@ export namespace utils {
 		}
 	}
 
+	// Checks if a given event represents a right click
 	export function isRightClick(event: any): boolean {
 		if ("which" in event) { // Gecko (Firefox), WebKit (Chrome/Safari), Opera
 			return event.which == 3;
@@ -57,6 +58,7 @@ export namespace utils {
 		return "M" + x1 + " " + y1 + " L" + x2 + " " + y2;
 	}
 
+	// Draws a line from (x1,y1) to (x2,y2)
 	export function line(canvas: RaphaelPaper, x1: number, y1: number, x2: number, y2: number) {
 		var line = canvas.path(this.linePath(x1, y1, x2, y2));
 		// TODO: make the stroke color flexible
@@ -64,10 +66,12 @@ export namespace utils {
 		return line;
 	}
 
+	// Converts a given angle from degrees to radians
 	export function toRadians(angle: number): number {
 		return angle * Math.PI / 180;
 	}
 
+	// Converts a given angle from radians to degrees
 	export function toDegrees(angle: number): number {
 		return angle * 180 / Math.PI;
 	}

@@ -26,6 +26,8 @@ function propertyName(type) {
 }
 
 export class System {
+	// Changes the system language and then notifies all
+	// the language change observers.
 	static changeLanguage(language): void {
 		Settings.changeLanguage(language);
 		for (let listener of this.languageChangeObservers) {
@@ -33,6 +35,8 @@ export class System {
 		}
 	}
 
+	// Registers a new language change observer, which will be notified
+	// when the system language changes.
 	static addLanguageChangeObserver(observer: LanguageChangeObserver): void {
 		this.languageChangeObservers.push(observer);
 	}
@@ -57,6 +61,8 @@ export class System {
 		this.keyEvent(<KeyboardKeyPress> event);
 	}
 
+	// Notifies every non-locked keyboard observer that is 'interested'
+	// in the triggered keyboard event.
 	static keyEvent(event: KeyboardKeyPress): boolean {
 		let triggered = false;
 		for (let observer of this.keyboardObservers) {
@@ -93,14 +99,17 @@ export class System {
 		delete this.lockedGroups[group];
 	}
 
+	// Sets a global lock for keyboard shortcuts.
 	static blockEvents(): void {
 		this.eventBlock = true;
 	}
 
+	// Unsets the keyboard shortcuts global lock.
 	static unblockEvents(): void {
 		this.eventBlock = false;
 	}
 
+	// Checks if a given keyboard event matches a given group of keys.
 	private static shortcutMatches(event: KeyboardKeyPress, keys: string[]): boolean {
 		if (this.eventBlock) {
 			// Ignore all keyboard events if there's an active event block.
@@ -131,6 +140,7 @@ export class System {
 		return true;
 	}
 
+	// Checks if a given keyboard observer is locked.
 	private static locked(observer: KeyboardObserver): boolean {
 		return this.lockedGroups.hasOwnProperty(observer.group);
 	}
