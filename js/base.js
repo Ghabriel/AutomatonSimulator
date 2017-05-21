@@ -3795,40 +3795,88 @@ define("tests/Test", ["require", "exports"], function (require, exports) {
             this.testPlans.push(plan);
         };
         Test.prototype.runTests = function () {
+            var output = "";
             for (var _i = 0, _a = this.testPlans; _i < _a.length; _i++) {
                 var plan = _a[_i];
+                var planName = plan.planName();
                 var testNames = plan.testNames();
+                var stats = {
+                    success: 0,
+                    failure: 0,
+                    exceptions: 0
+                };
+                output += "<div class='plan'>";
+                output += "<div class='plan_name'>" + planName + "</div>";
                 for (var _b = 0, testNames_1 = testNames; _b < testNames_1.length; _b++) {
                     var method = testNames_1[_b];
                     var status_1 = void 0;
+                    var className = void 0;
                     try {
                         if (plan[method]()) {
                             status_1 = " OK ";
+                            className = "success";
+                            stats.success++;
                         }
                         else {
                             status_1 = "FAIL";
+                            className = "failure";
+                            stats.failure++;
                         }
                     }
                     catch (e) {
                         status_1 = "EXCP";
+                        className = "exception";
+                        stats.exceptions++;
                     }
-                    var output = "<div class='testcase'>";
-                    output += "<div class='status'>" + status_1 + "</div>";
-                    output += "<div class='name'>" + method + "</div>";
+                    output += "<div class='test_case'>";
+                    output += "<div class='status " + className + "'>";
+                    output += status_1;
                     output += "</div>";
-                    this.targetNode.innerHTML += output;
+                    output += "<div class='test_name'>" + method + "</div>";
+                    output += "</div>";
                 }
+                output += "<div class='summary'>";
+                if (stats.failure == 0 && stats.exceptions == 0) {
+                    output += "<div class='success'>All tests passed.</div>";
+                }
+                else {
+                    var numTests = testNames.length;
+                    var successRate = ((stats.success / numTests) * 100).toFixed(2);
+                    var failureRate = ((stats.failure / numTests) * 100).toFixed(2);
+                    var excpRate = ((stats.exceptions / numTests) * 100).toFixed(2);
+                    var parts = [];
+                    parts.push(stats.success + " test(s) passed (" +
+                        successRate + "%)");
+                    if (stats.failure > 0) {
+                        parts.push(stats.failure + " test(s) failed (" +
+                            failureRate + "%)");
+                    }
+                    if (stats.exceptions > 0) {
+                        parts.push(stats.exceptions +
+                            " test(s) resulted in exceptions (" + excpRate + "%)");
+                    }
+                    output += "<div class='failure'>Test plan failed.</div>";
+                    output += "<ul>";
+                    output += "<li>" + parts.join("</li><li>") + "</li>";
+                    output += "</ul>";
+                }
+                output += "</div>";
+                output += "</div>";
             }
+            this.targetNode.innerHTML += output;
         };
         return Test;
     }());
     exports.Test = Test;
 });
-define("tests/FAtests", ["require", "exports", "machines/FA/FA"], function (require, exports, FA_2) {
+define("tests/FATests", ["require", "exports", "machines/FA/FA"], function (require, exports, FA_2) {
     "use strict";
     var FATests = (function () {
         function FATests() {
         }
+        FATests.prototype.planName = function () {
+            return "FA";
+        };
         FATests.prototype.testNames = function () {
             return ["something"];
         };
@@ -3840,14 +3888,37 @@ define("tests/FAtests", ["require", "exports", "machines/FA/FA"], function (requ
     }());
     exports.FATests = FATests;
 });
-define("tests", ["require", "exports", "tests/FAtests", "tests/Test"], function (require, exports, FAtests_1, Test_1) {
+define("tests/PDATests", ["require", "exports"], function (require, exports) {
     "use strict";
-    console.log("hello");
+    var PDATests = (function () {
+        function PDATests() {
+        }
+        PDATests.prototype.planName = function () {
+            return "PDA";
+        };
+        PDATests.prototype.testNames = function () {
+            return ["example1", "example2", "example3"];
+        };
+        PDATests.prototype.example1 = function () {
+            return false;
+        };
+        PDATests.prototype.example2 = function () {
+            return true;
+        };
+        PDATests.prototype.example3 = function () {
+            throw 42;
+        };
+        return PDATests;
+    }());
+    exports.PDATests = PDATests;
+});
+define("tests", ["require", "exports", "tests/FATests", "tests/PDATests", "tests/Test"], function (require, exports, FATests_1, PDATests_1, Test_1) {
+    "use strict";
     $(document).ready(function () {
-        console.log("world");
         var container = document.getElementById("container");
         var test = new Test_1.Test(container);
-        test.addTestPlan(new FAtests_1.FATests());
+        test.addTestPlan(new FATests_1.FATests());
+        test.addTestPlan(new PDATests_1.PDATests());
         test.runTests();
     });
 });

@@ -54,24 +54,8 @@ all: dirs libs languages machines
 		cp $(JS)/$(JSBASE) $(JS)/$(JSCOMPRESSED); \
 	fi
 
-# tests: dirs libs languages machines
-# 	@echo "[.ts ⟶ .js]"
-# 	@if [ "$(TSTESTFILES)" = "" ]; then \
-# 		touch $(JS)/$(JSTESTS); \
-# 		truncate -s 0 $(JS)/$(JSTESTS); \
-# 	else\
-# 		tsc --removeComments --noImplicitReturns --module amd --outFile $(JS)/$(JSTESTS) $(TSTESTFILES); \
-# 	fi
-
-# 	@if [ "$(COMPRESS)" = "1" ]; then \
-# 		echo "[minifying] $(JS)/$(JSTESTS)"; \
-# 		cp $(JS)/$(JSTESTS) virus; \
-# 		uglifyjs virus --compress --mangle > $(JS)/$(JSTESTS) 2> /dev/null; \
-# 		rm virus; \
-# 	fi
-
-# tests: all
-# 	@cp $(JS)/$(JSCOMPRESSED) $(JS)/$(JSTESTS)
+tests: all
+	@cp $(JS)/$(JSCOMPRESSED) $(JS)/$(JSTESTS)
 
 dirs: | $(CSS) $(JS) $(LIB) $(TS) $(INDEX)
 

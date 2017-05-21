@@ -1,0 +1,61 @@
+body {
+	font-family: arial;
+	font-size: 16px;
+	margin: 8px;
+}
+
+.plan {
+	background-color: #DDD;
+	border: 1px solid black;
+	padding: 8px;
+	margin-bottom: 8px;
+}
+
+.plan_name {
+	font-weight: bold;
+}
+
+.test_case {
+	font-family: monospace;
+}
+
+.test_case .status:before {
+	content: "[";
+}
+
+.test_case .status:after {
+	content: "]";
+}
+
+.test_case .status {
+	display: inline-block;
+}
+
+.test_case .test_name {
+	display: inline-block;
+	margin-left: 10px;
+}
+
+.success {
+	color: green;
+}
+
+.failure {
+	color: red;
+}
+
+.exception {
+	color: red;
+	font-weight: bold;
+}
+
+.summary {
+	border-top: 1px solid black;
+	margin-top: 5px;
+	padding-top: 5px;
+}
+
+ul {
+	margin: 0;
+	padding-left: 20px;
+}
