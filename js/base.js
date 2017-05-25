@@ -2538,7 +2538,12 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.bindEvents();
             this.bindShortcuts();
             this.bindFormalDefinitionListener();
-            System_3.System.addLanguageChangeObserver(this);
+            var self = this;
+            System_3.System.addLanguageChangeObserver({
+                onLanguageChange: function () {
+                    self.bindFormalDefinitionListener();
+                }
+            });
         };
         AutomatonRenderer.prototype.clear = function () {
             for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
@@ -2649,9 +2654,6 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     }
                 });
             }
-        };
-        AutomatonRenderer.prototype.onLanguageChange = function () {
-            this.bindFormalDefinitionListener();
         };
         AutomatonRenderer.prototype.bindFormalDefinitionListener = function () {
             var definitionContainer = null;

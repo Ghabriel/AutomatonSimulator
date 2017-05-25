@@ -147,17 +147,6 @@ export class FA {
 	public transitionIteration(
 		callback: (source: State, target: State, input: string) => void): void {
 
-/*
-	private transitions: {
-		[index: number]: {
-			[input: string]: UnorderedSet<Index>
-		}
-	} = {};
-	private epsilonTransitions: {
-		[index: number]: UnorderedSet<Index>
-	} = {};
-*/
-
 		let self = this;
 		for (let index in this.transitions) {
 			if (this.transitions.hasOwnProperty(index)) {

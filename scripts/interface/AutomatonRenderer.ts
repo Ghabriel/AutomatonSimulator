@@ -98,7 +98,12 @@ export class AutomatonRenderer {
 		this.bindEvents();
 		this.bindShortcuts();
 		this.bindFormalDefinitionListener();
-		System.addLanguageChangeObserver(this);
+		let self = this;
+		System.addLanguageChangeObserver({
+			onLanguageChange: function() {
+				self.bindFormalDefinitionListener();
+			}
+		});
 	}
 
 	public clear(): void {
@@ -235,11 +240,6 @@ export class AutomatonRenderer {
 				}
 			});
 		}
-	}
-
-	// Called when the system language is changed.
-	public onLanguageChange(): void {
-		this.bindFormalDefinitionListener();
 	}
 
 	// TODO: find a better name for this method
