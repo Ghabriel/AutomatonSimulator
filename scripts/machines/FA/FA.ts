@@ -10,7 +10,9 @@ export class FA {
 	// if there are no other states in this FA.
 	public addState(name: State): Index {
 		this.stateList.push(name);
-		let index = this.numStates() - 1;
+		// Cannot use this.numStates() here because
+		// removed states are kept in the list
+		let index = this.stateList.length - 1;
 		this.transitions[index] = {};
 		this.epsilonTransitions[index] = new UnorderedSet<Index>();
 		if (this.initialState == -1) {
@@ -27,7 +29,7 @@ export class FA {
 			let origin = parseInt(originIndex);
 			utils.foreach(transitions, function(input) {
 				if (transitions[input].contains(index)) {
-					this.removeTransition(origin, index, input);
+					self.removeTransition(origin, index, input);
 				}
 
 				if (origin == index) {

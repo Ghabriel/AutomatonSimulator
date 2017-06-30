@@ -159,6 +159,11 @@ export class Prompt {
 
 		let mainbar = utils.id(Settings.mainbarID);
 
+		// This flag avoids buggy behavior when the user triggers
+		// ok/cancel multiple times in the same prompt (e.g by quickly
+		// pressing enter/esc multiple times)
+		let completedInteraction = false;
+
 		let dismiss = function() {
 			// Removes the click blocker from the page
 			document.body.removeChild(blocker);
@@ -177,6 +182,12 @@ export class Prompt {
 			type: "button",
 			value: Strings.PROMPT_CONFIRM,
 			click: function() {
+				if (completedInteraction) {
+					return;
+				}
+
+				completedInteraction = true;
+
 				let contents: string[] = [];
 				for (let input of inputs) {
 					contents.push(input.value);
@@ -190,6 +201,12 @@ export class Prompt {
 			type: "button",
 			value: Strings.PROMPT_CANCEL,
 			click: function() {
+				if (completedInteraction) {
+					return;
+				}
+
+				completedInteraction = true;
+
 				dismiss();
 				if (fail) {
 					fail();
