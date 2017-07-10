@@ -1463,6 +1463,9 @@ define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Key
             var indexOrigin = this.index(origin);
             var indexTarget = this.index(target);
             var edgeText = this.edgeDataToText(data);
+            if (!data[0]) {
+                edgeText = "";
+            }
             this.machine.addTransition(indexOrigin, indexTarget, edgeText);
             this.editingCallback();
         };

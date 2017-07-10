@@ -44,6 +44,10 @@ export class FAController implements Controller {
 		let indexOrigin = this.index(origin);
 		let indexTarget = this.index(target);
 		let edgeText = this.edgeDataToText(data);
+		// Ensures that epsilon transitions are handled properly
+		if (!data[0]) {
+			edgeText = "";
+		}
 		this.machine.addTransition(indexOrigin, indexTarget, edgeText);
 		this.editingCallback();
 	}
