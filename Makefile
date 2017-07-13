@@ -62,12 +62,14 @@ dirs: | $(CSS) $(JS) $(LIB) $(TS) $(INDEX)
 libs: | $(LIBNAMES)
 
 languages:
+	@echo "[languages]"
 	@truncate -s 0 $(LANGLIST)
 	@for file in $(LANGFILES); do \
 		echo "export * from \"../$(LANGFOLDER)/$$file\"" >> $(LANGLIST); \
 	done
 
 machines:
+	@echo "[aux files]"
 	@truncate -s 0 $(CONTROLLERLIST)
 	@truncate -s 0 $(INITLIST)
 	@truncate -s 0 $(MACHINELIST)

@@ -61,10 +61,6 @@ export class Prompt {
 			for (let input of inputs) {
 				let index = input.id.replace(inputIdPrefix, "");
 				let validator = self.inputs[index].validator;
-				console.log(index);
-				console.log(validator.toString());
-				console.log(input.value);
-				console.log("---------------");
 				if (validator && !validator(input.value)) {
 					return false;
 				}
