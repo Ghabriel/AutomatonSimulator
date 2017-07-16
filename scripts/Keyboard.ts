@@ -52,6 +52,7 @@ export namespace Keyboard {
 	export const symbols = {
 		delta: "δ",
 		epsilon: "ε",
+		gamma: "Γ",
 		sigma: "Σ",
 	};
 }

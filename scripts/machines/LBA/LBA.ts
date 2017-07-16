@@ -4,17 +4,27 @@ import {utils} from "../../Utils"
 
 type State = string;
 type Index = number;
+type Alphabet = {[i: string]: number};
+
+enum Direction {
+	LEFT, RIGHT
+}
+
+interface TransitionInformation {
+	state: Index,
+	tapeSymbol: string,
+	direction: Direction
+}
 
 export class LBA {
-	// Adds a state to this FA, marking it as the initial state
-	// if there are no other states in this FA.
+	// Adds a state to this LBA, marking it as the initial state
+	// if there are no other states in this LBA.
 	public addState(name: State): Index {
 		this.stateList.push(name);
 		// Cannot use this.numStates() here because
 		// removed states are kept in the list
-		let index = this.stateList.length - 1;
+		let index = this.realNumStates() - 1;
 		this.transitions[index] = {};
-		this.epsilonTransitions[index] = new UnorderedSet<Index>();
 		if (this.initialState == -1) {
 			this.initialState = index;
 			this.reset();
@@ -22,7 +32,7 @@ export class LBA {
 		return index;
 	}
 
-	// Removes a state from this FA.
+	// Removes a state from this LBA.
 	public removeState(index: Index): void {
 		let self = this;
 		utils.foreach(this.transitions, function(originIndex, transitions) {
@@ -40,64 +50,64 @@ export class LBA {
 			});
 		});
 
-		// TODO: do we really need to remove the state from the state list?
-		// Doing so would require changes to numStates() and possibly
-		// other methods. Maybe replacing it by some kind of "invalid entry"
-		// is a better solution.
 		this.stateList[index] = undefined;
 		this.numRemovedStates++;
 	}
 
-	// Renames a state of this FA.
+	// Renames a state of this LBA.
 	public renameState(index: Index, newName: State): void {
 		this.stateList[index] = newName;
 	}
 
-	// Adds a transition to this FA. An empty input adds an
-	// epsilon-transition.
-	// TODO: maybe create a different method for adding epsilon-transitions?
-	public addTransition(source: Index, target: Index, input: string): void {
+	// Adds a transition to this LBA.
+	public addTransition(source: Index, target: Index, data: string[]): void {
 		let transitions = this.transitions[source];
-		if (input == "") {
-			this.epsilonTransitions[source].insert(target);
-		} else {
-			if (!transitions.hasOwnProperty(input)) {
-				transitions[input] = new UnorderedSet<Index>();
-			}
-			transitions[input].insert(target);
+		let input = data[0];
+		let write = data[1];
+		let direction = this.plainTextToDirection(data[2]);
 
-			if (!this.alphabetSet.hasOwnProperty(input)) {
-				this.alphabetSet[input] = 0;
+		transitions[input] = {
+			state: target,
+			tapeSymbol: write,
+			direction: direction
+		};
+
+		this.addInputSymbol(input);
+		this.addTapeSymbol(write);
+	}
+
+	// Removes a transition from this LBA.
+	public removeTransition(source: Index, target: Index, data: string[]): void {
+		let transitions = this.transitions[source];
+		let input = data[0];
+		let write = data[1];
+		let direction = this.plainTextToDirection(data[2]);
+
+		if (transitions.hasOwnProperty(input)) {
+			let properties = transitions[input];
+			let matches = (properties.state == target);
+			matches = matches && (properties.tapeSymbol == write);
+			matches = matches && (properties.direction == direction);
+
+			if (matches) {
+				delete transitions[input];
+
+				this.removeInputSymbol(input);
+				this.removeTapeSymbol(write);
 			}
-			this.alphabetSet[input]++;
 		}
 	}
 
-	// Removes a transition from this FA. An empty input removes an
-	// epsilon-transition.
-	// TODO: maybe create a different method for removing epsilon-transitions?
-	public removeTransition(source: Index, target: Index, input: string): void {
-		let transitions = this.transitions[source];
-		if (input == "") {
-			this.epsilonTransitions[source].erase(target);
-		} else if (transitions.hasOwnProperty(input)) {
-			transitions[input].erase(target);
-
-			this.alphabetSet[input]--;
-			if (this.alphabetSet[input] == 0) {
-				delete this.alphabetSet[input];
-			}
-		}
-	}
-
-	// Sets the initial state of this FA.
+	// Sets the initial state of this LBA.
+	// TODO: check FA::setInitialState()
+	// TODO: FA::clear() doesn't reset numRemovedStates!
 	public setInitialState(index: Index): void {
-		if (index < this.numStates()) {
+		if (index < this.realNumStates()) {
 			this.initialState = index;
 		}
 	}
 
-	// Unsets the initial state of this FA.
+	// Unsets the initial state of this LBA.
 	public unsetInitialState(): void {
 		this.initialState = -1;
 	}
@@ -127,27 +137,21 @@ export class LBA {
 		return result;
 	}
 
-	// Returns a list containing all the states that this FA is in.
-	public getCurrentStates(): State[] {
-		let result: State[] = [];
-		let self = this;
-		this.currentStates.forEach(function(index) {
-			result.push(self.stateList[index]);
-		});
-		return result;
+	// Returns the current state of this LBA.
+	public getCurrentState(): State {
+		return this.stateList[this.currentState];
 	}
 
-	// Returns a list containing all the states of this FA.
+	// Returns a list containing all the states of this LBA.
 	public getStates(): State[] {
 		return this.stateList.filter(function(value) {
 			return value !== undefined;
 		});
 	}
 
-	// Executes a callback function for every transition (including
-	// epsilon transitions) of this FA.
-	public transitionIteration(
-		callback: (source: State, target: State, input: string) => void): void {
+	// Executes a callback function for every transition of this LBA.
+	public transitionIteration(callback: (source: State,
+		data: TransitionInformation, input: string) => void): void {
 
 		let self = this;
 		for (let index in this.transitions) {
@@ -156,136 +160,158 @@ export class LBA {
 				let stateTransitions = this.transitions[index];
 				for (let input in stateTransitions) {
 					if (stateTransitions.hasOwnProperty(input)) {
-						stateTransitions[input].forEach(function(target: Index) {
-							let targetState = self.stateList[target];
-							callback(sourceState, targetState, input);
-						});
+						callback(sourceState, stateTransitions[input], input);
 					}
 				}
 			}
 		}
-
-		for (let index in this.epsilonTransitions) {
-			if (this.transitions.hasOwnProperty(index)) {
-				let sourceState = self.stateList[index];
-				let stateTransitions = this.epsilonTransitions[index];
-				stateTransitions.forEach(function(target: Index) {
-					let targetState = self.stateList[target];
-					callback(sourceState, targetState, "");
-				});
-			}
-		}
 	}
 
-	// Returns the alphabet of this FA.
-	public alphabet(): string[] {
+	// Returns the input alphabet of this LBA.
+	public getInputAlphabet(): string[] {
 		let result = [];
-		for (let member in this.alphabetSet) {
-			if (this.alphabetSet.hasOwnProperty(member)) {
+		for (let member in this.inputAlphabet) {
+			if (this.inputAlphabet.hasOwnProperty(member)) {
 				result.push(member);
 			}
 		}
 		return result;
 	}
 
-	// Reads a character, triggering state changes to this FA.
-	public read(input: string): void {
-		let newStates = new UnorderedSet<Index>();
-		let self = this;
-		this.currentStates.forEach(function(index) {
-			let output = self.transition(index, input);
-			if (output) {
-				output.forEach(function(state) {
-					newStates.insert(state);
-				});
+	// Returns the input alphabet of this LBA.
+	public getTapeAlphabet(): string[] {
+		let result = [];
+		for (let member in this.tapeAlphabet) {
+			if (this.tapeAlphabet.hasOwnProperty(member)) {
+				result.push(member);
 			}
-		});
-		this.expandSpontaneous(newStates);
-		this.currentStates = newStates;
+		}
+		return result;
 	}
 
-	// Resets this FA, making it return to its initial state.
-	public reset(): void {
-		this.currentStates.clear();
-		if (this.initialState != -1) {
-			this.currentStates.insert(this.initialState);
-			this.expandSpontaneous(this.currentStates);
+	// Reads a character from the tape, triggering state changes to this LBA.
+	public read(): void {
+		if (this.error()) {
+			return;
+		}
+
+		let error = true;
+		let input = this.tape[this.headPosition];
+
+		if (this.transitions.hasOwnProperty(this.currentState + "")) {
+			let transitions = this.transitions[this.currentState];
+			if (transitions.hasOwnProperty(input)) {
+				let info = transitions[input];
+				this.currentState = info.state;
+				this.tape[this.headPosition] = info.tapeSymbol;
+				this.headPosition += this.directionToOffset(info.direction);
+				error = false;
+			}
+		}
+
+		if (error) {
+			// goes to the error state
+			this.currentState = null;
 		}
 	}
 
-	// Clears this FA, making it effectively equal to new FA().
+	// Resets this LBA, making it return to its initial state and
+	// return its head to its initial position.
+	public reset(): void {
+		if (this.initialState == -1) {
+			this.currentState = null;
+		} else {
+			this.currentState = this.initialState;
+		}
+
+		this.headPosition = 0;
+	}
+
+	// Clears this LBA, making it effectively equal to new LBA().
 	public clear(): void {
 		this.stateList = [];
-		this.alphabetSet = {};
+		this.inputAlphabet = {};
+		this.tapeAlphabet = {};
 		this.transitions = {};
-		this.epsilonTransitions = {};
 		this.unsetInitialState();
 		this.finalStates.clear();
-		this.currentStates.clear();
+		this.numRemovedStates = 0;
+		this.currentState = null;
+		this.tape = [];
+		this.headPosition = 0;
 	}
 
-	// Checks if this FA is in an accepting state.
+	// Checks if this LBA is in an accepting state.
 	public accepts(): boolean {
-		let found = false;
-		let self = this;
-		this.finalStates.forEach(function(final) {
-			if (self.currentStates.contains(final)) {
-				found = true;
-				return false;
-			}
-			return true;
-		});
-		return found;
+		return this.finalStates.contains(this.currentState);
 	}
 
-	// Checks if this FA is in an error state, i.e. isn't in any state.
+	// Checks if this LBA is in an error state, i.e. isn't in any state.
 	public error(): boolean {
-		return this.currentStates.size() == 0;
+		return this.currentState === null;
 	}
 
-	// Returns the number of states of this FA.
+	// Returns the number of states of this LBA.
 	public numStates(): number {
 		return this.stateList.length - this.numRemovedStates;
 	}
 
-	// Returns all states that a given state transitions to
-	// with a given input.
-	private transition(state: Index, input: string): UnorderedSet<Index> {
-		return this.transitions[state][input];
+	private plainTextToDirection(input: string): Direction {
+		return Direction.LEFT;
 	}
 
-	// Expands all epsilon-transitions into a given state list.
-	private expandSpontaneous(stateList: UnorderedSet<Index>): void {
-		let queue = new Queue<Index>();
-		stateList.forEach(function(state) {
-			queue.push(state);
-		});
+	private directionToOffset(direction: Direction): number {
+		return (direction == Direction.LEFT) ? -1 : 1;
+	}
 
-		while (!queue.empty()) {
-			let state = queue.pop();
-			let eps = this.epsilonTransitions[state];
-			eps.forEach(function(index) {
-				if (!stateList.contains(index)) {
-					stateList.insert(index);
-					queue.push(index);
-				}
-			});
+	private addSymbol(location: string, symbol: string): void {
+		if (!this[location].hasOwnProperty(symbol)) {
+			this[location][symbol] = 0;
+		}
+		this[location][symbol]++;
+	}
+
+	private addInputSymbol(symbol: string): void {
+		this.addSymbol("inputAlphabet", symbol);
+	}
+
+	private addTapeSymbol(symbol: string): void {
+		this.addSymbol("tapeAlphabet", symbol);
+	}
+
+	public removeSymbol(location: string, symbol: string): void {
+		this[location][symbol]--;
+		if (this[location][symbol] == 0) {
+			delete this[location][symbol];
 		}
 	}
 
-	private stateList: State[] = [];
-	private alphabetSet: {[i: string]: number} = {};
+	private removeInputSymbol(symbol: string): void {
+		this.removeSymbol("inputAlphabet", symbol);
+	}
+
+	private removeTapeSymbol(symbol: string): void {
+		this.removeSymbol("tapeAlphabet", symbol);
+	}
+
+	private realNumStates(): number {
+		return this.stateList.length;
+	}
+
+	private stateList: State[] = []; // Q
+	private inputAlphabet: Alphabet = {}; // sigma
+	private tapeAlphabet: Alphabet = {}; // gamma
 	private transitions: {
 		[index: number]: {
-			[input: string]: UnorderedSet<Index>
+			[input: string]: TransitionInformation
 		}
-	} = {};
-	private epsilonTransitions: {
-		[index: number]: UnorderedSet<Index>
-	} = {};
-	private initialState: Index = -1;
-	private finalStates = new UnorderedSet<Index>();
+	} = {}; // delta (Q x gamma -> Q x gamma x {left, right})
+	private initialState: Index = -1; // q0
+	private finalStates = new UnorderedSet<Index>(); // F
 
 	private numRemovedStates: number = 0;
-	private currentStates = new UnorderedSet<Index>();
+
+	private currentState: Index = null;
+	private tape: string[] = [];
+	private headPosition: number = 0;
 }

@@ -6,6 +6,10 @@ import {State} from "../../interface/State"
 import {Strings} from "../../Settings"
 
 export class LBAController implements Controller {
+	constructor() {
+		this.machine = new LBA();
+	}
+
 	public edgePrompt(callback: (data: string[], text: string) => void,
 					  fallback?: () => void): void {
 		let self = this;
@@ -35,6 +39,7 @@ export class LBAController implements Controller {
 		let epsilon = Keyboard.symbols.epsilon;
 		data[0] = data[0] || epsilon;
 		data[1] = data[1] || epsilon;
+		data[2] = (data[2] == "<") ? "←" : "→";
 		return data[0] + ", " + data[1] + ", " + data[2];
 	}
 
@@ -57,12 +62,7 @@ export class LBAController implements Controller {
 	public createEdge(origin: State, target: State, data: string[]): void {
 		let indexOrigin = this.index(origin);
 		let indexTarget = this.index(target);
-		let edgeText = this.edgeDataToText(data);
-		// Ensures that epsilon transitions are handled properly
-		if (!data[0]) {
-			edgeText = "";
-		}
-		this.machine.addTransition(indexOrigin, indexTarget, edgeText);
+		this.machine.addTransition(indexOrigin, indexTarget, data);
 		this.editingCallback();
 	}
 
@@ -103,8 +103,7 @@ export class LBAController implements Controller {
 	public deleteEdge(origin: State, target: State, data: string[]): void {
 		let indexOrigin = this.index(origin);
 		let indexTarget = this.index(target);
-		let edgeText = this.edgeDataToText(data);
-		this.machine.removeTransition(indexOrigin, indexTarget, edgeText);
+		this.machine.removeTransition(indexOrigin, indexTarget, data);
 		this.editingCallback();
 	}
 
@@ -122,7 +121,29 @@ export class LBAController implements Controller {
 
 	public currentStates(): string[] { return []; }
 	public accepts(): boolean { return false; }
-	public formalDefinition(): FormalDefinition { return null; }
+	public formalDefinition(): FormalDefinition {
+		let machine = this.machine;
+		let delta = Keyboard.symbols.delta;
+		let gamma = Keyboard.symbols.gamma;
+		let sigma = Keyboard.symbols.sigma;
+		let result: FormalDefinition = {
+			tupleSequence: ["Q", sigma, gamma, delta, "q0", "B", "F"],
+			parameterSequence: ["Q", sigma, gamma, "q0", "B", "F", delta],
+			parameterValues: {}
+		};
+
+		let values = result.parameterValues;
+		values["Q"] = machine.getStates();
+		values[sigma] = machine.getInputAlphabet();
+		values[gamma] = machine.getTapeAlphabet();
+		// values[delta] = this.transitionTable();
+		values[delta] = {}; // TODO
+		values["q0"] = machine.getInitialState();
+		values["B"] = "TODO";
+		values["F"] = machine.getAcceptingStates();
+
+		return result;
+	}
 
 	public setEditingCallback(callback: () => void): void {
 		this.editingCallback = callback;

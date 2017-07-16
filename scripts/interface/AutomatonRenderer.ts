@@ -296,7 +296,7 @@ export class AutomatonRenderer {
 						content += "</span>";
 					}
 				} else {
-					content += "unspecified type (AutomatonRenderer:266)";
+					content += "unspecified type (AutomatonRenderer:299)";
 				}
 				content += "<br>";
 			}

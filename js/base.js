@@ -3,566 +3,6 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-define("datastructures/Queue", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var Queue = (function () {
-        function Queue() {
-            this.data = [];
-            this.pointer = 0;
-        }
-        Queue.prototype.push = function (value) {
-            this.data.push(value);
-        };
-        Queue.prototype.front = function () {
-            return this.data[this.pointer];
-        };
-        Queue.prototype.pop = function () {
-            var result = this.front();
-            this.pointer++;
-            if (this.pointer >= this.size() / 2) {
-                this.data = this.data.slice(this.pointer);
-                this.pointer = 0;
-            }
-            return result;
-        };
-        Queue.prototype.clear = function () {
-            this.data = [];
-            this.pointer = 0;
-        };
-        Queue.prototype.empty = function () {
-            return this.size() == 0;
-        };
-        Queue.prototype.size = function () {
-            return this.data.length - this.pointer;
-        };
-        return Queue;
-    }());
-    exports.Queue = Queue;
-});
-define("datastructures/UnorderedSet", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var UnorderedSet = (function () {
-        function UnorderedSet() {
-            this.data = {};
-            this.count = 0;
-        }
-        UnorderedSet.prototype.insert = function (value) {
-            if (!this.contains(value)) {
-                this.count++;
-            }
-            this.data[value] = true;
-            this.type = typeof value;
-        };
-        UnorderedSet.prototype.erase = function (value) {
-            if (this.contains(value)) {
-                this.count--;
-            }
-            delete this.data[value];
-        };
-        UnorderedSet.prototype.contains = function (value) {
-            return !!this.data[value];
-        };
-        UnorderedSet.prototype.clear = function () {
-            this.data = {};
-            this.count = 0;
-        };
-        UnorderedSet.prototype.empty = function () {
-            return this.size() == 0;
-        };
-        UnorderedSet.prototype.size = function () {
-            return this.count;
-        };
-        UnorderedSet.prototype.forEach = function (callback) {
-            for (var value in this.data) {
-                if (this.data.hasOwnProperty(value)) {
-                    var val = value;
-                    if (this.type == "number") {
-                        val = parseFloat(value);
-                    }
-                    if (callback(val) === false) {
-                        break;
-                    }
-                }
-            }
-        };
-        UnorderedSet.prototype.asList = function () {
-            var result = [];
-            this.forEach(function (value) {
-                result.push(value);
-            });
-            return result;
-        };
-        return UnorderedSet;
-    }());
-    exports.UnorderedSet = UnorderedSet;
-});
-define("Utils", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var utils;
-    (function (utils) {
-        function select(selector) {
-            return document.querySelector(selector);
-        }
-        utils.select = select;
-        function id(selector) {
-            return select("#" + selector);
-        }
-        utils.id = id;
-        function create(tag, props) {
-            var result = document.createElement(tag);
-            if (props) {
-                this.foreach(props, function (key, value) {
-                    if (key == "click") {
-                        result.addEventListener("click", value);
-                    }
-                    else {
-                        result[key] = value;
-                    }
-                });
-            }
-            return result;
-        }
-        utils.create = create;
-        function foreach(obj, callback) {
-            for (var i in obj) {
-                if (obj.hasOwnProperty(i)) {
-                    if (callback(i, obj[i]) === false) {
-                        break;
-                    }
-                }
-            }
-        }
-        utils.foreach = foreach;
-        function isRightClick(event) {
-            if ("which" in event) {
-                return event.which == 3;
-            }
-            else if ("button" in event) {
-                return event.button == 2;
-            }
-            console.log("[WARNING] Right click events will not work properly in this browser.");
-            return false;
-        }
-        utils.isRightClick = isRightClick;
-        function linePath(x1, y1, x2, y2) {
-            return "M" + x1 + " " + y1 + " L" + x2 + " " + y2;
-        }
-        utils.linePath = linePath;
-        function line(canvas, x1, y1, x2, y2) {
-            var line = canvas.path(this.linePath(x1, y1, x2, y2));
-            line.attr("stroke", "black");
-            return line;
-        }
-        utils.line = line;
-        function toRadians(angle) {
-            return angle * Math.PI / 180;
-        }
-        utils.toRadians = toRadians;
-        function toDegrees(angle) {
-            return angle * 180 / Math.PI;
-        }
-        utils.toDegrees = toDegrees;
-        function rotatePoint(point, center, angle) {
-            var sin = Math.sin(angle);
-            var cos = Math.cos(angle);
-            var copy = {
-                x: point.x,
-                y: point.y
-            };
-            copy.x -= center.x;
-            copy.y -= center.y;
-            var result = {
-                x: copy.x * cos - copy.y * sin,
-                y: copy.x * sin + copy.y * cos
-            };
-            return {
-                x: result.x + center.x,
-                y: result.y + center.y
-            };
-        }
-        utils.rotatePoint = rotatePoint;
-        function samePoint(p1, p2) {
-            return p1 && p2 && p1.x == p2.x && p1.y == p2.y;
-        }
-        utils.samePoint = samePoint;
-        function async(callback) {
-            setTimeout(callback, 0);
-        }
-        utils.async = async;
-        function printShortcut(keys) {
-            return keys.join(" ").toLowerCase();
-        }
-        utils.printShortcut = printShortcut;
-    })(utils = exports.utils || (exports.utils = {}));
-});
-define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastructures/UnorderedSet", "Utils"], function (require, exports, Queue_1, UnorderedSet_1, Utils_1) {
-    "use strict";
-    var FA = (function () {
-        function FA() {
-            this.stateList = [];
-            this.alphabetSet = {};
-            this.transitions = {};
-            this.epsilonTransitions = {};
-            this.initialState = -1;
-            this.finalStates = new UnorderedSet_1.UnorderedSet();
-            this.numRemovedStates = 0;
-            this.currentStates = new UnorderedSet_1.UnorderedSet();
-        }
-        FA.prototype.addState = function (name) {
-            this.stateList.push(name);
-            var index = this.stateList.length - 1;
-            this.transitions[index] = {};
-            this.epsilonTransitions[index] = new UnorderedSet_1.UnorderedSet();
-            if (this.initialState == -1) {
-                this.initialState = index;
-                this.reset();
-            }
-            return index;
-        };
-        FA.prototype.removeState = function (index) {
-            var self = this;
-            Utils_1.utils.foreach(this.transitions, function (originIndex, transitions) {
-                var origin = parseInt(originIndex);
-                Utils_1.utils.foreach(transitions, function (input) {
-                    if (transitions[input].contains(index)) {
-                        self.removeTransition(origin, index, input);
-                    }
-                    if (origin == index) {
-                        transitions[input].forEach(function (target) {
-                            self.removeTransition(index, target, input);
-                        });
-                    }
-                });
-            });
-            this.stateList[index] = undefined;
-            this.numRemovedStates++;
-        };
-        FA.prototype.renameState = function (index, newName) {
-            this.stateList[index] = newName;
-        };
-        FA.prototype.addTransition = function (source, target, input) {
-            var transitions = this.transitions[source];
-            if (input == "") {
-                this.epsilonTransitions[source].insert(target);
-            }
-            else {
-                if (!transitions.hasOwnProperty(input)) {
-                    transitions[input] = new UnorderedSet_1.UnorderedSet();
-                }
-                transitions[input].insert(target);
-                if (!this.alphabetSet.hasOwnProperty(input)) {
-                    this.alphabetSet[input] = 0;
-                }
-                this.alphabetSet[input]++;
-            }
-        };
-        FA.prototype.removeTransition = function (source, target, input) {
-            var transitions = this.transitions[source];
-            if (input == "") {
-                this.epsilonTransitions[source].erase(target);
-            }
-            else if (transitions.hasOwnProperty(input)) {
-                transitions[input].erase(target);
-                this.alphabetSet[input]--;
-                if (this.alphabetSet[input] == 0) {
-                    delete this.alphabetSet[input];
-                }
-            }
-        };
-        FA.prototype.setInitialState = function (index) {
-            if (index < this.numStates()) {
-                this.initialState = index;
-            }
-        };
-        FA.prototype.unsetInitialState = function () {
-            this.initialState = -1;
-        };
-        FA.prototype.getInitialState = function () {
-            return this.stateList[this.initialState];
-        };
-        FA.prototype.addAcceptingState = function (index) {
-            this.finalStates.insert(index);
-        };
-        FA.prototype.removeAcceptingState = function (index) {
-            this.finalStates.erase(index);
-        };
-        FA.prototype.getAcceptingStates = function () {
-            var result = [];
-            var self = this;
-            this.finalStates.forEach(function (index) {
-                result.push(self.stateList[index]);
-            });
-            return result;
-        };
-        FA.prototype.getCurrentStates = function () {
-            var result = [];
-            var self = this;
-            this.currentStates.forEach(function (index) {
-                result.push(self.stateList[index]);
-            });
-            return result;
-        };
-        FA.prototype.getStates = function () {
-            return this.stateList.filter(function (value) {
-                return value !== undefined;
-            });
-        };
-        FA.prototype.transitionIteration = function (callback) {
-            var self = this;
-            var _loop_1 = function(index) {
-                if (this_1.transitions.hasOwnProperty(index)) {
-                    var sourceState_1 = self.stateList[index];
-                    var stateTransitions = this_1.transitions[index];
-                    var _loop_2 = function(input) {
-                        if (stateTransitions.hasOwnProperty(input)) {
-                            stateTransitions[input].forEach(function (target) {
-                                var targetState = self.stateList[target];
-                                callback(sourceState_1, targetState, input);
-                            });
-                        }
-                    };
-                    for (var input in stateTransitions) {
-                        _loop_2(input);
-                    }
-                }
-            };
-            var this_1 = this;
-            for (var index in this.transitions) {
-                _loop_1(index);
-            }
-            var _loop_3 = function(index) {
-                if (this_2.transitions.hasOwnProperty(index)) {
-                    var sourceState_2 = self.stateList[index];
-                    var stateTransitions = this_2.epsilonTransitions[index];
-                    stateTransitions.forEach(function (target) {
-                        var targetState = self.stateList[target];
-                        callback(sourceState_2, targetState, "");
-                    });
-                }
-            };
-            var this_2 = this;
-            for (var index in this.epsilonTransitions) {
-                _loop_3(index);
-            }
-        };
-        FA.prototype.alphabet = function () {
-            var result = [];
-            for (var member in this.alphabetSet) {
-                if (this.alphabetSet.hasOwnProperty(member)) {
-                    result.push(member);
-                }
-            }
-            return result;
-        };
-        FA.prototype.read = function (input) {
-            var newStates = new UnorderedSet_1.UnorderedSet();
-            var self = this;
-            this.currentStates.forEach(function (index) {
-                var output = self.transition(index, input);
-                if (output) {
-                    output.forEach(function (state) {
-                        newStates.insert(state);
-                    });
-                }
-            });
-            this.expandSpontaneous(newStates);
-            this.currentStates = newStates;
-        };
-        FA.prototype.reset = function () {
-            this.currentStates.clear();
-            if (this.initialState != -1) {
-                this.currentStates.insert(this.initialState);
-                this.expandSpontaneous(this.currentStates);
-            }
-        };
-        FA.prototype.clear = function () {
-            this.stateList = [];
-            this.alphabetSet = {};
-            this.transitions = {};
-            this.epsilonTransitions = {};
-            this.unsetInitialState();
-            this.finalStates.clear();
-            this.currentStates.clear();
-        };
-        FA.prototype.accepts = function () {
-            var found = false;
-            var self = this;
-            this.finalStates.forEach(function (final) {
-                if (self.currentStates.contains(final)) {
-                    found = true;
-                    return false;
-                }
-                return true;
-            });
-            return found;
-        };
-        FA.prototype.error = function () {
-            return this.currentStates.size() == 0;
-        };
-        FA.prototype.numStates = function () {
-            return this.stateList.length - this.numRemovedStates;
-        };
-        FA.prototype.transition = function (state, input) {
-            return this.transitions[state][input];
-        };
-        FA.prototype.expandSpontaneous = function (stateList) {
-            var queue = new Queue_1.Queue();
-            stateList.forEach(function (state) {
-                queue.push(state);
-            });
-            while (!queue.empty()) {
-                var state = queue.pop();
-                var eps = this.epsilonTransitions[state];
-                eps.forEach(function (index) {
-                    if (!stateList.contains(index)) {
-                        stateList.insert(index);
-                        queue.push(index);
-                    }
-                });
-            }
-        };
-        return FA;
-    }());
-    exports.FA = FA;
-});
-define("tests/Test", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var Test = (function () {
-        function Test(target) {
-            this.testPlans = [];
-            this.targetNode = target;
-        }
-        Test.prototype.addTestPlan = function (plan) {
-            this.testPlans.push(plan);
-        };
-        Test.prototype.runTests = function () {
-            var output = "";
-            for (var _i = 0, _a = this.testPlans; _i < _a.length; _i++) {
-                var plan = _a[_i];
-                var planName = plan.planName();
-                var testNames = plan.testNames();
-                var stats = {
-                    success: 0,
-                    failure: 0,
-                    exceptions: 0
-                };
-                output += "<div class='plan'>";
-                output += "<div class='plan_name'>" + planName + "</div>";
-                for (var _b = 0, testNames_1 = testNames; _b < testNames_1.length; _b++) {
-                    var method = testNames_1[_b];
-                    var status_1 = void 0;
-                    var className = void 0;
-                    try {
-                        if (plan[method]()) {
-                            status_1 = " OK ";
-                            className = "success";
-                            stats.success++;
-                        }
-                        else {
-                            status_1 = "FAIL";
-                            className = "failure";
-                            stats.failure++;
-                        }
-                    }
-                    catch (e) {
-                        status_1 = "EXCP";
-                        className = "exception";
-                        stats.exceptions++;
-                    }
-                    output += "<div class='test_case'>";
-                    output += "<div class='status " + className + "'>";
-                    output += status_1;
-                    output += "</div>";
-                    output += "<div class='test_name'>" + method + "</div>";
-                    output += "</div>";
-                }
-                output += "<div class='summary'>";
-                if (stats.failure == 0 && stats.exceptions == 0) {
-                    output += "<div class='success'>All tests passed.</div>";
-                }
-                else {
-                    var numTests = testNames.length;
-                    var successRate = ((stats.success / numTests) * 100).toFixed(2);
-                    var failureRate = ((stats.failure / numTests) * 100).toFixed(2);
-                    var excpRate = ((stats.exceptions / numTests) * 100).toFixed(2);
-                    var parts = [];
-                    parts.push(stats.success + " test(s) passed (" +
-                        successRate + "%)");
-                    if (stats.failure > 0) {
-                        parts.push(stats.failure + " test(s) failed (" +
-                            failureRate + "%)");
-                    }
-                    if (stats.exceptions > 0) {
-                        parts.push(stats.exceptions +
-                            " test(s) resulted in exceptions (" + excpRate + "%)");
-                    }
-                    output += "<div class='failure'>Test plan failed.</div>";
-                    output += "<ul>";
-                    output += "<li>" + parts.join("</li><li>") + "</li>";
-                    output += "</ul>";
-                }
-                output += "</div>";
-                output += "</div>";
-            }
-            this.targetNode.innerHTML += output;
-        };
-        return Test;
-    }());
-    exports.Test = Test;
-});
-define("tests/FATests", ["require", "exports", "machines/FA/FA"], function (require, exports, FA_1) {
-    "use strict";
-    var FATests = (function () {
-        function FATests() {
-        }
-        FATests.prototype.planName = function () {
-            return "FA";
-        };
-        FATests.prototype.testNames = function () {
-            return ["something"];
-        };
-        FATests.prototype.something = function () {
-            var fa = new FA_1.FA();
-            return fa.error();
-        };
-        return FATests;
-    }());
-    exports.FATests = FATests;
-});
-define("tests/PDATests", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var PDATests = (function () {
-        function PDATests() {
-        }
-        PDATests.prototype.planName = function () {
-            return "PDA";
-        };
-        PDATests.prototype.testNames = function () {
-            return ["example1", "example2", "example3"];
-        };
-        PDATests.prototype.example1 = function () {
-            return false;
-        };
-        PDATests.prototype.example2 = function () {
-            return true;
-        };
-        PDATests.prototype.example3 = function () {
-            throw 42;
-        };
-        return PDATests;
-    }());
-    exports.PDATests = PDATests;
-});
-define("tests", ["require", "exports", "tests/FATests", "tests/PDATests", "tests/Test"], function (require, exports, FATests_1, PDATests_1, Test_1) {
-    "use strict";
-    $(document).ready(function () {
-        var container = document.getElementById("container");
-        var test = new Test_1.Test(container);
-        test.addTestPlan(new FATests_1.FATests());
-        test.addTestPlan(new PDATests_1.PDATests());
-        test.runTests();
-    });
-});
 define("languages/Portuguese", ["require", "exports"], function (require, exports) {
     "use strict";
     var portuguese;
@@ -788,7 +228,106 @@ define("interface/Renderer", ["require", "exports"], function (require, exports)
 define("StatePalette", ["require", "exports"], function (require, exports) {
     "use strict";
 });
-define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"], function (require, exports, Browser_1, Settings_1, Utils_2) {
+define("Utils", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var utils;
+    (function (utils) {
+        function select(selector) {
+            return document.querySelector(selector);
+        }
+        utils.select = select;
+        function id(selector) {
+            return select("#" + selector);
+        }
+        utils.id = id;
+        function create(tag, props) {
+            var result = document.createElement(tag);
+            if (props) {
+                this.foreach(props, function (key, value) {
+                    if (key == "click") {
+                        result.addEventListener("click", value);
+                    }
+                    else {
+                        result[key] = value;
+                    }
+                });
+            }
+            return result;
+        }
+        utils.create = create;
+        function foreach(obj, callback) {
+            for (var i in obj) {
+                if (obj.hasOwnProperty(i)) {
+                    if (callback(i, obj[i]) === false) {
+                        break;
+                    }
+                }
+            }
+        }
+        utils.foreach = foreach;
+        function isRightClick(event) {
+            if ("which" in event) {
+                return event.which == 3;
+            }
+            else if ("button" in event) {
+                return event.button == 2;
+            }
+            console.log("[WARNING] Right click events will not work properly in this browser.");
+            return false;
+        }
+        utils.isRightClick = isRightClick;
+        function linePath(x1, y1, x2, y2) {
+            return "M" + x1 + " " + y1 + " L" + x2 + " " + y2;
+        }
+        utils.linePath = linePath;
+        function line(canvas, x1, y1, x2, y2) {
+            var line = canvas.path(this.linePath(x1, y1, x2, y2));
+            line.attr("stroke", "black");
+            return line;
+        }
+        utils.line = line;
+        function toRadians(angle) {
+            return angle * Math.PI / 180;
+        }
+        utils.toRadians = toRadians;
+        function toDegrees(angle) {
+            return angle * 180 / Math.PI;
+        }
+        utils.toDegrees = toDegrees;
+        function rotatePoint(point, center, angle) {
+            var sin = Math.sin(angle);
+            var cos = Math.cos(angle);
+            var copy = {
+                x: point.x,
+                y: point.y
+            };
+            copy.x -= center.x;
+            copy.y -= center.y;
+            var result = {
+                x: copy.x * cos - copy.y * sin,
+                y: copy.x * sin + copy.y * cos
+            };
+            return {
+                x: result.x + center.x,
+                y: result.y + center.y
+            };
+        }
+        utils.rotatePoint = rotatePoint;
+        function samePoint(p1, p2) {
+            return p1 && p2 && p1.x == p2.x && p1.y == p2.y;
+        }
+        utils.samePoint = samePoint;
+        function async(callback) {
+            setTimeout(callback, 0);
+        }
+        utils.async = async;
+        function printShortcut(keys) {
+            return keys.join(" ").toLowerCase();
+        }
+        utils.printShortcut = printShortcut;
+    })(utils = exports.utils || (exports.utils = {}));
+});
+define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"], function (require, exports, Browser_1, Settings_1, Utils_1) {
     "use strict";
     var State = (function () {
         function State() {
@@ -959,8 +498,8 @@ define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"]
                 y: y
             };
             var target = { x: x, y: y };
-            var p1 = Utils_2.utils.rotatePoint(ref, target, alpha);
-            var p2 = Utils_2.utils.rotatePoint(ref, target, -alpha);
+            var p1 = Utils_1.utils.rotatePoint(ref, target, alpha);
+            var p2 = Utils_1.utils.rotatePoint(ref, target, -alpha);
             this.initialMarkOffsets = [
                 {
                     x: p1.x - x,
@@ -982,26 +521,26 @@ define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"]
                     var body = parts[0];
                     var topLine = parts[1];
                     var bottomLine = parts[2];
-                    body.attr("path", Utils_2.utils.linePath(x - length_1, y, x, y));
+                    body.attr("path", Utils_1.utils.linePath(x - length_1, y, x, y));
                     this.updateInitialMarkOffsets();
                     var topOffsets = this.initialMarkOffsets[0];
                     var botOffsets = this.initialMarkOffsets[1];
-                    topLine.attr("path", Utils_2.utils.linePath(topOffsets.x + x, topOffsets.y + y, x, y));
-                    bottomLine.attr("path", Utils_2.utils.linePath(botOffsets.x + x, botOffsets.y + y, x, y));
+                    topLine.attr("path", Utils_1.utils.linePath(topOffsets.x + x, topOffsets.y + y, x, y));
+                    bottomLine.attr("path", Utils_1.utils.linePath(botOffsets.x + x, botOffsets.y + y, x, y));
                 }
                 else {
                     var strokeColor = Settings_1.Settings.stateInitialMarkColor;
                     var strokeWidth = Settings_1.Settings.stateInitialMarkThickness;
-                    var body = Utils_2.utils.line(canvas, x - length_1, y, x, y);
+                    var body = Utils_1.utils.line(canvas, x - length_1, y, x, y);
                     body.attr("stroke", strokeColor);
                     body.attr("stroke-width", strokeWidth);
                     this.updateInitialMarkOffsets();
                     var topOffsets = this.initialMarkOffsets[0];
                     var botOffsets = this.initialMarkOffsets[1];
-                    var topLine = Utils_2.utils.line(canvas, topOffsets.x + x, topOffsets.y + y, x, y);
+                    var topLine = Utils_1.utils.line(canvas, topOffsets.x + x, topOffsets.y + y, x, y);
                     topLine.attr("stroke", strokeColor);
                     topLine.attr("stroke-width", strokeWidth);
-                    var bottomLine = Utils_2.utils.line(canvas, botOffsets.x + x, botOffsets.y + y, x, y);
+                    var bottomLine = Utils_1.utils.line(canvas, botOffsets.x + x, botOffsets.y + y, x, y);
                     bottomLine.attr("stroke", strokeColor);
                     bottomLine.attr("stroke-width", strokeWidth);
                     var parts = this.arrowParts;
@@ -1075,6 +614,329 @@ define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"]
 define("Controller", ["require", "exports"], function (require, exports) {
     "use strict";
 });
+define("datastructures/Queue", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var Queue = (function () {
+        function Queue() {
+            this.data = [];
+            this.pointer = 0;
+        }
+        Queue.prototype.push = function (value) {
+            this.data.push(value);
+        };
+        Queue.prototype.front = function () {
+            return this.data[this.pointer];
+        };
+        Queue.prototype.pop = function () {
+            var result = this.front();
+            this.pointer++;
+            if (this.pointer >= this.size() / 2) {
+                this.data = this.data.slice(this.pointer);
+                this.pointer = 0;
+            }
+            return result;
+        };
+        Queue.prototype.clear = function () {
+            this.data = [];
+            this.pointer = 0;
+        };
+        Queue.prototype.empty = function () {
+            return this.size() == 0;
+        };
+        Queue.prototype.size = function () {
+            return this.data.length - this.pointer;
+        };
+        return Queue;
+    }());
+    exports.Queue = Queue;
+});
+define("datastructures/UnorderedSet", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var UnorderedSet = (function () {
+        function UnorderedSet() {
+            this.data = {};
+            this.count = 0;
+        }
+        UnorderedSet.prototype.insert = function (value) {
+            if (!this.contains(value)) {
+                this.count++;
+            }
+            this.data[value] = true;
+            this.type = typeof value;
+        };
+        UnorderedSet.prototype.erase = function (value) {
+            if (this.contains(value)) {
+                this.count--;
+            }
+            delete this.data[value];
+        };
+        UnorderedSet.prototype.contains = function (value) {
+            return !!this.data[value];
+        };
+        UnorderedSet.prototype.clear = function () {
+            this.data = {};
+            this.count = 0;
+        };
+        UnorderedSet.prototype.empty = function () {
+            return this.size() == 0;
+        };
+        UnorderedSet.prototype.size = function () {
+            return this.count;
+        };
+        UnorderedSet.prototype.forEach = function (callback) {
+            for (var value in this.data) {
+                if (this.data.hasOwnProperty(value)) {
+                    var val = value;
+                    if (this.type == "number") {
+                        val = parseFloat(value);
+                    }
+                    if (callback(val) === false) {
+                        break;
+                    }
+                }
+            }
+        };
+        UnorderedSet.prototype.asList = function () {
+            var result = [];
+            this.forEach(function (value) {
+                result.push(value);
+            });
+            return result;
+        };
+        return UnorderedSet;
+    }());
+    exports.UnorderedSet = UnorderedSet;
+});
+define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastructures/UnorderedSet", "Utils"], function (require, exports, Queue_1, UnorderedSet_1, Utils_2) {
+    "use strict";
+    var FA = (function () {
+        function FA() {
+            this.stateList = [];
+            this.alphabetSet = {};
+            this.transitions = {};
+            this.epsilonTransitions = {};
+            this.initialState = -1;
+            this.finalStates = new UnorderedSet_1.UnorderedSet();
+            this.numRemovedStates = 0;
+            this.currentStates = new UnorderedSet_1.UnorderedSet();
+        }
+        FA.prototype.addState = function (name) {
+            this.stateList.push(name);
+            var index = this.stateList.length - 1;
+            this.transitions[index] = {};
+            this.epsilonTransitions[index] = new UnorderedSet_1.UnorderedSet();
+            if (this.initialState == -1) {
+                this.initialState = index;
+                this.reset();
+            }
+            return index;
+        };
+        FA.prototype.removeState = function (index) {
+            var self = this;
+            Utils_2.utils.foreach(this.transitions, function (originIndex, transitions) {
+                var origin = parseInt(originIndex);
+                Utils_2.utils.foreach(transitions, function (input) {
+                    if (transitions[input].contains(index)) {
+                        self.removeTransition(origin, index, input);
+                    }
+                    if (origin == index) {
+                        transitions[input].forEach(function (target) {
+                            self.removeTransition(index, target, input);
+                        });
+                    }
+                });
+            });
+            this.stateList[index] = undefined;
+            this.numRemovedStates++;
+        };
+        FA.prototype.renameState = function (index, newName) {
+            this.stateList[index] = newName;
+        };
+        FA.prototype.addTransition = function (source, target, input) {
+            var transitions = this.transitions[source];
+            if (input == "") {
+                this.epsilonTransitions[source].insert(target);
+            }
+            else {
+                if (!transitions.hasOwnProperty(input)) {
+                    transitions[input] = new UnorderedSet_1.UnorderedSet();
+                }
+                transitions[input].insert(target);
+                if (!this.alphabetSet.hasOwnProperty(input)) {
+                    this.alphabetSet[input] = 0;
+                }
+                this.alphabetSet[input]++;
+            }
+        };
+        FA.prototype.removeTransition = function (source, target, input) {
+            var transitions = this.transitions[source];
+            if (input == "") {
+                this.epsilonTransitions[source].erase(target);
+            }
+            else if (transitions.hasOwnProperty(input)) {
+                transitions[input].erase(target);
+                this.alphabetSet[input]--;
+                if (this.alphabetSet[input] == 0) {
+                    delete this.alphabetSet[input];
+                }
+            }
+        };
+        FA.prototype.setInitialState = function (index) {
+            if (index < this.numStates()) {
+                this.initialState = index;
+            }
+        };
+        FA.prototype.unsetInitialState = function () {
+            this.initialState = -1;
+        };
+        FA.prototype.getInitialState = function () {
+            return this.stateList[this.initialState];
+        };
+        FA.prototype.addAcceptingState = function (index) {
+            this.finalStates.insert(index);
+        };
+        FA.prototype.removeAcceptingState = function (index) {
+            this.finalStates.erase(index);
+        };
+        FA.prototype.getAcceptingStates = function () {
+            var result = [];
+            var self = this;
+            this.finalStates.forEach(function (index) {
+                result.push(self.stateList[index]);
+            });
+            return result;
+        };
+        FA.prototype.getCurrentStates = function () {
+            var result = [];
+            var self = this;
+            this.currentStates.forEach(function (index) {
+                result.push(self.stateList[index]);
+            });
+            return result;
+        };
+        FA.prototype.getStates = function () {
+            return this.stateList.filter(function (value) {
+                return value !== undefined;
+            });
+        };
+        FA.prototype.transitionIteration = function (callback) {
+            var self = this;
+            var _loop_1 = function(index) {
+                if (this_1.transitions.hasOwnProperty(index)) {
+                    var sourceState_1 = self.stateList[index];
+                    var stateTransitions = this_1.transitions[index];
+                    var _loop_2 = function(input) {
+                        if (stateTransitions.hasOwnProperty(input)) {
+                            stateTransitions[input].forEach(function (target) {
+                                var targetState = self.stateList[target];
+                                callback(sourceState_1, targetState, input);
+                            });
+                        }
+                    };
+                    for (var input in stateTransitions) {
+                        _loop_2(input);
+                    }
+                }
+            };
+            var this_1 = this;
+            for (var index in this.transitions) {
+                _loop_1(index);
+            }
+            var _loop_3 = function(index) {
+                if (this_2.transitions.hasOwnProperty(index)) {
+                    var sourceState_2 = self.stateList[index];
+                    var stateTransitions = this_2.epsilonTransitions[index];
+                    stateTransitions.forEach(function (target) {
+                        var targetState = self.stateList[target];
+                        callback(sourceState_2, targetState, "");
+                    });
+                }
+            };
+            var this_2 = this;
+            for (var index in this.epsilonTransitions) {
+                _loop_3(index);
+            }
+        };
+        FA.prototype.alphabet = function () {
+            var result = [];
+            for (var member in this.alphabetSet) {
+                if (this.alphabetSet.hasOwnProperty(member)) {
+                    result.push(member);
+                }
+            }
+            return result;
+        };
+        FA.prototype.read = function (input) {
+            var newStates = new UnorderedSet_1.UnorderedSet();
+            var self = this;
+            this.currentStates.forEach(function (index) {
+                var output = self.transition(index, input);
+                if (output) {
+                    output.forEach(function (state) {
+                        newStates.insert(state);
+                    });
+                }
+            });
+            this.expandSpontaneous(newStates);
+            this.currentStates = newStates;
+        };
+        FA.prototype.reset = function () {
+            this.currentStates.clear();
+            if (this.initialState != -1) {
+                this.currentStates.insert(this.initialState);
+                this.expandSpontaneous(this.currentStates);
+            }
+        };
+        FA.prototype.clear = function () {
+            this.stateList = [];
+            this.alphabetSet = {};
+            this.transitions = {};
+            this.epsilonTransitions = {};
+            this.unsetInitialState();
+            this.finalStates.clear();
+            this.currentStates.clear();
+        };
+        FA.prototype.accepts = function () {
+            var found = false;
+            var self = this;
+            this.finalStates.forEach(function (final) {
+                if (self.currentStates.contains(final)) {
+                    found = true;
+                    return false;
+                }
+                return true;
+            });
+            return found;
+        };
+        FA.prototype.error = function () {
+            return this.currentStates.size() == 0;
+        };
+        FA.prototype.numStates = function () {
+            return this.stateList.length - this.numRemovedStates;
+        };
+        FA.prototype.transition = function (state, input) {
+            return this.transitions[state][input];
+        };
+        FA.prototype.expandSpontaneous = function (stateList) {
+            var queue = new Queue_1.Queue();
+            stateList.forEach(function (state) {
+                queue.push(state);
+            });
+            while (!queue.empty()) {
+                var state = queue.pop();
+                var eps = this.epsilonTransitions[state];
+                eps.forEach(function (index) {
+                    if (!stateList.contains(index)) {
+                        stateList.insert(index);
+                        queue.push(index);
+                    }
+                });
+            }
+        };
+        return FA;
+    }());
+    exports.FA = FA;
+});
 define("Keyboard", ["require", "exports"], function (require, exports) {
     "use strict";
     var Keyboard;
@@ -1131,6 +993,7 @@ define("Keyboard", ["require", "exports"], function (require, exports) {
         Keyboard.symbols = {
             delta: "δ",
             epsilon: "ε",
+            gamma: "Γ",
             sigma: "Σ"
         };
     })(Keyboard = exports.Keyboard || (exports.Keyboard = {}));
@@ -1432,14 +1295,14 @@ define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils
     }());
     exports.Prompt = Prompt;
 });
-define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Keyboard", "Prompt", "Settings"], function (require, exports, FA_2, Keyboard_3, Prompt_1, Settings_4) {
+define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Keyboard", "Prompt", "Settings"], function (require, exports, FA_1, Keyboard_3, Prompt_1, Settings_4) {
     "use strict";
     var FAController = (function () {
         function FAController() {
             this.stateMapping = {};
             this.stepIndex = -1;
             this.editingCallback = function () { };
-            this.machine = new FA_2.FA();
+            this.machine = new FA_1.FA();
         }
         FAController.prototype.edgePrompt = function (callback, fallback) {
             var self = this;
@@ -1627,24 +1490,30 @@ define("machines/PDA/PDAController", ["require", "exports", "Prompt"], function 
     }());
     exports.PDAController = PDAController;
 });
-define("machines/LBA/LBA", ["require", "exports", "datastructures/Queue", "datastructures/UnorderedSet", "Utils"], function (require, exports, Queue_2, UnorderedSet_2, Utils_4) {
+define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet", "Utils"], function (require, exports, UnorderedSet_2, Utils_4) {
     "use strict";
+    var Direction;
+    (function (Direction) {
+        Direction[Direction["LEFT"] = 0] = "LEFT";
+        Direction[Direction["RIGHT"] = 1] = "RIGHT";
+    })(Direction || (Direction = {}));
     var LBA = (function () {
         function LBA() {
             this.stateList = [];
-            this.alphabetSet = {};
+            this.inputAlphabet = {};
+            this.tapeAlphabet = {};
             this.transitions = {};
-            this.epsilonTransitions = {};
             this.initialState = -1;
             this.finalStates = new UnorderedSet_2.UnorderedSet();
             this.numRemovedStates = 0;
-            this.currentStates = new UnorderedSet_2.UnorderedSet();
+            this.currentState = null;
+            this.tape = [];
+            this.headPosition = 0;
         }
         LBA.prototype.addState = function (name) {
             this.stateList.push(name);
-            var index = this.stateList.length - 1;
+            var index = this.realNumStates() - 1;
             this.transitions[index] = {};
-            this.epsilonTransitions[index] = new UnorderedSet_2.UnorderedSet();
             if (this.initialState == -1) {
                 this.initialState = index;
                 this.reset();
@@ -1672,37 +1541,38 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/Queue", "datas
         LBA.prototype.renameState = function (index, newName) {
             this.stateList[index] = newName;
         };
-        LBA.prototype.addTransition = function (source, target, input) {
+        LBA.prototype.addTransition = function (source, target, data) {
             var transitions = this.transitions[source];
-            if (input == "") {
-                this.epsilonTransitions[source].insert(target);
-            }
-            else {
-                if (!transitions.hasOwnProperty(input)) {
-                    transitions[input] = new UnorderedSet_2.UnorderedSet();
-                }
-                transitions[input].insert(target);
-                if (!this.alphabetSet.hasOwnProperty(input)) {
-                    this.alphabetSet[input] = 0;
-                }
-                this.alphabetSet[input]++;
-            }
+            var input = data[0];
+            var write = data[1];
+            var direction = this.plainTextToDirection(data[2]);
+            transitions[input] = {
+                state: target,
+                tapeSymbol: write,
+                direction: direction
+            };
+            this.addInputSymbol(input);
+            this.addTapeSymbol(write);
         };
-        LBA.prototype.removeTransition = function (source, target, input) {
+        LBA.prototype.removeTransition = function (source, target, data) {
             var transitions = this.transitions[source];
-            if (input == "") {
-                this.epsilonTransitions[source].erase(target);
-            }
-            else if (transitions.hasOwnProperty(input)) {
-                transitions[input].erase(target);
-                this.alphabetSet[input]--;
-                if (this.alphabetSet[input] == 0) {
-                    delete this.alphabetSet[input];
+            var input = data[0];
+            var write = data[1];
+            var direction = this.plainTextToDirection(data[2]);
+            if (transitions.hasOwnProperty(input)) {
+                var properties = transitions[input];
+                var matches = (properties.state == target);
+                matches = matches && (properties.tapeSymbol == write);
+                matches = matches && (properties.direction == direction);
+                if (matches) {
+                    delete transitions[input];
+                    this.removeInputSymbol(input);
+                    this.removeTapeSymbol(write);
                 }
             }
         };
         LBA.prototype.setInitialState = function (index) {
-            if (index < this.numStates()) {
+            if (index < this.realNumStates()) {
                 this.initialState = index;
             }
         };
@@ -1726,13 +1596,8 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/Queue", "datas
             });
             return result;
         };
-        LBA.prototype.getCurrentStates = function () {
-            var result = [];
-            var self = this;
-            this.currentStates.forEach(function (index) {
-                result.push(self.stateList[index]);
-            });
-            return result;
+        LBA.prototype.getCurrentState = function () {
+            return this.stateList[this.currentState];
         };
         LBA.prototype.getStates = function () {
             return this.stateList.filter(function (value) {
@@ -1741,129 +1606,131 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/Queue", "datas
         };
         LBA.prototype.transitionIteration = function (callback) {
             var self = this;
-            var _loop_4 = function(index) {
-                if (this_3.transitions.hasOwnProperty(index)) {
-                    var sourceState_3 = self.stateList[index];
-                    var stateTransitions = this_3.transitions[index];
-                    var _loop_5 = function(input) {
-                        if (stateTransitions.hasOwnProperty(input)) {
-                            stateTransitions[input].forEach(function (target) {
-                                var targetState = self.stateList[target];
-                                callback(sourceState_3, targetState, input);
-                            });
-                        }
-                    };
+            for (var index in this.transitions) {
+                if (this.transitions.hasOwnProperty(index)) {
+                    var sourceState = self.stateList[index];
+                    var stateTransitions = this.transitions[index];
                     for (var input in stateTransitions) {
-                        _loop_5(input);
+                        if (stateTransitions.hasOwnProperty(input)) {
+                            callback(sourceState, stateTransitions[input], input);
+                        }
                     }
                 }
-            };
-            var this_3 = this;
-            for (var index in this.transitions) {
-                _loop_4(index);
-            }
-            var _loop_6 = function(index) {
-                if (this_4.transitions.hasOwnProperty(index)) {
-                    var sourceState_4 = self.stateList[index];
-                    var stateTransitions = this_4.epsilonTransitions[index];
-                    stateTransitions.forEach(function (target) {
-                        var targetState = self.stateList[target];
-                        callback(sourceState_4, targetState, "");
-                    });
-                }
-            };
-            var this_4 = this;
-            for (var index in this.epsilonTransitions) {
-                _loop_6(index);
             }
         };
-        LBA.prototype.alphabet = function () {
+        LBA.prototype.getInputAlphabet = function () {
             var result = [];
-            for (var member in this.alphabetSet) {
-                if (this.alphabetSet.hasOwnProperty(member)) {
+            for (var member in this.inputAlphabet) {
+                if (this.inputAlphabet.hasOwnProperty(member)) {
                     result.push(member);
                 }
             }
             return result;
         };
-        LBA.prototype.read = function (input) {
-            var newStates = new UnorderedSet_2.UnorderedSet();
-            var self = this;
-            this.currentStates.forEach(function (index) {
-                var output = self.transition(index, input);
-                if (output) {
-                    output.forEach(function (state) {
-                        newStates.insert(state);
-                    });
+        LBA.prototype.getTapeAlphabet = function () {
+            var result = [];
+            for (var member in this.tapeAlphabet) {
+                if (this.tapeAlphabet.hasOwnProperty(member)) {
+                    result.push(member);
                 }
-            });
-            this.expandSpontaneous(newStates);
-            this.currentStates = newStates;
+            }
+            return result;
+        };
+        LBA.prototype.read = function () {
+            if (this.error()) {
+                return;
+            }
+            var error = true;
+            var input = this.tape[this.headPosition];
+            if (this.transitions.hasOwnProperty(this.currentState + "")) {
+                var transitions = this.transitions[this.currentState];
+                if (transitions.hasOwnProperty(input)) {
+                    var info = transitions[input];
+                    this.currentState = info.state;
+                    this.tape[this.headPosition] = info.tapeSymbol;
+                    this.headPosition += this.directionToOffset(info.direction);
+                    error = false;
+                }
+            }
+            if (error) {
+                this.currentState = null;
+            }
         };
         LBA.prototype.reset = function () {
-            this.currentStates.clear();
-            if (this.initialState != -1) {
-                this.currentStates.insert(this.initialState);
-                this.expandSpontaneous(this.currentStates);
+            if (this.initialState == -1) {
+                this.currentState = null;
             }
+            else {
+                this.currentState = this.initialState;
+            }
+            this.headPosition = 0;
         };
         LBA.prototype.clear = function () {
             this.stateList = [];
-            this.alphabetSet = {};
+            this.inputAlphabet = {};
+            this.tapeAlphabet = {};
             this.transitions = {};
-            this.epsilonTransitions = {};
             this.unsetInitialState();
             this.finalStates.clear();
-            this.currentStates.clear();
+            this.numRemovedStates = 0;
+            this.currentState = null;
+            this.tape = [];
+            this.headPosition = 0;
         };
         LBA.prototype.accepts = function () {
-            var found = false;
-            var self = this;
-            this.finalStates.forEach(function (final) {
-                if (self.currentStates.contains(final)) {
-                    found = true;
-                    return false;
-                }
-                return true;
-            });
-            return found;
+            return this.finalStates.contains(this.currentState);
         };
         LBA.prototype.error = function () {
-            return this.currentStates.size() == 0;
+            return this.currentState === null;
         };
         LBA.prototype.numStates = function () {
             return this.stateList.length - this.numRemovedStates;
         };
-        LBA.prototype.transition = function (state, input) {
-            return this.transitions[state][input];
+        LBA.prototype.plainTextToDirection = function (input) {
+            return Direction.LEFT;
         };
-        LBA.prototype.expandSpontaneous = function (stateList) {
-            var queue = new Queue_2.Queue();
-            stateList.forEach(function (state) {
-                queue.push(state);
-            });
-            while (!queue.empty()) {
-                var state = queue.pop();
-                var eps = this.epsilonTransitions[state];
-                eps.forEach(function (index) {
-                    if (!stateList.contains(index)) {
-                        stateList.insert(index);
-                        queue.push(index);
-                    }
-                });
+        LBA.prototype.directionToOffset = function (direction) {
+            return (direction == Direction.LEFT) ? -1 : 1;
+        };
+        LBA.prototype.addSymbol = function (location, symbol) {
+            if (!this[location].hasOwnProperty(symbol)) {
+                this[location][symbol] = 0;
             }
+            this[location][symbol]++;
+        };
+        LBA.prototype.addInputSymbol = function (symbol) {
+            this.addSymbol("inputAlphabet", symbol);
+        };
+        LBA.prototype.addTapeSymbol = function (symbol) {
+            this.addSymbol("tapeAlphabet", symbol);
+        };
+        LBA.prototype.removeSymbol = function (location, symbol) {
+            this[location][symbol]--;
+            if (this[location][symbol] == 0) {
+                delete this[location][symbol];
+            }
+        };
+        LBA.prototype.removeInputSymbol = function (symbol) {
+            this.removeSymbol("inputAlphabet", symbol);
+        };
+        LBA.prototype.removeTapeSymbol = function (symbol) {
+            this.removeSymbol("tapeAlphabet", symbol);
+        };
+        LBA.prototype.realNumStates = function () {
+            return this.stateList.length;
         };
         return LBA;
     }());
     exports.LBA = LBA;
 });
-define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "Prompt", "Settings"], function (require, exports, Keyboard_4, Prompt_3, Settings_5) {
+define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machines/LBA/LBA", "Prompt", "Settings"], function (require, exports, Keyboard_4, LBA_1, Prompt_3, Settings_5) {
     "use strict";
     var LBAController = (function () {
         function LBAController() {
             this.stateMapping = {};
             this.stepIndex = -1;
             this.editingCallback = function () { };
+            this.machine = new LBA_1.LBA();
         }
         LBAController.prototype.edgePrompt = function (callback, fallback) {
             var self = this;
@@ -1887,6 +1754,7 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "Prompt"
             var epsilon = Keyboard_4.Keyboard.symbols.epsilon;
             data[0] = data[0] || epsilon;
             data[1] = data[1] || epsilon;
+            data[2] = (data[2] == "<") ? "←" : "→";
             return data[0] + ", " + data[1] + ", " + data[2];
         };
         LBAController.prototype.createState = function (state) {
@@ -1904,11 +1772,7 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "Prompt"
         LBAController.prototype.createEdge = function (origin, target, data) {
             var indexOrigin = this.index(origin);
             var indexTarget = this.index(target);
-            var edgeText = this.edgeDataToText(data);
-            if (!data[0]) {
-                edgeText = "";
-            }
-            this.machine.addTransition(indexOrigin, indexTarget, edgeText);
+            this.machine.addTransition(indexOrigin, indexTarget, data);
             this.editingCallback();
         };
         LBAController.prototype.changeInitialFlag = function (state) {
@@ -1944,8 +1808,7 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "Prompt"
         LBAController.prototype.deleteEdge = function (origin, target, data) {
             var indexOrigin = this.index(origin);
             var indexTarget = this.index(target);
-            var edgeText = this.edgeDataToText(data);
-            this.machine.removeTransition(indexOrigin, indexTarget, edgeText);
+            this.machine.removeTransition(indexOrigin, indexTarget, data);
             this.editingCallback();
         };
         LBAController.prototype.clear = function () {
@@ -1960,7 +1823,26 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "Prompt"
         LBAController.prototype.stepPosition = function () { return -1; };
         LBAController.prototype.currentStates = function () { return []; };
         LBAController.prototype.accepts = function () { return false; };
-        LBAController.prototype.formalDefinition = function () { return null; };
+        LBAController.prototype.formalDefinition = function () {
+            var machine = this.machine;
+            var delta = Keyboard_4.Keyboard.symbols.delta;
+            var gamma = Keyboard_4.Keyboard.symbols.gamma;
+            var sigma = Keyboard_4.Keyboard.symbols.sigma;
+            var result = {
+                tupleSequence: ["Q", sigma, gamma, delta, "q0", "B", "F"],
+                parameterSequence: ["Q", sigma, gamma, "q0", "B", "F", delta],
+                parameterValues: {}
+            };
+            var values = result.parameterValues;
+            values["Q"] = machine.getStates();
+            values[sigma] = machine.getInputAlphabet();
+            values[gamma] = machine.getTapeAlphabet();
+            values[delta] = {};
+            values["q0"] = machine.getInitialState();
+            values["B"] = "TODO";
+            values["F"] = machine.getAcceptingStates();
+            return result;
+        };
         LBAController.prototype.setEditingCallback = function (callback) {
             this.editingCallback = callback;
         };
@@ -3174,7 +3056,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                         }
                     }
                     else {
-                        content += "unspecified type (AutomatonRenderer:266)";
+                        content += "unspecified type (AutomatonRenderer:299)";
                     }
                     content += "<br>";
                 }
@@ -3559,7 +3441,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 self.currentEdge.remove();
                 self.currentEdge = null;
             };
-            var _loop_7 = function(edge) {
+            var _loop_4 = function(edge) {
                 if (edge.getOrigin() == origin && edge.getTarget() == state) {
                     edgeText(function (data, text) {
                         edge.addText(text);
@@ -3575,8 +3457,8 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             };
             for (var _i = 0, _a = this.edgeList; _i < _a.length; _i++) {
                 var edge = _a[_i];
-                var state_7 = _loop_7(edge);
-                if (typeof state_7 === "object") return state_7.value;
+                var state_4 = _loop_4(edge);
+                if (typeof state_4 === "object") return state_4.value;
             }
             if (oppositeEdge) {
                 oppositeEdge.setCurveFlag(true);
@@ -3626,27 +3508,27 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         };
         AutomatonRenderer.prototype.newStateAt = function (x, y) {
             if (!this.locked) {
-                var state_8 = new State_2.State();
-                state_8.setPosition(x, y);
-                this.selectState(state_8);
-                this.bindStateEvents(state_8);
+                var state_5 = new State_2.State();
+                state_5.setPosition(x, y);
+                this.selectState(state_5);
+                this.bindStateEvents(state_5);
                 var self_2 = this;
                 var stateNamePrompt_1 = function () {
                     Prompt_4.Prompt.simple(Settings_11.Strings.STATE_MANUAL_CREATION, 1, function (data) {
                         var name = data[0];
                         for (var _i = 0, _a = self_2.stateList; _i < _a.length; _i++) {
-                            var state_9 = _a[_i];
-                            if (state_9.getName() == name) {
+                            var state_6 = _a[_i];
+                            if (state_6.getName() == name) {
                                 alert(Settings_11.Strings.DUPLICATE_STATE_NAME);
                                 return stateNamePrompt_1();
                             }
                         }
-                        state_8.setName(name);
-                        self_2.onStateCreation(state_8);
-                        self_2.updateEditableState(state_8);
+                        state_5.setName(name);
+                        self_2.onStateCreation(state_5);
+                        self_2.updateEditableState(state_5);
                     }, function () {
                         self_2.highlightedState = null;
-                        state_8.remove();
+                        state_5.remove();
                         self_2.updateEditableState(null);
                     });
                 };
@@ -4251,5 +4133,143 @@ define("main", ["require", "exports", "Settings", "System", "interface/UI"], fun
             }
             return true;
         });
+    });
+});
+define("tests/Test", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var Test = (function () {
+        function Test(target) {
+            this.testPlans = [];
+            this.targetNode = target;
+        }
+        Test.prototype.addTestPlan = function (plan) {
+            this.testPlans.push(plan);
+        };
+        Test.prototype.runTests = function () {
+            var output = "";
+            for (var _i = 0, _a = this.testPlans; _i < _a.length; _i++) {
+                var plan = _a[_i];
+                var planName = plan.planName();
+                var testNames = plan.testNames();
+                var stats = {
+                    success: 0,
+                    failure: 0,
+                    exceptions: 0
+                };
+                output += "<div class='plan'>";
+                output += "<div class='plan_name'>" + planName + "</div>";
+                for (var _b = 0, testNames_1 = testNames; _b < testNames_1.length; _b++) {
+                    var method = testNames_1[_b];
+                    var status_1 = void 0;
+                    var className = void 0;
+                    try {
+                        if (plan[method]()) {
+                            status_1 = " OK ";
+                            className = "success";
+                            stats.success++;
+                        }
+                        else {
+                            status_1 = "FAIL";
+                            className = "failure";
+                            stats.failure++;
+                        }
+                    }
+                    catch (e) {
+                        status_1 = "EXCP";
+                        className = "exception";
+                        stats.exceptions++;
+                    }
+                    output += "<div class='test_case'>";
+                    output += "<div class='status " + className + "'>";
+                    output += status_1;
+                    output += "</div>";
+                    output += "<div class='test_name'>" + method + "</div>";
+                    output += "</div>";
+                }
+                output += "<div class='summary'>";
+                if (stats.failure == 0 && stats.exceptions == 0) {
+                    output += "<div class='success'>All tests passed.</div>";
+                }
+                else {
+                    var numTests = testNames.length;
+                    var successRate = ((stats.success / numTests) * 100).toFixed(2);
+                    var failureRate = ((stats.failure / numTests) * 100).toFixed(2);
+                    var excpRate = ((stats.exceptions / numTests) * 100).toFixed(2);
+                    var parts = [];
+                    parts.push(stats.success + " test(s) passed (" +
+                        successRate + "%)");
+                    if (stats.failure > 0) {
+                        parts.push(stats.failure + " test(s) failed (" +
+                            failureRate + "%)");
+                    }
+                    if (stats.exceptions > 0) {
+                        parts.push(stats.exceptions +
+                            " test(s) resulted in exceptions (" + excpRate + "%)");
+                    }
+                    output += "<div class='failure'>Test plan failed.</div>";
+                    output += "<ul>";
+                    output += "<li>" + parts.join("</li><li>") + "</li>";
+                    output += "</ul>";
+                }
+                output += "</div>";
+                output += "</div>";
+            }
+            this.targetNode.innerHTML += output;
+        };
+        return Test;
+    }());
+    exports.Test = Test;
+});
+define("tests/FATests", ["require", "exports", "machines/FA/FA"], function (require, exports, FA_2) {
+    "use strict";
+    var FATests = (function () {
+        function FATests() {
+        }
+        FATests.prototype.planName = function () {
+            return "FA";
+        };
+        FATests.prototype.testNames = function () {
+            return ["something"];
+        };
+        FATests.prototype.something = function () {
+            var fa = new FA_2.FA();
+            return fa.error();
+        };
+        return FATests;
+    }());
+    exports.FATests = FATests;
+});
+define("tests/PDATests", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var PDATests = (function () {
+        function PDATests() {
+        }
+        PDATests.prototype.planName = function () {
+            return "PDA";
+        };
+        PDATests.prototype.testNames = function () {
+            return ["example1", "example2", "example3"];
+        };
+        PDATests.prototype.example1 = function () {
+            return false;
+        };
+        PDATests.prototype.example2 = function () {
+            return true;
+        };
+        PDATests.prototype.example3 = function () {
+            throw 42;
+        };
+        return PDATests;
+    }());
+    exports.PDATests = PDATests;
+});
+define("tests", ["require", "exports", "tests/FATests", "tests/PDATests", "tests/Test"], function (require, exports, FATests_1, PDATests_1, Test_1) {
+    "use strict";
+    $(document).ready(function () {
+        var container = document.getElementById("container");
+        var test = new Test_1.Test(container);
+        test.addTestPlan(new FATests_1.FATests());
+        test.addTestPlan(new PDATests_1.PDATests());
+        test.runTests();
     });
 });
