@@ -19,6 +19,10 @@ interface LanguageChangeObserver {
 	onLanguageChange: () => void;
 }
 
+interface MachineChangeObserver {
+	onMachineChange: () => void;
+}
+
 const modifiers = ["alt", "ctrl", "shift"];
 
 function propertyName(type) {
@@ -35,10 +39,23 @@ export class System {
 		}
 	}
 
+	// Notifies all machine change observers.
+	static changeMachine(): void {
+		for (let listener of this.machineChangeObservers) {
+			listener.onMachineChange();
+		}
+	}
+
 	// Registers a new language change observer, which will be notified
 	// when the system language changes.
 	static addLanguageChangeObserver(observer: LanguageChangeObserver): void {
 		this.languageChangeObservers.push(observer);
+	}
+
+	// Registers a new machine change observer, which will be notified
+	// when the system machine changes.
+	static addMachineChangeObserver(observer: MachineChangeObserver): void {
+		this.machineChangeObservers.push(observer);
 	}
 
 	static emitKeyEvent(keys: string[]): void {
@@ -147,6 +164,7 @@ export class System {
 
 	private static keyboardObservers: KeyboardObserver[] = [];
 	private static languageChangeObservers: LanguageChangeObserver[] = [];
+	private static machineChangeObservers: MachineChangeObserver[] = [];
 	private static eventBlock: boolean = false;
 	private static lockedGroups: {[g: string]: boolean} = {};
 }

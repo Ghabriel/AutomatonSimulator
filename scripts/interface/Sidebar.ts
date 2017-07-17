@@ -266,6 +266,7 @@ export class Sidebar extends Renderer {
 					Settings.currentMachine = type;
 					self.loadMachine(type);
 					self.renderDynamicMenus();
+					System.changeMachine();
 				}
 			});
 			table.add(button);

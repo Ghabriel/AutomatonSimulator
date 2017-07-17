@@ -1014,8 +1014,17 @@ define("System", ["require", "exports", "Keyboard", "Settings"], function (requi
                 listener.onLanguageChange();
             }
         };
+        System.changeMachine = function () {
+            for (var _i = 0, _a = this.machineChangeObservers; _i < _a.length; _i++) {
+                var listener = _a[_i];
+                listener.onMachineChange();
+            }
+        };
         System.addLanguageChangeObserver = function (observer) {
             this.languageChangeObservers.push(observer);
+        };
+        System.addMachineChangeObserver = function (observer) {
+            this.machineChangeObservers.push(observer);
         };
         System.emitKeyEvent = function (keys) {
             var event = {
@@ -1103,6 +1112,7 @@ define("System", ["require", "exports", "Keyboard", "Settings"], function (requi
         };
         System.keyboardObservers = [];
         System.languageChangeObservers = [];
+        System.machineChangeObservers = [];
         System.eventBlock = false;
         System.lockedGroups = {};
         return System;
@@ -1837,7 +1847,7 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
             values["Q"] = machine.getStates();
             values[sigma] = machine.getInputAlphabet();
             values[gamma] = machine.getTapeAlphabet();
-            values[delta] = {};
+            values[delta] = { list: [] };
             values["q0"] = machine.getInitialState();
             values["B"] = "TODO";
             values["F"] = machine.getAcceptingStates();
@@ -2890,6 +2900,11 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             var self = this;
             System_3.System.addLanguageChangeObserver({
                 onLanguageChange: function () {
+                    self.bindFormalDefinitionListener();
+                }
+            });
+            System_3.System.addMachineChangeObserver({
+                onMachineChange: function () {
                     self.bindFormalDefinitionListener();
                 }
             });
@@ -4028,6 +4043,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                         Settings_13.Settings.currentMachine = type;
                         self.loadMachine(type);
                         self.renderDynamicMenus();
+                        System_4.System.changeMachine();
                     }
                 });
                 table.add(button);

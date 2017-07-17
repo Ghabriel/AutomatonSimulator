@@ -137,7 +137,7 @@ export class LBAController implements Controller {
 		values[sigma] = machine.getInputAlphabet();
 		values[gamma] = machine.getTapeAlphabet();
 		// values[delta] = this.transitionTable();
-		values[delta] = {}; // TODO
+		values[delta] = { list: [] }; // TODO
 		values["q0"] = machine.getInitialState();
 		values["B"] = "TODO";
 		values["F"] = machine.getAcceptingStates();

@@ -18,89 +18,18 @@ export class AutomatonRenderer {
 	}
 
 	public render(): void {
-/*		let self = this;
-		let newState = function(name: string): State {
-			let state = new State();
-			state.setName(name);
-			self.stateList.push(state);
-			Settings.controller().createState(state);
-			return state;
-		};
-
-		let q0 = newState("q0");
-		q0.setPosition(200, 200);
-
-		let q1 = newState("q1");
-		q1.setPosition(400, 200);
-
-		let e1 = new Edge();
-		e1.setOrigin(q0);
-		e1.setTarget(q1);
-		e1.setCurveFlag(true);
-		EdgeUtils.addEdgeData(e1, ["a"]);
-		this.edgeList.push(e1);
-
-		let e2 = new Edge();
-		e2.setOrigin(q1);
-		e2.setTarget(q0);
-		e2.setCurveFlag(true);
-		EdgeUtils.addEdgeData(e2, ["b"]);
-		this.edgeList.push(e2);
-
-		this.updateEdges();
-
-
-		let q0 = newState("q0");
-		q0.setPosition(100, 200);
-
-		let q1 = newState("q1");
-		q1.setPosition(250, 350);
-
-		let q2 = newState("q2");
-		q2.setPosition(450, 350);
-
-		let q3 = newState("q3");
-		q3.setPosition(650, 350);
-
-		let e1 = new Edge();
-		e1.setOrigin(q0);
-		e1.setTarget(q0);
-		EdgeUtils.addEdgeData(e1, ["0"]);
-		EdgeUtils.addEdgeData(e1, ["1"]);
-		this.edgeList.push(e1);
-
-		let e2 = new Edge();
-		e2.setOrigin(q0);
-		e2.setTarget(q1);
-		EdgeUtils.addEdgeData(e2, ["1"]);
-		this.edgeList.push(e2);
-
-		let e3 = new Edge();
-		e3.setOrigin(q1);
-		e3.setTarget(q2);
-		EdgeUtils.addEdgeData(e3, ["0"]);
-		EdgeUtils.addEdgeData(e3, ["1"]);
-		this.edgeList.push(e3);
-
-		let e4 = new Edge();
-		e4.setOrigin(q2);
-		e4.setTarget(q3);
-		EdgeUtils.addEdgeData(e4, ["0"]);
-		EdgeUtils.addEdgeData(e4, ["1"]);
-		this.edgeList.push(e4);
-
-		this.updateEdges();
-
-		this.setInitialState(q0);
-		this.changeFinalFlag(q3, true);*/
-
-
 		this.bindEvents();
 		this.bindShortcuts();
 		this.bindFormalDefinitionListener();
 		let self = this;
 		System.addLanguageChangeObserver({
 			onLanguageChange: function() {
+				self.bindFormalDefinitionListener();
+			}
+		});
+
+		System.addMachineChangeObserver({
+			onMachineChange: function() {
 				self.bindFormalDefinitionListener();
 			}
 		});
