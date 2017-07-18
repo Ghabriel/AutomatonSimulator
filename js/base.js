@@ -722,7 +722,7 @@ define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastr
         }
         FA.prototype.addState = function (name) {
             this.stateList.push(name);
-            var index = this.stateList.length - 1;
+            var index = this.realNumStates() - 1;
             this.transitions[index] = {};
             this.epsilonTransitions[index] = new UnorderedSet_1.UnorderedSet();
             if (this.initialState == -1) {
@@ -746,6 +746,11 @@ define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastr
                     }
                 });
             });
+            delete this.transitions[index];
+            if (this.initialState == index) {
+                this.unsetInitialState();
+            }
+            this.finalStates.erase(index);
             this.stateList[index] = undefined;
             this.numRemovedStates++;
         };
@@ -771,10 +776,17 @@ define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastr
         FA.prototype.removeTransition = function (source, target, input) {
             var transitions = this.transitions[source];
             if (input == "") {
-                this.epsilonTransitions[source].erase(target);
+                var epsTransitions = this.epsilonTransitions;
+                epsTransitions[source].erase(target);
+                if (epsTransitions[input].empty()) {
+                    delete epsTransitions[input];
+                }
             }
             else if (transitions.hasOwnProperty(input)) {
                 transitions[input].erase(target);
+                if (transitions[input].empty()) {
+                    delete transitions[input];
+                }
                 this.alphabetSet[input]--;
                 if (this.alphabetSet[input] == 0) {
                     delete this.alphabetSet[input];
@@ -782,7 +794,7 @@ define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastr
             }
         };
         FA.prototype.setInitialState = function (index) {
-            if (index < this.numStates()) {
+            if (index < this.realNumStates()) {
                 this.initialState = index;
             }
         };
@@ -894,6 +906,7 @@ define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastr
             this.epsilonTransitions = {};
             this.unsetInitialState();
             this.finalStates.clear();
+            this.numRemovedStates = 0;
             this.currentStates.clear();
         };
         FA.prototype.accepts = function () {
@@ -913,6 +926,9 @@ define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastr
         };
         FA.prototype.numStates = function () {
             return this.stateList.length - this.numRemovedStates;
+        };
+        FA.prototype.realNumStates = function () {
+            return this.stateList.length;
         };
         FA.prototype.transition = function (state, input) {
             return this.transitions[state][input];
@@ -1535,16 +1551,19 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
             Utils_4.utils.foreach(this.transitions, function (originIndex, transitions) {
                 var origin = parseInt(originIndex);
                 Utils_4.utils.foreach(transitions, function (input) {
-                    if (transitions[input].contains(index)) {
-                        self.removeTransition(origin, index, input);
+                    if (transitions[input].state == index) {
+                        self.uncheckedRemoveTransition(origin, input);
                     }
                     if (origin == index) {
-                        transitions[input].forEach(function (target) {
-                            self.removeTransition(index, target, input);
-                        });
+                        self.uncheckedRemoveTransition(index, input);
                     }
                 });
             });
+            delete this.transitions[index];
+            if (this.initialState == index) {
+                this.unsetInitialState();
+            }
+            this.finalStates.erase(index);
             this.stateList[index] = undefined;
             this.numRemovedStates++;
         };
@@ -1562,6 +1581,8 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
                 direction: direction
             };
             this.addInputSymbol(input);
+            this.addInputSymbol(write);
+            this.addTapeSymbol(input);
             this.addTapeSymbol(write);
         };
         LBA.prototype.removeTransition = function (source, target, data) {
@@ -1575,11 +1596,18 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
                 matches = matches && (properties.tapeSymbol == write);
                 matches = matches && (properties.direction == direction);
                 if (matches) {
-                    delete transitions[input];
-                    this.removeInputSymbol(input);
-                    this.removeTapeSymbol(write);
+                    this.uncheckedRemoveTransition(source, input);
                 }
             }
+        };
+        LBA.prototype.uncheckedRemoveTransition = function (source, input) {
+            var transitions = this.transitions[source];
+            var tapeSymbol = transitions[input].tapeSymbol;
+            delete transitions[input];
+            this.removeInputSymbol(input);
+            this.removeInputSymbol(tapeSymbol);
+            this.removeTapeSymbol(input);
+            this.removeTapeSymbol(tapeSymbol);
         };
         LBA.prototype.setInitialState = function (index) {
             if (index < this.realNumStates()) {
@@ -1697,7 +1725,7 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
             return this.stateList.length - this.numRemovedStates;
         };
         LBA.prototype.plainTextToDirection = function (input) {
-            return Direction.LEFT;
+            return Direction.RIGHT;
         };
         LBA.prototype.directionToOffset = function (direction) {
             return (direction == Direction.LEFT) ? -1 : 1;

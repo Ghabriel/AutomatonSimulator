@@ -12,7 +12,7 @@ export class FA {
 		this.stateList.push(name);
 		// Cannot use this.numStates() here because
 		// removed states are kept in the list
-		let index = this.stateList.length - 1;
+		let index = this.realNumStates() - 1;
 		this.transitions[index] = {};
 		this.epsilonTransitions[index] = new UnorderedSet<Index>();
 		if (this.initialState == -1) {
@@ -39,6 +39,14 @@ export class FA {
 				}
 			});
 		});
+
+		delete this.transitions[index];
+
+		if (this.initialState == index) {
+			this.unsetInitialState();
+		}
+
+		this.finalStates.erase(index);
 
 		// TODO: do we really need to remove the state from the state list?
 		// Doing so would require changes to numStates() and possibly
@@ -79,9 +87,16 @@ export class FA {
 	public removeTransition(source: Index, target: Index, input: string): void {
 		let transitions = this.transitions[source];
 		if (input == "") {
-			this.epsilonTransitions[source].erase(target);
+			let epsTransitions = this.epsilonTransitions;
+			epsTransitions[source].erase(target);
+			if (epsTransitions[input].empty()) {
+				delete epsTransitions[input];
+			}
 		} else if (transitions.hasOwnProperty(input)) {
 			transitions[input].erase(target);
+			if (transitions[input].empty()) {
+				delete transitions[input];
+			}
 
 			this.alphabetSet[input]--;
 			if (this.alphabetSet[input] == 0) {
@@ -92,7 +107,7 @@ export class FA {
 
 	// Sets the initial state of this FA.
 	public setInitialState(index: Index): void {
-		if (index < this.numStates()) {
+		if (index < this.realNumStates()) {
 			this.initialState = index;
 		}
 	}
@@ -221,6 +236,7 @@ export class FA {
 		this.epsilonTransitions = {};
 		this.unsetInitialState();
 		this.finalStates.clear();
+		this.numRemovedStates = 0;
 		this.currentStates.clear();
 	}
 
@@ -246,6 +262,12 @@ export class FA {
 	// Returns the number of states of this FA.
 	public numStates(): number {
 		return this.stateList.length - this.numRemovedStates;
+	}
+
+	// Returns the number of states that are being stored inside
+	// this FA (which counts removed states)
+	private realNumStates(): number {
+		return this.stateList.length;
 	}
 
 	// Returns all states that a given state transitions to

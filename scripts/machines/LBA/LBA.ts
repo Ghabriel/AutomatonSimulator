@@ -38,17 +38,23 @@ export class LBA {
 		utils.foreach(this.transitions, function(originIndex, transitions) {
 			let origin = parseInt(originIndex);
 			utils.foreach(transitions, function(input) {
-				if (transitions[input].contains(index)) {
-					self.removeTransition(origin, index, input);
+				if (transitions[input].state == index) {
+					self.uncheckedRemoveTransition(origin, input);
 				}
 
 				if (origin == index) {
-					transitions[input].forEach(function(target) {
-						self.removeTransition(index, target, input);
-					});
+					self.uncheckedRemoveTransition(index, input);
 				}
 			});
 		});
+
+		delete this.transitions[index];
+
+		if (this.initialState == index) {
+			this.unsetInitialState();
+		}
+
+		this.finalStates.erase(index);
 
 		this.stateList[index] = undefined;
 		this.numRemovedStates++;
@@ -73,6 +79,8 @@ export class LBA {
 		};
 
 		this.addInputSymbol(input);
+		this.addInputSymbol(write);
+		this.addTapeSymbol(input);
 		this.addTapeSymbol(write);
 	}
 
@@ -90,17 +98,23 @@ export class LBA {
 			matches = matches && (properties.direction == direction);
 
 			if (matches) {
-				delete transitions[input];
-
-				this.removeInputSymbol(input);
-				this.removeTapeSymbol(write);
+				this.uncheckedRemoveTransition(source, input);
 			}
 		}
 	}
 
+	private uncheckedRemoveTransition(source: Index, input: string): void {
+		let transitions = this.transitions[source];
+		let tapeSymbol = transitions[input].tapeSymbol;
+		delete transitions[input];
+
+		this.removeInputSymbol(input);
+		this.removeInputSymbol(tapeSymbol);
+		this.removeTapeSymbol(input);
+		this.removeTapeSymbol(tapeSymbol);
+	}
+
 	// Sets the initial state of this LBA.
-	// TODO: check FA::setInitialState()
-	// TODO: FA::clear() doesn't reset numRemovedStates!
 	public setInitialState(index: Index): void {
 		if (index < this.realNumStates()) {
 			this.initialState = index;
@@ -257,7 +271,7 @@ export class LBA {
 	}
 
 	private plainTextToDirection(input: string): Direction {
-		return Direction.LEFT;
+		return Direction.RIGHT;
 	}
 
 	private directionToOffset(direction: Direction): number {
@@ -294,6 +308,8 @@ export class LBA {
 		this.removeSymbol("tapeAlphabet", symbol);
 	}
 
+	// Returns the number of states that are being stored inside
+	// this LBA (which counts removed states)
 	private realNumStates(): number {
 		return this.stateList.length;
 	}
