@@ -1812,6 +1812,16 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
             }
             return result;
         };
+        LBA.prototype.setTapeContent = function (input) {
+            this.tape = input;
+            this.headPosition = 0;
+        };
+        LBA.prototype.getTapeContent = function () {
+            return this.tape;
+        };
+        LBA.prototype.getHeadPosition = function () {
+            return this.headPosition;
+        };
         LBA.prototype.read = function () {
             if (this.error()) {
                 return;
@@ -1831,6 +1841,9 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
             if (error) {
                 this.currentState = null;
             }
+        };
+        LBA.prototype.halted = function () {
+            return this.error();
         };
         LBA.prototype.reset = function () {
             if (this.initialState == -1) {
@@ -1991,20 +2004,54 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
             this.machine.clear();
             this.editingCallback();
         };
-        LBAController.prototype.fastForward = function (input) { };
-        LBAController.prototype.step = function (input) { };
-        LBAController.prototype.stop = function () { };
-        LBAController.prototype.finished = function (input) { return true; };
-        LBAController.prototype.isStopped = function () { return true; };
-        LBAController.prototype.stepPosition = function () { return -1; };
+        LBAController.prototype.fastForward = function (input) {
+            this.machine.reset();
+            this.machine.setTapeContent(input.split(""));
+            for (var i = 0; i < input.length; i++) {
+                this.machine.read();
+            }
+        };
+        LBAController.prototype.step = function (input) {
+            if (!this.finished(input)) {
+                if (this.stepIndex == -1) {
+                    this.machine.reset();
+                    this.machine.setTapeContent(input.split(""));
+                }
+                else {
+                    this.machine.read();
+                }
+                this.stepIndex++;
+            }
+        };
+        LBAController.prototype.stop = function () {
+            this.stepIndex = -1;
+        };
+        LBAController.prototype.finished = function (input) {
+            return this.machine.halted();
+        };
+        LBAController.prototype.isStopped = function () {
+            return this.stepIndex == -1;
+        };
+        LBAController.prototype.stepPosition = function () {
+            return this.stepIndex;
+        };
         LBAController.prototype.getTapeContent = function () {
-            return "abcdefghijklmnopqrstuvwxyz";
+            return this.machine.getTapeContent();
         };
         LBAController.prototype.getHeadPosition = function () {
-            return 0;
+            return this.machine.getHeadPosition();
         };
-        LBAController.prototype.currentStates = function () { return []; };
-        LBAController.prototype.accepts = function () { return false; };
+        LBAController.prototype.currentStates = function () {
+            var state = this.machine.getCurrentState();
+            var result = [];
+            if (!this.machine.error()) {
+                result.push(state);
+            }
+            return result;
+        };
+        LBAController.prototype.accepts = function () {
+            return this.machine.accepts();
+        };
         LBAController.prototype.formalDefinition = function () {
             var machine = this.machine;
             var delta = Keyboard_4.Keyboard.symbols.delta;
@@ -2486,20 +2533,20 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
             var offset = (displayedChars - 1) / 2;
             var startIndex = headPosition - offset;
             if (startIndex < 0) {
-                var buffer = "";
+                var buffer = [];
                 for (var i = 0; i < -startIndex; i++) {
-                    buffer += "_";
+                    buffer.push("_");
                 }
-                tapeContent = buffer + tapeContent;
+                tapeContent = buffer.concat(tapeContent);
                 startIndex = 0;
             }
             if (startIndex + displayedChars > tapeContent.length) {
                 var delta = startIndex + displayedChars - tapeContent.length;
                 for (var i = 0; i < delta; i++) {
-                    tapeContent += "_";
+                    tapeContent.push("_");
                 }
             }
-            var displayedContent = tapeContent.substr(startIndex, displayedChars);
+            var displayedContent = tapeContent.slice(startIndex, startIndex + displayedChars);
             for (var i = 0; i < displayedContent.length; i++) {
                 tapeContainer.children[i].innerHTML = displayedContent[i];
             }
@@ -2545,6 +2592,7 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
                     Settings_8.Settings.automatonRenderer.unlock();
                     progressContainer.style.color = "black";
                     progressContainer.style.display = "none";
+                    tapeContainer.style.display = "none";
                     fastForwardStatus(true);
                     stepStatus(true);
                     stopStatus(false);
@@ -2558,7 +2606,9 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
                     testCaseInput.disabled = true;
                     var input = testCase();
                     var controller = Settings_8.Settings.controller();
+                    console.log("A");
                     if (controller.isStopped()) {
+                        console.log("B");
                         Settings_8.Settings.automatonRenderer.lock();
                         progressContainer.style.display = "";
                         var sidebar = Utils_8.utils.id(Settings_8.Settings.sidebarID);
@@ -2566,24 +2616,26 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
                         width -= 10;
                         width -= 1;
                         progressContainer.style.width = width + "px";
+                        tapeContainer.style.display = "";
+                        console.log("C");
                     }
                     var finished = controller.finished(input);
+                    console.log("D");
                     if (!finished) {
+                        console.log("E");
                         controller.step(input);
                         highlightCurrentStates();
                         finished = controller.finished(input);
+                        showTapeContent();
+                        console.log("F");
                     }
-                    var position = controller.stepPosition();
-                    var displayedText = input.substr(position);
-                    if (displayedText == "") {
-                        showAcceptanceStatus();
-                    }
-                    else {
-                        progressContainer.innerHTML = displayedText;
-                    }
+                    console.log("G");
                     if (finished) {
                         stepStatus(false);
+                        showAcceptanceStatus();
+                        console.log("H");
                     }
+                    console.log("------------------");
                 }
             });
         }

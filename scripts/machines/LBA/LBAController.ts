@@ -112,25 +112,70 @@ export class LBAController implements Controller {
 		this.editingCallback();
 	}
 
-	public fastForward(input: string): void {}
-	public step(input: string): void {}
-	public stop(): void {}
-	public finished(input: string): boolean { return true; }
-	public isStopped(): boolean { return true; }
-	public stepPosition(): number { return -1; }
+	public fastForward(input: string): void {
+		this.machine.reset();
+		this.machine.setTapeContent(input.split(""));
+		for (let i = 0; i < input.length; i++) {
+			this.machine.read();
+		}
+	}
 
-	public getTapeContent(): string {
-		// TODO
-		return "abcdefghijklmnopqrstuvwxyz";
+	public step(input: string): void {
+		if (!this.finished(input)) {
+			if (this.stepIndex == -1) {
+				// Don't parse anything if stepIndex == -1.
+				// This case is used to allow the interface
+				// to show the initial state(s) of the automaton.
+				this.machine.reset();
+				this.machine.setTapeContent(input.split(""));
+			} else {
+				this.machine.read();
+			}
+			this.stepIndex++;
+		}
+	}
+
+	public stop(): void {
+		this.stepIndex = -1;
+	}
+
+	public finished(input: string): boolean {
+		return this.machine.halted();
+	}
+
+	public isStopped(): boolean {
+		return this.stepIndex == -1;
+	}
+
+	public stepPosition(): number {
+		return this.stepIndex;
+	}
+
+	public getTapeContent(): string[] {
+		// return "abcdefghijklmnopqrstuvwxyz";
+		return this.machine.getTapeContent();
 	}
 
 	public getHeadPosition(): number {
-		// TODO
-		return 0;
+		// return 0;
+		return this.machine.getHeadPosition();
 	}
 
-	public currentStates(): string[] { return []; }
-	public accepts(): boolean { return false; }
+	public currentStates(): string[] {
+		let state = this.machine.getCurrentState();
+		let result: string[] = [];
+
+		if (!this.machine.error()) {
+			result.push(state);
+		}
+
+		return result;
+	}
+
+	public accepts(): boolean {
+		return this.machine.accepts();
+	}
+
 	public formalDefinition(): FormalDefinition {
 		let machine = this.machine;
 		let delta = Keyboard.symbols.delta;

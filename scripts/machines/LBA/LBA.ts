@@ -203,6 +203,19 @@ export class LBA {
 		return result;
 	}
 
+	public setTapeContent(input: string[]): void {
+		this.tape = input;
+		this.headPosition = 0;
+	}
+
+	public getTapeContent(): string[] {
+		return this.tape;
+	}
+
+	public getHeadPosition(): number {
+		return this.headPosition;
+	}
+
 	// Reads a character from the tape, triggering state changes to this LBA.
 	public read(): void {
 		if (this.error()) {
@@ -227,6 +240,11 @@ export class LBA {
 			// goes to the error state
 			this.currentState = null;
 		}
+	}
+
+	public halted(): boolean {
+		// TODO
+		return this.error();
 	}
 
 	// Resets this LBA, making it return to its initial state and

@@ -142,13 +142,13 @@ export namespace initLBA {
 
 		// Adds blank symbols to the left if needed
 		if (startIndex < 0) {
-			let buffer = "";
+			let buffer: string[] = [];
 
 			for (let i = 0; i < -startIndex; i++) {
-				buffer += "_";
+				buffer.push("_");
 			}
 
-			tapeContent = buffer + tapeContent;
+			tapeContent = buffer.concat(tapeContent);
 			startIndex = 0;
 		}
 
@@ -156,11 +156,12 @@ export namespace initLBA {
 		if (startIndex + displayedChars > tapeContent.length) {
 			let delta = startIndex + displayedChars - tapeContent.length;
 			for (let i = 0; i < delta; i++) {
-				tapeContent += "_";
+				tapeContent.push("_");
 			}
 		}
 
-		let displayedContent = tapeContent.substr(startIndex, displayedChars);
+		// let displayedContent = tapeContent.substr(startIndex, displayedChars);
+		let displayedContent = tapeContent.slice(startIndex, startIndex + displayedChars);
 
 		for (let i = 0; i < displayedContent.length; i++) {
 			tapeContainer.children[i].innerHTML = displayedContent[i];
@@ -218,6 +219,8 @@ export namespace initLBA {
 				progressContainer.style.color = "black";
 				progressContainer.style.display = "none";
 
+				tapeContainer.style.display = "none";
+
 				fastForwardStatus(true);
 				stepStatus(true);
 				stopStatus(false);
@@ -233,7 +236,9 @@ export namespace initLBA {
 
 				let input = testCase();
 				let controller = Settings.controller();
+				console.log("A");
 				if (controller.isStopped()) {
+					console.log("B");
 					Settings.automatonRenderer.lock();
 					progressContainer.style.display = "";
 					let sidebar = <HTMLDivElement> utils.id(Settings.sidebarID);
@@ -241,26 +246,38 @@ export namespace initLBA {
 					width -= 10; // twice the progress container padding
 					width -= 1; // sidebar border
 					progressContainer.style.width = width + "px";
+
+					tapeContainer.style.display = "";
+					console.log("C");
 				}
 
 				let finished = controller.finished(input);
+				console.log("D");
 				if (!finished) {
+					console.log("E");
 					controller.step(input);
 					highlightCurrentStates();
 					finished = controller.finished(input);
+
+					showTapeContent();
+					console.log("F");
 				}
 
-				let position = controller.stepPosition();
-				let displayedText = input.substr(position);
-				if (displayedText == "") {
-					showAcceptanceStatus();
-				} else {
-					progressContainer.innerHTML = displayedText;
-				}
+				console.log("G");
+				// let position = controller.stepPosition();
+				// let displayedText = input.substr(position);
+				// if (displayedText == "") {
+				// 	showAcceptanceStatus();
+				// } else {
+				// 	progressContainer.innerHTML = displayedText;
+				// }
 
 				if (finished) {
 					stepStatus(false);
+					showAcceptanceStatus();
+					console.log("H");
 				}
+				console.log("------------------");
 			}
 		});
 	}
