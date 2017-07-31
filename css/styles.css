@@ -144,13 +144,33 @@ div.row {
 
 #recognition_progress {
 	background-color: #DDD;
-	font-size: 300%;
+	font-size: 250%;
 	margin-left: -5px;
 	margin-right: -5px;
 	margin-top: 5px;
 	overflow: hidden;
 	padding: 5px;
 	text-overflow: ellipsis;
+}
+
+#tape {
+	background-color: #DDD;
+	border-collapse: collapse;
+	display: table;
+	font-family: courier;
+	font-size: 300%;
+	margin-top: 5px;
+	padding: 5px;
+	width: 100%;
+}
+
+.tape_cell {
+	border: 1px solid black;
+	display: table-cell;
+}
+
+.tape_cell.center {
+	background-color: #FF8;
 }
 
 span.none {

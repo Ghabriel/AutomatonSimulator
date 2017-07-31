@@ -31,6 +31,8 @@ export namespace Settings {
 	export const machineActionRows = 2;
 	export const machineActionColumns = 2;
 
+	export const tapeDisplayedChars = 7; // should be odd
+
 	export const stateRadius = 32;
 	export const stateRingRadius = 27;
 	export const stateDragTolerance = 50;

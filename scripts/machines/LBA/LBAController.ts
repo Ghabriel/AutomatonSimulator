@@ -119,6 +119,16 @@ export class LBAController implements Controller {
 	public isStopped(): boolean { return true; }
 	public stepPosition(): number { return -1; }
 
+	public getTapeContent(): string {
+		// TODO
+		return "abcdefghijklmnopqrstuvwxyz";
+	}
+
+	public getHeadPosition(): number {
+		// TODO
+		return 0;
+	}
+
 	public currentStates(): string[] { return []; }
 	public accepts(): boolean { return false; }
 	public formalDefinition(): FormalDefinition {

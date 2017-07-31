@@ -9,14 +9,14 @@ export class Table extends Renderer {
 		this.children = [];
 	}
 
-	add(elem: Element, colspan?: number): void {
+	public add(elem: Element, colspan?: number): void {
 		if (colspan) {
 			this.customColspans[this.children.length] = colspan;
 		}
 		this.children.push(elem);
 	}
 
-	html(): HTMLTableElement {
+	public html(): HTMLTableElement {
 		let wrapper = utils.create("table");
 		let index = 0;
 		for (let i = 0; i < this.numRows; i++) {
@@ -39,7 +39,7 @@ export class Table extends Renderer {
 		return <HTMLTableElement> wrapper;
 	}
 
-	onRender(): void {
+	public onRender(): void {
 		this.node.appendChild(this.html());
 	}
 

@@ -4,8 +4,9 @@ import {Settings, Strings} from "../../Settings"
 import {System} from "../../System"
 import {utils} from "../../Utils"
 
-export namespace initializer {
+export namespace initFA {
 	export function init() {
+		console.log("[FA] Initializing...");
 		let menuList: Menu[] = [];
 
 		let menu = new Menu(Strings.RECOGNITION);
@@ -30,6 +31,7 @@ export namespace initializer {
 		menuList.push(menu);
 
 		Settings.machines[Settings.Machine.FA].sidebar = menuList;
+		console.log("[FA] Initialized successfully");
 	}
 
 	let boundShortcuts = false;
