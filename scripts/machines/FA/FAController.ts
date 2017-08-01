@@ -125,6 +125,10 @@ export class FAController implements Controller {
 		this.stepIndex = -1;
 	}
 
+	public reset(): void {
+		this.machine.reset();
+	}
+
 	public finished(input: string): boolean {
 		return this.stepIndex >= input.length;
 	}

@@ -4,19 +4,18 @@ import {Settings, Strings} from "../../Settings"
 import {System} from "../../System"
 import {utils} from "../../Utils"
 
-export namespace initFA {
-	export function init() {
+export class initFA {
+	public init(): void {
 		console.log("[FA] Initializing...");
 		let menuList: Menu[] = [];
 
 		let menu = new Menu(Strings.RECOGNITION);
 		let rows: HTMLElement[][] = [];
 
-		buildTestCaseInput(rows);
-		buildRecognitionControls(rows);
-		buildRecognitionProgress(rows);
-		bindRecognitionEvents();
-		bindShortcuts();
+		this.buildTestCaseInput(rows);
+		this.buildRecognitionControls(rows);
+		this.buildRecognitionProgress(rows);
+		this.bindRecognitionEvents();
 
 		for (let row of rows) {
 			let div = <HTMLDivElement> utils.create("div", {
@@ -34,202 +33,220 @@ export namespace initFA {
 		console.log("[FA] Initialized successfully");
 	}
 
-	let boundShortcuts = false;
-	let testCaseInput: HTMLInputElement = null;
-	let fastRecognition: HTMLImageElement = null;
-	let stepRecognition: HTMLImageElement = null;
-	let stopRecognition: HTMLImageElement = null;
-	let progressContainer: HTMLDivElement = null;
-
-	function testCase(): string {
-		return testCaseInput.value;
+	public onEnter(): void {
+		this.bindShortcuts();
+		System.unlockShortcutGroup(this.shortcutGroup);
+		console.log("[FA] Bound events");
 	}
 
-	function buildTestCaseInput(container: HTMLElement[][]): void {
+	public onExit(): void {
+		System.lockShortcutGroup(this.shortcutGroup);
+		console.log("[FA] Unbound events");
+	}
+
+	readonly shortcutGroup = "FA";
+	private boundShortcuts = false;
+	private testCaseInput: HTMLInputElement = null;
+	private fastRecognition: HTMLImageElement = null;
+	private stepRecognition: HTMLImageElement = null;
+	private stopRecognition: HTMLImageElement = null;
+	private progressContainer: HTMLDivElement = null;
+
+	private testCase(): string {
+		return this.testCaseInput.value;
+	}
+
+	private buildTestCaseInput(container: HTMLElement[][]): void {
 		let input = <HTMLInputElement> utils.create("input", {
 			type: "text",
 			placeholder: Strings.TEST_CASE
 		});
 		container.push([input]);
-		testCaseInput = input;
+		this.testCaseInput = input;
 	}
 
-	function highlightCurrentStates(): void {
+	private highlightCurrentStates(): void {
 		let states = Settings.controller().currentStates();
 		Settings.automatonRenderer.recognitionHighlight(states);
 	}
 
-	function buildRecognitionControls(container: HTMLElement[][]): void {
+	private buildRecognitionControls(container: HTMLElement[][]): void {
 		const disabledClass = Settings.disabledButtonClass;
 
-		fastRecognition = <HTMLImageElement> utils.create("img", {
+		this.fastRecognition = <HTMLImageElement> utils.create("img", {
 			className: "image_button",
 			src: "images/fastforward.svg",
 			title: Strings.FAST_RECOGNITION
 		});
 
-		stopRecognition = <HTMLImageElement> utils.create("img", {
+		this.stopRecognition = <HTMLImageElement> utils.create("img", {
 			className: "image_button " + disabledClass,
 			src: "images/stop.svg",
 			title: Strings.STOP_RECOGNITION
 		});
 
-		stepRecognition = <HTMLImageElement> utils.create("img", {
+		this.stepRecognition = <HTMLImageElement> utils.create("img", {
 			className: "image_button",
 			src: "images/play.svg",
 			title: Strings.STEP_RECOGNITION
 		});
 
-		container.push([fastRecognition, stepRecognition,
-						stopRecognition]);
+		container.push([this.fastRecognition, this.stepRecognition,
+						this.stopRecognition]);
 	}
 
-	function buildRecognitionProgress(container: HTMLElement[][]): void {
-		progressContainer = <HTMLDivElement> utils.create("div", {
+	private buildRecognitionProgress(container: HTMLElement[][]): void {
+		this.progressContainer = <HTMLDivElement> utils.create("div", {
 			id: "recognition_progress"
 		});
 
-		progressContainer.style.display = "none";
+		this.progressContainer.style.display = "none";
 
-		container.push([progressContainer]);
+		container.push([this.progressContainer]);
 	}
 
-	function showAcceptanceStatus(): void {
+	private showAcceptanceStatus(): void {
 		if (Settings.controller().accepts()) {
-			progressContainer.style.color = Settings.acceptedTestCaseColor;
-			progressContainer.innerHTML = Strings.INPUT_ACCEPTED;
+			this.progressContainer.style.color = Settings.acceptedTestCaseColor;
+			this.progressContainer.innerHTML = Strings.INPUT_ACCEPTED;
 		} else {
-			progressContainer.style.color = Settings.rejectedTestCaseColor;
-			progressContainer.innerHTML = Strings.INPUT_REJECTED;
+			this.progressContainer.style.color = Settings.rejectedTestCaseColor;
+			this.progressContainer.innerHTML = Strings.INPUT_REJECTED;
 		}
 	}
 
-	function bindRecognitionEvents(): void {
+	private bindRecognitionEvents(): void {
 		const disabledClass = Settings.disabledButtonClass;
 		let fastForwardEnabled = true;
 		let stepEnabled = true;
 		let stopEnabled = false;
+		let self = this;
 
 		let fastForwardStatus = function(enabled) {
 			fastForwardEnabled = enabled;
-			fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+			self.fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
 		};
 
 		let stepStatus = function(enabled) {
 			stepEnabled = enabled;
-			stepRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+			self.stepRecognition.classList[enabled ? "remove" : "add"](disabledClass);
 		};
 
 		let stopStatus = function(enabled) {
 			stopEnabled = enabled;
-			stopRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+			self.stopRecognition.classList[enabled ? "remove" : "add"](disabledClass);
 		};
 
-		fastRecognition.addEventListener("click", function() {
+
+		this.fastRecognition.addEventListener("click", function() {
 			if (fastForwardEnabled) {
 				Settings.automatonRenderer.lock();
-				let input = testCase();
+				let input = self.testCase();
 				let controller = Settings.controller();
 				controller.fastForward(input);
-				highlightCurrentStates();
+				self.highlightCurrentStates();
 
-				progressContainer.style.display = "";
-				showAcceptanceStatus();
+				self.progressContainer.style.display = "";
+				self.showAcceptanceStatus();
 
 				fastForwardStatus(false);
 				stepStatus(false);
 				stopStatus(true);
-				testCaseInput.disabled = true;
+				self.testCaseInput.disabled = true;
 			}
 		});
 
-		stopRecognition.addEventListener("click", function() {
+		this.stopRecognition.addEventListener("click", function() {
 			if (stopEnabled) {
 				Settings.controller().stop();
 				Settings.automatonRenderer.recognitionDim();
 				Settings.automatonRenderer.unlock();
 
-				progressContainer.style.color = "black";
-				progressContainer.style.display = "none";
+				self.progressContainer.style.color = "black";
+				self.progressContainer.style.display = "none";
 
 				fastForwardStatus(true);
 				stepStatus(true);
 				stopStatus(false);
-				testCaseInput.disabled = false;
+				self.testCaseInput.disabled = false;
 			}
 		});
 
-		stepRecognition.addEventListener("click", function() {
+		this.stepRecognition.addEventListener("click", function() {
+			console.log("[FA STEP]");
 			if (stepEnabled) {
 				fastForwardStatus(false);
 				stopStatus(true);
-				testCaseInput.disabled = true;
+				self.testCaseInput.disabled = true;
 
-				let input = testCase();
+				let input = self.testCase();
 				let controller = Settings.controller();
 				if (controller.isStopped()) {
 					Settings.automatonRenderer.lock();
-					progressContainer.style.display = "";
+					self.progressContainer.style.display = "";
 					let sidebar = <HTMLDivElement> utils.id(Settings.sidebarID);
 					let width = sidebar.offsetWidth;
 					width -= 10; // twice the progress container padding
 					width -= 1; // sidebar border
-					progressContainer.style.width = width + "px";
+					self.progressContainer.style.width = width + "px";
 				}
 
 				let finished = controller.finished(input);
 				if (!finished) {
 					controller.step(input);
-					highlightCurrentStates();
+					self.highlightCurrentStates();
 					finished = controller.finished(input);
 				}
 
 				let position = controller.stepPosition();
 				let displayedText = input.substr(position);
 				if (displayedText == "") {
-					showAcceptanceStatus();
+					self.showAcceptanceStatus();
 				} else {
-					progressContainer.innerHTML = displayedText;
+					self.progressContainer.innerHTML = displayedText;
 				}
 
 				if (finished) {
 					stepStatus(false);
 				}
 			}
+			console.log("[FA END STEP]");
 		});
 	}
 
-	function bindShortcuts(): void {
+	private bindShortcuts(): void {
+		let self = this;
+
 		// Avoids a problem where changing the system language would make
 		// these shortcuts be rebound, which would effectively make them
 		// trigger multiple times by one keystroke.
-		if (!boundShortcuts) {
+		if (!this.boundShortcuts) {
 			System.bindShortcut(Settings.shortcuts.focusTestCase, function() {
-				testCaseInput.focus();
-			});
+				self.testCaseInput.focus();
+			}, this.shortcutGroup);
 
 			System.bindShortcut(Settings.shortcuts.fastForward, function() {
-				fastRecognition.click();
-			});
+				self.fastRecognition.click();
+			}, this.shortcutGroup);
 
 			System.bindShortcut(Settings.shortcuts.step, function() {
-				stepRecognition.click();
-			});
+				self.stepRecognition.click();
+			}, this.shortcutGroup);
 
 			System.bindShortcut(Settings.shortcuts.stop, function() {
-				stopRecognition.click();
-			});
+				self.stopRecognition.click();
+			}, this.shortcutGroup);
 
-			boundShortcuts = true;
+			this.boundShortcuts = true;
 		}
 
 		// Must be always rebound since the system's internal shortcut handler
 		// is not used here and the test case input vanishes when the system
 		// language is changed.
-		testCaseInput.addEventListener("keydown", function(e) {
+		this.testCaseInput.addEventListener("keydown", function(e) {
 			if (e.keyCode == Keyboard.keys[Settings.shortcuts.dimTestCase[0]]) {
-				if (testCaseInput == document.activeElement) {
-					testCaseInput.blur();
+				if (self.testCaseInput == document.activeElement) {
+					self.testCaseInput.blur();
 				}
 			}
 		});

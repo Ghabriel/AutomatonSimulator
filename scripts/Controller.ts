@@ -32,6 +32,7 @@ export interface Controller {
 	fastForward(input: string): void;
 	step(input: string): void;
 	stop(): void;
+	reset(): void;
 	finished(input: string): boolean;
 	isStopped(): boolean;
 	stepPosition(): number;

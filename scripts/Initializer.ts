@@ -1,13 +1,14 @@
-import * as init from "./lists/InitializerList"
 import {utils} from "./Utils"
 
-export class Initializer {
-	static exec(): void {
-		this.initSidebars();
-	}
+export interface Initializable {
+	init(): void;
+	onEnter(): void;
+	onExit(): void;
+}
 
-	private static initSidebars(): void {
-		utils.foreach(init, function(moduleName, obj) {
+export class Initializer {
+	static exec(initList: {[m: number]: Initializable}): void {
+		utils.foreach(initList, function(index: number, obj: Initializable) {
 			obj.init();
 		});
 	}

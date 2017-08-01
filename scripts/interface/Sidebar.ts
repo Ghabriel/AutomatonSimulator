@@ -263,10 +263,9 @@ export class Sidebar extends Renderer {
 					// Firefox ignores keyboard events triggered while focusing
 					// a disabled input, so blur it.
 					machineButtonMapping[type].blur();
-					Settings.currentMachine = type;
+					System.changeMachine(type);
 					self.loadMachine(type);
 					self.renderDynamicMenus();
-					System.changeMachine();
 				}
 			});
 			table.add(button);

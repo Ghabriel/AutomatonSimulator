@@ -40,7 +40,8 @@ export class System {
 	}
 
 	// Notifies all machine change observers.
-	static changeMachine(): void {
+	static changeMachine(type: number): void {
+		Settings.changeMachine(type);
 		for (let listener of this.machineChangeObservers) {
 			listener.onMachineChange();
 		}

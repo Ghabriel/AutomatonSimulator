@@ -1,10 +1,11 @@
-import * as lang from "./lists/LanguageList"
 import * as automata from "./lists/MachineList"
 import * as controllers from "./lists/ControllerList"
+import * as lang from "./lists/LanguageList"
+import * as init from "./lists/InitializerList"
 
 // import {Regex} from "./misc/Regex"
 import {Controller} from "./Controller"
-import {Initializer} from "./Initializer"
+import {Initializable, Initializer} from "./Initializer"
 import {StatePalette} from "./StatePalette"
 import {utils} from "./Utils"
 
@@ -12,6 +13,7 @@ interface MachineTraits {
 	name: string;
 	sidebar: any[];
 	controller: Controller;
+	initializer: Initializable;
 }
 
 export namespace Settings {
@@ -116,6 +118,7 @@ export namespace Settings {
 	export var machines: {[m: number]: MachineTraits} = {};
 
 	export var controllerMap: {[m: number]: Controller} = {};
+	export var initializerMap: {[m: number]: Initializable} = {};
 
 	// export var sidebar: Sidebar = null;
 	// export var automatonRenderer: AutomatonRenderer = null;
@@ -134,6 +137,7 @@ export namespace Settings {
 			for (let index in Machine) {
 				if (Machine.hasOwnProperty(index) && !isNaN(parseInt(index))) {
 					controllerMap[index] = new controllers[Machine[index] + "Controller"]();
+					initializerMap[index] = new init["init" + Machine[index]]();
 				}
 			}
 		}
@@ -141,10 +145,13 @@ export namespace Settings {
 		let machineList: typeof machines = {};
 		for (let index in Machine) {
 			if (Machine.hasOwnProperty(index) && !isNaN(parseInt(index))) {
+				// Stores the traits of this machine. Note that the
+				// "sidebar" property is filled by the init* classes.
 				machineList[index] = {
 					name: language.strings[Machine[index]],
 					sidebar: [],
-					controller: controllerMap[index]
+					controller: controllerMap[index],
+					initializer: initializerMap[index]
 				};
 			}
 		}
@@ -158,14 +165,25 @@ export namespace Settings {
 			// }
 		});
 
+		Initializer.exec(initializerMap);
+
+		if (firstUpdate) {
+			machines[currentMachine].initializer.onEnter();
+		}
+
 		firstUpdate = false;
-		Initializer.exec();
 	}
 
 	export function changeLanguage(newLanguage): void {
 		language = newLanguage;
 		Strings = language.strings;
 		update();
+	}
+
+	export function changeMachine(machineIndex: number): void {
+		machines[currentMachine].initializer.onExit();
+		currentMachine = machineIndex;
+		machines[currentMachine].initializer.onEnter();
 	}
 }
 

@@ -579,158 +579,6 @@ define("tests", ["require", "exports", "tests/FATests", "tests/PDATests", "tests
         test.runTests();
     });
 });
-define("languages/Portuguese", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var portuguese;
-    (function (portuguese) {
-        portuguese.strings = {
-            LANGUAGE_NAME: "Português",
-            SETTINGS: "Configurações do Sistema",
-            CHANGE_LANGUAGE: "Mudar o idioma para \"%\"?",
-            SYSTEM_LANGUAGE: "Idioma do sistema",
-            UNDO_MAX_COUNT: "Quantidade de 'desfazer'",
-            MEMORY_CONSUMPTION_WARNING: "Aumentar o tamanho do histórico aumenta o consumo de memória. Deseja continuar?",
-            FILE_MENUBAR: "Manipulação de Arquivos",
-            SAVE: "Salvar",
-            OPEN: "Abrir",
-            INVALID_FILE: "Arquivo inválido",
-            PROMPT_CONFIRM: "Confirmar",
-            PROMPT_CANCEL: "Cancelar",
-            SELECTED_ENTITY: "Entidade selecionada",
-            NO_SELECTED_ENTITY: "nenhuma entidade selecionada",
-            ORIGIN: "Origem",
-            TARGET: "Destino",
-            TRANSITIONS: "Transições",
-            STATE_NAME: "Nome",
-            STATE_IS_INITIAL: "É inicial",
-            STATE_IS_FINAL: "É final",
-            RENAME_STATE: "renomear",
-            TOGGLE_PROPERTY: "alternar",
-            CHANGE_PROPERTY: "alterar",
-            DELETE_STATE: "Remover estado",
-            DELETE_SELECTED_TRANSITION: "Remover transição selecionada",
-            DELETE_ALL_TRANSITIONS: "Remover todas as transições",
-            YES: "sim",
-            NO: "não",
-            FORMAL_DEFINITION: "Definição Formal",
-            DEFINITION_WHERE_SUFFIX: ", onde:",
-            NO_INITIAL_STATE: "nenhum",
-            NO_TRANSITIONS: "nenhuma transição",
-            SELECT_MACHINE: "Seleção de Máquina",
-            ACTION_LIST: "Ações",
-            CREATE_STATE: "Criar estado",
-            CREATE_EDGE: "Criar aresta",
-            CLEAR_MACHINE: "Limpar máquina",
-            CLEAR_CONFIRMATION: "Deseja realmente limpar o autômato?",
-            UNDO: "Desfazer",
-            CREATE_STATE_INSTRUCTIONS: "clique duplo no local alvo",
-            CREATE_EDGE_INSTRUCTIONS: "clique direito na origem e então clique no destino",
-            STATE_MANUAL_CREATION: "Digite o nome do estado:",
-            EDGE_MANUAL_CREATION: "Escolha a origem e o destino:",
-            DUPLICATE_STATE_NAME: "Nome do estado já em uso",
-            STATE_RENAME_ACTION: "Digite o novo nome do estado:",
-            EDGE_ENTER_NEW_ORIGIN: "Digite a nova origem:",
-            EDGE_ENTER_NEW_TARGET: "Digite o novo destino:",
-            FA: "Autômato Finito",
-            PDA: "Autômato de Pilha",
-            LBA: "Autômato Linearmente Limitado",
-            FA_ENTER_EDGE_CONTENT: "Digite o conteúdo da aresta (até 1 caractere):",
-            LBA_ENTER_EDGE_CONTENT: "Digite o(s) símbolo(s) de fita lido(s), escrito(s) e a direção do movimento",
-            LBA_ENTER_EDGE_PLACEHOLDER_1: "ler",
-            LBA_ENTER_EDGE_PLACEHOLDER_2: "escrever",
-            LBA_ENTER_EDGE_PLACEHOLDER_3: "direção",
-            RECOGNITION: "Reconhecimento",
-            TEST_CASE: "caso de teste",
-            FAST_RECOGNITION: "Reconhecimento rápido (R)",
-            STEP_RECOGNITION: "Reconhecimento passo-a-passo (N)",
-            STOP_RECOGNITION: "Parar reconhecimento passo-a-passo (S)",
-            CHANGE_MACHINE_WARNING: "Alterar o tipo de máquina reseta o autômato. Deseja continuar?",
-            INPUT_ACCEPTED: "aceito",
-            INPUT_REJECTED: "rejeitado",
-            ERROR_INVALID_STATE_NAME: "Nome de estado inválido"
-        };
-    })(portuguese = exports.portuguese || (exports.portuguese = {}));
-});
-define("languages/English", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var english;
-    (function (english) {
-        english.strings = {
-            LANGUAGE_NAME: "English",
-            SETTINGS: "System Settings",
-            CHANGE_LANGUAGE: "Change the language to \"%\"?",
-            SYSTEM_LANGUAGE: "System language",
-            UNDO_MAX_COUNT: "Undo max count",
-            MEMORY_CONSUMPTION_WARNING: "Increasing the history size increases the memory consumption. Do you wish to continue?",
-            FILE_MENUBAR: "File Manipulation",
-            SAVE: "Save",
-            OPEN: "Open",
-            INVALID_FILE: "Invalid file",
-            PROMPT_CONFIRM: "Confirm",
-            PROMPT_CANCEL: "Cancel",
-            SELECTED_ENTITY: "Selected entity",
-            NO_SELECTED_ENTITY: "no selected entity",
-            ORIGIN: "Origin",
-            TARGET: "Target",
-            TRANSITIONS: "Transitions",
-            STATE_NAME: "Name",
-            STATE_IS_INITIAL: "Is initial",
-            STATE_IS_FINAL: "Is final",
-            RENAME_STATE: "rename",
-            TOGGLE_PROPERTY: "toggle",
-            CHANGE_PROPERTY: "change",
-            DELETE_STATE: "Delete state",
-            DELETE_SELECTED_TRANSITION: "Delete selected transition",
-            DELETE_ALL_TRANSITIONS: "Delete all transitions",
-            YES: "yes",
-            NO: "no",
-            FORMAL_DEFINITION: "Formal Definition",
-            DEFINITION_WHERE_SUFFIX: ", where:",
-            NO_INITIAL_STATE: "none",
-            NO_TRANSITIONS: "none",
-            SELECT_MACHINE: "Machine Selection",
-            ACTION_LIST: "Actions",
-            CREATE_STATE: "Create state",
-            CREATE_EDGE: "Create edge",
-            CLEAR_MACHINE: "Clear machine",
-            CLEAR_CONFIRMATION: "Do you really want to reset this automaton?",
-            UNDO: "Undo",
-            CREATE_STATE_INSTRUCTIONS: "double click on target position",
-            CREATE_EDGE_INSTRUCTIONS: "right click on origin then click on target",
-            STATE_MANUAL_CREATION: "Enter the state name:",
-            EDGE_MANUAL_CREATION: "Choose the origin and destination",
-            DUPLICATE_STATE_NAME: "State name already in use",
-            STATE_RENAME_ACTION: "Enter the new state name:",
-            EDGE_ENTER_NEW_ORIGIN: "Enter a new origin:",
-            EDGE_ENTER_NEW_TARGET: "Enter a new target:",
-            FA: "Finite Automaton",
-            PDA: "Pushdown Automaton",
-            LBA: "Linearly Bounded Automaton",
-            FA_ENTER_EDGE_CONTENT: "Enter the edge content (up to 1 character):",
-            LBA_ENTER_EDGE_CONTENT: "Enter the tape symbol(s) read, tape symbol(s) written and move direction:",
-            LBA_ENTER_EDGE_PLACEHOLDER_1: "read",
-            LBA_ENTER_EDGE_PLACEHOLDER_2: "write",
-            LBA_ENTER_EDGE_PLACEHOLDER_3: "direction",
-            RECOGNITION: "Recognition",
-            TEST_CASE: "test case",
-            FAST_RECOGNITION: "Fast recognition (R)",
-            STEP_RECOGNITION: "Step-by-step recognition (N)",
-            STOP_RECOGNITION: "Stop step-by-step recognition (S)",
-            CHANGE_MACHINE_WARNING: "Changing the machine type resets the automaton. Do you wish to continue?",
-            INPUT_ACCEPTED: "accepted",
-            INPUT_REJECTED: "rejected",
-            ERROR_INVALID_STATE_NAME: "Invalid state name"
-        };
-    })(english = exports.english || (exports.english = {}));
-});
-define("lists/LanguageList", ["require", "exports", "languages/Portuguese", "languages/English"], function (require, exports, Portuguese_1, English_1) {
-    "use strict";
-    function __export(m) {
-        for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
-    }
-    __export(Portuguese_1);
-    __export(English_1);
-});
 define("lists/MachineList", ["require", "exports"], function (require, exports) {
     "use strict";
     (function (Machine) {
@@ -1168,7 +1016,8 @@ define("System", ["require", "exports", "Keyboard", "Settings"], function (requi
                 listener.onLanguageChange();
             }
         };
-        System.changeMachine = function () {
+        System.changeMachine = function (type) {
+            Settings_2.Settings.changeMachine(type);
             for (var _i = 0, _a = this.machineChangeObservers; _i < _a.length; _i++) {
                 var listener = _a[_i];
                 listener.onMachineChange();
@@ -1562,6 +1411,9 @@ define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Key
         FAController.prototype.stop = function () {
             this.stepIndex = -1;
         };
+        FAController.prototype.reset = function () {
+            this.machine.reset();
+        };
         FAController.prototype.finished = function (input) {
             return this.stepIndex >= input.length;
         };
@@ -1643,6 +1495,7 @@ define("machines/PDA/PDAController", ["require", "exports", "Prompt"], function 
         PDAController.prototype.fastForward = function (input) { };
         PDAController.prototype.step = function (input) { };
         PDAController.prototype.stop = function () { };
+        PDAController.prototype.reset = function () { };
         PDAController.prototype.finished = function (input) { return true; };
         PDAController.prototype.isStopped = function () { return true; };
         PDAController.prototype.stepPosition = function () { return -1; };
@@ -2018,6 +1871,7 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
                     this.machine.setTapeContent(input.split(""));
                 }
                 else {
+                    console.log("  [READ]");
                     this.machine.read();
                 }
                 this.stepIndex++;
@@ -2025,6 +1879,9 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
         };
         LBAController.prototype.stop = function () {
             this.stepIndex = -1;
+        };
+        LBAController.prototype.reset = function () {
+            this.machine.reset();
         };
         LBAController.prototype.finished = function (input) {
             return this.machine.halted();
@@ -2090,6 +1947,158 @@ define("lists/ControllerList", ["require", "exports", "machines/FA/FAController"
     __export(FAController_1);
     __export(PDAController_1);
     __export(LBAController_1);
+});
+define("languages/Portuguese", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var portuguese;
+    (function (portuguese) {
+        portuguese.strings = {
+            LANGUAGE_NAME: "Português",
+            SETTINGS: "Configurações do Sistema",
+            CHANGE_LANGUAGE: "Mudar o idioma para \"%\"?",
+            SYSTEM_LANGUAGE: "Idioma do sistema",
+            UNDO_MAX_COUNT: "Quantidade de 'desfazer'",
+            MEMORY_CONSUMPTION_WARNING: "Aumentar o tamanho do histórico aumenta o consumo de memória. Deseja continuar?",
+            FILE_MENUBAR: "Manipulação de Arquivos",
+            SAVE: "Salvar",
+            OPEN: "Abrir",
+            INVALID_FILE: "Arquivo inválido",
+            PROMPT_CONFIRM: "Confirmar",
+            PROMPT_CANCEL: "Cancelar",
+            SELECTED_ENTITY: "Entidade selecionada",
+            NO_SELECTED_ENTITY: "nenhuma entidade selecionada",
+            ORIGIN: "Origem",
+            TARGET: "Destino",
+            TRANSITIONS: "Transições",
+            STATE_NAME: "Nome",
+            STATE_IS_INITIAL: "É inicial",
+            STATE_IS_FINAL: "É final",
+            RENAME_STATE: "renomear",
+            TOGGLE_PROPERTY: "alternar",
+            CHANGE_PROPERTY: "alterar",
+            DELETE_STATE: "Remover estado",
+            DELETE_SELECTED_TRANSITION: "Remover transição selecionada",
+            DELETE_ALL_TRANSITIONS: "Remover todas as transições",
+            YES: "sim",
+            NO: "não",
+            FORMAL_DEFINITION: "Definição Formal",
+            DEFINITION_WHERE_SUFFIX: ", onde:",
+            NO_INITIAL_STATE: "nenhum",
+            NO_TRANSITIONS: "nenhuma transição",
+            SELECT_MACHINE: "Seleção de Máquina",
+            ACTION_LIST: "Ações",
+            CREATE_STATE: "Criar estado",
+            CREATE_EDGE: "Criar aresta",
+            CLEAR_MACHINE: "Limpar máquina",
+            CLEAR_CONFIRMATION: "Deseja realmente limpar o autômato?",
+            UNDO: "Desfazer",
+            CREATE_STATE_INSTRUCTIONS: "clique duplo no local alvo",
+            CREATE_EDGE_INSTRUCTIONS: "clique direito na origem e então clique no destino",
+            STATE_MANUAL_CREATION: "Digite o nome do estado:",
+            EDGE_MANUAL_CREATION: "Escolha a origem e o destino:",
+            DUPLICATE_STATE_NAME: "Nome do estado já em uso",
+            STATE_RENAME_ACTION: "Digite o novo nome do estado:",
+            EDGE_ENTER_NEW_ORIGIN: "Digite a nova origem:",
+            EDGE_ENTER_NEW_TARGET: "Digite o novo destino:",
+            FA: "Autômato Finito",
+            PDA: "Autômato de Pilha",
+            LBA: "Autômato Linearmente Limitado",
+            FA_ENTER_EDGE_CONTENT: "Digite o conteúdo da aresta (até 1 caractere):",
+            LBA_ENTER_EDGE_CONTENT: "Digite o(s) símbolo(s) de fita lido(s), escrito(s) e a direção do movimento",
+            LBA_ENTER_EDGE_PLACEHOLDER_1: "ler",
+            LBA_ENTER_EDGE_PLACEHOLDER_2: "escrever",
+            LBA_ENTER_EDGE_PLACEHOLDER_3: "direção",
+            RECOGNITION: "Reconhecimento",
+            TEST_CASE: "caso de teste",
+            FAST_RECOGNITION: "Reconhecimento rápido (R)",
+            STEP_RECOGNITION: "Reconhecimento passo-a-passo (N)",
+            STOP_RECOGNITION: "Parar reconhecimento passo-a-passo (S)",
+            CHANGE_MACHINE_WARNING: "Alterar o tipo de máquina reseta o autômato. Deseja continuar?",
+            INPUT_ACCEPTED: "aceito",
+            INPUT_REJECTED: "rejeitado",
+            ERROR_INVALID_STATE_NAME: "Nome de estado inválido"
+        };
+    })(portuguese = exports.portuguese || (exports.portuguese = {}));
+});
+define("languages/English", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var english;
+    (function (english) {
+        english.strings = {
+            LANGUAGE_NAME: "English",
+            SETTINGS: "System Settings",
+            CHANGE_LANGUAGE: "Change the language to \"%\"?",
+            SYSTEM_LANGUAGE: "System language",
+            UNDO_MAX_COUNT: "Undo max count",
+            MEMORY_CONSUMPTION_WARNING: "Increasing the history size increases the memory consumption. Do you wish to continue?",
+            FILE_MENUBAR: "File Manipulation",
+            SAVE: "Save",
+            OPEN: "Open",
+            INVALID_FILE: "Invalid file",
+            PROMPT_CONFIRM: "Confirm",
+            PROMPT_CANCEL: "Cancel",
+            SELECTED_ENTITY: "Selected entity",
+            NO_SELECTED_ENTITY: "no selected entity",
+            ORIGIN: "Origin",
+            TARGET: "Target",
+            TRANSITIONS: "Transitions",
+            STATE_NAME: "Name",
+            STATE_IS_INITIAL: "Is initial",
+            STATE_IS_FINAL: "Is final",
+            RENAME_STATE: "rename",
+            TOGGLE_PROPERTY: "toggle",
+            CHANGE_PROPERTY: "change",
+            DELETE_STATE: "Delete state",
+            DELETE_SELECTED_TRANSITION: "Delete selected transition",
+            DELETE_ALL_TRANSITIONS: "Delete all transitions",
+            YES: "yes",
+            NO: "no",
+            FORMAL_DEFINITION: "Formal Definition",
+            DEFINITION_WHERE_SUFFIX: ", where:",
+            NO_INITIAL_STATE: "none",
+            NO_TRANSITIONS: "none",
+            SELECT_MACHINE: "Machine Selection",
+            ACTION_LIST: "Actions",
+            CREATE_STATE: "Create state",
+            CREATE_EDGE: "Create edge",
+            CLEAR_MACHINE: "Clear machine",
+            CLEAR_CONFIRMATION: "Do you really want to reset this automaton?",
+            UNDO: "Undo",
+            CREATE_STATE_INSTRUCTIONS: "double click on target position",
+            CREATE_EDGE_INSTRUCTIONS: "right click on origin then click on target",
+            STATE_MANUAL_CREATION: "Enter the state name:",
+            EDGE_MANUAL_CREATION: "Choose the origin and destination",
+            DUPLICATE_STATE_NAME: "State name already in use",
+            STATE_RENAME_ACTION: "Enter the new state name:",
+            EDGE_ENTER_NEW_ORIGIN: "Enter a new origin:",
+            EDGE_ENTER_NEW_TARGET: "Enter a new target:",
+            FA: "Finite Automaton",
+            PDA: "Pushdown Automaton",
+            LBA: "Linearly Bounded Automaton",
+            FA_ENTER_EDGE_CONTENT: "Enter the edge content (up to 1 character):",
+            LBA_ENTER_EDGE_CONTENT: "Enter the tape symbol(s) read, tape symbol(s) written and move direction:",
+            LBA_ENTER_EDGE_PLACEHOLDER_1: "read",
+            LBA_ENTER_EDGE_PLACEHOLDER_2: "write",
+            LBA_ENTER_EDGE_PLACEHOLDER_3: "direction",
+            RECOGNITION: "Recognition",
+            TEST_CASE: "test case",
+            FAST_RECOGNITION: "Fast recognition (R)",
+            STEP_RECOGNITION: "Step-by-step recognition (N)",
+            STOP_RECOGNITION: "Stop step-by-step recognition (S)",
+            CHANGE_MACHINE_WARNING: "Changing the machine type resets the automaton. Do you wish to continue?",
+            INPUT_ACCEPTED: "accepted",
+            INPUT_REJECTED: "rejected",
+            ERROR_INVALID_STATE_NAME: "Invalid state name"
+        };
+    })(english = exports.english || (exports.english = {}));
+});
+define("lists/LanguageList", ["require", "exports", "languages/Portuguese", "languages/English"], function (require, exports, Portuguese_1, English_1) {
+    "use strict";
+    function __export(m) {
+        for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+    }
+    __export(Portuguese_1);
+    __export(English_1);
 });
 define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_1, Settings_6, Utils_5) {
     "use strict";
@@ -2171,18 +2180,25 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
 });
 define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "System", "Utils"], function (require, exports, Keyboard_5, Menu_1, Settings_7, System_2, Utils_6) {
     "use strict";
-    var initFA;
-    (function (initFA) {
-        function init() {
+    var initFA = (function () {
+        function initFA() {
+            this.shortcutGroup = "FA";
+            this.boundShortcuts = false;
+            this.testCaseInput = null;
+            this.fastRecognition = null;
+            this.stepRecognition = null;
+            this.stopRecognition = null;
+            this.progressContainer = null;
+        }
+        initFA.prototype.init = function () {
             console.log("[FA] Initializing...");
             var menuList = [];
             var menu = new Menu_1.Menu(Settings_7.Strings.RECOGNITION);
             var rows = [];
-            buildTestCaseInput(rows);
-            buildRecognitionControls(rows);
-            buildRecognitionProgress(rows);
-            bindRecognitionEvents();
-            bindShortcuts();
+            this.buildTestCaseInput(rows);
+            this.buildRecognitionControls(rows);
+            this.buildRecognitionProgress(rows);
+            this.bindRecognitionEvents();
             for (var _i = 0, rows_1 = rows; _i < rows_1.length; _i++) {
                 var row = rows_1[_i];
                 var div = Utils_6.utils.create("div", {
@@ -2197,182 +2213,198 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
             menuList.push(menu);
             Settings_7.Settings.machines[Settings_7.Settings.Machine.FA].sidebar = menuList;
             console.log("[FA] Initialized successfully");
-        }
-        initFA.init = init;
-        var boundShortcuts = false;
-        var testCaseInput = null;
-        var fastRecognition = null;
-        var stepRecognition = null;
-        var stopRecognition = null;
-        var progressContainer = null;
-        function testCase() {
-            return testCaseInput.value;
-        }
-        function buildTestCaseInput(container) {
+        };
+        initFA.prototype.onEnter = function () {
+            this.bindShortcuts();
+            System_2.System.unlockShortcutGroup(this.shortcutGroup);
+            console.log("[FA] Bound events");
+        };
+        initFA.prototype.onExit = function () {
+            System_2.System.lockShortcutGroup(this.shortcutGroup);
+            console.log("[FA] Unbound events");
+        };
+        initFA.prototype.testCase = function () {
+            return this.testCaseInput.value;
+        };
+        initFA.prototype.buildTestCaseInput = function (container) {
             var input = Utils_6.utils.create("input", {
                 type: "text",
                 placeholder: Settings_7.Strings.TEST_CASE
             });
             container.push([input]);
-            testCaseInput = input;
-        }
-        function highlightCurrentStates() {
+            this.testCaseInput = input;
+        };
+        initFA.prototype.highlightCurrentStates = function () {
             var states = Settings_7.Settings.controller().currentStates();
             Settings_7.Settings.automatonRenderer.recognitionHighlight(states);
-        }
-        function buildRecognitionControls(container) {
+        };
+        initFA.prototype.buildRecognitionControls = function (container) {
             var disabledClass = Settings_7.Settings.disabledButtonClass;
-            fastRecognition = Utils_6.utils.create("img", {
+            this.fastRecognition = Utils_6.utils.create("img", {
                 className: "image_button",
                 src: "images/fastforward.svg",
                 title: Settings_7.Strings.FAST_RECOGNITION
             });
-            stopRecognition = Utils_6.utils.create("img", {
+            this.stopRecognition = Utils_6.utils.create("img", {
                 className: "image_button " + disabledClass,
                 src: "images/stop.svg",
                 title: Settings_7.Strings.STOP_RECOGNITION
             });
-            stepRecognition = Utils_6.utils.create("img", {
+            this.stepRecognition = Utils_6.utils.create("img", {
                 className: "image_button",
                 src: "images/play.svg",
                 title: Settings_7.Strings.STEP_RECOGNITION
             });
-            container.push([fastRecognition, stepRecognition,
-                stopRecognition]);
-        }
-        function buildRecognitionProgress(container) {
-            progressContainer = Utils_6.utils.create("div", {
+            container.push([this.fastRecognition, this.stepRecognition,
+                this.stopRecognition]);
+        };
+        initFA.prototype.buildRecognitionProgress = function (container) {
+            this.progressContainer = Utils_6.utils.create("div", {
                 id: "recognition_progress"
             });
-            progressContainer.style.display = "none";
-            container.push([progressContainer]);
-        }
-        function showAcceptanceStatus() {
+            this.progressContainer.style.display = "none";
+            container.push([this.progressContainer]);
+        };
+        initFA.prototype.showAcceptanceStatus = function () {
             if (Settings_7.Settings.controller().accepts()) {
-                progressContainer.style.color = Settings_7.Settings.acceptedTestCaseColor;
-                progressContainer.innerHTML = Settings_7.Strings.INPUT_ACCEPTED;
+                this.progressContainer.style.color = Settings_7.Settings.acceptedTestCaseColor;
+                this.progressContainer.innerHTML = Settings_7.Strings.INPUT_ACCEPTED;
             }
             else {
-                progressContainer.style.color = Settings_7.Settings.rejectedTestCaseColor;
-                progressContainer.innerHTML = Settings_7.Strings.INPUT_REJECTED;
+                this.progressContainer.style.color = Settings_7.Settings.rejectedTestCaseColor;
+                this.progressContainer.innerHTML = Settings_7.Strings.INPUT_REJECTED;
             }
-        }
-        function bindRecognitionEvents() {
+        };
+        initFA.prototype.bindRecognitionEvents = function () {
             var disabledClass = Settings_7.Settings.disabledButtonClass;
             var fastForwardEnabled = true;
             var stepEnabled = true;
             var stopEnabled = false;
+            var self = this;
             var fastForwardStatus = function (enabled) {
                 fastForwardEnabled = enabled;
-                fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+                self.fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
             };
             var stepStatus = function (enabled) {
                 stepEnabled = enabled;
-                stepRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+                self.stepRecognition.classList[enabled ? "remove" : "add"](disabledClass);
             };
             var stopStatus = function (enabled) {
                 stopEnabled = enabled;
-                stopRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+                self.stopRecognition.classList[enabled ? "remove" : "add"](disabledClass);
             };
-            fastRecognition.addEventListener("click", function () {
+            this.fastRecognition.addEventListener("click", function () {
                 if (fastForwardEnabled) {
                     Settings_7.Settings.automatonRenderer.lock();
-                    var input = testCase();
+                    var input = self.testCase();
                     var controller = Settings_7.Settings.controller();
                     controller.fastForward(input);
-                    highlightCurrentStates();
-                    progressContainer.style.display = "";
-                    showAcceptanceStatus();
+                    self.highlightCurrentStates();
+                    self.progressContainer.style.display = "";
+                    self.showAcceptanceStatus();
                     fastForwardStatus(false);
                     stepStatus(false);
                     stopStatus(true);
-                    testCaseInput.disabled = true;
+                    self.testCaseInput.disabled = true;
                 }
             });
-            stopRecognition.addEventListener("click", function () {
+            this.stopRecognition.addEventListener("click", function () {
                 if (stopEnabled) {
                     Settings_7.Settings.controller().stop();
                     Settings_7.Settings.automatonRenderer.recognitionDim();
                     Settings_7.Settings.automatonRenderer.unlock();
-                    progressContainer.style.color = "black";
-                    progressContainer.style.display = "none";
+                    self.progressContainer.style.color = "black";
+                    self.progressContainer.style.display = "none";
                     fastForwardStatus(true);
                     stepStatus(true);
                     stopStatus(false);
-                    testCaseInput.disabled = false;
+                    self.testCaseInput.disabled = false;
                 }
             });
-            stepRecognition.addEventListener("click", function () {
+            this.stepRecognition.addEventListener("click", function () {
+                console.log("[FA STEP]");
                 if (stepEnabled) {
                     fastForwardStatus(false);
                     stopStatus(true);
-                    testCaseInput.disabled = true;
-                    var input = testCase();
+                    self.testCaseInput.disabled = true;
+                    var input = self.testCase();
                     var controller = Settings_7.Settings.controller();
                     if (controller.isStopped()) {
                         Settings_7.Settings.automatonRenderer.lock();
-                        progressContainer.style.display = "";
+                        self.progressContainer.style.display = "";
                         var sidebar = Utils_6.utils.id(Settings_7.Settings.sidebarID);
                         var width = sidebar.offsetWidth;
                         width -= 10;
                         width -= 1;
-                        progressContainer.style.width = width + "px";
+                        self.progressContainer.style.width = width + "px";
                     }
                     var finished = controller.finished(input);
                     if (!finished) {
                         controller.step(input);
-                        highlightCurrentStates();
+                        self.highlightCurrentStates();
                         finished = controller.finished(input);
                     }
                     var position = controller.stepPosition();
                     var displayedText = input.substr(position);
                     if (displayedText == "") {
-                        showAcceptanceStatus();
+                        self.showAcceptanceStatus();
                     }
                     else {
-                        progressContainer.innerHTML = displayedText;
+                        self.progressContainer.innerHTML = displayedText;
                     }
                     if (finished) {
                         stepStatus(false);
                     }
                 }
+                console.log("[FA END STEP]");
             });
-        }
-        function bindShortcuts() {
-            if (!boundShortcuts) {
+        };
+        initFA.prototype.bindShortcuts = function () {
+            var self = this;
+            if (!this.boundShortcuts) {
                 System_2.System.bindShortcut(Settings_7.Settings.shortcuts.focusTestCase, function () {
-                    testCaseInput.focus();
-                });
+                    self.testCaseInput.focus();
+                }, this.shortcutGroup);
                 System_2.System.bindShortcut(Settings_7.Settings.shortcuts.fastForward, function () {
-                    fastRecognition.click();
-                });
+                    self.fastRecognition.click();
+                }, this.shortcutGroup);
                 System_2.System.bindShortcut(Settings_7.Settings.shortcuts.step, function () {
-                    stepRecognition.click();
-                });
+                    self.stepRecognition.click();
+                }, this.shortcutGroup);
                 System_2.System.bindShortcut(Settings_7.Settings.shortcuts.stop, function () {
-                    stopRecognition.click();
-                });
-                boundShortcuts = true;
+                    self.stopRecognition.click();
+                }, this.shortcutGroup);
+                this.boundShortcuts = true;
             }
-            testCaseInput.addEventListener("keydown", function (e) {
+            this.testCaseInput.addEventListener("keydown", function (e) {
                 if (e.keyCode == Keyboard_5.Keyboard.keys[Settings_7.Settings.shortcuts.dimTestCase[0]]) {
-                    if (testCaseInput == document.activeElement) {
-                        testCaseInput.blur();
+                    if (self.testCaseInput == document.activeElement) {
+                        self.testCaseInput.blur();
                     }
                 }
             });
-        }
-    })(initFA = exports.initFA || (exports.initFA = {}));
+        };
+        return initFA;
+    }());
+    exports.initFA = initFA;
 });
 define("machines/PDA/initializer", ["require", "exports"], function (require, exports) {
     "use strict";
-    var initPDA;
-    (function (initPDA) {
-        function init() {
-            console.log("[INIT] PDA");
+    var initPDA = (function () {
+        function initPDA() {
         }
-        initPDA.init = init;
-    })(initPDA = exports.initPDA || (exports.initPDA = {}));
+        initPDA.prototype.init = function () {
+            console.log("[INIT] PDA");
+        };
+        initPDA.prototype.onEnter = function () {
+            console.log("[ENTER] PDA");
+        };
+        initPDA.prototype.onExit = function () {
+            console.log("[EXIT] PDA");
+        };
+        return initPDA;
+    }());
+    exports.initPDA = initPDA;
 });
 define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"], function (require, exports, Renderer_2, Utils_7) {
     "use strict";
@@ -2422,19 +2454,27 @@ define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"],
 });
 define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "System", "Utils"], function (require, exports, Keyboard_6, Menu_2, Settings_8, System_3, Utils_8) {
     "use strict";
-    var initLBA;
-    (function (initLBA) {
-        function init() {
+    var initLBA = (function () {
+        function initLBA() {
+            this.shortcutGroup = "LBA";
+            this.boundShortcuts = false;
+            this.testCaseInput = null;
+            this.fastRecognition = null;
+            this.stepRecognition = null;
+            this.stopRecognition = null;
+            this.progressContainer = null;
+            this.tapeContainer = null;
+        }
+        initLBA.prototype.init = function () {
             console.log("[LBA] Initializing...");
             var menuList = [];
             var menu = new Menu_2.Menu(Settings_8.Strings.RECOGNITION);
             var rows = [];
-            buildTestCaseInput(rows);
-            buildRecognitionControls(rows);
-            buildTape(rows);
-            buildRecognitionProgress(rows);
-            bindRecognitionEvents();
-            bindShortcuts();
+            this.buildTestCaseInput(rows);
+            this.buildRecognitionControls(rows);
+            this.buildTape(rows);
+            this.buildRecognitionProgress(rows);
+            this.bindRecognitionEvents();
             for (var _i = 0, rows_2 = rows; _i < rows_2.length; _i++) {
                 var row = rows_2[_i];
                 var div = Utils_8.utils.create("div", {
@@ -2449,83 +2489,84 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
             menuList.push(menu);
             Settings_8.Settings.machines[Settings_8.Settings.Machine.LBA].sidebar = menuList;
             console.log("[LBA] Initialized successfully");
-        }
-        initLBA.init = init;
-        var boundShortcuts = false;
-        var testCaseInput = null;
-        var fastRecognition = null;
-        var stepRecognition = null;
-        var stopRecognition = null;
-        var progressContainer = null;
-        var tapeContainer = null;
-        function testCase() {
-            return testCaseInput.value;
-        }
-        function buildTestCaseInput(container) {
+        };
+        initLBA.prototype.onEnter = function () {
+            this.bindShortcuts();
+            System_3.System.unlockShortcutGroup(this.shortcutGroup);
+            console.log("[LBA] Bound events");
+        };
+        initLBA.prototype.onExit = function () {
+            System_3.System.lockShortcutGroup(this.shortcutGroup);
+            console.log("[LBA] Unbound events");
+        };
+        initLBA.prototype.testCase = function () {
+            return this.testCaseInput.value;
+        };
+        initLBA.prototype.buildTestCaseInput = function (container) {
             var input = Utils_8.utils.create("input", {
                 type: "text",
                 placeholder: Settings_8.Strings.TEST_CASE
             });
             container.push([input]);
-            testCaseInput = input;
-        }
-        function highlightCurrentStates() {
+            this.testCaseInput = input;
+        };
+        initLBA.prototype.highlightCurrentStates = function () {
             var states = Settings_8.Settings.controller().currentStates();
             Settings_8.Settings.automatonRenderer.recognitionHighlight(states);
-        }
-        function buildRecognitionControls(container) {
+        };
+        initLBA.prototype.buildRecognitionControls = function (container) {
             var disabledClass = Settings_8.Settings.disabledButtonClass;
-            fastRecognition = Utils_8.utils.create("img", {
+            this.fastRecognition = Utils_8.utils.create("img", {
                 className: "image_button",
                 src: "images/fastforward.svg",
                 title: Settings_8.Strings.FAST_RECOGNITION
             });
-            stopRecognition = Utils_8.utils.create("img", {
+            this.stopRecognition = Utils_8.utils.create("img", {
                 className: "image_button " + disabledClass,
                 src: "images/stop.svg",
                 title: Settings_8.Strings.STOP_RECOGNITION
             });
-            stepRecognition = Utils_8.utils.create("img", {
+            this.stepRecognition = Utils_8.utils.create("img", {
                 className: "image_button",
                 src: "images/play.svg",
                 title: Settings_8.Strings.STEP_RECOGNITION
             });
-            container.push([fastRecognition, stepRecognition,
-                stopRecognition]);
-        }
-        function buildTape(container) {
-            tapeContainer = Utils_8.utils.create("div", {
+            container.push([this.fastRecognition, this.stepRecognition,
+                this.stopRecognition]);
+        };
+        initLBA.prototype.buildTape = function (container) {
+            this.tapeContainer = Utils_8.utils.create("div", {
                 id: "tape"
             });
-            tapeContainer.style.display = "none";
+            this.tapeContainer.style.display = "none";
             var displayedChars = Settings_8.Settings.tapeDisplayedChars;
             for (var i = 0; i < displayedChars; i++) {
                 var cell = Utils_8.utils.create("div", {
                     className: "tape_cell"
                 });
-                tapeContainer.appendChild(cell);
+                this.tapeContainer.appendChild(cell);
             }
-            tapeContainer.children[(displayedChars - 1) / 2].classList.add("center");
-            container.push([tapeContainer]);
-        }
-        function buildRecognitionProgress(container) {
-            progressContainer = Utils_8.utils.create("div", {
+            this.tapeContainer.children[(displayedChars - 1) / 2].classList.add("center");
+            container.push([this.tapeContainer]);
+        };
+        initLBA.prototype.buildRecognitionProgress = function (container) {
+            this.progressContainer = Utils_8.utils.create("div", {
                 id: "recognition_progress"
             });
-            progressContainer.style.display = "none";
-            container.push([progressContainer]);
-        }
-        function showAcceptanceStatus() {
+            this.progressContainer.style.display = "none";
+            container.push([this.progressContainer]);
+        };
+        initLBA.prototype.showAcceptanceStatus = function () {
             if (Settings_8.Settings.controller().accepts()) {
-                progressContainer.style.color = Settings_8.Settings.acceptedTestCaseColor;
-                progressContainer.innerHTML = Settings_8.Strings.INPUT_ACCEPTED;
+                this.progressContainer.style.color = Settings_8.Settings.acceptedTestCaseColor;
+                this.progressContainer.innerHTML = Settings_8.Strings.INPUT_ACCEPTED;
             }
             else {
-                progressContainer.style.color = Settings_8.Settings.rejectedTestCaseColor;
-                progressContainer.innerHTML = Settings_8.Strings.INPUT_REJECTED;
+                this.progressContainer.style.color = Settings_8.Settings.rejectedTestCaseColor;
+                this.progressContainer.innerHTML = Settings_8.Strings.INPUT_REJECTED;
             }
-        }
-        function showTapeContent() {
+        };
+        initLBA.prototype.showTapeContent = function () {
             var controller = Settings_8.Settings.controller();
             var tapeContent = controller.getTapeContent();
             var headPosition = controller.getHeadPosition();
@@ -2548,122 +2589,120 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
             }
             var displayedContent = tapeContent.slice(startIndex, startIndex + displayedChars);
             for (var i = 0; i < displayedContent.length; i++) {
-                tapeContainer.children[i].innerHTML = displayedContent[i];
+                this.tapeContainer.children[i].innerHTML = displayedContent[i];
             }
-        }
-        function bindRecognitionEvents() {
+        };
+        initLBA.prototype.bindRecognitionEvents = function () {
             var disabledClass = Settings_8.Settings.disabledButtonClass;
             var fastForwardEnabled = true;
             var stepEnabled = true;
             var stopEnabled = false;
+            var self = this;
             var fastForwardStatus = function (enabled) {
                 fastForwardEnabled = enabled;
-                fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+                self.fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
             };
             var stepStatus = function (enabled) {
                 stepEnabled = enabled;
-                stepRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+                self.stepRecognition.classList[enabled ? "remove" : "add"](disabledClass);
             };
             var stopStatus = function (enabled) {
                 stopEnabled = enabled;
-                stopRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+                self.stopRecognition.classList[enabled ? "remove" : "add"](disabledClass);
             };
-            fastRecognition.addEventListener("click", function () {
+            this.fastRecognition.addEventListener("click", function () {
                 if (fastForwardEnabled) {
                     Settings_8.Settings.automatonRenderer.lock();
-                    var input = testCase();
+                    var input = self.testCase();
                     var controller = Settings_8.Settings.controller();
                     controller.fastForward(input);
-                    highlightCurrentStates();
-                    progressContainer.style.display = "";
-                    showAcceptanceStatus();
-                    tapeContainer.style.display = "";
-                    showTapeContent();
+                    self.highlightCurrentStates();
+                    self.progressContainer.style.display = "";
+                    self.showAcceptanceStatus();
+                    self.tapeContainer.style.display = "";
+                    self.showTapeContent();
                     fastForwardStatus(false);
                     stepStatus(false);
                     stopStatus(true);
-                    testCaseInput.disabled = true;
+                    self.testCaseInput.disabled = true;
                 }
             });
-            stopRecognition.addEventListener("click", function () {
+            this.stopRecognition.addEventListener("click", function () {
                 if (stopEnabled) {
                     Settings_8.Settings.controller().stop();
                     Settings_8.Settings.automatonRenderer.recognitionDim();
                     Settings_8.Settings.automatonRenderer.unlock();
-                    progressContainer.style.color = "black";
-                    progressContainer.style.display = "none";
-                    tapeContainer.style.display = "none";
+                    self.progressContainer.style.color = "black";
+                    self.progressContainer.style.display = "none";
+                    self.tapeContainer.style.display = "none";
                     fastForwardStatus(true);
                     stepStatus(true);
                     stopStatus(false);
-                    testCaseInput.disabled = false;
+                    self.testCaseInput.disabled = false;
                 }
             });
-            stepRecognition.addEventListener("click", function () {
+            this.stepRecognition.addEventListener("click", function () {
+                console.log("[STEP]");
                 if (stepEnabled) {
                     fastForwardStatus(false);
                     stopStatus(true);
-                    testCaseInput.disabled = true;
-                    var input = testCase();
+                    self.testCaseInput.disabled = true;
+                    var input = self.testCase();
                     var controller = Settings_8.Settings.controller();
-                    console.log("A");
                     if (controller.isStopped()) {
-                        console.log("B");
+                        controller.reset();
                         Settings_8.Settings.automatonRenderer.lock();
-                        progressContainer.style.display = "";
+                        self.progressContainer.style.display = "";
                         var sidebar = Utils_8.utils.id(Settings_8.Settings.sidebarID);
                         var width = sidebar.offsetWidth;
                         width -= 10;
                         width -= 1;
-                        progressContainer.style.width = width + "px";
-                        tapeContainer.style.display = "";
-                        console.log("C");
+                        self.progressContainer.style.width = width + "px";
+                        self.tapeContainer.style.display = "";
                     }
                     var finished = controller.finished(input);
-                    console.log("D");
                     if (!finished) {
-                        console.log("E");
                         controller.step(input);
-                        highlightCurrentStates();
+                        self.highlightCurrentStates();
                         finished = controller.finished(input);
-                        showTapeContent();
-                        console.log("F");
+                        self.showTapeContent();
                     }
-                    console.log("G");
                     if (finished) {
                         stepStatus(false);
-                        showAcceptanceStatus();
-                        console.log("H");
+                        self.showAcceptanceStatus();
                     }
-                    console.log("------------------");
+                    console.log("[END STEP]");
                 }
             });
-        }
-        function bindShortcuts() {
-            if (!boundShortcuts) {
+        };
+        initLBA.prototype.bindShortcuts = function () {
+            var self = this;
+            if (!this.boundShortcuts) {
                 System_3.System.bindShortcut(Settings_8.Settings.shortcuts.focusTestCase, function () {
-                    testCaseInput.focus();
-                });
+                    self.testCaseInput.focus();
+                }, this.shortcutGroup);
                 System_3.System.bindShortcut(Settings_8.Settings.shortcuts.fastForward, function () {
-                    fastRecognition.click();
-                });
+                    self.fastRecognition.click();
+                }, this.shortcutGroup);
                 System_3.System.bindShortcut(Settings_8.Settings.shortcuts.step, function () {
-                    stepRecognition.click();
-                });
+                    self.stepRecognition.click();
+                }, this.shortcutGroup);
                 System_3.System.bindShortcut(Settings_8.Settings.shortcuts.stop, function () {
-                    stopRecognition.click();
-                });
-                boundShortcuts = true;
+                    self.stopRecognition.click();
+                }, this.shortcutGroup);
+                this.boundShortcuts = true;
             }
-            testCaseInput.addEventListener("keydown", function (e) {
+            this.testCaseInput.addEventListener("keydown", function (e) {
                 if (e.keyCode == Keyboard_6.Keyboard.keys[Settings_8.Settings.shortcuts.dimTestCase[0]]) {
-                    if (testCaseInput == document.activeElement) {
-                        testCaseInput.blur();
+                    if (self.testCaseInput == document.activeElement) {
+                        self.testCaseInput.blur();
                     }
                 }
             });
-        }
-    })(initLBA = exports.initLBA || (exports.initLBA = {}));
+        };
+        return initLBA;
+    }());
+    exports.initLBA = initLBA;
 });
 define("lists/InitializerList", ["require", "exports", "machines/FA/initializer", "machines/PDA/initializer", "machines/LBA/initializer"], function (require, exports, initializer_1, initializer_2, initializer_3) {
     "use strict";
@@ -2674,16 +2713,13 @@ define("lists/InitializerList", ["require", "exports", "machines/FA/initializer"
     __export(initializer_2);
     __export(initializer_3);
 });
-define("Initializer", ["require", "exports", "lists/InitializerList", "Utils"], function (require, exports, init, Utils_9) {
+define("Initializer", ["require", "exports", "Utils"], function (require, exports, Utils_9) {
     "use strict";
     var Initializer = (function () {
         function Initializer() {
         }
-        Initializer.exec = function () {
-            this.initSidebars();
-        };
-        Initializer.initSidebars = function () {
-            Utils_9.utils.foreach(init, function (moduleName, obj) {
+        Initializer.exec = function (initList) {
+            Utils_9.utils.foreach(initList, function (index, obj) {
                 obj.init();
             });
         };
@@ -2691,7 +2727,7 @@ define("Initializer", ["require", "exports", "lists/InitializerList", "Utils"], 
     }());
     exports.Initializer = Initializer;
 });
-define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineList", "lists/ControllerList", "Initializer", "Utils"], function (require, exports, lang, automata, controllers, Initializer_1, Utils_10) {
+define("Settings", ["require", "exports", "lists/MachineList", "lists/ControllerList", "lists/LanguageList", "lists/InitializerList", "Initializer", "Utils"], function (require, exports, automata, controllers, lang, init, Initializer_1, Utils_10) {
     "use strict";
     var Settings;
     (function (Settings) {
@@ -2769,6 +2805,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
         Settings.currentMachine = 0;
         Settings.machines = {};
         Settings.controllerMap = {};
+        Settings.initializerMap = {};
         Settings.sidebar = null;
         Settings.automatonRenderer = null;
         function controller() {
@@ -2781,6 +2818,7 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
                 for (var index in Settings.Machine) {
                     if (Settings.Machine.hasOwnProperty(index) && !isNaN(parseInt(index))) {
                         Settings.controllerMap[index] = new controllers[Settings.Machine[index] + "Controller"]();
+                        Settings.initializerMap[index] = new init["init" + Settings.Machine[index]]();
                     }
                 }
             }
@@ -2790,15 +2828,19 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
                     machineList[index] = {
                         name: Settings.language.strings[Settings.Machine[index]],
                         sidebar: [],
-                        controller: Settings.controllerMap[index]
+                        controller: Settings.controllerMap[index],
+                        initializer: Settings.initializerMap[index]
                     };
                 }
             }
             Utils_10.utils.foreach(machineList, function (key, value) {
                 Settings.machines[key] = value;
             });
+            Initializer_1.Initializer.exec(Settings.initializerMap);
+            if (firstUpdate) {
+                Settings.machines[Settings.currentMachine].initializer.onEnter();
+            }
             firstUpdate = false;
-            Initializer_1.Initializer.exec();
         }
         Settings.update = update;
         function changeLanguage(newLanguage) {
@@ -2807,6 +2849,12 @@ define("Settings", ["require", "exports", "lists/LanguageList", "lists/MachineLi
             update();
         }
         Settings.changeLanguage = changeLanguage;
+        function changeMachine(machineIndex) {
+            Settings.machines[Settings.currentMachine].initializer.onExit();
+            Settings.currentMachine = machineIndex;
+            Settings.machines[Settings.currentMachine].initializer.onEnter();
+        }
+        Settings.changeMachine = changeMachine;
     })(Settings = exports.Settings || (exports.Settings = {}));
     exports.Strings = Settings.language.strings;
 });
@@ -4497,10 +4545,9 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                         machineButtonMapping[Settings_14.Settings.currentMachine].disabled = false;
                         machineButtonMapping[type].disabled = true;
                         machineButtonMapping[type].blur();
-                        Settings_14.Settings.currentMachine = type;
+                        System_5.System.changeMachine(type);
                         self.loadMachine(type);
                         self.renderDynamicMenus();
-                        System_5.System.changeMachine();
                     }
                 });
                 table.add(button);

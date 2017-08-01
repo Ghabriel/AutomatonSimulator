@@ -32,6 +32,7 @@ export class PDAController implements Controller {
 	public fastForward(input: string): void {}
 	public step(input: string): void {}
 	public stop(): void {}
+	public reset(): void {}
 	public finished(input: string): boolean { return true; }
 	public isStopped(): boolean { return true; }
 	public stepPosition(): number { return -1; }

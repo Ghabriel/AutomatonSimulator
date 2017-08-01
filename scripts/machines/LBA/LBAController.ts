@@ -129,6 +129,7 @@ export class LBAController implements Controller {
 				this.machine.reset();
 				this.machine.setTapeContent(input.split(""));
 			} else {
+				console.log("  [READ]");
 				this.machine.read();
 			}
 			this.stepIndex++;
@@ -137,6 +138,10 @@ export class LBAController implements Controller {
 
 	public stop(): void {
 		this.stepIndex = -1;
+	}
+
+	public reset(): void {
+		this.machine.reset();
 	}
 
 	public finished(input: string): boolean {
