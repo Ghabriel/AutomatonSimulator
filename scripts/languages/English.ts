@@ -63,6 +63,7 @@ export namespace english {
 		CHANGE_MACHINE_WARNING: "Changing the machine type resets the automaton. Do you wish to continue?",
 		INPUT_ACCEPTED: "accepted",
 		INPUT_REJECTED: "rejected",
+		INPUT_LOOPING: "rejected<br>(looping)",
 		ERROR_INVALID_STATE_NAME: "Invalid state name",
 	};
 }

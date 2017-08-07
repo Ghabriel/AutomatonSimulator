@@ -218,6 +218,8 @@ export class LBA {
 	public setTapeContent(input: string[]): void {
 		this.tape = input;
 		this.headPosition = 0;
+		this.calculationSteps = 0;
+		this.inputLength = input.length;
 	}
 
 	public getTapeContent(): string[] {
@@ -244,8 +246,13 @@ export class LBA {
 				this.currentState = info.state;
 				this.tape[this.headPosition] = info.tapeSymbol;
 				this.headPosition += this.directionToOffset(info.direction);
+				this.calculationSteps++;
 				error = false;
 			}
+		}
+
+		if (this.exhausted()) {
+			error = true;
 		}
 
 		if (error) {
@@ -269,6 +276,7 @@ export class LBA {
 		}
 
 		this.headPosition = 0;
+		this.calculationSteps = 0;
 	}
 
 	// Clears this LBA, making it effectively equal to new LBA().
@@ -283,6 +291,7 @@ export class LBA {
 		this.currentState = null;
 		this.tape = [];
 		this.headPosition = 0;
+		this.calculationSteps = 0;
 	}
 
 	// Checks if this LBA is in an accepting state.
@@ -298,6 +307,13 @@ export class LBA {
 	// Returns the number of states of this LBA.
 	public numStates(): number {
 		return this.stateList.length - this.numRemovedStates;
+	}
+
+	public exhausted(): boolean {
+		let q = this.numStates();
+		let n = this.inputLength;
+		let g = Object.keys(this.tapeAlphabet).length;
+		return this.calculationSteps > q * n * Math.pow(g, n) && !this.accepts();
 	}
 
 	private isInputSymbol(symbol: string): boolean {
@@ -364,4 +380,7 @@ export class LBA {
 	private currentState: Index = null;
 	private tape: string[] = [];
 	private headPosition: number = 0;
+
+	private calculationSteps: number = 0;
+	private inputLength: number = 0;
 }

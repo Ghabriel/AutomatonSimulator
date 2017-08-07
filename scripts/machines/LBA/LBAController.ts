@@ -117,7 +117,7 @@ export class LBAController implements Controller {
 	public fastForward(input: string): void {
 		this.machine.reset();
 		this.machine.setTapeContent(input.split(""));
-		for (let i = 0; i < input.length; i++) {
+		while (!this.finished(input)) {
 			this.machine.read();
 		}
 	}
@@ -180,6 +180,10 @@ export class LBAController implements Controller {
 
 	public accepts(): boolean {
 		return this.machine.accepts();
+	}
+
+	public exhausted(): boolean {
+		return this.machine.exhausted();
 	}
 
 	public formalDefinition(): FormalDefinition {

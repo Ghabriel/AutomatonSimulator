@@ -132,12 +132,17 @@ export class initLBA {
 	}
 
 	private showAcceptanceStatus(): void {
-		if (Settings.controller().accepts()) {
+		let controller = <LBAController> Settings.controller();
+		if (controller.accepts()) {
 			this.progressContainer.style.color = Settings.acceptedTestCaseColor;
 			this.progressContainer.innerHTML = Strings.INPUT_ACCEPTED;
 		} else {
 			this.progressContainer.style.color = Settings.rejectedTestCaseColor;
-			this.progressContainer.innerHTML = Strings.INPUT_REJECTED;
+			if (controller.exhausted()) {
+				this.progressContainer.innerHTML = Strings.INPUT_LOOPING;
+			} else {
+				this.progressContainer.innerHTML = Strings.INPUT_REJECTED;
+			}
 		}
 	}
 
@@ -171,10 +176,9 @@ export class initLBA {
 			}
 		}
 
-		// let displayedContent = tapeContent.substr(startIndex, displayedChars);
 		let displayedContent = tapeContent.slice(startIndex, startIndex + displayedChars);
 
-		for (let i = 0; i < displayedContent.length; i++) {
+		for (let i = 0; i < displayedChars; i++) {
 			this.tapeContainer.children[i].innerHTML = displayedContent[i];
 		}
 	}
@@ -253,7 +257,6 @@ export class initLBA {
 					controller.reset();
 
 					Settings.automatonRenderer.lock();
-					self.progressContainer.style.display = "";
 					let sidebar = <HTMLDivElement> utils.id(Settings.sidebarID);
 					let width = sidebar.offsetWidth;
 					width -= 10; // twice the progress container padding
@@ -274,6 +277,7 @@ export class initLBA {
 
 				if (finished) {
 					stepStatus(false);
+					self.progressContainer.style.display = "";
 					self.showAcceptanceStatus();
 				}
 			}
