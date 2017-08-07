@@ -37,10 +37,12 @@ export class LBAController implements Controller {
 
 	public edgeDataToText(data: string[]): string {
 		let epsilon = Keyboard.symbols.epsilon;
-		data[0] = data[0] || epsilon;
-		data[1] = data[1] || epsilon;
-		data[2] = (data[2] == "<") ? "←" : "→";
-		return data[0] + ", " + data[1] + ", " + data[2];
+		let formatted = [
+			data[0] || epsilon,
+			data[1] || epsilon,
+			(data[2] == "<") ? "←" : "→"
+		];
+		return formatted[0] + ", " + formatted[1] + ", " + formatted[2];
 	}
 
 	public createState(state: State): void {
@@ -129,7 +131,6 @@ export class LBAController implements Controller {
 				this.machine.reset();
 				this.machine.setTapeContent(input.split(""));
 			} else {
-				console.log("  [READ]");
 				this.machine.read();
 			}
 			this.stepIndex++;
@@ -199,7 +200,7 @@ export class LBAController implements Controller {
 		// values[delta] = this.transitionTable();
 		values[delta] = { list: [] }; // TODO
 		values["q0"] = machine.getInitialState();
-		values["B"] = "TODO";
+		values["B"] = "_";
 		values["F"] = machine.getAcceptingStates();
 
 		return result;

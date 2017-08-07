@@ -241,8 +241,6 @@ export class initLBA {
 		});
 
 		this.stepRecognition.addEventListener("click", function() {
-			console.log("[STEP]");
-
 			if (stepEnabled) {
 				fastForwardStatus(false);
 				stopStatus(true);
@@ -278,8 +276,6 @@ export class initLBA {
 					stepStatus(false);
 					self.showAcceptanceStatus();
 				}
-
-				console.log("[END STEP]");
 			}
 		});
 	}

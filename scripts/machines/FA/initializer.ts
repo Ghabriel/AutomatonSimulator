@@ -173,7 +173,6 @@ export class initFA {
 		});
 
 		this.stepRecognition.addEventListener("click", function() {
-			console.log("[FA STEP]");
 			if (stepEnabled) {
 				fastForwardStatus(false);
 				stopStatus(true);
@@ -210,7 +209,6 @@ export class initFA {
 					stepStatus(false);
 				}
 			}
-			console.log("[FA END STEP]");
 		});
 	}
 

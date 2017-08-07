@@ -78,8 +78,14 @@ export class LBA {
 			direction: direction
 		};
 
-		this.addInputSymbol(input);
-		this.addInputSymbol(write);
+		if (this.isInputSymbol(input)) {
+			this.addInputSymbol(input);
+		}
+
+		if (this.isInputSymbol(write)) {
+			this.addInputSymbol(write);
+		}
+
 		this.addTapeSymbol(input);
 		this.addTapeSymbol(write);
 	}
@@ -108,8 +114,14 @@ export class LBA {
 		let tapeSymbol = transitions[input].tapeSymbol;
 		delete transitions[input];
 
-		this.removeInputSymbol(input);
-		this.removeInputSymbol(tapeSymbol);
+		if (this.isInputSymbol(input)) {
+			this.removeInputSymbol(input);
+		}
+
+		if (this.isInputSymbol(tapeSymbol)) {
+			this.removeInputSymbol(tapeSymbol);
+		}
+
 		this.removeTapeSymbol(input);
 		this.removeTapeSymbol(tapeSymbol);
 	}
@@ -288,8 +300,12 @@ export class LBA {
 		return this.stateList.length - this.numRemovedStates;
 	}
 
+	private isInputSymbol(symbol: string): boolean {
+		return /[a-z]/.test(symbol);
+	}
+
 	private plainTextToDirection(input: string): Direction {
-		return Direction.RIGHT;
+		return (input == "<") ? Direction.LEFT : Direction.RIGHT;
 	}
 
 	private directionToOffset(direction: Direction): number {
