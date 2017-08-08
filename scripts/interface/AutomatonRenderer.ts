@@ -2,13 +2,12 @@ import {Edge} from "./Edge"
 import {EdgeUtils} from "./EdgeUtils"
 import {Memento} from "../Memento"
 import {Persistence} from "../Persistence"
+import {Prompt, ValuedHTMLElement} from "../Prompt"
 import {Settings, Strings} from "../Settings"
 import {State} from "./State"
-import {Point, utils} from "../Utils"
-import {Table} from "./Table"
 import {System} from "../System"
-
-import {Prompt} from "../Prompt"
+import {Table} from "./Table"
+import {Point, utils} from "../Utils"
 
 export class AutomatonRenderer {
 	constructor(canvas: RaphaelPaper, node: Element, memento: Memento<string>) {

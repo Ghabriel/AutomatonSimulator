@@ -1,4 +1,4 @@
-js/base.js -diff
-js/main.js -diff
-js/tests.js -diff
+js/base.js -text -diff
+js/main.js -text -diff
+js/tests.js -text -diff
 

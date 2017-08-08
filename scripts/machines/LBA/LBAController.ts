@@ -1,9 +1,10 @@
 import {Controller, FormalDefinition} from "../../Controller"
 import {Keyboard} from "../../Keyboard"
 import {LBA} from "./LBA"
-import {Prompt} from "../../Prompt"
+import {Prompt, ValuedHTMLElement} from "../../Prompt"
 import {State} from "../../interface/State"
 import {Strings} from "../../Settings"
+import {utils} from "../../Utils"
 
 export class LBAController implements Controller {
 	constructor() {
@@ -22,8 +23,25 @@ export class LBAController implements Controller {
 			placeholder: Strings.LBA_ENTER_EDGE_PLACEHOLDER_2
 		});
 
+		// prompt.addInput({
+		// 	placeholder: Strings.LBA_ENTER_EDGE_PLACEHOLDER_3
+		// });
+
 		prompt.addInput({
-			placeholder: Strings.LBA_ENTER_EDGE_PLACEHOLDER_3
+			initializer: function() {
+				let node = <HTMLSelectElement> utils.create("select");
+				node.appendChild(utils.create("option", {
+					innerHTML: "←",
+					value: "<"
+				}));
+
+				node.appendChild(utils.create("option", {
+					innerHTML: "→",
+					value: ">"
+				}));
+
+				return <ValuedHTMLElement> node;
+			}
 		});
 
 		prompt.onSuccess(function(data) {

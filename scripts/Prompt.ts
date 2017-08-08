@@ -3,7 +3,12 @@ import {Settings, Strings} from "./Settings"
 import {System} from "./System"
 import {utils} from "./Utils"
 
+export interface ValuedHTMLElement extends HTMLElement {
+	value: string;
+}
+
 interface InputProperties {
+	initializer?: () => ValuedHTMLElement;
 	placeholder?: string;
 	validator?: (v: string) => boolean;
 }
@@ -54,7 +59,7 @@ export class Prompt {
 			});
 		};
 
-		let inputs: HTMLInputElement[] = [];
+		let inputs: ValuedHTMLElement[] = [];
 		let self = this;
 
 		let allInputsValid = function(): boolean {
@@ -100,21 +105,33 @@ export class Prompt {
 		});
 
 		for (let i = 0; i < this.inputs.length; i++) {
-			let input = <HTMLInputElement> utils.create("input", {
-				id: inputIdPrefix + i,
-				type: "text",
-				placeholder: this.inputs[i].placeholder || ""
-			});
+			let input: ValuedHTMLElement;
 
-			input.addEventListener("keydown", function(e) {
-				if (e.keyCode == Keyboard.keys.ENTER) {
-					ok.click();
-				} else if (e.keyCode == Keyboard.keys.ESC) {
-					cancel.click();
-				} else {
-					ok.disabled = !allInputsValid();
-				}
-			});
+			if (this.inputs[i].initializer) {
+				input = this.inputs[i].initializer();
+			} else {
+				input = <HTMLInputElement> utils.create("input", {
+					type: "text",
+					placeholder: this.inputs[i].placeholder || ""
+				});
+			}
+
+			input.id = inputIdPrefix + i;
+
+			let isInputText = /input/i.test(input.tagName);
+			isInputText = isInputText && (<HTMLInputElement> input).type == "text";
+
+			if (isInputText) {
+				input.addEventListener("keydown", function(e) {
+					if (e.keyCode == Keyboard.keys.ENTER) {
+						ok.click();
+					} else if (e.keyCode == Keyboard.keys.ESC) {
+						cancel.click();
+					} else {
+						ok.disabled = !allInputsValid();
+					}
+				});
+			}
 
 			inputs.push(input);
 			container.appendChild(input);
