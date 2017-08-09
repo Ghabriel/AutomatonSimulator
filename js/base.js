@@ -582,9 +582,9 @@ define("tests", ["require", "exports", "tests/FATests", "tests/PDATests", "tests
 define("lists/MachineList", ["require", "exports"], function (require, exports) {
     "use strict";
     (function (Machine) {
-        Machine[Machine["FA"] = 0] = "FA";
-        Machine[Machine["PDA"] = 1] = "PDA";
-        Machine[Machine["LBA"] = 2] = "LBA";
+        Machine[Machine["LBA"] = 0] = "LBA";
+        Machine[Machine["FA"] = 1] = "FA";
+        Machine[Machine["PDA"] = 2] = "PDA";
     })(exports.Machine || (exports.Machine = {}));
     var Machine = exports.Machine;
 });
@@ -1002,524 +1002,7 @@ define("Keyboard", ["require", "exports"], function (require, exports) {
         };
     })(Keyboard = exports.Keyboard || (exports.Keyboard = {}));
 });
-define("System", ["require", "exports", "Keyboard", "Settings"], function (require, exports, Keyboard_1, Settings_2) {
-    "use strict";
-    var modifiers = ["alt", "ctrl", "shift"];
-    function propertyName(type) {
-        return type + "Key";
-    }
-    var System = (function () {
-        function System() {
-        }
-        System.changeLanguage = function (language) {
-            Settings_2.Settings.changeLanguage(language);
-            for (var _i = 0, _a = this.languageChangeObservers; _i < _a.length; _i++) {
-                var listener = _a[_i];
-                listener.onLanguageChange();
-            }
-        };
-        System.changeMachine = function (type) {
-            Settings_2.Settings.changeMachine(type);
-            for (var _i = 0, _a = this.machineChangeObservers; _i < _a.length; _i++) {
-                var listener = _a[_i];
-                listener.onMachineChange();
-            }
-        };
-        System.addLanguageChangeObserver = function (observer) {
-            this.languageChangeObservers.push(observer);
-        };
-        System.addMachineChangeObserver = function (observer) {
-            this.machineChangeObservers.push(observer);
-        };
-        System.emitKeyEvent = function (keys) {
-            var event = {
-                preventDefault: function () { }
-            };
-            for (var _i = 0, modifiers_1 = modifiers; _i < modifiers_1.length; _i++) {
-                var modifier = modifiers_1[_i];
-                event[propertyName(modifier)] = false;
-            }
-            for (var _a = 0, keys_1 = keys; _a < keys_1.length; _a++) {
-                var key = keys_1[_a];
-                if (modifiers.indexOf(key) >= 0) {
-                    event[propertyName(key)] = true;
-                }
-                else {
-                    event["keyCode"] = Keyboard_1.Keyboard.keys[key.toUpperCase()];
-                }
-            }
-            this.keyEvent(event);
-        };
-        System.keyEvent = function (event) {
-            var triggered = false;
-            for (var _i = 0, _a = this.keyboardObservers; _i < _a.length; _i++) {
-                var observer = _a[_i];
-                var keys = observer.keys;
-                if (!this.locked(observer) && this.shortcutMatches(event, keys)) {
-                    observer.callback();
-                    triggered = true;
-                }
-            }
-            if (triggered) {
-                event.preventDefault();
-                return false;
-            }
-            return true;
-        };
-        System.bindShortcut = function (keys, callback, group) {
-            this.keyboardObservers.push({
-                keys: keys,
-                callback: callback,
-                group: group
-            });
-        };
-        System.lockShortcutGroup = function (group) {
-            this.lockedGroups[group] = true;
-        };
-        System.unlockShortcutGroup = function (group) {
-            delete this.lockedGroups[group];
-        };
-        System.blockEvents = function () {
-            this.eventBlock = true;
-        };
-        System.unblockEvents = function () {
-            this.eventBlock = false;
-        };
-        System.shortcutMatches = function (event, keys) {
-            if (this.eventBlock) {
-                return false;
-            }
-            var expectedModifiers = [];
-            for (var _i = 0, keys_2 = keys; _i < keys_2.length; _i++) {
-                var key = keys_2[_i];
-                if (modifiers.indexOf(key) >= 0) {
-                    expectedModifiers.push(key);
-                    if (!event[propertyName(key)]) {
-                        return false;
-                    }
-                }
-                else if (event.keyCode != Keyboard_1.Keyboard.keys[key]) {
-                    return false;
-                }
-            }
-            for (var _a = 0, modifiers_2 = modifiers; _a < modifiers_2.length; _a++) {
-                var modifier = modifiers_2[_a];
-                if (expectedModifiers.indexOf(modifier) == -1) {
-                    if (event[propertyName(modifier)]) {
-                        return false;
-                    }
-                }
-            }
-            return true;
-        };
-        System.locked = function (observer) {
-            return this.lockedGroups.hasOwnProperty(observer.group);
-        };
-        System.keyboardObservers = [];
-        System.languageChangeObservers = [];
-        System.machineChangeObservers = [];
-        System.eventBlock = false;
-        System.lockedGroups = {};
-        return System;
-    }());
-    exports.System = System;
-});
-define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils"], function (require, exports, Keyboard_2, Settings_3, System_1, Utils_3) {
-    "use strict";
-    var Prompt = (function () {
-        function Prompt(message) {
-            this.inputs = [];
-            this.successCallback = null;
-            this.abortCallback = null;
-            this.message = message;
-        }
-        Prompt.prototype.addInput = function (properties) {
-            this.inputs.push(properties);
-        };
-        Prompt.prototype.onSuccess = function (callback) {
-            this.successCallback = callback;
-        };
-        Prompt.prototype.onAbort = function (callback) {
-            this.abortCallback = callback;
-        };
-        Prompt.prototype.show = function () {
-            var blocker = Utils_3.utils.create("div", {
-                className: "click_blocker"
-            });
-            var container = Utils_3.utils.create("div", {
-                id: "system_prompt"
-            });
-            container.innerHTML = this.message + "<br>";
-            var mainbar = Utils_3.utils.id(Settings_3.Settings.mainbarID);
-            var inputIdPrefix = "system_prompt_input_";
-            var dismiss = function () {
-                document.body.removeChild(blocker);
-                System_1.System.unblockEvents();
-                $(container).slideUp(Settings_3.Settings.promptSlideInterval, function () {
-                    mainbar.removeChild(container);
-                });
-            };
-            var inputs = [];
-            var self = this;
-            var allInputsValid = function () {
-                for (var _i = 0, inputs_1 = inputs; _i < inputs_1.length; _i++) {
-                    var input = inputs_1[_i];
-                    var index = input.id.replace(inputIdPrefix, "");
-                    var validator = self.inputs[index].validator;
-                    if (validator && !validator(input.value)) {
-                        return false;
-                    }
-                }
-                return true;
-            };
-            var ok = Utils_3.utils.create("input", {
-                type: "button",
-                value: Settings_3.Strings.PROMPT_CONFIRM,
-                click: function () {
-                    var allValid = true;
-                    var contents = [];
-                    for (var _i = 0, inputs_2 = inputs; _i < inputs_2.length; _i++) {
-                        var input = inputs_2[_i];
-                        var index = input.id.replace(inputIdPrefix, "");
-                        var validator = self.inputs[index].validator;
-                        if (validator && !validator(input.value)) {
-                            allValid = false;
-                            break;
-                        }
-                        contents.push(input.value);
-                    }
-                    dismiss();
-                    self.successCallback(contents);
-                }
-            });
-            var cancel = Utils_3.utils.create("input", {
-                type: "button",
-                value: Settings_3.Strings.PROMPT_CANCEL,
-                click: function () {
-                    dismiss();
-                    if (self.abortCallback) {
-                        self.abortCallback();
-                    }
-                }
-            });
-            for (var i = 0; i < this.inputs.length; i++) {
-                var input = void 0;
-                if (this.inputs[i].initializer) {
-                    input = this.inputs[i].initializer();
-                }
-                else {
-                    input = Utils_3.utils.create("input", {
-                        type: "text",
-                        placeholder: this.inputs[i].placeholder || ""
-                    });
-                }
-                input.id = inputIdPrefix + i;
-                var isInputText = /input/i.test(input.tagName);
-                isInputText = isInputText && input.type == "text";
-                if (isInputText) {
-                    input.addEventListener("keydown", function (e) {
-                        if (e.keyCode == Keyboard_2.Keyboard.keys.ENTER) {
-                            ok.click();
-                        }
-                        else if (e.keyCode == Keyboard_2.Keyboard.keys.ESC) {
-                            cancel.click();
-                        }
-                        else {
-                            ok.disabled = !allInputsValid();
-                        }
-                    });
-                }
-                inputs.push(input);
-                container.appendChild(input);
-            }
-            container.appendChild(ok);
-            container.appendChild(cancel);
-            document.body.insertBefore(blocker, document.body.children[0]);
-            System_1.System.blockEvents();
-            $(container).toggle();
-            mainbar.insertBefore(container, mainbar.children[0]);
-            $(container).slideDown(Settings_3.Settings.promptSlideInterval, function () {
-                inputs[0].focus();
-            });
-        };
-        Prompt.simple = function (message, numFields, success, fail) {
-            var blocker = Utils_3.utils.create("div", {
-                className: "click_blocker"
-            });
-            var container = Utils_3.utils.create("div", {
-                id: "system_prompt"
-            });
-            container.innerHTML = message + "<br>";
-            var mainbar = Utils_3.utils.id(Settings_3.Settings.mainbarID);
-            var completedInteraction = false;
-            var dismiss = function () {
-                document.body.removeChild(blocker);
-                System_1.System.unblockEvents();
-                $(container).slideUp(Settings_3.Settings.promptSlideInterval, function () {
-                    mainbar.removeChild(container);
-                });
-            };
-            var inputs = [];
-            var ok = Utils_3.utils.create("input", {
-                type: "button",
-                value: Settings_3.Strings.PROMPT_CONFIRM,
-                click: function () {
-                    if (completedInteraction) {
-                        return;
-                    }
-                    completedInteraction = true;
-                    var contents = [];
-                    for (var _i = 0, inputs_3 = inputs; _i < inputs_3.length; _i++) {
-                        var input = inputs_3[_i];
-                        contents.push(input.value);
-                    }
-                    dismiss();
-                    success(contents);
-                }
-            });
-            var cancel = Utils_3.utils.create("input", {
-                type: "button",
-                value: Settings_3.Strings.PROMPT_CANCEL,
-                click: function () {
-                    if (completedInteraction) {
-                        return;
-                    }
-                    completedInteraction = true;
-                    dismiss();
-                    if (fail) {
-                        fail();
-                    }
-                }
-            });
-            for (var i = 0; i < numFields; i++) {
-                var input = Utils_3.utils.create("input", {
-                    type: "text"
-                });
-                input.addEventListener("keydown", function (e) {
-                    if (e.keyCode == Keyboard_2.Keyboard.keys.ENTER) {
-                        ok.click();
-                    }
-                    else if (e.keyCode == Keyboard_2.Keyboard.keys.ESC) {
-                        cancel.click();
-                    }
-                });
-                inputs.push(input);
-                container.appendChild(input);
-            }
-            container.appendChild(ok);
-            container.appendChild(cancel);
-            document.body.insertBefore(blocker, document.body.children[0]);
-            System_1.System.blockEvents();
-            $(container).toggle();
-            mainbar.insertBefore(container, mainbar.children[0]);
-            $(container).slideDown(Settings_3.Settings.promptSlideInterval, function () {
-                inputs[0].focus();
-            });
-        };
-        return Prompt;
-    }());
-    exports.Prompt = Prompt;
-});
-define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Keyboard", "Prompt", "Settings"], function (require, exports, FA_2, Keyboard_3, Prompt_1, Settings_4) {
-    "use strict";
-    var FAController = (function () {
-        function FAController() {
-            this.stateMapping = {};
-            this.stepIndex = -1;
-            this.editingCallback = function () { };
-            this.machine = new FA_2.FA();
-        }
-        FAController.prototype.edgePrompt = function (callback, fallback) {
-            var self = this;
-            Prompt_1.Prompt.simple(Settings_4.Strings.FA_ENTER_EDGE_CONTENT, 1, function (data) {
-                callback(data, self.edgeDataToText(data));
-            }, fallback);
-        };
-        FAController.prototype.edgeDataToText = function (data) {
-            var epsilon = Keyboard_3.Keyboard.symbols.epsilon;
-            return data[0] || epsilon;
-        };
-        FAController.prototype.createState = function (state) {
-            var name = state.getName();
-            var index = this.machine.addState(name);
-            this.stateMapping[name] = index;
-            if (state.isInitial()) {
-                this.machine.setInitialState(index);
-            }
-            if (state.isFinal()) {
-                this.machine.addAcceptingState(index);
-            }
-            this.editingCallback();
-        };
-        FAController.prototype.createEdge = function (origin, target, data) {
-            var indexOrigin = this.index(origin);
-            var indexTarget = this.index(target);
-            var edgeText = this.edgeDataToText(data);
-            if (!data[0]) {
-                edgeText = "";
-            }
-            this.machine.addTransition(indexOrigin, indexTarget, edgeText);
-            this.editingCallback();
-        };
-        FAController.prototype.changeInitialFlag = function (state) {
-            if (state.isInitial()) {
-                this.machine.setInitialState(this.index(state));
-            }
-            else {
-                this.machine.unsetInitialState();
-            }
-            this.editingCallback();
-        };
-        FAController.prototype.changeFinalFlag = function (state) {
-            var index = this.index(state);
-            if (state.isFinal()) {
-                this.machine.addAcceptingState(index);
-            }
-            else {
-                this.machine.removeAcceptingState(index);
-            }
-            this.editingCallback();
-        };
-        FAController.prototype.renameState = function (state, newName) {
-            var index = this.index(state);
-            delete this.stateMapping[state.getName()];
-            this.stateMapping[newName] = index;
-            this.machine.renameState(index, newName);
-            this.editingCallback();
-        };
-        FAController.prototype.deleteState = function (state) {
-            this.machine.removeState(this.index(state));
-            this.editingCallback();
-        };
-        FAController.prototype.deleteEdge = function (origin, target, data) {
-            var indexOrigin = this.index(origin);
-            var indexTarget = this.index(target);
-            var edgeText = this.edgeDataToText(data);
-            this.machine.removeTransition(indexOrigin, indexTarget, edgeText);
-            this.editingCallback();
-        };
-        FAController.prototype.clear = function () {
-            this.machine.clear();
-            this.editingCallback();
-        };
-        FAController.prototype.fastForward = function (input) {
-            this.machine.reset();
-            for (var i = 0; i < input.length; i++) {
-                this.machine.read(input[i]);
-            }
-        };
-        FAController.prototype.step = function (input) {
-            if (!this.finished(input)) {
-                if (this.stepIndex == -1) {
-                    this.machine.reset();
-                }
-                else {
-                    var symbol = input[this.stepIndex];
-                    this.machine.read(symbol);
-                }
-                this.stepIndex++;
-            }
-        };
-        FAController.prototype.stop = function () {
-            this.stepIndex = -1;
-        };
-        FAController.prototype.reset = function () {
-            this.machine.reset();
-        };
-        FAController.prototype.finished = function (input) {
-            return this.stepIndex >= input.length;
-        };
-        FAController.prototype.isStopped = function () {
-            return this.stepIndex == -1;
-        };
-        FAController.prototype.stepPosition = function () {
-            return this.stepIndex;
-        };
-        FAController.prototype.currentStates = function () {
-            return this.machine.getCurrentStates();
-        };
-        FAController.prototype.accepts = function () {
-            return this.machine.accepts();
-        };
-        FAController.prototype.formalDefinition = function () {
-            var machine = this.machine;
-            var delta = Keyboard_3.Keyboard.symbols.delta;
-            var sigma = Keyboard_3.Keyboard.symbols.sigma;
-            var result = {
-                tupleSequence: ["Q", sigma, delta, "q0", "F"],
-                parameterSequence: ["Q", sigma, "q0", "F", delta],
-                parameterValues: {}
-            };
-            var values = result.parameterValues;
-            values["Q"] = machine.getStates();
-            values[sigma] = machine.alphabet();
-            values[delta] = this.transitionTable();
-            values["q0"] = machine.getInitialState();
-            values["F"] = machine.getAcceptingStates();
-            return result;
-        };
-        FAController.prototype.setEditingCallback = function (callback) {
-            this.editingCallback = callback;
-        };
-        FAController.prototype.index = function (state) {
-            return this.stateMapping[state.getName()];
-        };
-        FAController.prototype.transitionTable = function () {
-            var transitions = {
-                list: []
-            };
-            var callback = function (source, target, input) {
-                transitions.list.push([source, target, input]);
-            };
-            this.machine.transitionIteration(callback);
-            return transitions;
-        };
-        return FAController;
-    }());
-    exports.FAController = FAController;
-});
-define("machines/PDA/PDAController", ["require", "exports", "Prompt"], function (require, exports, Prompt_2) {
-    "use strict";
-    var PDAController = (function () {
-        function PDAController() {
-        }
-        PDAController.prototype.edgePrompt = function (callback, fallback) {
-            var self = this;
-            Prompt_2.Prompt.simple("Enter the edge content:", 3, function (data) {
-                callback(data, self.edgeDataToText(data));
-            }, fallback);
-        };
-        PDAController.prototype.edgeDataToText = function (data) {
-            var epsilon = "ε";
-            var input = data[0] || epsilon;
-            var stackRead = data[1] || epsilon;
-            var stackWrite = data[2] || epsilon;
-            return input + "," + stackRead + " → " + stackWrite;
-        };
-        PDAController.prototype.createState = function (state) { };
-        PDAController.prototype.createEdge = function (origin, target, data) { };
-        PDAController.prototype.changeInitialFlag = function (state) { };
-        PDAController.prototype.changeFinalFlag = function (state) { };
-        PDAController.prototype.renameState = function (state, newName) { };
-        PDAController.prototype.deleteState = function (state) { };
-        PDAController.prototype.deleteEdge = function (origin, target, data) { };
-        PDAController.prototype.clear = function () { };
-        PDAController.prototype.fastForward = function (input) { };
-        PDAController.prototype.step = function (input) { };
-        PDAController.prototype.stop = function () { };
-        PDAController.prototype.reset = function () { };
-        PDAController.prototype.finished = function (input) { return true; };
-        PDAController.prototype.isStopped = function () { return true; };
-        PDAController.prototype.stepPosition = function () { return -1; };
-        PDAController.prototype.setEditingCallback = function (callback) { };
-        PDAController.prototype.currentStates = function () { return []; };
-        PDAController.prototype.accepts = function () { return false; };
-        PDAController.prototype.formalDefinition = function () { return null; };
-        return PDAController;
-    }());
-    exports.PDAController = PDAController;
-});
-define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet", "Utils"], function (require, exports, UnorderedSet_2, Utils_4) {
+define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet", "Utils"], function (require, exports, UnorderedSet_2, Utils_3) {
     "use strict";
     var Direction;
     (function (Direction) {
@@ -1553,9 +1036,9 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
         };
         LBA.prototype.removeState = function (index) {
             var self = this;
-            Utils_4.utils.foreach(this.transitions, function (originIndex, transitions) {
+            Utils_3.utils.foreach(this.transitions, function (originIndex, transitions) {
                 var origin = parseInt(originIndex);
-                Utils_4.utils.foreach(transitions, function (input) {
+                Utils_3.utils.foreach(transitions, function (input) {
                     if (transitions[input].state == index) {
                         self.uncheckedRemoveTransition(origin, input);
                     }
@@ -1810,7 +1293,325 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
     }());
     exports.LBA = LBA;
 });
-define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machines/LBA/LBA", "Prompt", "Settings", "Utils"], function (require, exports, Keyboard_4, LBA_1, Prompt_3, Settings_5, Utils_5) {
+define("System", ["require", "exports", "Keyboard", "Settings"], function (require, exports, Keyboard_1, Settings_2) {
+    "use strict";
+    var modifiers = ["alt", "ctrl", "shift"];
+    function propertyName(type) {
+        return type + "Key";
+    }
+    var System = (function () {
+        function System() {
+        }
+        System.changeLanguage = function (language) {
+            Settings_2.Settings.changeLanguage(language);
+            for (var _i = 0, _a = this.languageChangeObservers; _i < _a.length; _i++) {
+                var listener = _a[_i];
+                listener.onLanguageChange();
+            }
+        };
+        System.changeMachine = function (type) {
+            Settings_2.Settings.changeMachine(type);
+            for (var _i = 0, _a = this.machineChangeObservers; _i < _a.length; _i++) {
+                var listener = _a[_i];
+                listener.onMachineChange();
+            }
+        };
+        System.addLanguageChangeObserver = function (observer) {
+            this.languageChangeObservers.push(observer);
+        };
+        System.addMachineChangeObserver = function (observer) {
+            this.machineChangeObservers.push(observer);
+        };
+        System.emitKeyEvent = function (keys) {
+            var event = {
+                preventDefault: function () { }
+            };
+            for (var _i = 0, modifiers_1 = modifiers; _i < modifiers_1.length; _i++) {
+                var modifier = modifiers_1[_i];
+                event[propertyName(modifier)] = false;
+            }
+            for (var _a = 0, keys_1 = keys; _a < keys_1.length; _a++) {
+                var key = keys_1[_a];
+                if (modifiers.indexOf(key) >= 0) {
+                    event[propertyName(key)] = true;
+                }
+                else {
+                    event["keyCode"] = Keyboard_1.Keyboard.keys[key.toUpperCase()];
+                }
+            }
+            this.keyEvent(event);
+        };
+        System.keyEvent = function (event) {
+            var triggered = false;
+            for (var _i = 0, _a = this.keyboardObservers; _i < _a.length; _i++) {
+                var observer = _a[_i];
+                var keys = observer.keys;
+                if (!this.locked(observer) && this.shortcutMatches(event, keys)) {
+                    observer.callback();
+                    triggered = true;
+                }
+            }
+            if (triggered) {
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        };
+        System.bindShortcut = function (keys, callback, group) {
+            this.keyboardObservers.push({
+                keys: keys,
+                callback: callback,
+                group: group
+            });
+        };
+        System.lockShortcutGroup = function (group) {
+            this.lockedGroups[group] = true;
+        };
+        System.unlockShortcutGroup = function (group) {
+            delete this.lockedGroups[group];
+        };
+        System.blockEvents = function () {
+            this.eventBlock = true;
+        };
+        System.unblockEvents = function () {
+            this.eventBlock = false;
+        };
+        System.shortcutMatches = function (event, keys) {
+            if (this.eventBlock) {
+                return false;
+            }
+            var expectedModifiers = [];
+            for (var _i = 0, keys_2 = keys; _i < keys_2.length; _i++) {
+                var key = keys_2[_i];
+                if (modifiers.indexOf(key) >= 0) {
+                    expectedModifiers.push(key);
+                    if (!event[propertyName(key)]) {
+                        return false;
+                    }
+                }
+                else if (event.keyCode != Keyboard_1.Keyboard.keys[key]) {
+                    return false;
+                }
+            }
+            for (var _a = 0, modifiers_2 = modifiers; _a < modifiers_2.length; _a++) {
+                var modifier = modifiers_2[_a];
+                if (expectedModifiers.indexOf(modifier) == -1) {
+                    if (event[propertyName(modifier)]) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        };
+        System.locked = function (observer) {
+            return this.lockedGroups.hasOwnProperty(observer.group);
+        };
+        System.keyboardObservers = [];
+        System.languageChangeObservers = [];
+        System.machineChangeObservers = [];
+        System.eventBlock = false;
+        System.lockedGroups = {};
+        return System;
+    }());
+    exports.System = System;
+});
+define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils"], function (require, exports, Keyboard_2, Settings_3, System_1, Utils_4) {
+    "use strict";
+    var Prompt = (function () {
+        function Prompt(message) {
+            this.inputs = [];
+            this.successCallback = null;
+            this.abortCallback = null;
+            this.message = message;
+        }
+        Prompt.prototype.addInput = function (properties) {
+            this.inputs.push(properties);
+        };
+        Prompt.prototype.onSuccess = function (callback) {
+            this.successCallback = callback;
+        };
+        Prompt.prototype.onAbort = function (callback) {
+            this.abortCallback = callback;
+        };
+        Prompt.prototype.show = function () {
+            var blocker = Utils_4.utils.create("div", {
+                className: "click_blocker"
+            });
+            var container = Utils_4.utils.create("div", {
+                id: "system_prompt"
+            });
+            container.innerHTML = this.message + "<br>";
+            var mainbar = Utils_4.utils.id(Settings_3.Settings.mainbarID);
+            var inputIdPrefix = "system_prompt_input_";
+            var dismiss = function () {
+                document.body.removeChild(blocker);
+                System_1.System.unblockEvents();
+                $(container).slideUp(Settings_3.Settings.promptSlideInterval, function () {
+                    mainbar.removeChild(container);
+                });
+            };
+            var inputs = [];
+            var self = this;
+            var allInputsValid = function () {
+                for (var _i = 0, inputs_1 = inputs; _i < inputs_1.length; _i++) {
+                    var input = inputs_1[_i];
+                    var index = input.id.replace(inputIdPrefix, "");
+                    var validator = self.inputs[index].validator;
+                    if (validator && !validator(input.value)) {
+                        return false;
+                    }
+                }
+                return true;
+            };
+            var ok = Utils_4.utils.create("input", {
+                type: "button",
+                value: Settings_3.Strings.PROMPT_CONFIRM,
+                click: function () {
+                    var allValid = true;
+                    var contents = [];
+                    for (var _i = 0, inputs_2 = inputs; _i < inputs_2.length; _i++) {
+                        var input = inputs_2[_i];
+                        var index = input.id.replace(inputIdPrefix, "");
+                        var validator = self.inputs[index].validator;
+                        if (validator && !validator(input.value)) {
+                            allValid = false;
+                            break;
+                        }
+                        contents.push(input.value);
+                    }
+                    dismiss();
+                    self.successCallback(contents);
+                }
+            });
+            var cancel = Utils_4.utils.create("input", {
+                type: "button",
+                value: Settings_3.Strings.PROMPT_CANCEL,
+                click: function () {
+                    dismiss();
+                    if (self.abortCallback) {
+                        self.abortCallback();
+                    }
+                }
+            });
+            for (var i = 0; i < this.inputs.length; i++) {
+                var input = void 0;
+                if (this.inputs[i].initializer) {
+                    input = this.inputs[i].initializer();
+                }
+                else {
+                    input = Utils_4.utils.create("input", {
+                        type: "text",
+                        placeholder: this.inputs[i].placeholder || ""
+                    });
+                }
+                input.id = inputIdPrefix + i;
+                var isInputText = /input/i.test(input.tagName);
+                isInputText = isInputText && input.type == "text";
+                if (isInputText) {
+                    input.addEventListener("keydown", function (e) {
+                        if (e.keyCode == Keyboard_2.Keyboard.keys.ENTER) {
+                            ok.click();
+                        }
+                        else if (e.keyCode == Keyboard_2.Keyboard.keys.ESC) {
+                            cancel.click();
+                        }
+                        else {
+                            ok.disabled = !allInputsValid();
+                        }
+                    });
+                }
+                inputs.push(input);
+                container.appendChild(input);
+            }
+            container.appendChild(ok);
+            container.appendChild(cancel);
+            document.body.insertBefore(blocker, document.body.children[0]);
+            System_1.System.blockEvents();
+            $(container).toggle();
+            mainbar.insertBefore(container, mainbar.children[0]);
+            $(container).slideDown(Settings_3.Settings.promptSlideInterval, function () {
+                inputs[0].focus();
+            });
+        };
+        Prompt.simple = function (message, numFields, success, fail) {
+            var blocker = Utils_4.utils.create("div", {
+                className: "click_blocker"
+            });
+            var container = Utils_4.utils.create("div", {
+                id: "system_prompt"
+            });
+            container.innerHTML = message + "<br>";
+            var mainbar = Utils_4.utils.id(Settings_3.Settings.mainbarID);
+            var completedInteraction = false;
+            var dismiss = function () {
+                document.body.removeChild(blocker);
+                System_1.System.unblockEvents();
+                $(container).slideUp(Settings_3.Settings.promptSlideInterval, function () {
+                    mainbar.removeChild(container);
+                });
+            };
+            var inputs = [];
+            var ok = Utils_4.utils.create("input", {
+                type: "button",
+                value: Settings_3.Strings.PROMPT_CONFIRM,
+                click: function () {
+                    if (completedInteraction) {
+                        return;
+                    }
+                    completedInteraction = true;
+                    var contents = [];
+                    for (var _i = 0, inputs_3 = inputs; _i < inputs_3.length; _i++) {
+                        var input = inputs_3[_i];
+                        contents.push(input.value);
+                    }
+                    dismiss();
+                    success(contents);
+                }
+            });
+            var cancel = Utils_4.utils.create("input", {
+                type: "button",
+                value: Settings_3.Strings.PROMPT_CANCEL,
+                click: function () {
+                    if (completedInteraction) {
+                        return;
+                    }
+                    completedInteraction = true;
+                    dismiss();
+                    if (fail) {
+                        fail();
+                    }
+                }
+            });
+            for (var i = 0; i < numFields; i++) {
+                var input = Utils_4.utils.create("input", {
+                    type: "text"
+                });
+                input.addEventListener("keydown", function (e) {
+                    if (e.keyCode == Keyboard_2.Keyboard.keys.ENTER) {
+                        ok.click();
+                    }
+                    else if (e.keyCode == Keyboard_2.Keyboard.keys.ESC) {
+                        cancel.click();
+                    }
+                });
+                inputs.push(input);
+                container.appendChild(input);
+            }
+            container.appendChild(ok);
+            container.appendChild(cancel);
+            document.body.insertBefore(blocker, document.body.children[0]);
+            System_1.System.blockEvents();
+            $(container).toggle();
+            mainbar.insertBefore(container, mainbar.children[0]);
+            $(container).slideDown(Settings_3.Settings.promptSlideInterval, function () {
+                inputs[0].focus();
+            });
+        };
+        return Prompt;
+    }());
+    exports.Prompt = Prompt;
+});
+define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machines/LBA/LBA", "Prompt", "Settings", "Utils"], function (require, exports, Keyboard_3, LBA_1, Prompt_1, Settings_4, Utils_5) {
     "use strict";
     var LBAController = (function () {
         function LBAController() {
@@ -1821,22 +1622,22 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
         }
         LBAController.prototype.edgePrompt = function (callback, fallback) {
             var self = this;
-            var prompt = new Prompt_3.Prompt(Settings_5.Strings.LBA_ENTER_EDGE_CONTENT);
+            var prompt = new Prompt_1.Prompt(Settings_4.Strings.LBA_ENTER_EDGE_CONTENT);
             prompt.addInput({
-                placeholder: Settings_5.Strings.LBA_ENTER_EDGE_PLACEHOLDER_1
+                placeholder: Settings_4.Strings.LBA_ENTER_EDGE_PLACEHOLDER_1
             });
             prompt.addInput({
-                placeholder: Settings_5.Strings.LBA_ENTER_EDGE_PLACEHOLDER_2
+                placeholder: Settings_4.Strings.LBA_ENTER_EDGE_PLACEHOLDER_2
             });
             prompt.addInput({
                 initializer: function () {
                     var node = Utils_5.utils.create("select");
                     node.appendChild(Utils_5.utils.create("option", {
-                        innerHTML: Keyboard_4.Keyboard.symbols.leftArrow,
+                        innerHTML: Keyboard_3.Keyboard.symbols.leftArrow,
                         value: "<"
                     }));
                     node.appendChild(Utils_5.utils.create("option", {
-                        innerHTML: Keyboard_4.Keyboard.symbols.rightArrow,
+                        innerHTML: Keyboard_3.Keyboard.symbols.rightArrow,
                         value: ">"
                     }));
                     return node;
@@ -1849,7 +1650,7 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
             prompt.show();
         };
         LBAController.prototype.edgeDataToText = function (data) {
-            var symbols = Keyboard_4.Keyboard.symbols;
+            var symbols = Keyboard_3.Keyboard.symbols;
             var epsilon = symbols.epsilon;
             var formatted = [
                 data[0] || epsilon,
@@ -1972,9 +1773,9 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
         };
         LBAController.prototype.formalDefinition = function () {
             var machine = this.machine;
-            var delta = Keyboard_4.Keyboard.symbols.delta;
-            var gamma = Keyboard_4.Keyboard.symbols.gamma;
-            var sigma = Keyboard_4.Keyboard.symbols.sigma;
+            var delta = Keyboard_3.Keyboard.symbols.delta;
+            var gamma = Keyboard_3.Keyboard.symbols.gamma;
+            var sigma = Keyboard_3.Keyboard.symbols.sigma;
             var result = {
                 tupleSequence: ["Q", sigma, gamma, delta, "q0", "B", "F"],
                 parameterSequence: ["Q", sigma, gamma, "q0", "B", "F", delta],
@@ -2000,7 +1801,7 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
             var transitions = {
                 list: []
             };
-            var arrows = [Keyboard_4.Keyboard.symbols.leftArrow, Keyboard_4.Keyboard.symbols.rightArrow];
+            var arrows = [Keyboard_3.Keyboard.symbols.leftArrow, Keyboard_3.Keyboard.symbols.rightArrow];
             var callback = function (source, target, input) {
                 transitions.list.push([
                     source,
@@ -2017,14 +1818,213 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
     }());
     exports.LBAController = LBAController;
 });
-define("lists/ControllerList", ["require", "exports", "machines/FA/FAController", "machines/PDA/PDAController", "machines/LBA/LBAController"], function (require, exports, FAController_1, PDAController_1, LBAController_1) {
+define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Keyboard", "Prompt", "Settings"], function (require, exports, FA_2, Keyboard_4, Prompt_2, Settings_5) {
+    "use strict";
+    var FAController = (function () {
+        function FAController() {
+            this.stateMapping = {};
+            this.stepIndex = -1;
+            this.editingCallback = function () { };
+            this.machine = new FA_2.FA();
+        }
+        FAController.prototype.edgePrompt = function (callback, fallback) {
+            var self = this;
+            Prompt_2.Prompt.simple(Settings_5.Strings.FA_ENTER_EDGE_CONTENT, 1, function (data) {
+                callback(data, self.edgeDataToText(data));
+            }, fallback);
+        };
+        FAController.prototype.edgeDataToText = function (data) {
+            var epsilon = Keyboard_4.Keyboard.symbols.epsilon;
+            return data[0] || epsilon;
+        };
+        FAController.prototype.createState = function (state) {
+            var name = state.getName();
+            var index = this.machine.addState(name);
+            this.stateMapping[name] = index;
+            if (state.isInitial()) {
+                this.machine.setInitialState(index);
+            }
+            if (state.isFinal()) {
+                this.machine.addAcceptingState(index);
+            }
+            this.editingCallback();
+        };
+        FAController.prototype.createEdge = function (origin, target, data) {
+            var indexOrigin = this.index(origin);
+            var indexTarget = this.index(target);
+            var edgeText = this.edgeDataToText(data);
+            if (!data[0]) {
+                edgeText = "";
+            }
+            this.machine.addTransition(indexOrigin, indexTarget, edgeText);
+            this.editingCallback();
+        };
+        FAController.prototype.changeInitialFlag = function (state) {
+            if (state.isInitial()) {
+                this.machine.setInitialState(this.index(state));
+            }
+            else {
+                this.machine.unsetInitialState();
+            }
+            this.editingCallback();
+        };
+        FAController.prototype.changeFinalFlag = function (state) {
+            var index = this.index(state);
+            if (state.isFinal()) {
+                this.machine.addAcceptingState(index);
+            }
+            else {
+                this.machine.removeAcceptingState(index);
+            }
+            this.editingCallback();
+        };
+        FAController.prototype.renameState = function (state, newName) {
+            var index = this.index(state);
+            delete this.stateMapping[state.getName()];
+            this.stateMapping[newName] = index;
+            this.machine.renameState(index, newName);
+            this.editingCallback();
+        };
+        FAController.prototype.deleteState = function (state) {
+            this.machine.removeState(this.index(state));
+            this.editingCallback();
+        };
+        FAController.prototype.deleteEdge = function (origin, target, data) {
+            var indexOrigin = this.index(origin);
+            var indexTarget = this.index(target);
+            var edgeText = this.edgeDataToText(data);
+            this.machine.removeTransition(indexOrigin, indexTarget, edgeText);
+            this.editingCallback();
+        };
+        FAController.prototype.clear = function () {
+            this.machine.clear();
+            this.editingCallback();
+        };
+        FAController.prototype.fastForward = function (input) {
+            this.machine.reset();
+            for (var i = 0; i < input.length; i++) {
+                this.machine.read(input[i]);
+            }
+        };
+        FAController.prototype.step = function (input) {
+            if (!this.finished(input)) {
+                if (this.stepIndex == -1) {
+                    this.machine.reset();
+                }
+                else {
+                    var symbol = input[this.stepIndex];
+                    this.machine.read(symbol);
+                }
+                this.stepIndex++;
+            }
+        };
+        FAController.prototype.stop = function () {
+            this.stepIndex = -1;
+        };
+        FAController.prototype.reset = function () {
+            this.machine.reset();
+        };
+        FAController.prototype.finished = function (input) {
+            return this.stepIndex >= input.length;
+        };
+        FAController.prototype.isStopped = function () {
+            return this.stepIndex == -1;
+        };
+        FAController.prototype.stepPosition = function () {
+            return this.stepIndex;
+        };
+        FAController.prototype.currentStates = function () {
+            return this.machine.getCurrentStates();
+        };
+        FAController.prototype.accepts = function () {
+            return this.machine.accepts();
+        };
+        FAController.prototype.formalDefinition = function () {
+            var machine = this.machine;
+            var delta = Keyboard_4.Keyboard.symbols.delta;
+            var sigma = Keyboard_4.Keyboard.symbols.sigma;
+            var result = {
+                tupleSequence: ["Q", sigma, delta, "q0", "F"],
+                parameterSequence: ["Q", sigma, "q0", "F", delta],
+                parameterValues: {}
+            };
+            var values = result.parameterValues;
+            values["Q"] = machine.getStates();
+            values[sigma] = machine.alphabet();
+            values[delta] = this.transitionTable();
+            values["q0"] = machine.getInitialState();
+            values["F"] = machine.getAcceptingStates();
+            return result;
+        };
+        FAController.prototype.setEditingCallback = function (callback) {
+            this.editingCallback = callback;
+        };
+        FAController.prototype.index = function (state) {
+            return this.stateMapping[state.getName()];
+        };
+        FAController.prototype.transitionTable = function () {
+            var transitions = {
+                list: []
+            };
+            var callback = function (source, target, input) {
+                transitions.list.push([source, target, input]);
+            };
+            this.machine.transitionIteration(callback);
+            return transitions;
+        };
+        return FAController;
+    }());
+    exports.FAController = FAController;
+});
+define("machines/PDA/PDAController", ["require", "exports", "Prompt"], function (require, exports, Prompt_3) {
+    "use strict";
+    var PDAController = (function () {
+        function PDAController() {
+        }
+        PDAController.prototype.edgePrompt = function (callback, fallback) {
+            var self = this;
+            Prompt_3.Prompt.simple("Enter the edge content:", 3, function (data) {
+                callback(data, self.edgeDataToText(data));
+            }, fallback);
+        };
+        PDAController.prototype.edgeDataToText = function (data) {
+            var epsilon = "ε";
+            var input = data[0] || epsilon;
+            var stackRead = data[1] || epsilon;
+            var stackWrite = data[2] || epsilon;
+            return input + "," + stackRead + " → " + stackWrite;
+        };
+        PDAController.prototype.createState = function (state) { };
+        PDAController.prototype.createEdge = function (origin, target, data) { };
+        PDAController.prototype.changeInitialFlag = function (state) { };
+        PDAController.prototype.changeFinalFlag = function (state) { };
+        PDAController.prototype.renameState = function (state, newName) { };
+        PDAController.prototype.deleteState = function (state) { };
+        PDAController.prototype.deleteEdge = function (origin, target, data) { };
+        PDAController.prototype.clear = function () { };
+        PDAController.prototype.fastForward = function (input) { };
+        PDAController.prototype.step = function (input) { };
+        PDAController.prototype.stop = function () { };
+        PDAController.prototype.reset = function () { };
+        PDAController.prototype.finished = function (input) { return true; };
+        PDAController.prototype.isStopped = function () { return true; };
+        PDAController.prototype.stepPosition = function () { return -1; };
+        PDAController.prototype.setEditingCallback = function (callback) { };
+        PDAController.prototype.currentStates = function () { return []; };
+        PDAController.prototype.accepts = function () { return false; };
+        PDAController.prototype.formalDefinition = function () { return null; };
+        return PDAController;
+    }());
+    exports.PDAController = PDAController;
+});
+define("lists/ControllerList", ["require", "exports", "machines/LBA/LBAController", "machines/FA/FAController", "machines/PDA/PDAController"], function (require, exports, LBAController_1, FAController_1, PDAController_1) {
     "use strict";
     function __export(m) {
         for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
     }
+    __export(LBAController_1);
     __export(FAController_1);
     __export(PDAController_1);
-    __export(LBAController_1);
 });
 define("languages/Portuguese", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -2258,30 +2258,78 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
     }(Renderer_1.Renderer));
     exports.Menu = Menu;
 });
-define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "System", "Utils"], function (require, exports, Keyboard_5, Menu_1, Settings_7, System_2, Utils_7) {
+define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"], function (require, exports, Renderer_2, Utils_7) {
     "use strict";
-    var initFA = (function () {
-        function initFA() {
-            this.shortcutGroup = "FA";
+    var Table = (function (_super) {
+        __extends(Table, _super);
+        function Table(numRows, numColumns) {
+            _super.call(this);
+            this.customColspans = {};
+            this.numRows = numRows;
+            this.numColumns = numColumns;
+            this.children = [];
+        }
+        Table.prototype.add = function (elem, colspan) {
+            if (colspan) {
+                this.customColspans[this.children.length] = colspan;
+            }
+            this.children.push(elem);
+        };
+        Table.prototype.html = function () {
+            var wrapper = Utils_7.utils.create("table");
+            var index = 0;
+            for (var i = 0; i < this.numRows; i++) {
+                var tr = Utils_7.utils.create("tr");
+                for (var j = 0; j < this.numColumns; j++) {
+                    var td = Utils_7.utils.create("td");
+                    if (index < this.children.length) {
+                        if (this.customColspans.hasOwnProperty(index + "")) {
+                            var colSpan = this.customColspans[index];
+                            td.colSpan = colSpan;
+                            j += colSpan - 1;
+                        }
+                        td.appendChild(this.children[index]);
+                    }
+                    tr.appendChild(td);
+                    index++;
+                }
+                wrapper.appendChild(tr);
+            }
+            return wrapper;
+        };
+        Table.prototype.onRender = function () {
+            this.node.appendChild(this.html());
+        };
+        return Table;
+    }(Renderer_2.Renderer));
+    exports.Table = Table;
+});
+define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "System", "Utils"], function (require, exports, Keyboard_5, Menu_1, Settings_7, System_2, Utils_8) {
+    "use strict";
+    var initLBA = (function () {
+        function initLBA() {
+            this.shortcutGroup = "LBA";
             this.boundShortcuts = false;
             this.testCaseInput = null;
             this.fastRecognition = null;
             this.stepRecognition = null;
             this.stopRecognition = null;
             this.progressContainer = null;
+            this.tapeContainer = null;
         }
-        initFA.prototype.init = function () {
-            console.log("[FA] Initializing...");
+        initLBA.prototype.init = function () {
+            console.log("[LBA] Initializing...");
             var menuList = [];
             var menu = new Menu_1.Menu(Settings_7.Strings.RECOGNITION);
             var rows = [];
             this.buildTestCaseInput(rows);
             this.buildRecognitionControls(rows);
+            this.buildTape(rows);
             this.buildRecognitionProgress(rows);
             this.bindRecognitionEvents();
             for (var _i = 0, rows_1 = rows; _i < rows_1.length; _i++) {
                 var row = rows_1[_i];
-                var div = Utils_7.utils.create("div", {
+                var div = Utils_8.utils.create("div", {
                     className: "row"
                 });
                 for (var _a = 0, row_1 = row; _a < row_1.length; _a++) {
@@ -2291,46 +2339,46 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
                 menu.add(div);
             }
             menuList.push(menu);
-            Settings_7.Settings.machines[Settings_7.Settings.Machine.FA].sidebar = menuList;
-            console.log("[FA] Initialized successfully");
+            Settings_7.Settings.machines[Settings_7.Settings.Machine.LBA].sidebar = menuList;
+            console.log("[LBA] Initialized successfully");
         };
-        initFA.prototype.onEnter = function () {
+        initLBA.prototype.onEnter = function () {
             this.bindShortcuts();
             System_2.System.unlockShortcutGroup(this.shortcutGroup);
-            console.log("[FA] Bound events");
+            console.log("[LBA] Bound events");
         };
-        initFA.prototype.onExit = function () {
+        initLBA.prototype.onExit = function () {
             System_2.System.lockShortcutGroup(this.shortcutGroup);
-            console.log("[FA] Unbound events");
+            console.log("[LBA] Unbound events");
         };
-        initFA.prototype.testCase = function () {
+        initLBA.prototype.testCase = function () {
             return this.testCaseInput.value;
         };
-        initFA.prototype.buildTestCaseInput = function (container) {
-            var input = Utils_7.utils.create("input", {
+        initLBA.prototype.buildTestCaseInput = function (container) {
+            var input = Utils_8.utils.create("input", {
                 type: "text",
                 placeholder: Settings_7.Strings.TEST_CASE
             });
             container.push([input]);
             this.testCaseInput = input;
         };
-        initFA.prototype.highlightCurrentStates = function () {
+        initLBA.prototype.highlightCurrentStates = function () {
             var states = Settings_7.Settings.controller().currentStates();
             Settings_7.Settings.automatonRenderer.recognitionHighlight(states);
         };
-        initFA.prototype.buildRecognitionControls = function (container) {
+        initLBA.prototype.buildRecognitionControls = function (container) {
             var disabledClass = Settings_7.Settings.disabledButtonClass;
-            this.fastRecognition = Utils_7.utils.create("img", {
+            this.fastRecognition = Utils_8.utils.create("img", {
                 className: "image_button",
                 src: "images/fastforward.svg",
                 title: Settings_7.Strings.FAST_RECOGNITION
             });
-            this.stopRecognition = Utils_7.utils.create("img", {
+            this.stopRecognition = Utils_8.utils.create("img", {
                 className: "image_button " + disabledClass,
                 src: "images/stop.svg",
                 title: Settings_7.Strings.STOP_RECOGNITION
             });
-            this.stepRecognition = Utils_7.utils.create("img", {
+            this.stepRecognition = Utils_8.utils.create("img", {
                 className: "image_button",
                 src: "images/play.svg",
                 title: Settings_7.Strings.STEP_RECOGNITION
@@ -2338,24 +2386,71 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
             container.push([this.fastRecognition, this.stepRecognition,
                 this.stopRecognition]);
         };
-        initFA.prototype.buildRecognitionProgress = function (container) {
-            this.progressContainer = Utils_7.utils.create("div", {
+        initLBA.prototype.buildTape = function (container) {
+            this.tapeContainer = Utils_8.utils.create("div", {
+                id: "tape"
+            });
+            this.tapeContainer.style.display = "none";
+            var displayedChars = Settings_7.Settings.tapeDisplayedChars;
+            for (var i = 0; i < displayedChars; i++) {
+                var cell = Utils_8.utils.create("div", {
+                    className: "tape_cell"
+                });
+                this.tapeContainer.appendChild(cell);
+            }
+            this.tapeContainer.children[(displayedChars - 1) / 2].classList.add("center");
+            container.push([this.tapeContainer]);
+        };
+        initLBA.prototype.buildRecognitionProgress = function (container) {
+            this.progressContainer = Utils_8.utils.create("div", {
                 id: "recognition_progress"
             });
             this.progressContainer.style.display = "none";
             container.push([this.progressContainer]);
         };
-        initFA.prototype.showAcceptanceStatus = function () {
-            if (Settings_7.Settings.controller().accepts()) {
+        initLBA.prototype.showAcceptanceStatus = function () {
+            var controller = Settings_7.Settings.controller();
+            if (controller.accepts()) {
                 this.progressContainer.style.color = Settings_7.Settings.acceptedTestCaseColor;
                 this.progressContainer.innerHTML = Settings_7.Strings.INPUT_ACCEPTED;
             }
             else {
                 this.progressContainer.style.color = Settings_7.Settings.rejectedTestCaseColor;
-                this.progressContainer.innerHTML = Settings_7.Strings.INPUT_REJECTED;
+                if (controller.exhausted()) {
+                    this.progressContainer.innerHTML = Settings_7.Strings.INPUT_LOOPING;
+                }
+                else {
+                    this.progressContainer.innerHTML = Settings_7.Strings.INPUT_REJECTED;
+                }
             }
         };
-        initFA.prototype.bindRecognitionEvents = function () {
+        initLBA.prototype.showTapeContent = function () {
+            var controller = Settings_7.Settings.controller();
+            var tapeContent = controller.getTapeContent();
+            var headPosition = controller.getHeadPosition();
+            var displayedChars = Settings_7.Settings.tapeDisplayedChars;
+            var offset = (displayedChars - 1) / 2;
+            var startIndex = headPosition - offset;
+            if (startIndex < 0) {
+                var buffer = [];
+                for (var i = 0; i < -startIndex; i++) {
+                    buffer.push("_");
+                }
+                tapeContent = buffer.concat(tapeContent);
+                startIndex = 0;
+            }
+            if (startIndex + displayedChars > tapeContent.length) {
+                var delta = startIndex + displayedChars - tapeContent.length;
+                for (var i = 0; i < delta; i++) {
+                    tapeContent.push("_");
+                }
+            }
+            var displayedContent = tapeContent.slice(startIndex, startIndex + displayedChars);
+            for (var i = 0; i < displayedChars; i++) {
+                this.tapeContainer.children[i].innerHTML = displayedContent[i];
+            }
+        };
+        initLBA.prototype.bindRecognitionEvents = function () {
             var disabledClass = Settings_7.Settings.disabledButtonClass;
             var fastForwardEnabled = true;
             var stepEnabled = true;
@@ -2382,6 +2477,8 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
                     self.highlightCurrentStates();
                     self.progressContainer.style.display = "";
                     self.showAcceptanceStatus();
+                    self.tapeContainer.style.display = "";
+                    self.showTapeContent();
                     fastForwardStatus(false);
                     stepStatus(false);
                     stopStatus(true);
@@ -2395,6 +2492,7 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
                     Settings_7.Settings.automatonRenderer.unlock();
                     self.progressContainer.style.color = "black";
                     self.progressContainer.style.display = "none";
+                    self.tapeContainer.style.display = "none";
                     fastForwardStatus(true);
                     stepStatus(true);
                     stopStatus(false);
@@ -2409,9 +2507,213 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
                     var input = self.testCase();
                     var controller = Settings_7.Settings.controller();
                     if (controller.isStopped()) {
+                        controller.reset();
                         Settings_7.Settings.automatonRenderer.lock();
+                        var sidebar = Utils_8.utils.id(Settings_7.Settings.sidebarID);
+                        var width = sidebar.offsetWidth;
+                        width -= 10;
+                        width -= 1;
+                        self.progressContainer.style.width = width + "px";
+                        self.tapeContainer.style.display = "";
+                    }
+                    var finished = controller.finished(input);
+                    if (!finished) {
+                        controller.step(input);
+                        self.highlightCurrentStates();
+                        finished = controller.finished(input);
+                        self.showTapeContent();
+                    }
+                    if (finished) {
+                        stepStatus(false);
                         self.progressContainer.style.display = "";
-                        var sidebar = Utils_7.utils.id(Settings_7.Settings.sidebarID);
+                        self.showAcceptanceStatus();
+                    }
+                }
+            });
+        };
+        initLBA.prototype.bindShortcuts = function () {
+            var self = this;
+            if (!this.boundShortcuts) {
+                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.focusTestCase, function () {
+                    self.testCaseInput.focus();
+                }, this.shortcutGroup);
+                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.fastForward, function () {
+                    self.fastRecognition.click();
+                }, this.shortcutGroup);
+                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.step, function () {
+                    self.stepRecognition.click();
+                }, this.shortcutGroup);
+                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.stop, function () {
+                    self.stopRecognition.click();
+                }, this.shortcutGroup);
+                this.boundShortcuts = true;
+            }
+            this.testCaseInput.addEventListener("keydown", function (e) {
+                if (e.keyCode == Keyboard_5.Keyboard.keys[Settings_7.Settings.shortcuts.dimTestCase[0]]) {
+                    if (self.testCaseInput == document.activeElement) {
+                        self.testCaseInput.blur();
+                    }
+                }
+            });
+        };
+        return initLBA;
+    }());
+    exports.initLBA = initLBA;
+});
+define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "System", "Utils"], function (require, exports, Keyboard_6, Menu_2, Settings_8, System_3, Utils_9) {
+    "use strict";
+    var initFA = (function () {
+        function initFA() {
+            this.shortcutGroup = "FA";
+            this.boundShortcuts = false;
+            this.testCaseInput = null;
+            this.fastRecognition = null;
+            this.stepRecognition = null;
+            this.stopRecognition = null;
+            this.progressContainer = null;
+        }
+        initFA.prototype.init = function () {
+            console.log("[FA] Initializing...");
+            var menuList = [];
+            var menu = new Menu_2.Menu(Settings_8.Strings.RECOGNITION);
+            var rows = [];
+            this.buildTestCaseInput(rows);
+            this.buildRecognitionControls(rows);
+            this.buildRecognitionProgress(rows);
+            this.bindRecognitionEvents();
+            for (var _i = 0, rows_2 = rows; _i < rows_2.length; _i++) {
+                var row = rows_2[_i];
+                var div = Utils_9.utils.create("div", {
+                    className: "row"
+                });
+                for (var _a = 0, row_2 = row; _a < row_2.length; _a++) {
+                    var node = row_2[_a];
+                    div.appendChild(node);
+                }
+                menu.add(div);
+            }
+            menuList.push(menu);
+            Settings_8.Settings.machines[Settings_8.Settings.Machine.FA].sidebar = menuList;
+            console.log("[FA] Initialized successfully");
+        };
+        initFA.prototype.onEnter = function () {
+            this.bindShortcuts();
+            System_3.System.unlockShortcutGroup(this.shortcutGroup);
+            console.log("[FA] Bound events");
+        };
+        initFA.prototype.onExit = function () {
+            System_3.System.lockShortcutGroup(this.shortcutGroup);
+            console.log("[FA] Unbound events");
+        };
+        initFA.prototype.testCase = function () {
+            return this.testCaseInput.value;
+        };
+        initFA.prototype.buildTestCaseInput = function (container) {
+            var input = Utils_9.utils.create("input", {
+                type: "text",
+                placeholder: Settings_8.Strings.TEST_CASE
+            });
+            container.push([input]);
+            this.testCaseInput = input;
+        };
+        initFA.prototype.highlightCurrentStates = function () {
+            var states = Settings_8.Settings.controller().currentStates();
+            Settings_8.Settings.automatonRenderer.recognitionHighlight(states);
+        };
+        initFA.prototype.buildRecognitionControls = function (container) {
+            var disabledClass = Settings_8.Settings.disabledButtonClass;
+            this.fastRecognition = Utils_9.utils.create("img", {
+                className: "image_button",
+                src: "images/fastforward.svg",
+                title: Settings_8.Strings.FAST_RECOGNITION
+            });
+            this.stopRecognition = Utils_9.utils.create("img", {
+                className: "image_button " + disabledClass,
+                src: "images/stop.svg",
+                title: Settings_8.Strings.STOP_RECOGNITION
+            });
+            this.stepRecognition = Utils_9.utils.create("img", {
+                className: "image_button",
+                src: "images/play.svg",
+                title: Settings_8.Strings.STEP_RECOGNITION
+            });
+            container.push([this.fastRecognition, this.stepRecognition,
+                this.stopRecognition]);
+        };
+        initFA.prototype.buildRecognitionProgress = function (container) {
+            this.progressContainer = Utils_9.utils.create("div", {
+                id: "recognition_progress"
+            });
+            this.progressContainer.style.display = "none";
+            container.push([this.progressContainer]);
+        };
+        initFA.prototype.showAcceptanceStatus = function () {
+            if (Settings_8.Settings.controller().accepts()) {
+                this.progressContainer.style.color = Settings_8.Settings.acceptedTestCaseColor;
+                this.progressContainer.innerHTML = Settings_8.Strings.INPUT_ACCEPTED;
+            }
+            else {
+                this.progressContainer.style.color = Settings_8.Settings.rejectedTestCaseColor;
+                this.progressContainer.innerHTML = Settings_8.Strings.INPUT_REJECTED;
+            }
+        };
+        initFA.prototype.bindRecognitionEvents = function () {
+            var disabledClass = Settings_8.Settings.disabledButtonClass;
+            var fastForwardEnabled = true;
+            var stepEnabled = true;
+            var stopEnabled = false;
+            var self = this;
+            var fastForwardStatus = function (enabled) {
+                fastForwardEnabled = enabled;
+                self.fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+            };
+            var stepStatus = function (enabled) {
+                stepEnabled = enabled;
+                self.stepRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+            };
+            var stopStatus = function (enabled) {
+                stopEnabled = enabled;
+                self.stopRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+            };
+            this.fastRecognition.addEventListener("click", function () {
+                if (fastForwardEnabled) {
+                    Settings_8.Settings.automatonRenderer.lock();
+                    var input = self.testCase();
+                    var controller = Settings_8.Settings.controller();
+                    controller.fastForward(input);
+                    self.highlightCurrentStates();
+                    self.progressContainer.style.display = "";
+                    self.showAcceptanceStatus();
+                    fastForwardStatus(false);
+                    stepStatus(false);
+                    stopStatus(true);
+                    self.testCaseInput.disabled = true;
+                }
+            });
+            this.stopRecognition.addEventListener("click", function () {
+                if (stopEnabled) {
+                    Settings_8.Settings.controller().stop();
+                    Settings_8.Settings.automatonRenderer.recognitionDim();
+                    Settings_8.Settings.automatonRenderer.unlock();
+                    self.progressContainer.style.color = "black";
+                    self.progressContainer.style.display = "none";
+                    fastForwardStatus(true);
+                    stepStatus(true);
+                    stopStatus(false);
+                    self.testCaseInput.disabled = false;
+                }
+            });
+            this.stepRecognition.addEventListener("click", function () {
+                if (stepEnabled) {
+                    fastForwardStatus(false);
+                    stopStatus(true);
+                    self.testCaseInput.disabled = true;
+                    var input = self.testCase();
+                    var controller = Settings_8.Settings.controller();
+                    if (controller.isStopped()) {
+                        Settings_8.Settings.automatonRenderer.lock();
+                        self.progressContainer.style.display = "";
+                        var sidebar = Utils_9.utils.id(Settings_8.Settings.sidebarID);
                         var width = sidebar.offsetWidth;
                         width -= 10;
                         width -= 1;
@@ -2440,22 +2742,22 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
         initFA.prototype.bindShortcuts = function () {
             var self = this;
             if (!this.boundShortcuts) {
-                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.focusTestCase, function () {
+                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.focusTestCase, function () {
                     self.testCaseInput.focus();
                 }, this.shortcutGroup);
-                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.fastForward, function () {
+                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.fastForward, function () {
                     self.fastRecognition.click();
                 }, this.shortcutGroup);
-                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.step, function () {
+                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.step, function () {
                     self.stepRecognition.click();
                 }, this.shortcutGroup);
-                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.stop, function () {
+                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.stop, function () {
                     self.stopRecognition.click();
                 }, this.shortcutGroup);
                 this.boundShortcuts = true;
             }
             this.testCaseInput.addEventListener("keydown", function (e) {
-                if (e.keyCode == Keyboard_5.Keyboard.keys[Settings_7.Settings.shortcuts.dimTestCase[0]]) {
+                if (e.keyCode == Keyboard_6.Keyboard.keys[Settings_8.Settings.shortcuts.dimTestCase[0]]) {
                     if (self.testCaseInput == document.activeElement) {
                         self.testCaseInput.blur();
                     }
@@ -2484,309 +2786,7 @@ define("machines/PDA/initializer", ["require", "exports"], function (require, ex
     }());
     exports.initPDA = initPDA;
 });
-define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"], function (require, exports, Renderer_2, Utils_8) {
-    "use strict";
-    var Table = (function (_super) {
-        __extends(Table, _super);
-        function Table(numRows, numColumns) {
-            _super.call(this);
-            this.customColspans = {};
-            this.numRows = numRows;
-            this.numColumns = numColumns;
-            this.children = [];
-        }
-        Table.prototype.add = function (elem, colspan) {
-            if (colspan) {
-                this.customColspans[this.children.length] = colspan;
-            }
-            this.children.push(elem);
-        };
-        Table.prototype.html = function () {
-            var wrapper = Utils_8.utils.create("table");
-            var index = 0;
-            for (var i = 0; i < this.numRows; i++) {
-                var tr = Utils_8.utils.create("tr");
-                for (var j = 0; j < this.numColumns; j++) {
-                    var td = Utils_8.utils.create("td");
-                    if (index < this.children.length) {
-                        if (this.customColspans.hasOwnProperty(index + "")) {
-                            var colSpan = this.customColspans[index];
-                            td.colSpan = colSpan;
-                            j += colSpan - 1;
-                        }
-                        td.appendChild(this.children[index]);
-                    }
-                    tr.appendChild(td);
-                    index++;
-                }
-                wrapper.appendChild(tr);
-            }
-            return wrapper;
-        };
-        Table.prototype.onRender = function () {
-            this.node.appendChild(this.html());
-        };
-        return Table;
-    }(Renderer_2.Renderer));
-    exports.Table = Table;
-});
-define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "System", "Utils"], function (require, exports, Keyboard_6, Menu_2, Settings_8, System_3, Utils_9) {
-    "use strict";
-    var initLBA = (function () {
-        function initLBA() {
-            this.shortcutGroup = "LBA";
-            this.boundShortcuts = false;
-            this.testCaseInput = null;
-            this.fastRecognition = null;
-            this.stepRecognition = null;
-            this.stopRecognition = null;
-            this.progressContainer = null;
-            this.tapeContainer = null;
-        }
-        initLBA.prototype.init = function () {
-            console.log("[LBA] Initializing...");
-            var menuList = [];
-            var menu = new Menu_2.Menu(Settings_8.Strings.RECOGNITION);
-            var rows = [];
-            this.buildTestCaseInput(rows);
-            this.buildRecognitionControls(rows);
-            this.buildTape(rows);
-            this.buildRecognitionProgress(rows);
-            this.bindRecognitionEvents();
-            for (var _i = 0, rows_2 = rows; _i < rows_2.length; _i++) {
-                var row = rows_2[_i];
-                var div = Utils_9.utils.create("div", {
-                    className: "row"
-                });
-                for (var _a = 0, row_2 = row; _a < row_2.length; _a++) {
-                    var node = row_2[_a];
-                    div.appendChild(node);
-                }
-                menu.add(div);
-            }
-            menuList.push(menu);
-            Settings_8.Settings.machines[Settings_8.Settings.Machine.LBA].sidebar = menuList;
-            console.log("[LBA] Initialized successfully");
-        };
-        initLBA.prototype.onEnter = function () {
-            this.bindShortcuts();
-            System_3.System.unlockShortcutGroup(this.shortcutGroup);
-            console.log("[LBA] Bound events");
-        };
-        initLBA.prototype.onExit = function () {
-            System_3.System.lockShortcutGroup(this.shortcutGroup);
-            console.log("[LBA] Unbound events");
-        };
-        initLBA.prototype.testCase = function () {
-            return this.testCaseInput.value;
-        };
-        initLBA.prototype.buildTestCaseInput = function (container) {
-            var input = Utils_9.utils.create("input", {
-                type: "text",
-                placeholder: Settings_8.Strings.TEST_CASE
-            });
-            container.push([input]);
-            this.testCaseInput = input;
-        };
-        initLBA.prototype.highlightCurrentStates = function () {
-            var states = Settings_8.Settings.controller().currentStates();
-            Settings_8.Settings.automatonRenderer.recognitionHighlight(states);
-        };
-        initLBA.prototype.buildRecognitionControls = function (container) {
-            var disabledClass = Settings_8.Settings.disabledButtonClass;
-            this.fastRecognition = Utils_9.utils.create("img", {
-                className: "image_button",
-                src: "images/fastforward.svg",
-                title: Settings_8.Strings.FAST_RECOGNITION
-            });
-            this.stopRecognition = Utils_9.utils.create("img", {
-                className: "image_button " + disabledClass,
-                src: "images/stop.svg",
-                title: Settings_8.Strings.STOP_RECOGNITION
-            });
-            this.stepRecognition = Utils_9.utils.create("img", {
-                className: "image_button",
-                src: "images/play.svg",
-                title: Settings_8.Strings.STEP_RECOGNITION
-            });
-            container.push([this.fastRecognition, this.stepRecognition,
-                this.stopRecognition]);
-        };
-        initLBA.prototype.buildTape = function (container) {
-            this.tapeContainer = Utils_9.utils.create("div", {
-                id: "tape"
-            });
-            this.tapeContainer.style.display = "none";
-            var displayedChars = Settings_8.Settings.tapeDisplayedChars;
-            for (var i = 0; i < displayedChars; i++) {
-                var cell = Utils_9.utils.create("div", {
-                    className: "tape_cell"
-                });
-                this.tapeContainer.appendChild(cell);
-            }
-            this.tapeContainer.children[(displayedChars - 1) / 2].classList.add("center");
-            container.push([this.tapeContainer]);
-        };
-        initLBA.prototype.buildRecognitionProgress = function (container) {
-            this.progressContainer = Utils_9.utils.create("div", {
-                id: "recognition_progress"
-            });
-            this.progressContainer.style.display = "none";
-            container.push([this.progressContainer]);
-        };
-        initLBA.prototype.showAcceptanceStatus = function () {
-            var controller = Settings_8.Settings.controller();
-            if (controller.accepts()) {
-                this.progressContainer.style.color = Settings_8.Settings.acceptedTestCaseColor;
-                this.progressContainer.innerHTML = Settings_8.Strings.INPUT_ACCEPTED;
-            }
-            else {
-                this.progressContainer.style.color = Settings_8.Settings.rejectedTestCaseColor;
-                if (controller.exhausted()) {
-                    this.progressContainer.innerHTML = Settings_8.Strings.INPUT_LOOPING;
-                }
-                else {
-                    this.progressContainer.innerHTML = Settings_8.Strings.INPUT_REJECTED;
-                }
-            }
-        };
-        initLBA.prototype.showTapeContent = function () {
-            var controller = Settings_8.Settings.controller();
-            var tapeContent = controller.getTapeContent();
-            var headPosition = controller.getHeadPosition();
-            var displayedChars = Settings_8.Settings.tapeDisplayedChars;
-            var offset = (displayedChars - 1) / 2;
-            var startIndex = headPosition - offset;
-            if (startIndex < 0) {
-                var buffer = [];
-                for (var i = 0; i < -startIndex; i++) {
-                    buffer.push("_");
-                }
-                tapeContent = buffer.concat(tapeContent);
-                startIndex = 0;
-            }
-            if (startIndex + displayedChars > tapeContent.length) {
-                var delta = startIndex + displayedChars - tapeContent.length;
-                for (var i = 0; i < delta; i++) {
-                    tapeContent.push("_");
-                }
-            }
-            var displayedContent = tapeContent.slice(startIndex, startIndex + displayedChars);
-            for (var i = 0; i < displayedChars; i++) {
-                this.tapeContainer.children[i].innerHTML = displayedContent[i];
-            }
-        };
-        initLBA.prototype.bindRecognitionEvents = function () {
-            var disabledClass = Settings_8.Settings.disabledButtonClass;
-            var fastForwardEnabled = true;
-            var stepEnabled = true;
-            var stopEnabled = false;
-            var self = this;
-            var fastForwardStatus = function (enabled) {
-                fastForwardEnabled = enabled;
-                self.fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
-            };
-            var stepStatus = function (enabled) {
-                stepEnabled = enabled;
-                self.stepRecognition.classList[enabled ? "remove" : "add"](disabledClass);
-            };
-            var stopStatus = function (enabled) {
-                stopEnabled = enabled;
-                self.stopRecognition.classList[enabled ? "remove" : "add"](disabledClass);
-            };
-            this.fastRecognition.addEventListener("click", function () {
-                if (fastForwardEnabled) {
-                    Settings_8.Settings.automatonRenderer.lock();
-                    var input = self.testCase();
-                    var controller = Settings_8.Settings.controller();
-                    controller.fastForward(input);
-                    self.highlightCurrentStates();
-                    self.progressContainer.style.display = "";
-                    self.showAcceptanceStatus();
-                    self.tapeContainer.style.display = "";
-                    self.showTapeContent();
-                    fastForwardStatus(false);
-                    stepStatus(false);
-                    stopStatus(true);
-                    self.testCaseInput.disabled = true;
-                }
-            });
-            this.stopRecognition.addEventListener("click", function () {
-                if (stopEnabled) {
-                    Settings_8.Settings.controller().stop();
-                    Settings_8.Settings.automatonRenderer.recognitionDim();
-                    Settings_8.Settings.automatonRenderer.unlock();
-                    self.progressContainer.style.color = "black";
-                    self.progressContainer.style.display = "none";
-                    self.tapeContainer.style.display = "none";
-                    fastForwardStatus(true);
-                    stepStatus(true);
-                    stopStatus(false);
-                    self.testCaseInput.disabled = false;
-                }
-            });
-            this.stepRecognition.addEventListener("click", function () {
-                if (stepEnabled) {
-                    fastForwardStatus(false);
-                    stopStatus(true);
-                    self.testCaseInput.disabled = true;
-                    var input = self.testCase();
-                    var controller = Settings_8.Settings.controller();
-                    if (controller.isStopped()) {
-                        controller.reset();
-                        Settings_8.Settings.automatonRenderer.lock();
-                        var sidebar = Utils_9.utils.id(Settings_8.Settings.sidebarID);
-                        var width = sidebar.offsetWidth;
-                        width -= 10;
-                        width -= 1;
-                        self.progressContainer.style.width = width + "px";
-                        self.tapeContainer.style.display = "";
-                    }
-                    var finished = controller.finished(input);
-                    if (!finished) {
-                        controller.step(input);
-                        self.highlightCurrentStates();
-                        finished = controller.finished(input);
-                        self.showTapeContent();
-                    }
-                    if (finished) {
-                        stepStatus(false);
-                        self.progressContainer.style.display = "";
-                        self.showAcceptanceStatus();
-                    }
-                }
-            });
-        };
-        initLBA.prototype.bindShortcuts = function () {
-            var self = this;
-            if (!this.boundShortcuts) {
-                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.focusTestCase, function () {
-                    self.testCaseInput.focus();
-                }, this.shortcutGroup);
-                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.fastForward, function () {
-                    self.fastRecognition.click();
-                }, this.shortcutGroup);
-                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.step, function () {
-                    self.stepRecognition.click();
-                }, this.shortcutGroup);
-                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.stop, function () {
-                    self.stopRecognition.click();
-                }, this.shortcutGroup);
-                this.boundShortcuts = true;
-            }
-            this.testCaseInput.addEventListener("keydown", function (e) {
-                if (e.keyCode == Keyboard_6.Keyboard.keys[Settings_8.Settings.shortcuts.dimTestCase[0]]) {
-                    if (self.testCaseInput == document.activeElement) {
-                        self.testCaseInput.blur();
-                    }
-                }
-            });
-        };
-        return initLBA;
-    }());
-    exports.initLBA = initLBA;
-});
-define("lists/InitializerList", ["require", "exports", "machines/FA/initializer", "machines/PDA/initializer", "machines/LBA/initializer"], function (require, exports, initializer_1, initializer_2, initializer_3) {
+define("lists/InitializerList", ["require", "exports", "machines/LBA/initializer", "machines/FA/initializer", "machines/PDA/initializer"], function (require, exports, initializer_1, initializer_2, initializer_3) {
     "use strict";
     function __export(m) {
         for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
@@ -3495,6 +3495,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     self.bindFormalDefinitionListener();
                 }
             });
+            this.load('["LBA",[["q0",0,155,315],["q1",0,345,189],["q2",0,563,185],["q3",0,783,189]],[["q0","q1",[["a","b",">"]]],["q1","q2",[["a","b","<"]]],["q2","q3",[["b","b",">"]]],["q3","q2",[["b","b","<"]]]],0]', false);
         };
         AutomatonRenderer.prototype.clear = function () {
             for (var _i = 0, _a = this.stateList; _i < _a.length; _i++) {
