@@ -186,3 +186,21 @@ span.none {
 	border: 1px solid black;
 	padding: 5px;
 }
+
+#multiple_recognition {
+	display: table;
+}
+
+#multiple_recognition > * {
+	display: table-cell;
+	font-size: 16px;
+	vertical-align: top;
+}
+
+#multiple_recognition > *:first-child {
+	margin-right: 5px;
+}
+
+#multiple_recognition span {
+	display: block;
+}

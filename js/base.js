@@ -2087,10 +2087,12 @@ define("languages/Portuguese", ["require", "exports"], function (require, export
             LBA_ENTER_EDGE_PLACEHOLDER_2: "escrever",
             LBA_ENTER_EDGE_PLACEHOLDER_3: "direção",
             RECOGNITION: "Reconhecimento",
+            MULTIPLE_RECOGNITION: "Reconhecimento múltiplo",
             TEST_CASE: "caso de teste",
             FAST_RECOGNITION: "Reconhecimento rápido (R)",
             STEP_RECOGNITION: "Reconhecimento passo-a-passo (N)",
             STOP_RECOGNITION: "Parar reconhecimento passo-a-passo (S)",
+            START_MULTIPLE_RECOGNITION: "Reconhecimento múltiplo (M)",
             CHANGE_MACHINE_WARNING: "Alterar o tipo de máquina reseta o autômato. Deseja continuar?",
             INPUT_ACCEPTED: "aceito",
             INPUT_REJECTED: "rejeitado",
@@ -2160,10 +2162,12 @@ define("languages/English", ["require", "exports"], function (require, exports) 
             LBA_ENTER_EDGE_PLACEHOLDER_2: "write",
             LBA_ENTER_EDGE_PLACEHOLDER_3: "direction",
             RECOGNITION: "Recognition",
+            MULTIPLE_RECOGNITION: "Multiple recognition",
             TEST_CASE: "test case",
             FAST_RECOGNITION: "Fast recognition (R)",
             STEP_RECOGNITION: "Step-by-step recognition (N)",
             STOP_RECOGNITION: "Stop step-by-step recognition (S)",
+            START_MULTIPLE_RECOGNITION: "Multiple recognition (M)",
             CHANGE_MACHINE_WARNING: "Changing the machine type resets the automaton. Do you wish to continue?",
             INPUT_ACCEPTED: "accepted",
             INPUT_REJECTED: "rejected",
@@ -2269,28 +2273,26 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
             this.stepRecognition = null;
             this.stopRecognition = null;
             this.progressContainer = null;
+            this.multipleCaseArea = null;
+            this.multipleCaseResults = null;
+            this.multipleCaseButton = null;
         }
         initFA.prototype.init = function () {
             console.log("[FA] Initializing...");
             var menuList = [];
-            var menu = new Menu_1.Menu(Settings_7.Strings.RECOGNITION);
+            var recognitionMenu = new Menu_1.Menu(Settings_7.Strings.RECOGNITION);
             var rows = [];
             this.buildTestCaseInput(rows);
             this.buildRecognitionControls(rows);
             this.buildRecognitionProgress(rows);
+            this.addRows(rows, recognitionMenu);
+            menuList.push(recognitionMenu);
+            var multipleRecognitionMenu = new Menu_1.Menu(Settings_7.Strings.MULTIPLE_RECOGNITION);
+            rows = [];
+            this.buildMultipleRecognition(rows);
+            this.addRows(rows, multipleRecognitionMenu);
+            menuList.push(multipleRecognitionMenu);
             this.bindRecognitionEvents();
-            for (var _i = 0, rows_1 = rows; _i < rows_1.length; _i++) {
-                var row = rows_1[_i];
-                var div = Utils_7.utils.create("div", {
-                    className: "row"
-                });
-                for (var _a = 0, row_1 = row; _a < row_1.length; _a++) {
-                    var node = row_1[_a];
-                    div.appendChild(node);
-                }
-                menu.add(div);
-            }
-            menuList.push(menu);
             Settings_7.Settings.machines[Settings_7.Settings.Machine.FA].sidebar = menuList;
             console.log("[FA] Initialized successfully");
         };
@@ -2303,16 +2305,28 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
             System_2.System.lockShortcutGroup(this.shortcutGroup);
             console.log("[FA] Unbound events");
         };
+        initFA.prototype.addRows = function (rows, menu) {
+            for (var _i = 0, rows_1 = rows; _i < rows_1.length; _i++) {
+                var row = rows_1[_i];
+                var div = Utils_7.utils.create("div", {
+                    className: "row"
+                });
+                for (var _a = 0, row_1 = row; _a < row_1.length; _a++) {
+                    var node = row_1[_a];
+                    div.appendChild(node);
+                }
+                menu.add(div);
+            }
+        };
         initFA.prototype.testCase = function () {
             return this.testCaseInput.value;
         };
         initFA.prototype.buildTestCaseInput = function (container) {
-            var input = Utils_7.utils.create("input", {
+            this.testCaseInput = Utils_7.utils.create("input", {
                 type: "text",
                 placeholder: Settings_7.Strings.TEST_CASE
             });
-            container.push([input]);
-            this.testCaseInput = input;
+            container.push([this.testCaseInput]);
         };
         initFA.prototype.highlightCurrentStates = function () {
             var states = Settings_7.Settings.controller().currentStates();
@@ -2344,6 +2358,24 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
             });
             this.progressContainer.style.display = "none";
             container.push([this.progressContainer]);
+        };
+        initFA.prototype.buildMultipleRecognition = function (container) {
+            this.multipleCaseArea = Utils_7.utils.create("textarea");
+            this.multipleCaseArea.rows = Settings_7.Settings.multRecognitionAreaRows;
+            this.multipleCaseArea.cols = Settings_7.Settings.multRecognitionAreaCols;
+            this.multipleCaseResults = Utils_7.utils.create("div");
+            var testCaseArea = Utils_7.utils.create("div", {
+                id: "multiple_recognition"
+            });
+            testCaseArea.appendChild(this.multipleCaseArea);
+            testCaseArea.appendChild(this.multipleCaseResults);
+            container.push([testCaseArea]);
+            this.multipleCaseButton = Utils_7.utils.create("img", {
+                className: "image_button",
+                src: "images/play.svg",
+                title: Settings_7.Strings.START_MULTIPLE_RECOGNITION
+            });
+            container.push([this.multipleCaseButton]);
         };
         initFA.prototype.showAcceptanceStatus = function () {
             if (Settings_7.Settings.controller().accepts()) {
@@ -2436,6 +2468,25 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
                     }
                 }
             });
+            this.multipleCaseButton.addEventListener("click", function () {
+                var testCases = self.multipleCaseArea.value.split("\n");
+                var controller = Settings_7.Settings.controller();
+                self.multipleCaseResults.innerHTML = "";
+                for (var _i = 0, testCases_1 = testCases; _i < testCases_1.length; _i++) {
+                    var input = testCases_1[_i];
+                    controller.fastForward(input);
+                    var result = Utils_7.utils.create("span");
+                    if (controller.accepts()) {
+                        result.style.color = Settings_7.Settings.acceptedTestCaseColor;
+                        result.innerHTML = Settings_7.Strings.INPUT_ACCEPTED;
+                    }
+                    else {
+                        result.style.color = Settings_7.Settings.rejectedTestCaseColor;
+                        result.innerHTML = Settings_7.Strings.INPUT_REJECTED;
+                    }
+                    self.multipleCaseResults.appendChild(result);
+                }
+            });
         };
         initFA.prototype.bindShortcuts = function () {
             var self = this;
@@ -2451,6 +2502,9 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
                 }, this.shortcutGroup);
                 System_2.System.bindShortcut(Settings_7.Settings.shortcuts.stop, function () {
                     self.stopRecognition.click();
+                }, this.shortcutGroup);
+                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.multipleRecognition, function () {
+                    self.multipleCaseButton.click();
                 }, this.shortcutGroup);
                 this.boundShortcuts = true;
             }
@@ -2825,6 +2879,8 @@ define("Settings", ["require", "exports", "lists/MachineList", "lists/Controller
         Settings.machineActionRows = 2;
         Settings.machineActionColumns = 2;
         Settings.tapeDisplayedChars = 7;
+        Settings.multRecognitionAreaRows = 4;
+        Settings.multRecognitionAreaCols = 15;
         Settings.stateRadius = 32;
         Settings.stateRingRadius = 27;
         Settings.stateDragTolerance = 50;
@@ -2879,7 +2935,8 @@ define("Settings", ["require", "exports", "lists/MachineList", "lists/Controller
             dimTestCase: ["ENTER"],
             fastForward: ["R"],
             step: ["N"],
-            stop: ["S"]
+            stop: ["S"],
+            multipleRecognition: ["M"]
         };
         Settings.languages = lang;
         Settings.Machine = automata.Machine;
@@ -4734,7 +4791,9 @@ define("main", ["require", "exports", "Settings", "System", "interface/UI"], fun
         var ui = new UI_1.UI();
         ui.render();
         document.body.addEventListener("keydown", function (e) {
-            if (document.activeElement.tagName.toLowerCase() != "input") {
+            var activeElementTag = document.activeElement.tagName.toLowerCase();
+            var inhibitors = ["input", "textarea"];
+            if (inhibitors.indexOf(activeElementTag) == -1) {
                 return System_6.System.keyEvent(e);
             }
             return true;

@@ -18,8 +18,9 @@ $(document).ready(function() {
 	ui.render();
 
 	document.body.addEventListener("keydown", function(e) {
-		// TODO: make this look better
-		if (document.activeElement.tagName.toLowerCase() != "input") {
+		let activeElementTag = document.activeElement.tagName.toLowerCase();
+		let inhibitors = ["input", "textarea"];
+		if (inhibitors.indexOf(activeElementTag) == -1) {
 			return System.keyEvent(e);
 		}
 		return true;
