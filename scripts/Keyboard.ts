@@ -54,5 +54,7 @@ export namespace Keyboard {
 		epsilon: "ε",
 		gamma: "Γ",
 		sigma: "Σ",
+		leftArrow: "←",
+		rightArrow: "→"
 	};
 }

@@ -31,12 +31,12 @@ export class LBAController implements Controller {
 			initializer: function() {
 				let node = <HTMLSelectElement> utils.create("select");
 				node.appendChild(utils.create("option", {
-					innerHTML: "←",
+					innerHTML: Keyboard.symbols.leftArrow,
 					value: "<"
 				}));
 
 				node.appendChild(utils.create("option", {
-					innerHTML: "→",
+					innerHTML: Keyboard.symbols.rightArrow,
 					value: ">"
 				}));
 
@@ -54,11 +54,12 @@ export class LBAController implements Controller {
 	}
 
 	public edgeDataToText(data: string[]): string {
-		let epsilon = Keyboard.symbols.epsilon;
+		let symbols = Keyboard.symbols;
+		let epsilon = symbols.epsilon;
 		let formatted = [
 			data[0] || epsilon,
 			data[1] || epsilon,
-			(data[2] == "<") ? "←" : "→"
+			(data[2] == "<") ? symbols.leftArrow : symbols.rightArrow
 		];
 		return formatted[0] + ", " + formatted[1] + ", " + formatted[2];
 	}
@@ -239,6 +240,9 @@ export class LBAController implements Controller {
 		let transitions = {
 			list: []
 		};
+
+		let arrows = [Keyboard.symbols.leftArrow, Keyboard.symbols.rightArrow];
+
 		let callback = function(source: string, target: TransitionInformation,
 								input: string) {
 			transitions.list.push([
@@ -246,7 +250,7 @@ export class LBAController implements Controller {
 				input,
 				target.state,
 				target.tapeSymbol,
-				target.direction
+				arrows[target.direction]
 			]);
 		};
 		this.machine.transitionIteration(callback);

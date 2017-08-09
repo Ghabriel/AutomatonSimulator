@@ -996,7 +996,9 @@ define("Keyboard", ["require", "exports"], function (require, exports) {
             delta: "δ",
             epsilon: "ε",
             gamma: "Γ",
-            sigma: "Σ"
+            sigma: "Σ",
+            leftArrow: "←",
+            rightArrow: "→"
         };
     })(Keyboard = exports.Keyboard || (exports.Keyboard = {}));
 });
@@ -1830,11 +1832,11 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
                 initializer: function () {
                     var node = Utils_5.utils.create("select");
                     node.appendChild(Utils_5.utils.create("option", {
-                        innerHTML: "←",
+                        innerHTML: Keyboard_4.Keyboard.symbols.leftArrow,
                         value: "<"
                     }));
                     node.appendChild(Utils_5.utils.create("option", {
-                        innerHTML: "→",
+                        innerHTML: Keyboard_4.Keyboard.symbols.rightArrow,
                         value: ">"
                     }));
                     return node;
@@ -1847,11 +1849,12 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
             prompt.show();
         };
         LBAController.prototype.edgeDataToText = function (data) {
-            var epsilon = Keyboard_4.Keyboard.symbols.epsilon;
+            var symbols = Keyboard_4.Keyboard.symbols;
+            var epsilon = symbols.epsilon;
             var formatted = [
                 data[0] || epsilon,
                 data[1] || epsilon,
-                (data[2] == "<") ? "←" : "→"
+                (data[2] == "<") ? symbols.leftArrow : symbols.rightArrow
             ];
             return formatted[0] + ", " + formatted[1] + ", " + formatted[2];
         };
@@ -1997,13 +2000,14 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
             var transitions = {
                 list: []
             };
+            var arrows = [Keyboard_4.Keyboard.symbols.leftArrow, Keyboard_4.Keyboard.symbols.rightArrow];
             var callback = function (source, target, input) {
                 transitions.list.push([
                     source,
                     input,
                     target.state,
                     target.tapeSymbol,
-                    target.direction
+                    arrows[target.direction]
                 ]);
             };
             this.machine.transitionIteration(callback);
