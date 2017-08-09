@@ -1,6 +1,6 @@
 import {Controller, FormalDefinition} from "../../Controller"
 import {Keyboard} from "../../Keyboard"
-import {LBA} from "./LBA"
+import {LBA, TransitionInformation} from "./LBA"
 import {Prompt, ValuedHTMLElement} from "../../Prompt"
 import {State} from "../../interface/State"
 import {Strings} from "../../Settings"
@@ -219,8 +219,7 @@ export class LBAController implements Controller {
 		values["Q"] = machine.getStates();
 		values[sigma] = machine.getInputAlphabet();
 		values[gamma] = machine.getTapeAlphabet();
-		// values[delta] = this.transitionTable();
-		values[delta] = { list: [] }; // TODO
+		values[delta] = this.transitionTable();
 		values["q0"] = machine.getInitialState();
 		values["B"] = "_";
 		values["F"] = machine.getAcceptingStates();
@@ -234,6 +233,24 @@ export class LBAController implements Controller {
 
 	private index(state: State): number {
 		return this.stateMapping[state.getName()];
+	}
+
+	private transitionTable(): any {
+		let transitions = {
+			list: []
+		};
+		let callback = function(source: string, target: TransitionInformation,
+								input: string) {
+			transitions.list.push([
+				source,
+				input,
+				target.state,
+				target.tapeSymbol,
+				target.direction
+			]);
+		};
+		this.machine.transitionIteration(callback);
+		return transitions;
 	}
 
 	private machine: LBA;

@@ -173,10 +173,7 @@ export class AutomatonRenderer {
 	// TODO: find a better name for this method
 	// (since it also handles saving the current state)
 	private bindFormalDefinitionListener(): void {
-		// TODO: this will probably not work properly when the user
-		// changes the automaton type
 		let definitionContainer: HTMLDivElement = null;
-		let controller = Settings.controller();
 		let self = this;
 		let callback = function() {
 			// Saves the current state to the memento if it's not frozen
@@ -189,53 +186,60 @@ export class AutomatonRenderer {
 				Settings.sidebar.updateFormalDefinition(definitionContainer);
 			}
 
-			let formalDefinition = controller.formalDefinition();
-			// TODO: render the formal definition properly
-			let tupleSequence = formalDefinition.tupleSequence;
-			let content = "M = (" + tupleSequence.join(", ") + ")";
-			content += Strings.DEFINITION_WHERE_SUFFIX + "<br>";
-			for (let parameter of formalDefinition.parameterSequence) {
-				let value = formalDefinition.parameterValues[parameter];
-				let type = typeof value;
-				content += parameter + " = ";
-				if (type == "number" || type == "string") {
-					content += value;
-				} else if (value instanceof Array) {
-					content += "{" + value.join(", ") + "}";
-				} else if (type == "undefined") {
-					content += "<span class='none'>";
-					content += Strings.NO_INITIAL_STATE;
-					content += "</span>";
-				} else if (value.hasOwnProperty("list")) {
-					let list: [string, string, string][] = value.list;
-					if (list.length > 0) {
-						let table = new Table(list.length, 3);
-						for (let i = 0; i < list.length; i++) {
-							for (let j = 0; j < list[i].length; j++) {
-								table.add(utils.create("span", {
-									innerHTML: list[i][j]
-								}));
-							}
-						}
-						content += "<table id='transition_table'>" + table.html().innerHTML + "</table>";
-					} else {
-						content += "<span class='none'>";
-						content += Strings.NO_TRANSITIONS;
-						content += "</span>";
-					}
-				} else {
-					content += "unspecified type (AutomatonRenderer:299)";
-				}
-				content += "<br>";
-			}
-			definitionContainer.innerHTML = content;
+			definitionContainer.innerHTML = self.buildFormalDefinition();
 		};
 
-		controller.setEditingCallback(callback);
+		Settings.controller().setEditingCallback(callback);
 
 		// Calls the callback to display the initial formal definition
 		// (normally the formal definition of an empty automaton)
 		callback();
+	}
+
+	private buildFormalDefinition(): string {
+		let formalDefinition = Settings.controller().formalDefinition();
+		// TODO: render the formal definition properly
+		let tupleSequence = formalDefinition.tupleSequence;
+		let content = "M = (" + tupleSequence.join(", ") + ")";
+		content += Strings.DEFINITION_WHERE_SUFFIX + "<br>";
+		for (let parameter of formalDefinition.parameterSequence) {
+			let value = formalDefinition.parameterValues[parameter];
+			let type = typeof value;
+			content += parameter + " = ";
+			if (type == "number" || type == "string") {
+				content += value;
+			} else if (value instanceof Array) {
+				content += "{" + value.join(", ") + "}";
+			} else if (type == "undefined") {
+				content += "<span class='none'>";
+				content += Strings.NO_INITIAL_STATE;
+				content += "</span>";
+			} else if (value.hasOwnProperty("list")) {
+				let list: string[][] = value.list;
+				if (list.length > 0) {
+					let table = new Table(list.length, list[0].length);
+					for (let i = 0; i < list.length; i++) {
+						for (let j = 0; j < list[i].length; j++) {
+							table.add(utils.create("span", {
+								innerHTML: list[i][j]
+							}));
+						}
+					}
+					content += "<table id='transition_table'>";
+					content += table.html().innerHTML;
+					content += "</table>";
+				} else {
+					content += "<span class='none'>";
+					content += Strings.NO_TRANSITIONS;
+					content += "</span>";
+				}
+			} else {
+				content += "unspecified type (AutomatonRenderer:235)";
+			}
+			content += "<br>";
+		}
+
+		return content;
 	}
 
 	private selectState(state: State) {

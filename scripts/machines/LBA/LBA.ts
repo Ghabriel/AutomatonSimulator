@@ -10,8 +10,14 @@ enum Direction {
 	LEFT, RIGHT
 }
 
-interface TransitionInformation {
+interface InternalTransitionInformation {
 	state: Index,
+	tapeSymbol: string,
+	direction: Direction
+}
+
+export interface TransitionInformation {
+	state: State,
 	tapeSymbol: string,
 	direction: Direction
 }
@@ -184,9 +190,16 @@ export class LBA {
 			if (this.transitions.hasOwnProperty(index)) {
 				let sourceState = self.stateList[index];
 				let stateTransitions = this.transitions[index];
+
 				for (let input in stateTransitions) {
 					if (stateTransitions.hasOwnProperty(input)) {
-						callback(sourceState, stateTransitions[input], input);
+						let internalInfo = stateTransitions[input];
+						let info: TransitionInformation = {
+							state: this.stateList[internalInfo.state],
+							tapeSymbol: internalInfo.tapeSymbol,
+							direction: internalInfo.direction
+						};
+						callback(sourceState, info, input);
 					}
 				}
 			}
@@ -369,7 +382,7 @@ export class LBA {
 	private tapeAlphabet: Alphabet = {}; // gamma
 	private transitions: {
 		[index: number]: {
-			[input: string]: TransitionInformation
+			[input: string]: InternalTransitionInformation
 		}
 	} = {}; // delta (Q x gamma -> Q x gamma x {left, right})
 	private initialState: Index = -1; // q0
