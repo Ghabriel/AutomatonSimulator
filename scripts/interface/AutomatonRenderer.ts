@@ -32,8 +32,6 @@ export class AutomatonRenderer {
 				self.bindFormalDefinitionListener();
 			}
 		});
-
-		this.load('["LBA",[["q0",0,155,315],["q1",0,345,189],["q2",0,563,185],["q3",0,783,189]],[["q0","q1",[["a","b",">"]]],["q1","q2",[["a","b","<"]]],["q2","q3",[["b","b",">"]]],["q3","q2",[["b","b","<"]]]],0]', false);
 	}
 
 	public clear(): void {
