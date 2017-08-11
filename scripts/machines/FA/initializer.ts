@@ -65,7 +65,6 @@ export class initFA {
 			}
 			menu.add(div);
 		}
-
 	}
 
 	private testCase(): string {

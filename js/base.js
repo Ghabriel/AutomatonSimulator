@@ -3,98 +3,78 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-define("datastructures/Queue", ["require", "exports"], function (require, exports) {
+define("lists/MachineList", ["require", "exports"], function (require, exports) {
     "use strict";
-    var Queue = (function () {
-        function Queue() {
-            this.data = [];
-            this.pointer = 0;
-        }
-        Queue.prototype.push = function (value) {
-            this.data.push(value);
-        };
-        Queue.prototype.front = function () {
-            return this.data[this.pointer];
-        };
-        Queue.prototype.pop = function () {
-            var result = this.front();
-            this.pointer++;
-            if (this.pointer >= this.size() / 2) {
-                this.data = this.data.slice(this.pointer);
-                this.pointer = 0;
-            }
-            return result;
-        };
-        Queue.prototype.clear = function () {
-            this.data = [];
-            this.pointer = 0;
-        };
-        Queue.prototype.empty = function () {
-            return this.size() == 0;
-        };
-        Queue.prototype.size = function () {
-            return this.data.length - this.pointer;
-        };
-        return Queue;
-    }());
-    exports.Queue = Queue;
+    (function (Machine) {
+        Machine[Machine["FA"] = 0] = "FA";
+        Machine[Machine["PDA"] = 1] = "PDA";
+        Machine[Machine["LBA"] = 2] = "LBA";
+    })(exports.Machine || (exports.Machine = {}));
+    var Machine = exports.Machine;
 });
-define("datastructures/UnorderedSet", ["require", "exports"], function (require, exports) {
+define("Browser", ["require", "exports"], function (require, exports) {
     "use strict";
-    var UnorderedSet = (function () {
-        function UnorderedSet() {
-            this.data = {};
-            this.count = 0;
-        }
-        UnorderedSet.prototype.insert = function (value) {
-            if (!this.contains(value)) {
-                this.count++;
-            }
-            this.data[value] = true;
-            this.type = typeof value;
-        };
-        UnorderedSet.prototype.erase = function (value) {
-            if (this.contains(value)) {
-                this.count--;
-            }
-            delete this.data[value];
-        };
-        UnorderedSet.prototype.contains = function (value) {
-            return !!this.data[value];
-        };
-        UnorderedSet.prototype.clear = function () {
-            this.data = {};
-            this.count = 0;
-        };
-        UnorderedSet.prototype.empty = function () {
-            return this.size() == 0;
-        };
-        UnorderedSet.prototype.size = function () {
-            return this.count;
-        };
-        UnorderedSet.prototype.forEach = function (callback) {
-            for (var value in this.data) {
-                if (this.data.hasOwnProperty(value)) {
-                    var val = value;
-                    if (this.type == "number") {
-                        val = parseFloat(value);
+    var Browser;
+    (function (Browser) {
+        var data = info();
+        Browser.name = data.name;
+        Browser.version = data.version;
+        function info() {
+            var ua = navigator.userAgent.toLowerCase();
+            var test = function (regex) {
+                return regex.test(ua);
+            };
+            var data = {
+                msie: test(/msie/) || test(/trident/),
+                edge: test(/edge/),
+                firefox: test(/mozilla/) && test(/firefox/),
+                chrome: test(/webkit/) && test(/chrome/) && !test(/edge/),
+                safari: test(/safari/) && test(/applewebkit/) && !test(/chrome/),
+                opera: test(/opera/)
+            };
+            var browserName = "";
+            var version = "Unknown";
+            for (var name_1 in data) {
+                if (data.hasOwnProperty(name_1) && data[name_1]) {
+                    browserName = name_1;
+                    var regex = new RegExp(name_1 + "( |/)([0-9]+)");
+                    var matches = ua.match(regex);
+                    if (matches) {
+                        version = matches[2];
                     }
-                    if (callback(val) === false) {
-                        break;
+                    else if (matches = ua.match(/rv:([0-9]+)/)) {
+                        version = matches[1];
                     }
                 }
             }
+            return {
+                name: browserName,
+                version: version
+            };
+        }
+    })(Browser = exports.Browser || (exports.Browser = {}));
+});
+define("interface/Renderer", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var Renderer = (function () {
+        function Renderer() {
+        }
+        Renderer.prototype.bind = function (node) {
+            this.node = node;
+            this.onBind();
         };
-        UnorderedSet.prototype.asList = function () {
-            var result = [];
-            this.forEach(function (value) {
-                result.push(value);
-            });
-            return result;
+        Renderer.prototype.render = function () {
+            if (this.node) {
+                this.onRender();
+            }
         };
-        return UnorderedSet;
+        Renderer.prototype.onBind = function () { };
+        return Renderer;
     }());
-    exports.UnorderedSet = UnorderedSet;
+    exports.Renderer = Renderer;
+});
+define("StatePalette", ["require", "exports"], function (require, exports) {
+    "use strict";
 });
 define("Utils", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -195,7 +175,387 @@ define("Utils", ["require", "exports"], function (require, exports) {
         utils.printShortcut = printShortcut;
     })(utils = exports.utils || (exports.utils = {}));
 });
-define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastructures/UnorderedSet", "Utils"], function (require, exports, Queue_1, UnorderedSet_1, Utils_1) {
+define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"], function (require, exports, Browser_1, Settings_1, Utils_1) {
+    "use strict";
+    var State = (function () {
+        function State() {
+            this.initial = false;
+            this.final = false;
+            this.name = "";
+            this.initialMarkOffsets = [];
+            this.defaultPalette = {
+                fillColor: Settings_1.Settings.stateFillColor,
+                strokeColor: Settings_1.Settings.stateStrokeColor,
+                strokeWidth: Settings_1.Settings.stateStrokeWidth,
+                ringStrokeWidth: Settings_1.Settings.stateRingStrokeWidth
+            };
+            this.palette = this.defaultPalette;
+            this.body = null;
+            this.ring = null;
+            this.arrowParts = [];
+            this.textContainer = null;
+            this.radius = Settings_1.Settings.stateRadius;
+        }
+        State.prototype.setPosition = function (x, y) {
+            this.x = x;
+            this.y = y;
+        };
+        State.prototype.getPosition = function () {
+            return {
+                x: this.x,
+                y: this.y
+            };
+        };
+        State.prototype.setInitial = function (flag) {
+            this.initial = flag;
+        };
+        State.prototype.isInitial = function () {
+            return this.initial;
+        };
+        State.prototype.setFinal = function (flag) {
+            this.final = flag;
+        };
+        State.prototype.isFinal = function () {
+            return this.final;
+        };
+        State.prototype.setName = function (name) {
+            this.name = name;
+        };
+        State.prototype.getName = function () {
+            return this.name;
+        };
+        State.prototype.applyPalette = function (palette) {
+            this.palette = palette;
+        };
+        State.prototype.removePalette = function () {
+            this.palette = this.defaultPalette;
+        };
+        State.prototype.remove = function () {
+            if (this.body) {
+                this.body.remove();
+                this.body = null;
+            }
+            if (this.ring) {
+                this.ring.remove();
+                this.ring = null;
+            }
+            for (var _i = 0, _a = this.arrowParts; _i < _a.length; _i++) {
+                var part = _a[_i];
+                part.remove();
+            }
+            this.arrowParts = [];
+            if (this.textContainer) {
+                this.textContainer.remove();
+                this.textContainer = null;
+            }
+        };
+        State.prototype.render = function (canvas) {
+            this.renderBody(canvas);
+            this.renderInitialMark(canvas);
+            this.renderFinalMark(canvas);
+            this.renderText(canvas);
+        };
+        State.prototype.node = function () {
+            return this.body;
+        };
+        State.prototype.html = function () {
+            if (this.body) {
+                return this.body.node;
+            }
+            return null;
+        };
+        State.prototype.drag = function (moveCallback, endCallback) {
+            var self = this;
+            var begin = function (x, y, event) {
+                var position = self.getPosition();
+                this.ox = position.x;
+                this.oy = position.y;
+                return null;
+            };
+            var moveController = 0;
+            var callbackFrequency;
+            if (Browser_1.Browser.name == "chrome") {
+                callbackFrequency = 3;
+            }
+            else {
+                callbackFrequency = 4;
+            }
+            var move = function (dx, dy, x, y, event) {
+                self.setVisualPosition(this.ox + dx, this.oy + dy);
+                if (moveController == 0) {
+                    moveCallback.call(this, event);
+                }
+                moveController = (moveController + 1) % callbackFrequency;
+                return null;
+            };
+            var end = function (event) {
+                var position = self.getPosition();
+                var dx = position.x - this.ox;
+                var dy = position.y - this.oy;
+                var distanceSquared = dx * dx + dy * dy;
+                var accepted = endCallback.call(this, distanceSquared, event);
+                if (!accepted && (dx != 0 || dy != 0)) {
+                    self.setVisualPosition(this.ox, this.oy);
+                }
+                moveCallback.call(this, event);
+                return null;
+            };
+            this.body.drag(move, begin, end);
+            if (this.textContainer) {
+                this.textContainer.drag(move, begin, end);
+            }
+        };
+        State.prototype.fillColor = function () {
+            return this.palette.fillColor;
+        };
+        State.prototype.strokeColor = function () {
+            return this.palette.strokeColor;
+        };
+        State.prototype.strokeWidth = function () {
+            return this.palette.strokeWidth;
+        };
+        State.prototype.ringStrokeWidth = function () {
+            return this.palette.ringStrokeWidth;
+        };
+        State.prototype.renderBody = function (canvas) {
+            if (!this.body) {
+                this.body = canvas.circle(this.x, this.y, this.radius);
+            }
+            else {
+                this.body.attr({
+                    cx: this.x,
+                    cy: this.y
+                });
+            }
+            this.body.attr("fill", this.fillColor());
+            this.body.attr("stroke", this.strokeColor());
+            this.body.attr("stroke-width", this.strokeWidth());
+        };
+        State.prototype.updateInitialMarkOffsets = function () {
+            if (this.initialMarkOffsets.length) {
+                return;
+            }
+            var length = Settings_1.Settings.stateInitialMarkLength;
+            var x = this.x - this.radius;
+            var y = this.y;
+            var arrowLength = Settings_1.Settings.stateInitialMarkHeadLength;
+            var alpha = Settings_1.Settings.stateInitialMarkAngle;
+            var u = 1 - arrowLength / length;
+            var ref = {
+                x: x - length + u * length,
+                y: y
+            };
+            var target = { x: x, y: y };
+            var p1 = Utils_1.utils.rotatePoint(ref, target, alpha);
+            var p2 = Utils_1.utils.rotatePoint(ref, target, -alpha);
+            this.initialMarkOffsets = [
+                {
+                    x: p1.x - x,
+                    y: p1.y - y
+                },
+                {
+                    x: p2.x - x,
+                    y: p2.y - y
+                }
+            ];
+        };
+        State.prototype.renderInitialMark = function (canvas) {
+            if (this.initial) {
+                var length_1 = Settings_1.Settings.stateInitialMarkLength;
+                var x = this.x - this.radius;
+                var y = this.y;
+                if (this.arrowParts.length) {
+                    var parts = this.arrowParts;
+                    var body = parts[0];
+                    var topLine = parts[1];
+                    var bottomLine = parts[2];
+                    body.attr("path", Utils_1.utils.linePath(x - length_1, y, x, y));
+                    this.updateInitialMarkOffsets();
+                    var topOffsets = this.initialMarkOffsets[0];
+                    var botOffsets = this.initialMarkOffsets[1];
+                    topLine.attr("path", Utils_1.utils.linePath(topOffsets.x + x, topOffsets.y + y, x, y));
+                    bottomLine.attr("path", Utils_1.utils.linePath(botOffsets.x + x, botOffsets.y + y, x, y));
+                }
+                else {
+                    var strokeColor = Settings_1.Settings.stateInitialMarkColor;
+                    var strokeWidth = Settings_1.Settings.stateInitialMarkThickness;
+                    var body = Utils_1.utils.line(canvas, x - length_1, y, x, y);
+                    body.attr("stroke", strokeColor);
+                    body.attr("stroke-width", strokeWidth);
+                    this.updateInitialMarkOffsets();
+                    var topOffsets = this.initialMarkOffsets[0];
+                    var botOffsets = this.initialMarkOffsets[1];
+                    var topLine = Utils_1.utils.line(canvas, topOffsets.x + x, topOffsets.y + y, x, y);
+                    topLine.attr("stroke", strokeColor);
+                    topLine.attr("stroke-width", strokeWidth);
+                    var bottomLine = Utils_1.utils.line(canvas, botOffsets.x + x, botOffsets.y + y, x, y);
+                    bottomLine.attr("stroke", strokeColor);
+                    bottomLine.attr("stroke-width", strokeWidth);
+                    var parts = this.arrowParts;
+                    parts.push(body);
+                    parts.push(topLine);
+                    parts.push(bottomLine);
+                }
+            }
+            else {
+                var parts = this.arrowParts;
+                while (parts.length) {
+                    parts[parts.length - 1].remove();
+                    parts.pop();
+                }
+            }
+        };
+        State.prototype.renderFinalMark = function (canvas) {
+            if (this.final) {
+                if (!this.ring) {
+                    this.ring = canvas.circle(this.x, this.y, Settings_1.Settings.stateRingRadius);
+                }
+                else {
+                    this.ring.attr({
+                        cx: this.x,
+                        cy: this.y
+                    });
+                }
+                this.ring.attr("stroke", this.strokeColor());
+                this.ring.attr("stroke-width", this.ringStrokeWidth());
+            }
+            else if (this.ring) {
+                this.ring.remove();
+                this.ring = null;
+            }
+        };
+        State.prototype.renderText = function (canvas) {
+            if (!this.textContainer) {
+                this.textContainer = canvas.text(this.x, this.y, this.name);
+                this.textContainer.attr("font-family", Settings_1.Settings.stateLabelFontFamily);
+                this.textContainer.attr("font-size", Settings_1.Settings.stateLabelFontSize);
+                this.textContainer.attr("stroke", Settings_1.Settings.stateLabelFontColor);
+                this.textContainer.attr("fill", Settings_1.Settings.stateLabelFontColor);
+            }
+            else {
+                this.textContainer.attr("x", this.x);
+                this.textContainer.attr("y", this.y);
+                this.textContainer.attr("text", this.name);
+            }
+        };
+        State.prototype.setVisualPosition = function (x, y) {
+            this.setPosition(x, y);
+            this.body.attr({
+                cx: x,
+                cy: y
+            });
+            if (this.ring) {
+                this.ring.attr({
+                    cx: x,
+                    cy: y
+                });
+            }
+            if (this.initial) {
+                this.renderInitialMark();
+            }
+            this.renderText();
+        };
+        return State;
+    }());
+    exports.State = State;
+});
+define("Controller", ["require", "exports"], function (require, exports) {
+    "use strict";
+});
+define("datastructures/Queue", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var Queue = (function () {
+        function Queue() {
+            this.data = [];
+            this.pointer = 0;
+        }
+        Queue.prototype.push = function (value) {
+            this.data.push(value);
+        };
+        Queue.prototype.front = function () {
+            return this.data[this.pointer];
+        };
+        Queue.prototype.pop = function () {
+            var result = this.front();
+            this.pointer++;
+            if (this.pointer >= this.size() / 2) {
+                this.data = this.data.slice(this.pointer);
+                this.pointer = 0;
+            }
+            return result;
+        };
+        Queue.prototype.clear = function () {
+            this.data = [];
+            this.pointer = 0;
+        };
+        Queue.prototype.empty = function () {
+            return this.size() == 0;
+        };
+        Queue.prototype.size = function () {
+            return this.data.length - this.pointer;
+        };
+        return Queue;
+    }());
+    exports.Queue = Queue;
+});
+define("datastructures/UnorderedSet", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var UnorderedSet = (function () {
+        function UnorderedSet() {
+            this.data = {};
+            this.count = 0;
+        }
+        UnorderedSet.prototype.insert = function (value) {
+            if (!this.contains(value)) {
+                this.count++;
+            }
+            this.data[value] = true;
+            this.type = typeof value;
+        };
+        UnorderedSet.prototype.erase = function (value) {
+            if (this.contains(value)) {
+                this.count--;
+            }
+            delete this.data[value];
+        };
+        UnorderedSet.prototype.contains = function (value) {
+            return !!this.data[value];
+        };
+        UnorderedSet.prototype.clear = function () {
+            this.data = {};
+            this.count = 0;
+        };
+        UnorderedSet.prototype.empty = function () {
+            return this.size() == 0;
+        };
+        UnorderedSet.prototype.size = function () {
+            return this.count;
+        };
+        UnorderedSet.prototype.forEach = function (callback) {
+            for (var value in this.data) {
+                if (this.data.hasOwnProperty(value)) {
+                    var val = value;
+                    if (this.type == "number") {
+                        val = parseFloat(value);
+                    }
+                    if (callback(val) === false) {
+                        break;
+                    }
+                }
+            }
+        };
+        UnorderedSet.prototype.asList = function () {
+            var result = [];
+            this.forEach(function (value) {
+                result.push(value);
+            });
+            return result;
+        };
+        return UnorderedSet;
+    }());
+    exports.UnorderedSet = UnorderedSet;
+});
+define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastructures/UnorderedSet", "Utils"], function (require, exports, Queue_1, UnorderedSet_1, Utils_2) {
     "use strict";
     var FA = (function () {
         function FA() {
@@ -221,9 +581,9 @@ define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastr
         };
         FA.prototype.removeState = function (index) {
             var self = this;
-            Utils_1.utils.foreach(this.transitions, function (originIndex, transitions) {
+            Utils_2.utils.foreach(this.transitions, function (originIndex, transitions) {
                 var origin = parseInt(originIndex);
-                Utils_1.utils.foreach(transitions, function (input) {
+                Utils_2.utils.foreach(transitions, function (input) {
                     if (transitions[input].contains(index)) {
                         self.removeTransition(origin, index, input);
                     }
@@ -440,504 +800,6 @@ define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastr
         return FA;
     }());
     exports.FA = FA;
-});
-define("tests/Test", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var Test = (function () {
-        function Test(target) {
-            this.testPlans = [];
-            this.targetNode = target;
-        }
-        Test.prototype.addTestPlan = function (plan) {
-            this.testPlans.push(plan);
-        };
-        Test.prototype.runTests = function () {
-            var output = "";
-            for (var _i = 0, _a = this.testPlans; _i < _a.length; _i++) {
-                var plan = _a[_i];
-                var planName = plan.planName();
-                var testNames = plan.testNames();
-                var stats = {
-                    success: 0,
-                    failure: 0,
-                    exceptions: 0
-                };
-                output += "<div class='plan'>";
-                output += "<div class='plan_name'>" + planName + "</div>";
-                for (var _b = 0, testNames_1 = testNames; _b < testNames_1.length; _b++) {
-                    var method = testNames_1[_b];
-                    var status_1 = void 0;
-                    var className = void 0;
-                    try {
-                        if (plan[method]()) {
-                            status_1 = " OK ";
-                            className = "success";
-                            stats.success++;
-                        }
-                        else {
-                            status_1 = "FAIL";
-                            className = "failure";
-                            stats.failure++;
-                        }
-                    }
-                    catch (e) {
-                        status_1 = "EXCP";
-                        className = "exception";
-                        stats.exceptions++;
-                    }
-                    output += "<div class='test_case'>";
-                    output += "<div class='status " + className + "'>";
-                    output += status_1;
-                    output += "</div>";
-                    output += "<div class='test_name'>" + method + "</div>";
-                    output += "</div>";
-                }
-                output += "<div class='summary'>";
-                if (stats.failure == 0 && stats.exceptions == 0) {
-                    output += "<div class='success'>All tests passed.</div>";
-                }
-                else {
-                    var numTests = testNames.length;
-                    var successRate = ((stats.success / numTests) * 100).toFixed(2);
-                    var failureRate = ((stats.failure / numTests) * 100).toFixed(2);
-                    var excpRate = ((stats.exceptions / numTests) * 100).toFixed(2);
-                    var parts = [];
-                    parts.push(stats.success + " test(s) passed (" +
-                        successRate + "%)");
-                    if (stats.failure > 0) {
-                        parts.push(stats.failure + " test(s) failed (" +
-                            failureRate + "%)");
-                    }
-                    if (stats.exceptions > 0) {
-                        parts.push(stats.exceptions +
-                            " test(s) resulted in exceptions (" + excpRate + "%)");
-                    }
-                    output += "<div class='failure'>Test plan failed.</div>";
-                    output += "<ul>";
-                    output += "<li>" + parts.join("</li><li>") + "</li>";
-                    output += "</ul>";
-                }
-                output += "</div>";
-                output += "</div>";
-            }
-            this.targetNode.innerHTML += output;
-        };
-        return Test;
-    }());
-    exports.Test = Test;
-});
-define("tests/FATests", ["require", "exports", "machines/FA/FA"], function (require, exports, FA_1) {
-    "use strict";
-    var FATests = (function () {
-        function FATests() {
-        }
-        FATests.prototype.planName = function () {
-            return "FA";
-        };
-        FATests.prototype.testNames = function () {
-            return ["something"];
-        };
-        FATests.prototype.something = function () {
-            var fa = new FA_1.FA();
-            return fa.error();
-        };
-        return FATests;
-    }());
-    exports.FATests = FATests;
-});
-define("tests/PDATests", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var PDATests = (function () {
-        function PDATests() {
-        }
-        PDATests.prototype.planName = function () {
-            return "PDA";
-        };
-        PDATests.prototype.testNames = function () {
-            return ["example1", "example2", "example3"];
-        };
-        PDATests.prototype.example1 = function () {
-            return false;
-        };
-        PDATests.prototype.example2 = function () {
-            return true;
-        };
-        PDATests.prototype.example3 = function () {
-            throw 42;
-        };
-        return PDATests;
-    }());
-    exports.PDATests = PDATests;
-});
-define("tests", ["require", "exports", "tests/FATests", "tests/PDATests", "tests/Test"], function (require, exports, FATests_1, PDATests_1, Test_1) {
-    "use strict";
-    $(document).ready(function () {
-        var container = document.getElementById("container");
-        var test = new Test_1.Test(container);
-        test.addTestPlan(new FATests_1.FATests());
-        test.addTestPlan(new PDATests_1.PDATests());
-        test.runTests();
-    });
-});
-define("lists/MachineList", ["require", "exports"], function (require, exports) {
-    "use strict";
-    (function (Machine) {
-        Machine[Machine["FA"] = 0] = "FA";
-        Machine[Machine["PDA"] = 1] = "PDA";
-        Machine[Machine["LBA"] = 2] = "LBA";
-    })(exports.Machine || (exports.Machine = {}));
-    var Machine = exports.Machine;
-});
-define("Browser", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var Browser;
-    (function (Browser) {
-        var data = info();
-        Browser.name = data.name;
-        Browser.version = data.version;
-        function info() {
-            var ua = navigator.userAgent.toLowerCase();
-            var test = function (regex) {
-                return regex.test(ua);
-            };
-            var data = {
-                msie: test(/msie/) || test(/trident/),
-                edge: test(/edge/),
-                firefox: test(/mozilla/) && test(/firefox/),
-                chrome: test(/webkit/) && test(/chrome/) && !test(/edge/),
-                safari: test(/safari/) && test(/applewebkit/) && !test(/chrome/),
-                opera: test(/opera/)
-            };
-            var browserName = "";
-            var version = "Unknown";
-            for (var name_1 in data) {
-                if (data.hasOwnProperty(name_1) && data[name_1]) {
-                    browserName = name_1;
-                    var regex = new RegExp(name_1 + "( |/)([0-9]+)");
-                    var matches = ua.match(regex);
-                    if (matches) {
-                        version = matches[2];
-                    }
-                    else if (matches = ua.match(/rv:([0-9]+)/)) {
-                        version = matches[1];
-                    }
-                }
-            }
-            return {
-                name: browserName,
-                version: version
-            };
-        }
-    })(Browser = exports.Browser || (exports.Browser = {}));
-});
-define("interface/Renderer", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var Renderer = (function () {
-        function Renderer() {
-        }
-        Renderer.prototype.bind = function (node) {
-            this.node = node;
-            this.onBind();
-        };
-        Renderer.prototype.render = function () {
-            if (this.node) {
-                this.onRender();
-            }
-        };
-        Renderer.prototype.onBind = function () { };
-        return Renderer;
-    }());
-    exports.Renderer = Renderer;
-});
-define("StatePalette", ["require", "exports"], function (require, exports) {
-    "use strict";
-});
-define("interface/State", ["require", "exports", "Browser", "Settings", "Utils"], function (require, exports, Browser_1, Settings_1, Utils_2) {
-    "use strict";
-    var State = (function () {
-        function State() {
-            this.initial = false;
-            this.final = false;
-            this.name = "";
-            this.initialMarkOffsets = [];
-            this.defaultPalette = {
-                fillColor: Settings_1.Settings.stateFillColor,
-                strokeColor: Settings_1.Settings.stateStrokeColor,
-                strokeWidth: Settings_1.Settings.stateStrokeWidth,
-                ringStrokeWidth: Settings_1.Settings.stateRingStrokeWidth
-            };
-            this.palette = this.defaultPalette;
-            this.body = null;
-            this.ring = null;
-            this.arrowParts = [];
-            this.textContainer = null;
-            this.radius = Settings_1.Settings.stateRadius;
-        }
-        State.prototype.setPosition = function (x, y) {
-            this.x = x;
-            this.y = y;
-        };
-        State.prototype.getPosition = function () {
-            return {
-                x: this.x,
-                y: this.y
-            };
-        };
-        State.prototype.setInitial = function (flag) {
-            this.initial = flag;
-        };
-        State.prototype.isInitial = function () {
-            return this.initial;
-        };
-        State.prototype.setFinal = function (flag) {
-            this.final = flag;
-        };
-        State.prototype.isFinal = function () {
-            return this.final;
-        };
-        State.prototype.setName = function (name) {
-            this.name = name;
-        };
-        State.prototype.getName = function () {
-            return this.name;
-        };
-        State.prototype.applyPalette = function (palette) {
-            this.palette = palette;
-        };
-        State.prototype.removePalette = function () {
-            this.palette = this.defaultPalette;
-        };
-        State.prototype.remove = function () {
-            if (this.body) {
-                this.body.remove();
-                this.body = null;
-            }
-            if (this.ring) {
-                this.ring.remove();
-                this.ring = null;
-            }
-            for (var _i = 0, _a = this.arrowParts; _i < _a.length; _i++) {
-                var part = _a[_i];
-                part.remove();
-            }
-            this.arrowParts = [];
-            if (this.textContainer) {
-                this.textContainer.remove();
-                this.textContainer = null;
-            }
-        };
-        State.prototype.render = function (canvas) {
-            this.renderBody(canvas);
-            this.renderInitialMark(canvas);
-            this.renderFinalMark(canvas);
-            this.renderText(canvas);
-        };
-        State.prototype.node = function () {
-            return this.body;
-        };
-        State.prototype.html = function () {
-            if (this.body) {
-                return this.body.node;
-            }
-            return null;
-        };
-        State.prototype.drag = function (moveCallback, endCallback) {
-            var self = this;
-            var begin = function (x, y, event) {
-                var position = self.getPosition();
-                this.ox = position.x;
-                this.oy = position.y;
-                return null;
-            };
-            var moveController = 0;
-            var callbackFrequency;
-            if (Browser_1.Browser.name == "chrome") {
-                callbackFrequency = 3;
-            }
-            else {
-                callbackFrequency = 4;
-            }
-            var move = function (dx, dy, x, y, event) {
-                self.setVisualPosition(this.ox + dx, this.oy + dy);
-                if (moveController == 0) {
-                    moveCallback.call(this, event);
-                }
-                moveController = (moveController + 1) % callbackFrequency;
-                return null;
-            };
-            var end = function (event) {
-                var position = self.getPosition();
-                var dx = position.x - this.ox;
-                var dy = position.y - this.oy;
-                var distanceSquared = dx * dx + dy * dy;
-                var accepted = endCallback.call(this, distanceSquared, event);
-                if (!accepted && (dx != 0 || dy != 0)) {
-                    self.setVisualPosition(this.ox, this.oy);
-                }
-                moveCallback.call(this, event);
-                return null;
-            };
-            this.body.drag(move, begin, end);
-            if (this.textContainer) {
-                this.textContainer.drag(move, begin, end);
-            }
-        };
-        State.prototype.fillColor = function () {
-            return this.palette.fillColor;
-        };
-        State.prototype.strokeColor = function () {
-            return this.palette.strokeColor;
-        };
-        State.prototype.strokeWidth = function () {
-            return this.palette.strokeWidth;
-        };
-        State.prototype.ringStrokeWidth = function () {
-            return this.palette.ringStrokeWidth;
-        };
-        State.prototype.renderBody = function (canvas) {
-            if (!this.body) {
-                this.body = canvas.circle(this.x, this.y, this.radius);
-            }
-            else {
-                this.body.attr({
-                    cx: this.x,
-                    cy: this.y
-                });
-            }
-            this.body.attr("fill", this.fillColor());
-            this.body.attr("stroke", this.strokeColor());
-            this.body.attr("stroke-width", this.strokeWidth());
-        };
-        State.prototype.updateInitialMarkOffsets = function () {
-            if (this.initialMarkOffsets.length) {
-                return;
-            }
-            var length = Settings_1.Settings.stateInitialMarkLength;
-            var x = this.x - this.radius;
-            var y = this.y;
-            var arrowLength = Settings_1.Settings.stateInitialMarkHeadLength;
-            var alpha = Settings_1.Settings.stateInitialMarkAngle;
-            var u = 1 - arrowLength / length;
-            var ref = {
-                x: x - length + u * length,
-                y: y
-            };
-            var target = { x: x, y: y };
-            var p1 = Utils_2.utils.rotatePoint(ref, target, alpha);
-            var p2 = Utils_2.utils.rotatePoint(ref, target, -alpha);
-            this.initialMarkOffsets = [
-                {
-                    x: p1.x - x,
-                    y: p1.y - y
-                },
-                {
-                    x: p2.x - x,
-                    y: p2.y - y
-                }
-            ];
-        };
-        State.prototype.renderInitialMark = function (canvas) {
-            if (this.initial) {
-                var length_1 = Settings_1.Settings.stateInitialMarkLength;
-                var x = this.x - this.radius;
-                var y = this.y;
-                if (this.arrowParts.length) {
-                    var parts = this.arrowParts;
-                    var body = parts[0];
-                    var topLine = parts[1];
-                    var bottomLine = parts[2];
-                    body.attr("path", Utils_2.utils.linePath(x - length_1, y, x, y));
-                    this.updateInitialMarkOffsets();
-                    var topOffsets = this.initialMarkOffsets[0];
-                    var botOffsets = this.initialMarkOffsets[1];
-                    topLine.attr("path", Utils_2.utils.linePath(topOffsets.x + x, topOffsets.y + y, x, y));
-                    bottomLine.attr("path", Utils_2.utils.linePath(botOffsets.x + x, botOffsets.y + y, x, y));
-                }
-                else {
-                    var strokeColor = Settings_1.Settings.stateInitialMarkColor;
-                    var strokeWidth = Settings_1.Settings.stateInitialMarkThickness;
-                    var body = Utils_2.utils.line(canvas, x - length_1, y, x, y);
-                    body.attr("stroke", strokeColor);
-                    body.attr("stroke-width", strokeWidth);
-                    this.updateInitialMarkOffsets();
-                    var topOffsets = this.initialMarkOffsets[0];
-                    var botOffsets = this.initialMarkOffsets[1];
-                    var topLine = Utils_2.utils.line(canvas, topOffsets.x + x, topOffsets.y + y, x, y);
-                    topLine.attr("stroke", strokeColor);
-                    topLine.attr("stroke-width", strokeWidth);
-                    var bottomLine = Utils_2.utils.line(canvas, botOffsets.x + x, botOffsets.y + y, x, y);
-                    bottomLine.attr("stroke", strokeColor);
-                    bottomLine.attr("stroke-width", strokeWidth);
-                    var parts = this.arrowParts;
-                    parts.push(body);
-                    parts.push(topLine);
-                    parts.push(bottomLine);
-                }
-            }
-            else {
-                var parts = this.arrowParts;
-                while (parts.length) {
-                    parts[parts.length - 1].remove();
-                    parts.pop();
-                }
-            }
-        };
-        State.prototype.renderFinalMark = function (canvas) {
-            if (this.final) {
-                if (!this.ring) {
-                    this.ring = canvas.circle(this.x, this.y, Settings_1.Settings.stateRingRadius);
-                }
-                else {
-                    this.ring.attr({
-                        cx: this.x,
-                        cy: this.y
-                    });
-                }
-                this.ring.attr("stroke", this.strokeColor());
-                this.ring.attr("stroke-width", this.ringStrokeWidth());
-            }
-            else if (this.ring) {
-                this.ring.remove();
-                this.ring = null;
-            }
-        };
-        State.prototype.renderText = function (canvas) {
-            if (!this.textContainer) {
-                this.textContainer = canvas.text(this.x, this.y, this.name);
-                this.textContainer.attr("font-family", Settings_1.Settings.stateLabelFontFamily);
-                this.textContainer.attr("font-size", Settings_1.Settings.stateLabelFontSize);
-                this.textContainer.attr("stroke", Settings_1.Settings.stateLabelFontColor);
-                this.textContainer.attr("fill", Settings_1.Settings.stateLabelFontColor);
-            }
-            else {
-                this.textContainer.attr("x", this.x);
-                this.textContainer.attr("y", this.y);
-                this.textContainer.attr("text", this.name);
-            }
-        };
-        State.prototype.setVisualPosition = function (x, y) {
-            this.setPosition(x, y);
-            this.body.attr({
-                cx: x,
-                cy: y
-            });
-            if (this.ring) {
-                this.ring.attr({
-                    cx: x,
-                    cy: y
-                });
-            }
-            if (this.initial) {
-                this.renderInitialMark();
-            }
-            this.renderText();
-        };
-        return State;
-    }());
-    exports.State = State;
-});
-define("Controller", ["require", "exports"], function (require, exports) {
-    "use strict";
 });
 define("Keyboard", ["require", "exports"], function (require, exports) {
     "use strict";
@@ -1320,14 +1182,14 @@ define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils
     }());
     exports.Prompt = Prompt;
 });
-define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Keyboard", "Prompt", "Settings"], function (require, exports, FA_2, Keyboard_3, Prompt_1, Settings_4) {
+define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Keyboard", "Prompt", "Settings"], function (require, exports, FA_1, Keyboard_3, Prompt_1, Settings_4) {
     "use strict";
     var FAController = (function () {
         function FAController() {
             this.stateMapping = {};
             this.stepIndex = -1;
             this.editingCallback = function () { };
-            this.machine = new FA_2.FA();
+            this.machine = new FA_1.FA();
         }
         FAController.prototype.edgePrompt = function (callback, fallback) {
             var self = this;
@@ -2596,29 +2458,27 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
             this.stopRecognition = null;
             this.progressContainer = null;
             this.tapeContainer = null;
+            this.multipleCaseArea = null;
+            this.multipleCaseResults = null;
+            this.multipleCaseButton = null;
         }
         initLBA.prototype.init = function () {
             console.log("[LBA] Initializing...");
             var menuList = [];
-            var menu = new Menu_2.Menu(Settings_8.Strings.RECOGNITION);
+            var recognitionMenu = new Menu_2.Menu(Settings_8.Strings.RECOGNITION);
             var rows = [];
             this.buildTestCaseInput(rows);
             this.buildRecognitionControls(rows);
             this.buildTape(rows);
             this.buildRecognitionProgress(rows);
+            this.addRows(rows, recognitionMenu);
+            menuList.push(recognitionMenu);
+            var multipleRecognitionMenu = new Menu_2.Menu(Settings_8.Strings.MULTIPLE_RECOGNITION);
+            rows = [];
+            this.buildMultipleRecognition(rows);
+            this.addRows(rows, multipleRecognitionMenu);
+            menuList.push(multipleRecognitionMenu);
             this.bindRecognitionEvents();
-            for (var _i = 0, rows_2 = rows; _i < rows_2.length; _i++) {
-                var row = rows_2[_i];
-                var div = Utils_9.utils.create("div", {
-                    className: "row"
-                });
-                for (var _a = 0, row_2 = row; _a < row_2.length; _a++) {
-                    var node = row_2[_a];
-                    div.appendChild(node);
-                }
-                menu.add(div);
-            }
-            menuList.push(menu);
             Settings_8.Settings.machines[Settings_8.Settings.Machine.LBA].sidebar = menuList;
             console.log("[LBA] Initialized successfully");
         };
@@ -2630,6 +2490,19 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
         initLBA.prototype.onExit = function () {
             System_3.System.lockShortcutGroup(this.shortcutGroup);
             console.log("[LBA] Unbound events");
+        };
+        initLBA.prototype.addRows = function (rows, menu) {
+            for (var _i = 0, rows_2 = rows; _i < rows_2.length; _i++) {
+                var row = rows_2[_i];
+                var div = Utils_9.utils.create("div", {
+                    className: "row"
+                });
+                for (var _a = 0, row_2 = row; _a < row_2.length; _a++) {
+                    var node = row_2[_a];
+                    div.appendChild(node);
+                }
+                menu.add(div);
+            }
         };
         initLBA.prototype.testCase = function () {
             return this.testCaseInput.value;
@@ -2687,6 +2560,24 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
             });
             this.progressContainer.style.display = "none";
             container.push([this.progressContainer]);
+        };
+        initLBA.prototype.buildMultipleRecognition = function (container) {
+            this.multipleCaseArea = Utils_9.utils.create("textarea");
+            this.multipleCaseArea.rows = Settings_8.Settings.multRecognitionAreaRows;
+            this.multipleCaseArea.cols = Settings_8.Settings.multRecognitionAreaCols;
+            this.multipleCaseResults = Utils_9.utils.create("div");
+            var testCaseArea = Utils_9.utils.create("div", {
+                id: "multiple_recognition"
+            });
+            testCaseArea.appendChild(this.multipleCaseArea);
+            testCaseArea.appendChild(this.multipleCaseResults);
+            container.push([testCaseArea]);
+            this.multipleCaseButton = Utils_9.utils.create("img", {
+                className: "image_button",
+                src: "images/play.svg",
+                title: Settings_8.Strings.START_MULTIPLE_RECOGNITION
+            });
+            container.push([this.multipleCaseButton]);
         };
         initLBA.prototype.showAcceptanceStatus = function () {
             var controller = Settings_8.Settings.controller();
@@ -2810,6 +2701,30 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
                     }
                 }
             });
+            this.multipleCaseButton.addEventListener("click", function () {
+                var testCases = self.multipleCaseArea.value.split("\n");
+                var controller = Settings_8.Settings.controller();
+                self.multipleCaseResults.innerHTML = "";
+                for (var _i = 0, testCases_2 = testCases; _i < testCases_2.length; _i++) {
+                    var input = testCases_2[_i];
+                    controller.fastForward(input);
+                    var result = Utils_9.utils.create("span");
+                    if (controller.accepts()) {
+                        result.style.color = Settings_8.Settings.acceptedTestCaseColor;
+                        result.innerHTML = Settings_8.Strings.INPUT_ACCEPTED;
+                    }
+                    else {
+                        result.style.color = Settings_8.Settings.rejectedTestCaseColor;
+                        if (controller.exhausted()) {
+                            result.innerHTML = Settings_8.Strings.INPUT_LOOPING.split("<br>").join(" ");
+                        }
+                        else {
+                            result.innerHTML = Settings_8.Strings.INPUT_REJECTED;
+                        }
+                    }
+                    self.multipleCaseResults.appendChild(result);
+                }
+            });
         };
         initLBA.prototype.bindShortcuts = function () {
             var self = this;
@@ -2825,6 +2740,9 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
                 }, this.shortcutGroup);
                 System_3.System.bindShortcut(Settings_8.Settings.shortcuts.stop, function () {
                     self.stopRecognition.click();
+                }, this.shortcutGroup);
+                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.multipleRecognition, function () {
+                    self.multipleCaseButton.click();
                 }, this.shortcutGroup);
                 this.boundShortcuts = true;
             }
@@ -4798,5 +4716,143 @@ define("main", ["require", "exports", "Settings", "System", "interface/UI"], fun
             }
             return true;
         });
+    });
+});
+define("tests/Test", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var Test = (function () {
+        function Test(target) {
+            this.testPlans = [];
+            this.targetNode = target;
+        }
+        Test.prototype.addTestPlan = function (plan) {
+            this.testPlans.push(plan);
+        };
+        Test.prototype.runTests = function () {
+            var output = "";
+            for (var _i = 0, _a = this.testPlans; _i < _a.length; _i++) {
+                var plan = _a[_i];
+                var planName = plan.planName();
+                var testNames = plan.testNames();
+                var stats = {
+                    success: 0,
+                    failure: 0,
+                    exceptions: 0
+                };
+                output += "<div class='plan'>";
+                output += "<div class='plan_name'>" + planName + "</div>";
+                for (var _b = 0, testNames_1 = testNames; _b < testNames_1.length; _b++) {
+                    var method = testNames_1[_b];
+                    var status_1 = void 0;
+                    var className = void 0;
+                    try {
+                        if (plan[method]()) {
+                            status_1 = " OK ";
+                            className = "success";
+                            stats.success++;
+                        }
+                        else {
+                            status_1 = "FAIL";
+                            className = "failure";
+                            stats.failure++;
+                        }
+                    }
+                    catch (e) {
+                        status_1 = "EXCP";
+                        className = "exception";
+                        stats.exceptions++;
+                    }
+                    output += "<div class='test_case'>";
+                    output += "<div class='status " + className + "'>";
+                    output += status_1;
+                    output += "</div>";
+                    output += "<div class='test_name'>" + method + "</div>";
+                    output += "</div>";
+                }
+                output += "<div class='summary'>";
+                if (stats.failure == 0 && stats.exceptions == 0) {
+                    output += "<div class='success'>All tests passed.</div>";
+                }
+                else {
+                    var numTests = testNames.length;
+                    var successRate = ((stats.success / numTests) * 100).toFixed(2);
+                    var failureRate = ((stats.failure / numTests) * 100).toFixed(2);
+                    var excpRate = ((stats.exceptions / numTests) * 100).toFixed(2);
+                    var parts = [];
+                    parts.push(stats.success + " test(s) passed (" +
+                        successRate + "%)");
+                    if (stats.failure > 0) {
+                        parts.push(stats.failure + " test(s) failed (" +
+                            failureRate + "%)");
+                    }
+                    if (stats.exceptions > 0) {
+                        parts.push(stats.exceptions +
+                            " test(s) resulted in exceptions (" + excpRate + "%)");
+                    }
+                    output += "<div class='failure'>Test plan failed.</div>";
+                    output += "<ul>";
+                    output += "<li>" + parts.join("</li><li>") + "</li>";
+                    output += "</ul>";
+                }
+                output += "</div>";
+                output += "</div>";
+            }
+            this.targetNode.innerHTML += output;
+        };
+        return Test;
+    }());
+    exports.Test = Test;
+});
+define("tests/FATests", ["require", "exports", "machines/FA/FA"], function (require, exports, FA_2) {
+    "use strict";
+    var FATests = (function () {
+        function FATests() {
+        }
+        FATests.prototype.planName = function () {
+            return "FA";
+        };
+        FATests.prototype.testNames = function () {
+            return ["something"];
+        };
+        FATests.prototype.something = function () {
+            var fa = new FA_2.FA();
+            return fa.error();
+        };
+        return FATests;
+    }());
+    exports.FATests = FATests;
+});
+define("tests/PDATests", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var PDATests = (function () {
+        function PDATests() {
+        }
+        PDATests.prototype.planName = function () {
+            return "PDA";
+        };
+        PDATests.prototype.testNames = function () {
+            return ["example1", "example2", "example3"];
+        };
+        PDATests.prototype.example1 = function () {
+            return false;
+        };
+        PDATests.prototype.example2 = function () {
+            return true;
+        };
+        PDATests.prototype.example3 = function () {
+            throw 42;
+        };
+        return PDATests;
+    }());
+    exports.PDATests = PDATests;
+});
+define("tests", ["require", "exports", "tests/FATests", "tests/PDATests", "tests/Test"], function (require, exports, FATests_1, PDATests_1, Test_1) {
+    "use strict";
+    $(document).ready(function () {
+        var container = document.getElementById("container");
+        var test = new Test_1.Test(container);
+        test.addTestPlan(new FATests_1.FATests());
+        test.addTestPlan(new PDATests_1.PDATests());
+        test.runTests();
     });
 });

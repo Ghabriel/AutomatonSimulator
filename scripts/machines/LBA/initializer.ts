@@ -11,26 +11,26 @@ export class initLBA {
 		console.log("[LBA] Initializing...");
 		let menuList: Menu[] = [];
 
-		let menu = new Menu(Strings.RECOGNITION);
+		let recognitionMenu = new Menu(Strings.RECOGNITION);
 		let rows: HTMLElement[][] = [];
 
 		this.buildTestCaseInput(rows);
 		this.buildRecognitionControls(rows);
 		this.buildTape(rows);
 		this.buildRecognitionProgress(rows);
+
+		this.addRows(rows, recognitionMenu);
+		menuList.push(recognitionMenu);
+
+		let multipleRecognitionMenu = new Menu(Strings.MULTIPLE_RECOGNITION);
+		rows = [];
+
+		this.buildMultipleRecognition(rows);
+
+		this.addRows(rows, multipleRecognitionMenu);
+		menuList.push(multipleRecognitionMenu);
+
 		this.bindRecognitionEvents();
-
-		for (let row of rows) {
-			let div = <HTMLDivElement> utils.create("div", {
-				className: "row"
-			});
-			for (let node of row) {
-				div.appendChild(node);
-			}
-			menu.add(div);
-		}
-
-		menuList.push(menu);
 
 		Settings.machines[Settings.Machine.LBA].sidebar = menuList;
 		console.log("[LBA] Initialized successfully");
@@ -55,6 +55,21 @@ export class initLBA {
 	private stopRecognition: HTMLImageElement = null;
 	private progressContainer: HTMLDivElement = null;
 	private tapeContainer: HTMLDivElement = null;
+	private multipleCaseArea: HTMLTextAreaElement = null;
+	private multipleCaseResults: HTMLDivElement = null;
+	private multipleCaseButton: HTMLImageElement = null;
+
+	private addRows(rows: HTMLElement[][], menu: Menu): void {
+		for (let row of rows) {
+			let div = <HTMLDivElement> utils.create("div", {
+				className: "row"
+			});
+			for (let node of row) {
+				div.appendChild(node);
+			}
+			menu.add(div);
+		}
+	}
 
 	private testCase(): string {
 		return this.testCaseInput.value;
@@ -130,6 +145,29 @@ export class initLBA {
 
 		container.push([this.progressContainer]);
 	}
+
+	private buildMultipleRecognition(container: HTMLElement[][]): void {
+		this.multipleCaseArea = <HTMLTextAreaElement> utils.create("textarea");
+		this.multipleCaseArea.rows = Settings.multRecognitionAreaRows;
+		this.multipleCaseArea.cols = Settings.multRecognitionAreaCols;
+
+		this.multipleCaseResults = <HTMLDivElement> utils.create("div");
+
+		let testCaseArea = <HTMLDivElement> utils.create("div", {
+			id: "multiple_recognition"
+		});
+		testCaseArea.appendChild(this.multipleCaseArea);
+		testCaseArea.appendChild(this.multipleCaseResults);
+		container.push([testCaseArea]);
+
+		this.multipleCaseButton = <HTMLImageElement> utils.create("img", {
+			className: "image_button",
+			src: "images/play.svg",
+			title: Strings.START_MULTIPLE_RECOGNITION
+		});
+		container.push([this.multipleCaseButton]);
+	}
+
 
 	private showAcceptanceStatus(): void {
 		let controller = <LBAController> Settings.controller();
@@ -282,6 +320,32 @@ export class initLBA {
 				}
 			}
 		});
+
+		this.multipleCaseButton.addEventListener("click", function() {
+			let testCases = self.multipleCaseArea.value.split("\n");
+			let controller = <LBAController> Settings.controller();
+
+			self.multipleCaseResults.innerHTML = "";
+
+			for (let input of testCases) {
+				controller.fastForward(input);
+
+				let result = <HTMLSpanElement> utils.create("span");
+				if (controller.accepts()) {
+					result.style.color = Settings.acceptedTestCaseColor;
+					result.innerHTML = Strings.INPUT_ACCEPTED;
+				} else {
+					result.style.color = Settings.rejectedTestCaseColor;
+					if (controller.exhausted()) {
+						// TODO: make this look more elegant
+						result.innerHTML = Strings.INPUT_LOOPING.split("<br>").join(" ");
+					} else {
+						result.innerHTML = Strings.INPUT_REJECTED;
+					}
+				}
+				self.multipleCaseResults.appendChild(result);
+			}
+		});
 	}
 
 	private bindShortcuts(): void {
@@ -305,6 +369,10 @@ export class initLBA {
 
 			System.bindShortcut(Settings.shortcuts.stop, function() {
 				self.stopRecognition.click();
+			}, this.shortcutGroup);
+
+			System.bindShortcut(Settings.shortcuts.multipleRecognition, function() {
+				self.multipleCaseButton.click();
 			}, this.shortcutGroup);
 
 			this.boundShortcuts = true;
