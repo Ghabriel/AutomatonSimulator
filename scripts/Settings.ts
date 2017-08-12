@@ -35,6 +35,9 @@ export namespace Settings {
 
 	export const tapeDisplayedChars = 7; // should be odd
 
+	export const multRecognitionAreaRows = 4;
+	export const multRecognitionAreaCols = 15;
+
 	export const stateRadius = 32;
 	export const stateRingRadius = 27;
 	export const stateDragTolerance = 50;
@@ -102,6 +105,7 @@ export namespace Settings {
 		fastForward: ["R"], // "R"ecognize (is there a better alternative?)
 		step: ["N"], // "N"ext step
 		stop: ["S"],
+		multipleRecognition: ["M"],
 	};
 
 	export const languages = lang;
