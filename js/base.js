@@ -1340,48 +1340,438 @@ define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Key
     }());
     exports.FAController = FAController;
 });
-define("machines/PDA/PDAController", ["require", "exports", "Prompt"], function (require, exports, Prompt_2) {
+define("machines/PDA/PDA", ["require", "exports", "datastructures/UnorderedSet", "Utils"], function (require, exports, UnorderedSet_2, Utils_4) {
+    "use strict";
+    var PDA = (function () {
+        function PDA() {
+            this.stateList = [];
+            this.inputAlphabet = {};
+            this.stackAlphabet = {};
+            this.transitions = {};
+            this.initialState = -1;
+            this.finalStates = new UnorderedSet_2.UnorderedSet();
+            this.numRemovedStates = 0;
+            this.currentState = null;
+            this.stack = [];
+            this.input = null;
+        }
+        PDA.prototype.addState = function (name) {
+            this.stateList.push(name);
+            var index = this.realNumStates() - 1;
+            this.transitions[index] = {};
+            if (this.initialState == -1) {
+                this.initialState = index;
+                this.reset();
+            }
+            return index;
+        };
+        PDA.prototype.removeState = function (index) {
+            var self = this;
+            Utils_4.utils.foreach(this.transitions, function (originIndex, transitions) {
+                var origin = parseInt(originIndex);
+                Utils_4.utils.foreach(transitions, function (input, indexedByStack) {
+                    Utils_4.utils.foreach(indexedByStack, function (stackRead, group) {
+                        var i = 0;
+                        while (i < group.length) {
+                            if (origin == index || group[i][0] == index) {
+                                group.splice(i, 1);
+                            }
+                            else {
+                                i++;
+                            }
+                        }
+                    });
+                });
+            });
+            delete this.transitions[index];
+            if (this.initialState == index) {
+                this.unsetInitialState();
+            }
+            this.finalStates.erase(index);
+            this.stateList[index] = undefined;
+            this.numRemovedStates++;
+        };
+        PDA.prototype.renameState = function (index, newName) {
+            this.stateList[index] = newName;
+        };
+        PDA.prototype.addTransition = function (source, target, data) {
+            var transitions = this.transitions[source];
+            var input = data[0];
+            var stackRead = data[1];
+            var stackWrite = data[2];
+            if (!transitions.hasOwnProperty(input)) {
+                transitions[input] = {};
+            }
+            if (!transitions[input].hasOwnProperty(stackRead)) {
+                transitions[input][stackRead] = [];
+            }
+            transitions[input][stackRead].push([target, stackWrite]);
+            this.addInputSymbol(input);
+            this.addStackSymbol(stackRead);
+            this.addStackSymbol(stackWrite);
+        };
+        PDA.prototype.removeTransition = function (source, target, data) {
+            var transitions = this.transitions[source];
+            var input = data[0];
+            var stackRead = data[1];
+            var stackWrite = data[2];
+            if (transitions.hasOwnProperty(input)) {
+                if (transitions[input].hasOwnProperty(stackRead)) {
+                    var properties = transitions[input][stackRead];
+                    for (var i = 0; i < properties.length; i++) {
+                        var group = properties[i];
+                        if (group[0] == target && group[1] == stackWrite) {
+                            properties.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+            }
+        };
+        PDA.prototype.setInitialState = function (index) {
+            if (index < this.realNumStates()) {
+                this.initialState = index;
+            }
+        };
+        PDA.prototype.unsetInitialState = function () {
+            this.initialState = -1;
+        };
+        PDA.prototype.getInitialState = function () {
+            return this.stateList[this.initialState];
+        };
+        PDA.prototype.addAcceptingState = function (index) {
+            this.finalStates.insert(index);
+        };
+        PDA.prototype.removeAcceptingState = function (index) {
+            this.finalStates.erase(index);
+        };
+        PDA.prototype.getAcceptingStates = function () {
+            var result = [];
+            var self = this;
+            this.finalStates.forEach(function (index) {
+                result.push(self.stateList[index]);
+            });
+            return result;
+        };
+        PDA.prototype.getCurrentState = function () {
+            return this.stateList[this.currentState];
+        };
+        PDA.prototype.getStates = function () {
+            return this.stateList.filter(function (value) {
+                return value !== undefined;
+            });
+        };
+        PDA.prototype.transitionIteration = function (callback) {
+            var self = this;
+            Utils_4.utils.foreach(this.transitions, function (index, stateTransitions) {
+                Utils_4.utils.foreach(stateTransitions, function (input, indexedByStack) {
+                    Utils_4.utils.foreach(indexedByStack, function (stackRead, info) {
+                        var sourceState = self.stateList[index];
+                        for (var _i = 0, info_1 = info; _i < info_1.length; _i++) {
+                            var group = info_1[_i];
+                            var targetState = self.stateList[group[0]];
+                            callback(sourceState, [targetState, group[1]], input, stackRead);
+                        }
+                    });
+                });
+            });
+        };
+        PDA.prototype.getInputAlphabet = function () {
+            var result = [];
+            for (var member in this.inputAlphabet) {
+                if (this.inputAlphabet.hasOwnProperty(member)) {
+                    result.push(member);
+                }
+            }
+            return result;
+        };
+        PDA.prototype.getStackAlphabet = function () {
+            var result = [];
+            for (var member in this.stackAlphabet) {
+                if (this.stackAlphabet.hasOwnProperty(member)) {
+                    result.push(member);
+                }
+            }
+            return result;
+        };
+        PDA.prototype.getStackContent = function () {
+            return this.stack;
+        };
+        PDA.prototype.setInput = function (input) {
+            this.input = input;
+            this.stack = ["$"];
+        };
+        PDA.prototype.read = function () {
+            if (this.error()) {
+                return;
+            }
+            var error = true;
+            var input = this.input[0];
+            console.log("[INPUT]", this.input);
+            console.log("[STACK]", this.stack);
+            if (this.transitions.hasOwnProperty(this.currentState + "")) {
+                var transitions = this.transitions[this.currentState];
+                if (transitions.hasOwnProperty(input)) {
+                    var indexedByStack = transitions[input];
+                    console.log(indexedByStack);
+                    var stackTop = this.stack[this.stack.length - 1];
+                    if (indexedByStack.hasOwnProperty(stackTop)) {
+                        var possibilities = indexedByStack[stackTop];
+                        this.currentState = possibilities[0][0];
+                        this.input = this.input.substr(1);
+                        this.stack.pop();
+                        var stackWrite = possibilities[0][1];
+                        for (var i = 0; i < stackWrite.length; i++) {
+                            this.stack.push(stackWrite[i]);
+                        }
+                        console.log("[INPUT]", this.input);
+                        console.log("[STACK]", this.stack);
+                        console.log("-----------------------");
+                        error = false;
+                    }
+                }
+            }
+            if (error) {
+                this.currentState = null;
+            }
+        };
+        PDA.prototype.reset = function () {
+            if (this.initialState == -1) {
+                this.currentState = null;
+            }
+            else {
+                this.currentState = this.initialState;
+            }
+            this.stack = [];
+        };
+        PDA.prototype.clear = function () {
+            this.stateList = [];
+            this.inputAlphabet = {};
+            this.stackAlphabet = {};
+            this.transitions = {};
+            this.unsetInitialState();
+            this.finalStates.clear();
+            this.numRemovedStates = 0;
+            this.currentState = null;
+            this.stack = [];
+        };
+        PDA.prototype.accepts = function () {
+            return this.finalStates.contains(this.currentState);
+        };
+        PDA.prototype.error = function () {
+            return this.currentState === null;
+        };
+        PDA.prototype.numStates = function () {
+            return this.stateList.length - this.numRemovedStates;
+        };
+        PDA.prototype.addSymbol = function (location, symbol) {
+            if (!this[location].hasOwnProperty(symbol)) {
+                this[location][symbol] = 0;
+            }
+            this[location][symbol]++;
+        };
+        PDA.prototype.addInputSymbol = function (symbol) {
+            this.addSymbol("inputAlphabet", symbol);
+        };
+        PDA.prototype.addStackSymbol = function (symbol) {
+            this.addSymbol("stackAlphabet", symbol);
+        };
+        PDA.prototype.removeSymbol = function (location, symbol) {
+            this[location][symbol]--;
+            if (this[location][symbol] == 0) {
+                delete this[location][symbol];
+            }
+        };
+        PDA.prototype.removeInputSymbol = function (symbol) {
+            this.removeSymbol("inputAlphabet", symbol);
+        };
+        PDA.prototype.removeStackSymbol = function (symbol) {
+            this.removeSymbol("stackAlphabet", symbol);
+        };
+        PDA.prototype.realNumStates = function () {
+            return this.stateList.length;
+        };
+        return PDA;
+    }());
+    exports.PDA = PDA;
+});
+define("machines/PDA/PDAController", ["require", "exports", "machines/PDA/PDA", "Keyboard", "Prompt", "Settings"], function (require, exports, PDA_1, Keyboard_4, Prompt_2, Settings_5) {
     "use strict";
     var PDAController = (function () {
         function PDAController() {
+            this.stateMapping = {};
+            this.stepIndex = -1;
+            this.editingCallback = function () { };
+            this.machine = new PDA_1.PDA();
         }
         PDAController.prototype.edgePrompt = function (callback, fallback) {
             var self = this;
-            Prompt_2.Prompt.simple("Enter the edge content:", 3, function (data) {
+            var prompt = new Prompt_2.Prompt(Settings_5.Strings.PDA_ENTER_EDGE_CONTENT);
+            prompt.addInput({
+                placeholder: Settings_5.Strings.PDA_ENTER_EDGE_PLACEHOLDER_1
+            });
+            prompt.addInput({
+                placeholder: Settings_5.Strings.PDA_ENTER_EDGE_PLACEHOLDER_2
+            });
+            prompt.addInput({
+                placeholder: Settings_5.Strings.PDA_ENTER_EDGE_PLACEHOLDER_3
+            });
+            prompt.onSuccess(function (data) {
                 callback(data, self.edgeDataToText(data));
-            }, fallback);
+            });
+            prompt.onAbort(fallback);
+            prompt.show();
         };
         PDAController.prototype.edgeDataToText = function (data) {
-            var epsilon = "ε";
+            var epsilon = Keyboard_4.Keyboard.symbols.epsilon;
             var input = data[0] || epsilon;
             var stackRead = data[1] || epsilon;
             var stackWrite = data[2] || epsilon;
             return input + "," + stackRead + " → " + stackWrite;
         };
-        PDAController.prototype.createState = function (state) { };
-        PDAController.prototype.createEdge = function (origin, target, data) { };
-        PDAController.prototype.changeInitialFlag = function (state) { };
-        PDAController.prototype.changeFinalFlag = function (state) { };
-        PDAController.prototype.renameState = function (state, newName) { };
-        PDAController.prototype.deleteState = function (state) { };
-        PDAController.prototype.deleteEdge = function (origin, target, data) { };
-        PDAController.prototype.clear = function () { };
-        PDAController.prototype.fastForward = function (input) { };
-        PDAController.prototype.step = function (input) { };
-        PDAController.prototype.stop = function () { };
-        PDAController.prototype.reset = function () { };
-        PDAController.prototype.finished = function (input) { return true; };
-        PDAController.prototype.isStopped = function () { return true; };
-        PDAController.prototype.stepPosition = function () { return -1; };
-        PDAController.prototype.setEditingCallback = function (callback) { };
-        PDAController.prototype.currentStates = function () { return []; };
-        PDAController.prototype.accepts = function () { return false; };
-        PDAController.prototype.formalDefinition = function () { return null; };
+        PDAController.prototype.createState = function (state) {
+            var name = state.getName();
+            var index = this.machine.addState(name);
+            this.stateMapping[name] = index;
+            if (state.isInitial()) {
+                this.machine.setInitialState(index);
+            }
+            if (state.isFinal()) {
+                this.machine.addAcceptingState(index);
+            }
+            this.editingCallback();
+        };
+        PDAController.prototype.createEdge = function (origin, target, data) {
+            var indexOrigin = this.index(origin);
+            var indexTarget = this.index(target);
+            this.machine.addTransition(indexOrigin, indexTarget, data);
+            this.editingCallback();
+        };
+        PDAController.prototype.changeInitialFlag = function (state) {
+            if (state.isInitial()) {
+                this.machine.setInitialState(this.index(state));
+            }
+            else {
+                this.machine.unsetInitialState();
+            }
+            this.editingCallback();
+        };
+        PDAController.prototype.changeFinalFlag = function (state) {
+            var index = this.index(state);
+            if (state.isFinal()) {
+                this.machine.addAcceptingState(index);
+            }
+            else {
+                this.machine.removeAcceptingState(index);
+            }
+            this.editingCallback();
+        };
+        PDAController.prototype.renameState = function (state, newName) {
+            var index = this.index(state);
+            delete this.stateMapping[state.getName()];
+            this.stateMapping[newName] = index;
+            this.machine.renameState(index, newName);
+            this.editingCallback();
+        };
+        PDAController.prototype.deleteState = function (state) {
+            this.machine.removeState(this.index(state));
+            this.editingCallback();
+        };
+        PDAController.prototype.deleteEdge = function (origin, target, data) {
+            var indexOrigin = this.index(origin);
+            var indexTarget = this.index(target);
+            this.machine.removeTransition(indexOrigin, indexTarget, data);
+            this.editingCallback();
+        };
+        PDAController.prototype.clear = function () {
+            this.machine.clear();
+            this.editingCallback();
+        };
+        PDAController.prototype.fastForward = function (input) {
+            console.log("PDAController::fastForward() not implemented");
+        };
+        PDAController.prototype.step = function (input) {
+            if (!this.finished(input)) {
+                if (this.stepIndex == -1) {
+                    this.machine.reset();
+                    this.machine.setInput(input);
+                }
+                else {
+                    this.machine.read();
+                }
+                this.stepIndex++;
+            }
+        };
+        PDAController.prototype.stop = function () {
+            this.stepIndex = -1;
+        };
+        PDAController.prototype.reset = function () {
+            this.machine.reset();
+        };
+        PDAController.prototype.finished = function (input) {
+            return false;
+        };
+        PDAController.prototype.isStopped = function () {
+            return this.stepIndex == -1;
+        };
+        PDAController.prototype.stepPosition = function () {
+            return this.stepIndex;
+        };
+        PDAController.prototype.getStackContent = function () {
+            return this.machine.getStackContent();
+        };
+        PDAController.prototype.currentStates = function () {
+            var state = this.machine.getCurrentState();
+            var result = [];
+            if (!this.machine.error()) {
+                result.push(state);
+            }
+            return result;
+        };
+        PDAController.prototype.accepts = function () {
+            return this.machine.accepts();
+        };
+        PDAController.prototype.formalDefinition = function () {
+            var machine = this.machine;
+            var delta = Keyboard_4.Keyboard.symbols.delta;
+            var gamma = Keyboard_4.Keyboard.symbols.gamma;
+            var sigma = Keyboard_4.Keyboard.symbols.sigma;
+            var result = {
+                tupleSequence: ["Q", sigma, gamma, delta, "q0", "Z0", "F"],
+                parameterSequence: ["Q", sigma, gamma, "q0", "Z0", "F", delta],
+                parameterValues: {}
+            };
+            var values = result.parameterValues;
+            values["Q"] = machine.getStates();
+            values[sigma] = machine.getInputAlphabet();
+            values[gamma] = machine.getStackAlphabet();
+            values[delta] = this.transitionTable();
+            values["q0"] = machine.getInitialState();
+            values["Z0"] = "$";
+            values["F"] = machine.getAcceptingStates();
+            return result;
+        };
+        PDAController.prototype.setEditingCallback = function (callback) {
+            this.editingCallback = callback;
+        };
+        PDAController.prototype.index = function (state) {
+            return this.stateMapping[state.getName()];
+        };
+        PDAController.prototype.transitionTable = function () {
+            var transitions = {
+                list: []
+            };
+            var callback = function (source, data, input, stackRead) {
+                transitions.list.push([source, input, stackRead, data[0], data[1]]);
+            };
+            this.machine.transitionIteration(callback);
+            return transitions;
+        };
         return PDAController;
     }());
     exports.PDAController = PDAController;
 });
-define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet", "Utils"], function (require, exports, UnorderedSet_2, Utils_4) {
+define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet", "Utils"], function (require, exports, UnorderedSet_3, Utils_5) {
     "use strict";
     var Direction;
     (function (Direction) {
@@ -1395,7 +1785,7 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
             this.tapeAlphabet = {};
             this.transitions = {};
             this.initialState = -1;
-            this.finalStates = new UnorderedSet_2.UnorderedSet();
+            this.finalStates = new UnorderedSet_3.UnorderedSet();
             this.numRemovedStates = 0;
             this.currentState = null;
             this.tape = [];
@@ -1416,9 +1806,9 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
         };
         LBA.prototype.removeState = function (index) {
             var self = this;
-            Utils_4.utils.foreach(this.transitions, function (originIndex, transitions) {
+            Utils_5.utils.foreach(this.transitions, function (originIndex, transitions) {
                 var origin = parseInt(originIndex);
-                Utils_4.utils.foreach(transitions, function (input) {
+                Utils_5.utils.foreach(transitions, function (input) {
                     if (transitions[input].state == index) {
                         self.uncheckedRemoveTransition(origin, input);
                     }
@@ -1687,7 +2077,7 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
     }());
     exports.LBA = LBA;
 });
-define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machines/LBA/LBA", "Prompt", "Settings", "Utils"], function (require, exports, Keyboard_4, LBA_1, Prompt_3, Settings_5, Utils_5) {
+define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machines/LBA/LBA", "Prompt", "Settings", "Utils"], function (require, exports, Keyboard_5, LBA_1, Prompt_3, Settings_6, Utils_6) {
     "use strict";
     var LBAController = (function () {
         function LBAController() {
@@ -1698,22 +2088,22 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
         }
         LBAController.prototype.edgePrompt = function (callback, fallback) {
             var self = this;
-            var prompt = new Prompt_3.Prompt(Settings_5.Strings.LBA_ENTER_EDGE_CONTENT);
+            var prompt = new Prompt_3.Prompt(Settings_6.Strings.LBA_ENTER_EDGE_CONTENT);
             prompt.addInput({
-                placeholder: Settings_5.Strings.LBA_ENTER_EDGE_PLACEHOLDER_1
+                placeholder: Settings_6.Strings.LBA_ENTER_EDGE_PLACEHOLDER_1
             });
             prompt.addInput({
-                placeholder: Settings_5.Strings.LBA_ENTER_EDGE_PLACEHOLDER_2
+                placeholder: Settings_6.Strings.LBA_ENTER_EDGE_PLACEHOLDER_2
             });
             prompt.addInput({
                 initializer: function () {
-                    var node = Utils_5.utils.create("select");
-                    node.appendChild(Utils_5.utils.create("option", {
-                        innerHTML: Keyboard_4.Keyboard.symbols.leftArrow,
+                    var node = Utils_6.utils.create("select");
+                    node.appendChild(Utils_6.utils.create("option", {
+                        innerHTML: Keyboard_5.Keyboard.symbols.leftArrow,
                         value: "<"
                     }));
-                    node.appendChild(Utils_5.utils.create("option", {
-                        innerHTML: Keyboard_4.Keyboard.symbols.rightArrow,
+                    node.appendChild(Utils_6.utils.create("option", {
+                        innerHTML: Keyboard_5.Keyboard.symbols.rightArrow,
                         value: ">"
                     }));
                     return node;
@@ -1726,7 +2116,7 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
             prompt.show();
         };
         LBAController.prototype.edgeDataToText = function (data) {
-            var symbols = Keyboard_4.Keyboard.symbols;
+            var symbols = Keyboard_5.Keyboard.symbols;
             var epsilon = symbols.epsilon;
             var formatted = [
                 data[0] || epsilon,
@@ -1849,9 +2239,9 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
         };
         LBAController.prototype.formalDefinition = function () {
             var machine = this.machine;
-            var delta = Keyboard_4.Keyboard.symbols.delta;
-            var gamma = Keyboard_4.Keyboard.symbols.gamma;
-            var sigma = Keyboard_4.Keyboard.symbols.sigma;
+            var delta = Keyboard_5.Keyboard.symbols.delta;
+            var gamma = Keyboard_5.Keyboard.symbols.gamma;
+            var sigma = Keyboard_5.Keyboard.symbols.sigma;
             var result = {
                 tupleSequence: ["Q", sigma, gamma, delta, "q0", "B", "F"],
                 parameterSequence: ["Q", sigma, gamma, "q0", "B", "F", delta],
@@ -1877,7 +2267,7 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
             var transitions = {
                 list: []
             };
-            var arrows = [Keyboard_4.Keyboard.symbols.leftArrow, Keyboard_4.Keyboard.symbols.rightArrow];
+            var arrows = [Keyboard_5.Keyboard.symbols.leftArrow, Keyboard_5.Keyboard.symbols.rightArrow];
             var callback = function (source, target, input) {
                 transitions.list.push([
                     source,
@@ -1959,6 +2349,10 @@ define("languages/Portuguese", ["require", "exports"], function (require, export
             PDA: "Autômato de Pilha",
             LBA: "Autômato Linearmente Limitado",
             FA_ENTER_EDGE_CONTENT: "Digite o conteúdo da aresta (até 1 caractere):",
+            PDA_ENTER_EDGE_CONTENT: "Digite o símbolo de entrada, símbolo de pilha lido e símbolo(s) de pilha escrito(s)",
+            PDA_ENTER_EDGE_PLACEHOLDER_1: "ler (entrada)",
+            PDA_ENTER_EDGE_PLACEHOLDER_2: "ler (pilha)",
+            PDA_ENTER_EDGE_PLACEHOLDER_3: "escrever",
             LBA_ENTER_EDGE_CONTENT: "Digite o(s) símbolo(s) de fita lido(s), escrito(s) e a direção do movimento",
             LBA_ENTER_EDGE_PLACEHOLDER_1: "ler",
             LBA_ENTER_EDGE_PLACEHOLDER_2: "escrever",
@@ -2034,6 +2428,10 @@ define("languages/English", ["require", "exports"], function (require, exports) 
             PDA: "Pushdown Automaton",
             LBA: "Linearly Bounded Automaton",
             FA_ENTER_EDGE_CONTENT: "Enter the edge content (up to 1 character):",
+            PDA_ENTER_EDGE_CONTENT: "Enter the input symbol, stack symbol read and stack symbol(s) written:",
+            PDA_ENTER_EDGE_PLACEHOLDER_1: "read (input)",
+            PDA_ENTER_EDGE_PLACEHOLDER_2: "read (stack)",
+            PDA_ENTER_EDGE_PLACEHOLDER_3: "write",
             LBA_ENTER_EDGE_CONTENT: "Enter the tape symbol(s) read, tape symbol(s) written and move direction:",
             LBA_ENTER_EDGE_PLACEHOLDER_1: "read",
             LBA_ENTER_EDGE_PLACEHOLDER_2: "write",
@@ -2061,7 +2459,7 @@ define("lists/LanguageList", ["require", "exports", "languages/Portuguese", "lan
     __export(Portuguese_1);
     __export(English_1);
 });
-define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_1, Settings_6, Utils_6) {
+define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_1, Settings_7, Utils_7) {
     "use strict";
     var Menu = (function (_super) {
         __extends(Menu, _super);
@@ -2080,16 +2478,16 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
         };
         Menu.prototype.onRender = function () {
             var node = this.node;
-            var wrapper = Utils_6.utils.create("div");
+            var wrapper = Utils_7.utils.create("div");
             wrapper.classList.add("menu");
-            var arrow = Utils_6.utils.create("div");
+            var arrow = Utils_7.utils.create("div");
             arrow.classList.add("menu_arrow");
-            var title = Utils_6.utils.create("div");
+            var title = Utils_7.utils.create("div");
             title.classList.add("title");
             title.appendChild(arrow);
             title.innerHTML += this.title;
             wrapper.appendChild(title);
-            var content = Utils_6.utils.create("div");
+            var content = Utils_7.utils.create("div");
             content.classList.add("content");
             for (var _i = 0, _a = this.children; _i < _a.length; _i++) {
                 var child = _a[_i];
@@ -2100,7 +2498,7 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
             var self = this;
             title.addEventListener("click", function () {
                 if (!$(content).is(":animated")) {
-                    $(content).slideToggle(Settings_6.Settings.menuSlideInterval, function () {
+                    $(content).slideToggle(Settings_7.Settings.menuSlideInterval, function () {
                         self.updateArrow();
                     });
                 }
@@ -2139,7 +2537,7 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
     }(Renderer_1.Renderer));
     exports.Menu = Menu;
 });
-define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "System", "Utils"], function (require, exports, Keyboard_5, Menu_1, Settings_7, System_2, Utils_7) {
+define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "System", "Utils"], function (require, exports, Keyboard_6, Menu_1, Settings_8, System_2, Utils_8) {
     "use strict";
     var initFA = (function () {
         function initFA() {
@@ -2157,20 +2555,20 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
         initFA.prototype.init = function () {
             console.log("[FA] Initializing...");
             var menuList = [];
-            var recognitionMenu = new Menu_1.Menu(Settings_7.Strings.RECOGNITION);
+            var recognitionMenu = new Menu_1.Menu(Settings_8.Strings.RECOGNITION);
             var rows = [];
             this.buildTestCaseInput(rows);
             this.buildRecognitionControls(rows);
             this.buildRecognitionProgress(rows);
             this.addRows(rows, recognitionMenu);
             menuList.push(recognitionMenu);
-            var multipleRecognitionMenu = new Menu_1.Menu(Settings_7.Strings.MULTIPLE_RECOGNITION);
+            var multipleRecognitionMenu = new Menu_1.Menu(Settings_8.Strings.MULTIPLE_RECOGNITION);
             rows = [];
             this.buildMultipleRecognition(rows);
             this.addRows(rows, multipleRecognitionMenu);
             menuList.push(multipleRecognitionMenu);
             this.bindRecognitionEvents();
-            Settings_7.Settings.machines[Settings_7.Settings.Machine.FA].sidebar = menuList;
+            Settings_8.Settings.machines[Settings_8.Settings.Machine.FA].sidebar = menuList;
             console.log("[FA] Initialized successfully");
         };
         initFA.prototype.onEnter = function () {
@@ -2185,7 +2583,7 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
         initFA.prototype.addRows = function (rows, menu) {
             for (var _i = 0, rows_1 = rows; _i < rows_1.length; _i++) {
                 var row = rows_1[_i];
-                var div = Utils_7.utils.create("div", {
+                var div = Utils_8.utils.create("div", {
                     className: "row"
                 });
                 for (var _a = 0, row_1 = row; _a < row_1.length; _a++) {
@@ -2199,354 +2597,29 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
             return this.testCaseInput.value;
         };
         initFA.prototype.buildTestCaseInput = function (container) {
-            this.testCaseInput = Utils_7.utils.create("input", {
+            this.testCaseInput = Utils_8.utils.create("input", {
                 type: "text",
-                placeholder: Settings_7.Strings.TEST_CASE
+                placeholder: Settings_8.Strings.TEST_CASE
             });
             container.push([this.testCaseInput]);
         };
         initFA.prototype.highlightCurrentStates = function () {
-            var states = Settings_7.Settings.controller().currentStates();
-            Settings_7.Settings.automatonRenderer.recognitionHighlight(states);
-        };
-        initFA.prototype.buildRecognitionControls = function (container) {
-            var disabledClass = Settings_7.Settings.disabledButtonClass;
-            this.fastRecognition = Utils_7.utils.create("img", {
-                className: "image_button",
-                src: "images/fastforward.svg",
-                title: Settings_7.Strings.FAST_RECOGNITION
-            });
-            this.stopRecognition = Utils_7.utils.create("img", {
-                className: "image_button " + disabledClass,
-                src: "images/stop.svg",
-                title: Settings_7.Strings.STOP_RECOGNITION
-            });
-            this.stepRecognition = Utils_7.utils.create("img", {
-                className: "image_button",
-                src: "images/play.svg",
-                title: Settings_7.Strings.STEP_RECOGNITION
-            });
-            container.push([this.fastRecognition, this.stepRecognition,
-                this.stopRecognition]);
-        };
-        initFA.prototype.buildRecognitionProgress = function (container) {
-            this.progressContainer = Utils_7.utils.create("div", {
-                id: "recognition_progress"
-            });
-            this.progressContainer.style.display = "none";
-            container.push([this.progressContainer]);
-        };
-        initFA.prototype.buildMultipleRecognition = function (container) {
-            this.multipleCaseArea = Utils_7.utils.create("textarea");
-            this.multipleCaseArea.rows = Settings_7.Settings.multRecognitionAreaRows;
-            this.multipleCaseArea.cols = Settings_7.Settings.multRecognitionAreaCols;
-            this.multipleCaseResults = Utils_7.utils.create("div");
-            var testCaseArea = Utils_7.utils.create("div", {
-                id: "multiple_recognition"
-            });
-            testCaseArea.appendChild(this.multipleCaseArea);
-            testCaseArea.appendChild(this.multipleCaseResults);
-            container.push([testCaseArea]);
-            this.multipleCaseButton = Utils_7.utils.create("img", {
-                className: "image_button",
-                src: "images/play.svg",
-                title: Settings_7.Strings.START_MULTIPLE_RECOGNITION
-            });
-            container.push([this.multipleCaseButton]);
-        };
-        initFA.prototype.showAcceptanceStatus = function () {
-            if (Settings_7.Settings.controller().accepts()) {
-                this.progressContainer.style.color = Settings_7.Settings.acceptedTestCaseColor;
-                this.progressContainer.innerHTML = Settings_7.Strings.INPUT_ACCEPTED;
-            }
-            else {
-                this.progressContainer.style.color = Settings_7.Settings.rejectedTestCaseColor;
-                this.progressContainer.innerHTML = Settings_7.Strings.INPUT_REJECTED;
-            }
-        };
-        initFA.prototype.bindRecognitionEvents = function () {
-            var disabledClass = Settings_7.Settings.disabledButtonClass;
-            var fastForwardEnabled = true;
-            var stepEnabled = true;
-            var stopEnabled = false;
-            var self = this;
-            var fastForwardStatus = function (enabled) {
-                fastForwardEnabled = enabled;
-                self.fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
-            };
-            var stepStatus = function (enabled) {
-                stepEnabled = enabled;
-                self.stepRecognition.classList[enabled ? "remove" : "add"](disabledClass);
-            };
-            var stopStatus = function (enabled) {
-                stopEnabled = enabled;
-                self.stopRecognition.classList[enabled ? "remove" : "add"](disabledClass);
-            };
-            this.fastRecognition.addEventListener("click", function () {
-                if (fastForwardEnabled) {
-                    Settings_7.Settings.automatonRenderer.lock();
-                    var input = self.testCase();
-                    var controller = Settings_7.Settings.controller();
-                    controller.fastForward(input);
-                    self.highlightCurrentStates();
-                    self.progressContainer.style.display = "";
-                    self.showAcceptanceStatus();
-                    fastForwardStatus(false);
-                    stepStatus(false);
-                    stopStatus(true);
-                    self.testCaseInput.disabled = true;
-                }
-            });
-            this.stopRecognition.addEventListener("click", function () {
-                if (stopEnabled) {
-                    Settings_7.Settings.controller().stop();
-                    Settings_7.Settings.automatonRenderer.recognitionDim();
-                    Settings_7.Settings.automatonRenderer.unlock();
-                    self.progressContainer.style.color = "black";
-                    self.progressContainer.style.display = "none";
-                    fastForwardStatus(true);
-                    stepStatus(true);
-                    stopStatus(false);
-                    self.testCaseInput.disabled = false;
-                }
-            });
-            this.stepRecognition.addEventListener("click", function () {
-                if (stepEnabled) {
-                    fastForwardStatus(false);
-                    stopStatus(true);
-                    self.testCaseInput.disabled = true;
-                    var input = self.testCase();
-                    var controller = Settings_7.Settings.controller();
-                    if (controller.isStopped()) {
-                        Settings_7.Settings.automatonRenderer.lock();
-                        self.progressContainer.style.display = "";
-                        var sidebar = Utils_7.utils.id(Settings_7.Settings.sidebarID);
-                        var width = sidebar.offsetWidth;
-                        width -= 10;
-                        width -= 1;
-                        self.progressContainer.style.width = width + "px";
-                    }
-                    var finished = controller.finished(input);
-                    if (!finished) {
-                        controller.step(input);
-                        self.highlightCurrentStates();
-                        finished = controller.finished(input);
-                    }
-                    var position = controller.stepPosition();
-                    var displayedText = input.substr(position);
-                    if (displayedText == "") {
-                        self.showAcceptanceStatus();
-                    }
-                    else {
-                        self.progressContainer.innerHTML = displayedText;
-                    }
-                    if (finished) {
-                        stepStatus(false);
-                    }
-                }
-            });
-            this.multipleCaseButton.addEventListener("click", function () {
-                var testCases = self.multipleCaseArea.value.split("\n");
-                var controller = Settings_7.Settings.controller();
-                self.multipleCaseResults.innerHTML = "";
-                for (var _i = 0, testCases_1 = testCases; _i < testCases_1.length; _i++) {
-                    var input = testCases_1[_i];
-                    controller.fastForward(input);
-                    var result = Utils_7.utils.create("span");
-                    if (controller.accepts()) {
-                        result.style.color = Settings_7.Settings.acceptedTestCaseColor;
-                        result.innerHTML = Settings_7.Strings.INPUT_ACCEPTED;
-                    }
-                    else {
-                        result.style.color = Settings_7.Settings.rejectedTestCaseColor;
-                        result.innerHTML = Settings_7.Strings.INPUT_REJECTED;
-                    }
-                    self.multipleCaseResults.appendChild(result);
-                }
-            });
-        };
-        initFA.prototype.bindShortcuts = function () {
-            var self = this;
-            if (!this.boundShortcuts) {
-                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.focusTestCase, function () {
-                    self.testCaseInput.focus();
-                }, this.shortcutGroup);
-                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.fastForward, function () {
-                    self.fastRecognition.click();
-                }, this.shortcutGroup);
-                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.step, function () {
-                    self.stepRecognition.click();
-                }, this.shortcutGroup);
-                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.stop, function () {
-                    self.stopRecognition.click();
-                }, this.shortcutGroup);
-                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.multipleRecognition, function () {
-                    self.multipleCaseButton.click();
-                }, this.shortcutGroup);
-                this.boundShortcuts = true;
-            }
-            this.testCaseInput.addEventListener("keydown", function (e) {
-                if (e.keyCode == Keyboard_5.Keyboard.keys[Settings_7.Settings.shortcuts.dimTestCase[0]]) {
-                    if (self.testCaseInput == document.activeElement) {
-                        self.testCaseInput.blur();
-                    }
-                }
-            });
-        };
-        return initFA;
-    }());
-    exports.initFA = initFA;
-});
-define("machines/PDA/initializer", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var initPDA = (function () {
-        function initPDA() {
-        }
-        initPDA.prototype.init = function () {
-            console.log("[INIT] PDA");
-        };
-        initPDA.prototype.onEnter = function () {
-            console.log("[ENTER] PDA");
-        };
-        initPDA.prototype.onExit = function () {
-            console.log("[EXIT] PDA");
-        };
-        return initPDA;
-    }());
-    exports.initPDA = initPDA;
-});
-define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"], function (require, exports, Renderer_2, Utils_8) {
-    "use strict";
-    var Table = (function (_super) {
-        __extends(Table, _super);
-        function Table(numRows, numColumns) {
-            _super.call(this);
-            this.customColspans = {};
-            this.numRows = numRows;
-            this.numColumns = numColumns;
-            this.children = [];
-        }
-        Table.prototype.add = function (elem, colspan) {
-            if (colspan) {
-                this.customColspans[this.children.length] = colspan;
-            }
-            this.children.push(elem);
-        };
-        Table.prototype.html = function () {
-            var wrapper = Utils_8.utils.create("table");
-            var index = 0;
-            for (var i = 0; i < this.numRows; i++) {
-                var tr = Utils_8.utils.create("tr");
-                for (var j = 0; j < this.numColumns; j++) {
-                    var td = Utils_8.utils.create("td");
-                    if (index < this.children.length) {
-                        if (this.customColspans.hasOwnProperty(index + "")) {
-                            var colSpan = this.customColspans[index];
-                            td.colSpan = colSpan;
-                            j += colSpan - 1;
-                        }
-                        td.appendChild(this.children[index]);
-                    }
-                    tr.appendChild(td);
-                    index++;
-                }
-                wrapper.appendChild(tr);
-            }
-            return wrapper;
-        };
-        Table.prototype.onRender = function () {
-            this.node.appendChild(this.html());
-        };
-        return Table;
-    }(Renderer_2.Renderer));
-    exports.Table = Table;
-});
-define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "System", "Utils"], function (require, exports, Keyboard_6, Menu_2, Settings_8, System_3, Utils_9) {
-    "use strict";
-    var initLBA = (function () {
-        function initLBA() {
-            this.shortcutGroup = "LBA";
-            this.boundShortcuts = false;
-            this.testCaseInput = null;
-            this.fastRecognition = null;
-            this.stepRecognition = null;
-            this.stopRecognition = null;
-            this.progressContainer = null;
-            this.tapeContainer = null;
-            this.multipleCaseArea = null;
-            this.multipleCaseResults = null;
-            this.multipleCaseButton = null;
-        }
-        initLBA.prototype.init = function () {
-            console.log("[LBA] Initializing...");
-            var menuList = [];
-            var recognitionMenu = new Menu_2.Menu(Settings_8.Strings.RECOGNITION);
-            var rows = [];
-            this.buildTestCaseInput(rows);
-            this.buildRecognitionControls(rows);
-            this.buildTape(rows);
-            this.buildRecognitionProgress(rows);
-            this.addRows(rows, recognitionMenu);
-            menuList.push(recognitionMenu);
-            var multipleRecognitionMenu = new Menu_2.Menu(Settings_8.Strings.MULTIPLE_RECOGNITION);
-            rows = [];
-            this.buildMultipleRecognition(rows);
-            this.addRows(rows, multipleRecognitionMenu);
-            menuList.push(multipleRecognitionMenu);
-            this.bindRecognitionEvents();
-            Settings_8.Settings.machines[Settings_8.Settings.Machine.LBA].sidebar = menuList;
-            console.log("[LBA] Initialized successfully");
-        };
-        initLBA.prototype.onEnter = function () {
-            this.bindShortcuts();
-            System_3.System.unlockShortcutGroup(this.shortcutGroup);
-            console.log("[LBA] Bound events");
-        };
-        initLBA.prototype.onExit = function () {
-            System_3.System.lockShortcutGroup(this.shortcutGroup);
-            console.log("[LBA] Unbound events");
-        };
-        initLBA.prototype.addRows = function (rows, menu) {
-            for (var _i = 0, rows_2 = rows; _i < rows_2.length; _i++) {
-                var row = rows_2[_i];
-                var div = Utils_9.utils.create("div", {
-                    className: "row"
-                });
-                for (var _a = 0, row_2 = row; _a < row_2.length; _a++) {
-                    var node = row_2[_a];
-                    div.appendChild(node);
-                }
-                menu.add(div);
-            }
-        };
-        initLBA.prototype.testCase = function () {
-            return this.testCaseInput.value;
-        };
-        initLBA.prototype.buildTestCaseInput = function (container) {
-            var input = Utils_9.utils.create("input", {
-                type: "text",
-                placeholder: Settings_8.Strings.TEST_CASE
-            });
-            container.push([input]);
-            this.testCaseInput = input;
-        };
-        initLBA.prototype.highlightCurrentStates = function () {
             var states = Settings_8.Settings.controller().currentStates();
             Settings_8.Settings.automatonRenderer.recognitionHighlight(states);
         };
-        initLBA.prototype.buildRecognitionControls = function (container) {
+        initFA.prototype.buildRecognitionControls = function (container) {
             var disabledClass = Settings_8.Settings.disabledButtonClass;
-            this.fastRecognition = Utils_9.utils.create("img", {
+            this.fastRecognition = Utils_8.utils.create("img", {
                 className: "image_button",
                 src: "images/fastforward.svg",
                 title: Settings_8.Strings.FAST_RECOGNITION
             });
-            this.stopRecognition = Utils_9.utils.create("img", {
+            this.stopRecognition = Utils_8.utils.create("img", {
                 className: "image_button " + disabledClass,
                 src: "images/stop.svg",
                 title: Settings_8.Strings.STOP_RECOGNITION
             });
-            this.stepRecognition = Utils_9.utils.create("img", {
+            this.stepRecognition = Utils_8.utils.create("img", {
                 className: "image_button",
                 src: "images/play.svg",
                 title: Settings_8.Strings.STEP_RECOGNITION
@@ -2554,89 +2627,42 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
             container.push([this.fastRecognition, this.stepRecognition,
                 this.stopRecognition]);
         };
-        initLBA.prototype.buildTape = function (container) {
-            this.tapeContainer = Utils_9.utils.create("div", {
-                id: "tape"
-            });
-            this.tapeContainer.style.display = "none";
-            var displayedChars = Settings_8.Settings.tapeDisplayedChars;
-            for (var i = 0; i < displayedChars; i++) {
-                var cell = Utils_9.utils.create("div", {
-                    className: "tape_cell"
-                });
-                this.tapeContainer.appendChild(cell);
-            }
-            this.tapeContainer.children[(displayedChars - 1) / 2].classList.add("center");
-            container.push([this.tapeContainer]);
-        };
-        initLBA.prototype.buildRecognitionProgress = function (container) {
-            this.progressContainer = Utils_9.utils.create("div", {
+        initFA.prototype.buildRecognitionProgress = function (container) {
+            this.progressContainer = Utils_8.utils.create("div", {
                 id: "recognition_progress"
             });
             this.progressContainer.style.display = "none";
             container.push([this.progressContainer]);
         };
-        initLBA.prototype.buildMultipleRecognition = function (container) {
-            this.multipleCaseArea = Utils_9.utils.create("textarea");
+        initFA.prototype.buildMultipleRecognition = function (container) {
+            this.multipleCaseArea = Utils_8.utils.create("textarea");
             this.multipleCaseArea.rows = Settings_8.Settings.multRecognitionAreaRows;
             this.multipleCaseArea.cols = Settings_8.Settings.multRecognitionAreaCols;
-            this.multipleCaseResults = Utils_9.utils.create("div");
-            var testCaseArea = Utils_9.utils.create("div", {
+            this.multipleCaseResults = Utils_8.utils.create("div");
+            var testCaseArea = Utils_8.utils.create("div", {
                 id: "multiple_recognition"
             });
             testCaseArea.appendChild(this.multipleCaseArea);
             testCaseArea.appendChild(this.multipleCaseResults);
             container.push([testCaseArea]);
-            this.multipleCaseButton = Utils_9.utils.create("img", {
+            this.multipleCaseButton = Utils_8.utils.create("img", {
                 className: "image_button",
                 src: "images/play.svg",
                 title: Settings_8.Strings.START_MULTIPLE_RECOGNITION
             });
             container.push([this.multipleCaseButton]);
         };
-        initLBA.prototype.showAcceptanceStatus = function () {
-            var controller = Settings_8.Settings.controller();
-            if (controller.accepts()) {
+        initFA.prototype.showAcceptanceStatus = function () {
+            if (Settings_8.Settings.controller().accepts()) {
                 this.progressContainer.style.color = Settings_8.Settings.acceptedTestCaseColor;
                 this.progressContainer.innerHTML = Settings_8.Strings.INPUT_ACCEPTED;
             }
             else {
                 this.progressContainer.style.color = Settings_8.Settings.rejectedTestCaseColor;
-                if (controller.exhausted()) {
-                    this.progressContainer.innerHTML = Settings_8.Strings.INPUT_LOOPING;
-                }
-                else {
-                    this.progressContainer.innerHTML = Settings_8.Strings.INPUT_REJECTED;
-                }
+                this.progressContainer.innerHTML = Settings_8.Strings.INPUT_REJECTED;
             }
         };
-        initLBA.prototype.showTapeContent = function () {
-            var controller = Settings_8.Settings.controller();
-            var tapeContent = controller.getTapeContent();
-            var headPosition = controller.getHeadPosition();
-            var displayedChars = Settings_8.Settings.tapeDisplayedChars;
-            var offset = (displayedChars - 1) / 2;
-            var startIndex = headPosition - offset;
-            if (startIndex < 0) {
-                var buffer = [];
-                for (var i = 0; i < -startIndex; i++) {
-                    buffer.push("_");
-                }
-                tapeContent = buffer.concat(tapeContent);
-                startIndex = 0;
-            }
-            if (startIndex + displayedChars > tapeContent.length) {
-                var delta = startIndex + displayedChars - tapeContent.length;
-                for (var i = 0; i < delta; i++) {
-                    tapeContent.push("_");
-                }
-            }
-            var displayedContent = tapeContent.slice(startIndex, startIndex + displayedChars);
-            for (var i = 0; i < displayedChars; i++) {
-                this.tapeContainer.children[i].innerHTML = displayedContent[i];
-            }
-        };
-        initLBA.prototype.bindRecognitionEvents = function () {
+        initFA.prototype.bindRecognitionEvents = function () {
             var disabledClass = Settings_8.Settings.disabledButtonClass;
             var fastForwardEnabled = true;
             var stepEnabled = true;
@@ -2663,8 +2689,6 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
                     self.highlightCurrentStates();
                     self.progressContainer.style.display = "";
                     self.showAcceptanceStatus();
-                    self.tapeContainer.style.display = "";
-                    self.showTapeContent();
                     fastForwardStatus(false);
                     stepStatus(false);
                     stopStatus(true);
@@ -2676,6 +2700,636 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
                     Settings_8.Settings.controller().stop();
                     Settings_8.Settings.automatonRenderer.recognitionDim();
                     Settings_8.Settings.automatonRenderer.unlock();
+                    self.progressContainer.style.color = "black";
+                    self.progressContainer.style.display = "none";
+                    fastForwardStatus(true);
+                    stepStatus(true);
+                    stopStatus(false);
+                    self.testCaseInput.disabled = false;
+                }
+            });
+            this.stepRecognition.addEventListener("click", function () {
+                if (stepEnabled) {
+                    fastForwardStatus(false);
+                    stopStatus(true);
+                    self.testCaseInput.disabled = true;
+                    var input = self.testCase();
+                    var controller = Settings_8.Settings.controller();
+                    if (controller.isStopped()) {
+                        Settings_8.Settings.automatonRenderer.lock();
+                        self.progressContainer.style.display = "";
+                        var sidebar = Utils_8.utils.id(Settings_8.Settings.sidebarID);
+                        var width = sidebar.offsetWidth;
+                        width -= 10;
+                        width -= 1;
+                        self.progressContainer.style.width = width + "px";
+                    }
+                    var finished = controller.finished(input);
+                    if (!finished) {
+                        controller.step(input);
+                        self.highlightCurrentStates();
+                        finished = controller.finished(input);
+                    }
+                    var position = controller.stepPosition();
+                    var displayedText = input.substr(position);
+                    if (displayedText == "") {
+                        self.showAcceptanceStatus();
+                    }
+                    else {
+                        self.progressContainer.innerHTML = displayedText;
+                    }
+                    if (finished) {
+                        stepStatus(false);
+                    }
+                }
+            });
+            this.multipleCaseButton.addEventListener("click", function () {
+                var testCases = self.multipleCaseArea.value.split("\n");
+                var controller = Settings_8.Settings.controller();
+                self.multipleCaseResults.innerHTML = "";
+                for (var _i = 0, testCases_1 = testCases; _i < testCases_1.length; _i++) {
+                    var input = testCases_1[_i];
+                    controller.fastForward(input);
+                    var result = Utils_8.utils.create("span");
+                    if (controller.accepts()) {
+                        result.style.color = Settings_8.Settings.acceptedTestCaseColor;
+                        result.innerHTML = Settings_8.Strings.INPUT_ACCEPTED;
+                    }
+                    else {
+                        result.style.color = Settings_8.Settings.rejectedTestCaseColor;
+                        result.innerHTML = Settings_8.Strings.INPUT_REJECTED;
+                    }
+                    self.multipleCaseResults.appendChild(result);
+                }
+            });
+        };
+        initFA.prototype.bindShortcuts = function () {
+            var self = this;
+            if (!this.boundShortcuts) {
+                System_2.System.bindShortcut(Settings_8.Settings.shortcuts.focusTestCase, function () {
+                    self.testCaseInput.focus();
+                }, this.shortcutGroup);
+                System_2.System.bindShortcut(Settings_8.Settings.shortcuts.fastForward, function () {
+                    self.fastRecognition.click();
+                }, this.shortcutGroup);
+                System_2.System.bindShortcut(Settings_8.Settings.shortcuts.step, function () {
+                    self.stepRecognition.click();
+                }, this.shortcutGroup);
+                System_2.System.bindShortcut(Settings_8.Settings.shortcuts.stop, function () {
+                    self.stopRecognition.click();
+                }, this.shortcutGroup);
+                System_2.System.bindShortcut(Settings_8.Settings.shortcuts.multipleRecognition, function () {
+                    self.multipleCaseButton.click();
+                }, this.shortcutGroup);
+                this.boundShortcuts = true;
+            }
+            this.testCaseInput.addEventListener("keydown", function (e) {
+                if (e.keyCode == Keyboard_6.Keyboard.keys[Settings_8.Settings.shortcuts.dimTestCase[0]]) {
+                    if (self.testCaseInput == document.activeElement) {
+                        self.testCaseInput.blur();
+                    }
+                }
+            });
+        };
+        return initFA;
+    }());
+    exports.initFA = initFA;
+});
+define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"], function (require, exports, Renderer_2, Utils_9) {
+    "use strict";
+    var Table = (function (_super) {
+        __extends(Table, _super);
+        function Table(numRows, numColumns) {
+            _super.call(this);
+            this.customColspans = {};
+            this.numRows = numRows;
+            this.numColumns = numColumns;
+            this.children = [];
+        }
+        Table.prototype.add = function (elem, colspan) {
+            if (colspan) {
+                this.customColspans[this.children.length] = colspan;
+            }
+            this.children.push(elem);
+        };
+        Table.prototype.html = function () {
+            var wrapper = Utils_9.utils.create("table");
+            var index = 0;
+            for (var i = 0; i < this.numRows; i++) {
+                var tr = Utils_9.utils.create("tr");
+                for (var j = 0; j < this.numColumns; j++) {
+                    var td = Utils_9.utils.create("td");
+                    if (index < this.children.length) {
+                        if (this.customColspans.hasOwnProperty(index + "")) {
+                            var colSpan = this.customColspans[index];
+                            td.colSpan = colSpan;
+                            j += colSpan - 1;
+                        }
+                        td.appendChild(this.children[index]);
+                    }
+                    tr.appendChild(td);
+                    index++;
+                }
+                wrapper.appendChild(tr);
+            }
+            return wrapper;
+        };
+        Table.prototype.onRender = function () {
+            this.node.appendChild(this.html());
+        };
+        return Table;
+    }(Renderer_2.Renderer));
+    exports.Table = Table;
+});
+define("machines/PDA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "System", "Utils"], function (require, exports, Keyboard_7, Menu_2, Settings_9, System_3, Utils_10) {
+    "use strict";
+    var initPDA = (function () {
+        function initPDA() {
+            this.shortcutGroup = "PDA";
+            this.boundShortcuts = false;
+            this.testCaseInput = null;
+            this.fastRecognition = null;
+            this.stepRecognition = null;
+            this.stopRecognition = null;
+            this.progressContainer = null;
+            this.stackContainer = null;
+            this.multipleCaseArea = null;
+            this.multipleCaseResults = null;
+            this.multipleCaseButton = null;
+        }
+        initPDA.prototype.init = function () {
+            console.log("[PDA] Initializing...");
+            var menuList = [];
+            var recognitionMenu = new Menu_2.Menu(Settings_9.Strings.RECOGNITION);
+            var rows = [];
+            this.buildTestCaseInput(rows);
+            this.buildRecognitionControls(rows);
+            this.buildStack(rows);
+            this.buildRecognitionProgress(rows);
+            this.addRows(rows, recognitionMenu);
+            menuList.push(recognitionMenu);
+            var multipleRecognitionMenu = new Menu_2.Menu(Settings_9.Strings.MULTIPLE_RECOGNITION);
+            rows = [];
+            this.buildMultipleRecognition(rows);
+            this.addRows(rows, multipleRecognitionMenu);
+            multipleRecognitionMenu.toggle();
+            menuList.push(multipleRecognitionMenu);
+            this.bindRecognitionEvents();
+            Settings_9.Settings.machines[Settings_9.Settings.Machine.PDA].sidebar = menuList;
+            console.log("[PDA] Initialized successfully");
+        };
+        initPDA.prototype.onEnter = function () {
+            this.bindShortcuts();
+            System_3.System.unlockShortcutGroup(this.shortcutGroup);
+            console.log("[PDA] Bound events");
+        };
+        initPDA.prototype.onExit = function () {
+            System_3.System.lockShortcutGroup(this.shortcutGroup);
+            console.log("[PDA] Unbound events");
+        };
+        initPDA.prototype.addRows = function (rows, menu) {
+            for (var _i = 0, rows_2 = rows; _i < rows_2.length; _i++) {
+                var row = rows_2[_i];
+                var div = Utils_10.utils.create("div", {
+                    className: "row"
+                });
+                for (var _a = 0, row_2 = row; _a < row_2.length; _a++) {
+                    var node = row_2[_a];
+                    div.appendChild(node);
+                }
+                menu.add(div);
+            }
+        };
+        initPDA.prototype.testCase = function () {
+            return this.testCaseInput.value;
+        };
+        initPDA.prototype.buildTestCaseInput = function (container) {
+            var input = Utils_10.utils.create("input", {
+                type: "text",
+                placeholder: Settings_9.Strings.TEST_CASE
+            });
+            container.push([input]);
+            this.testCaseInput = input;
+        };
+        initPDA.prototype.highlightCurrentStates = function () {
+            var states = Settings_9.Settings.controller().currentStates();
+            Settings_9.Settings.automatonRenderer.recognitionHighlight(states);
+        };
+        initPDA.prototype.buildRecognitionControls = function (container) {
+            var disabledClass = Settings_9.Settings.disabledButtonClass;
+            this.fastRecognition = Utils_10.utils.create("img", {
+                className: "image_button",
+                src: "images/fastforward.svg",
+                title: Settings_9.Strings.FAST_RECOGNITION
+            });
+            this.stopRecognition = Utils_10.utils.create("img", {
+                className: "image_button " + disabledClass,
+                src: "images/stop.svg",
+                title: Settings_9.Strings.STOP_RECOGNITION
+            });
+            this.stepRecognition = Utils_10.utils.create("img", {
+                className: "image_button",
+                src: "images/play.svg",
+                title: Settings_9.Strings.STEP_RECOGNITION
+            });
+            container.push([this.fastRecognition, this.stepRecognition,
+                this.stopRecognition]);
+        };
+        initPDA.prototype.buildStack = function (container) {
+            this.stackContainer = Utils_10.utils.create("div", {
+                id: "stack"
+            });
+            this.stackContainer.style.display = "none";
+            container.push([this.stackContainer]);
+        };
+        initPDA.prototype.buildRecognitionProgress = function (container) {
+            this.progressContainer = Utils_10.utils.create("div", {
+                id: "recognition_progress"
+            });
+            this.progressContainer.style.display = "none";
+            container.push([this.progressContainer]);
+        };
+        initPDA.prototype.buildMultipleRecognition = function (container) {
+            this.multipleCaseArea = Utils_10.utils.create("textarea");
+            this.multipleCaseArea.rows = Settings_9.Settings.multRecognitionAreaRows;
+            this.multipleCaseArea.cols = Settings_9.Settings.multRecognitionAreaCols;
+            this.multipleCaseResults = Utils_10.utils.create("div");
+            var testCaseArea = Utils_10.utils.create("div", {
+                id: "multiple_recognition"
+            });
+            testCaseArea.appendChild(this.multipleCaseArea);
+            testCaseArea.appendChild(this.multipleCaseResults);
+            container.push([testCaseArea]);
+            this.multipleCaseButton = Utils_10.utils.create("img", {
+                className: "image_button",
+                src: "images/play.svg",
+                title: Settings_9.Strings.START_MULTIPLE_RECOGNITION
+            });
+            container.push([this.multipleCaseButton]);
+        };
+        initPDA.prototype.showAcceptanceStatus = function () {
+            var controller = Settings_9.Settings.controller();
+            if (controller.accepts()) {
+                this.progressContainer.style.color = Settings_9.Settings.acceptedTestCaseColor;
+                this.progressContainer.innerHTML = Settings_9.Strings.INPUT_ACCEPTED;
+            }
+            else {
+                this.progressContainer.style.color = Settings_9.Settings.rejectedTestCaseColor;
+                this.progressContainer.innerHTML = Settings_9.Strings.INPUT_REJECTED;
+            }
+        };
+        initPDA.prototype.showStackContent = function () {
+            var controller = Settings_9.Settings.controller();
+            var stackContent = controller.getStackContent();
+            this.stackContainer.innerHTML = stackContent.join("<br>");
+        };
+        initPDA.prototype.bindRecognitionEvents = function () {
+            var disabledClass = Settings_9.Settings.disabledButtonClass;
+            var fastForwardEnabled = true;
+            var stepEnabled = true;
+            var stopEnabled = false;
+            var self = this;
+            var fastForwardStatus = function (enabled) {
+                fastForwardEnabled = enabled;
+                self.fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+            };
+            var stepStatus = function (enabled) {
+                stepEnabled = enabled;
+                self.stepRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+            };
+            var stopStatus = function (enabled) {
+                stopEnabled = enabled;
+                self.stopRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+            };
+            this.fastRecognition.addEventListener("click", function () {
+                if (fastForwardEnabled) {
+                    Settings_9.Settings.automatonRenderer.lock();
+                    var input = self.testCase();
+                    var controller = Settings_9.Settings.controller();
+                    controller.fastForward(input);
+                    self.highlightCurrentStates();
+                    self.progressContainer.style.display = "";
+                    self.showAcceptanceStatus();
+                    self.stackContainer.style.display = "";
+                    self.showStackContent();
+                    fastForwardStatus(false);
+                    stepStatus(false);
+                    stopStatus(true);
+                    self.testCaseInput.disabled = true;
+                }
+            });
+            this.stopRecognition.addEventListener("click", function () {
+                if (stopEnabled) {
+                    Settings_9.Settings.controller().stop();
+                    Settings_9.Settings.automatonRenderer.recognitionDim();
+                    Settings_9.Settings.automatonRenderer.unlock();
+                    self.progressContainer.style.color = "black";
+                    self.progressContainer.style.display = "none";
+                    self.stackContainer.style.display = "none";
+                    fastForwardStatus(true);
+                    stepStatus(true);
+                    stopStatus(false);
+                    self.testCaseInput.disabled = false;
+                }
+            });
+            this.stepRecognition.addEventListener("click", function () {
+                if (stepEnabled) {
+                    fastForwardStatus(false);
+                    stopStatus(true);
+                    self.testCaseInput.disabled = true;
+                    var input = self.testCase();
+                    var controller = Settings_9.Settings.controller();
+                    if (controller.isStopped()) {
+                        controller.reset();
+                        Settings_9.Settings.automatonRenderer.lock();
+                        var sidebar = Utils_10.utils.id(Settings_9.Settings.sidebarID);
+                        var width = sidebar.offsetWidth;
+                        width -= 10;
+                        width -= 1;
+                        self.progressContainer.style.width = width + "px";
+                        self.stackContainer.style.display = "";
+                    }
+                    var finished = controller.finished(input);
+                    if (!finished) {
+                        controller.step(input);
+                        self.highlightCurrentStates();
+                        finished = controller.finished(input);
+                        self.showStackContent();
+                    }
+                    if (finished) {
+                        stepStatus(false);
+                        self.progressContainer.style.display = "";
+                        self.showAcceptanceStatus();
+                    }
+                }
+            });
+            this.multipleCaseButton.addEventListener("click", function () {
+                var testCases = self.multipleCaseArea.value.split("\n");
+                var controller = Settings_9.Settings.controller();
+                self.multipleCaseResults.innerHTML = "";
+                for (var _i = 0, testCases_2 = testCases; _i < testCases_2.length; _i++) {
+                    var input = testCases_2[_i];
+                    controller.fastForward(input);
+                    var result = Utils_10.utils.create("span");
+                    if (controller.accepts()) {
+                        result.style.color = Settings_9.Settings.acceptedTestCaseColor;
+                        result.innerHTML = Settings_9.Strings.INPUT_ACCEPTED;
+                    }
+                    else {
+                        result.style.color = Settings_9.Settings.rejectedTestCaseColor;
+                        result.innerHTML = Settings_9.Strings.INPUT_REJECTED;
+                    }
+                    self.multipleCaseResults.appendChild(result);
+                }
+            });
+        };
+        initPDA.prototype.bindShortcuts = function () {
+            var self = this;
+            if (!this.boundShortcuts) {
+                System_3.System.bindShortcut(Settings_9.Settings.shortcuts.focusTestCase, function () {
+                    self.testCaseInput.focus();
+                }, this.shortcutGroup);
+                System_3.System.bindShortcut(Settings_9.Settings.shortcuts.fastForward, function () {
+                    self.fastRecognition.click();
+                }, this.shortcutGroup);
+                System_3.System.bindShortcut(Settings_9.Settings.shortcuts.step, function () {
+                    self.stepRecognition.click();
+                }, this.shortcutGroup);
+                System_3.System.bindShortcut(Settings_9.Settings.shortcuts.stop, function () {
+                    self.stopRecognition.click();
+                }, this.shortcutGroup);
+                System_3.System.bindShortcut(Settings_9.Settings.shortcuts.multipleRecognition, function () {
+                    self.multipleCaseButton.click();
+                }, this.shortcutGroup);
+                this.boundShortcuts = true;
+            }
+            this.testCaseInput.addEventListener("keydown", function (e) {
+                if (e.keyCode == Keyboard_7.Keyboard.keys[Settings_9.Settings.shortcuts.dimTestCase[0]]) {
+                    if (self.testCaseInput == document.activeElement) {
+                        self.testCaseInput.blur();
+                    }
+                }
+            });
+        };
+        return initPDA;
+    }());
+    exports.initPDA = initPDA;
+});
+define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "System", "Utils"], function (require, exports, Keyboard_8, Menu_3, Settings_10, System_4, Utils_11) {
+    "use strict";
+    var initLBA = (function () {
+        function initLBA() {
+            this.shortcutGroup = "LBA";
+            this.boundShortcuts = false;
+            this.testCaseInput = null;
+            this.fastRecognition = null;
+            this.stepRecognition = null;
+            this.stopRecognition = null;
+            this.progressContainer = null;
+            this.tapeContainer = null;
+            this.multipleCaseArea = null;
+            this.multipleCaseResults = null;
+            this.multipleCaseButton = null;
+        }
+        initLBA.prototype.init = function () {
+            console.log("[LBA] Initializing...");
+            var menuList = [];
+            var recognitionMenu = new Menu_3.Menu(Settings_10.Strings.RECOGNITION);
+            var rows = [];
+            this.buildTestCaseInput(rows);
+            this.buildRecognitionControls(rows);
+            this.buildTape(rows);
+            this.buildRecognitionProgress(rows);
+            this.addRows(rows, recognitionMenu);
+            menuList.push(recognitionMenu);
+            var multipleRecognitionMenu = new Menu_3.Menu(Settings_10.Strings.MULTIPLE_RECOGNITION);
+            rows = [];
+            this.buildMultipleRecognition(rows);
+            this.addRows(rows, multipleRecognitionMenu);
+            menuList.push(multipleRecognitionMenu);
+            this.bindRecognitionEvents();
+            Settings_10.Settings.machines[Settings_10.Settings.Machine.LBA].sidebar = menuList;
+            console.log("[LBA] Initialized successfully");
+        };
+        initLBA.prototype.onEnter = function () {
+            this.bindShortcuts();
+            System_4.System.unlockShortcutGroup(this.shortcutGroup);
+            console.log("[LBA] Bound events");
+        };
+        initLBA.prototype.onExit = function () {
+            System_4.System.lockShortcutGroup(this.shortcutGroup);
+            console.log("[LBA] Unbound events");
+        };
+        initLBA.prototype.addRows = function (rows, menu) {
+            for (var _i = 0, rows_3 = rows; _i < rows_3.length; _i++) {
+                var row = rows_3[_i];
+                var div = Utils_11.utils.create("div", {
+                    className: "row"
+                });
+                for (var _a = 0, row_3 = row; _a < row_3.length; _a++) {
+                    var node = row_3[_a];
+                    div.appendChild(node);
+                }
+                menu.add(div);
+            }
+        };
+        initLBA.prototype.testCase = function () {
+            return this.testCaseInput.value;
+        };
+        initLBA.prototype.buildTestCaseInput = function (container) {
+            var input = Utils_11.utils.create("input", {
+                type: "text",
+                placeholder: Settings_10.Strings.TEST_CASE
+            });
+            container.push([input]);
+            this.testCaseInput = input;
+        };
+        initLBA.prototype.highlightCurrentStates = function () {
+            var states = Settings_10.Settings.controller().currentStates();
+            Settings_10.Settings.automatonRenderer.recognitionHighlight(states);
+        };
+        initLBA.prototype.buildRecognitionControls = function (container) {
+            var disabledClass = Settings_10.Settings.disabledButtonClass;
+            this.fastRecognition = Utils_11.utils.create("img", {
+                className: "image_button",
+                src: "images/fastforward.svg",
+                title: Settings_10.Strings.FAST_RECOGNITION
+            });
+            this.stopRecognition = Utils_11.utils.create("img", {
+                className: "image_button " + disabledClass,
+                src: "images/stop.svg",
+                title: Settings_10.Strings.STOP_RECOGNITION
+            });
+            this.stepRecognition = Utils_11.utils.create("img", {
+                className: "image_button",
+                src: "images/play.svg",
+                title: Settings_10.Strings.STEP_RECOGNITION
+            });
+            container.push([this.fastRecognition, this.stepRecognition,
+                this.stopRecognition]);
+        };
+        initLBA.prototype.buildTape = function (container) {
+            this.tapeContainer = Utils_11.utils.create("div", {
+                id: "tape"
+            });
+            this.tapeContainer.style.display = "none";
+            var displayedChars = Settings_10.Settings.tapeDisplayedChars;
+            for (var i = 0; i < displayedChars; i++) {
+                var cell = Utils_11.utils.create("div", {
+                    className: "tape_cell"
+                });
+                this.tapeContainer.appendChild(cell);
+            }
+            this.tapeContainer.children[(displayedChars - 1) / 2].classList.add("center");
+            container.push([this.tapeContainer]);
+        };
+        initLBA.prototype.buildRecognitionProgress = function (container) {
+            this.progressContainer = Utils_11.utils.create("div", {
+                id: "recognition_progress"
+            });
+            this.progressContainer.style.display = "none";
+            container.push([this.progressContainer]);
+        };
+        initLBA.prototype.buildMultipleRecognition = function (container) {
+            this.multipleCaseArea = Utils_11.utils.create("textarea");
+            this.multipleCaseArea.rows = Settings_10.Settings.multRecognitionAreaRows;
+            this.multipleCaseArea.cols = Settings_10.Settings.multRecognitionAreaCols;
+            this.multipleCaseResults = Utils_11.utils.create("div");
+            var testCaseArea = Utils_11.utils.create("div", {
+                id: "multiple_recognition"
+            });
+            testCaseArea.appendChild(this.multipleCaseArea);
+            testCaseArea.appendChild(this.multipleCaseResults);
+            container.push([testCaseArea]);
+            this.multipleCaseButton = Utils_11.utils.create("img", {
+                className: "image_button",
+                src: "images/play.svg",
+                title: Settings_10.Strings.START_MULTIPLE_RECOGNITION
+            });
+            container.push([this.multipleCaseButton]);
+        };
+        initLBA.prototype.showAcceptanceStatus = function () {
+            var controller = Settings_10.Settings.controller();
+            if (controller.accepts()) {
+                this.progressContainer.style.color = Settings_10.Settings.acceptedTestCaseColor;
+                this.progressContainer.innerHTML = Settings_10.Strings.INPUT_ACCEPTED;
+            }
+            else {
+                this.progressContainer.style.color = Settings_10.Settings.rejectedTestCaseColor;
+                if (controller.exhausted()) {
+                    this.progressContainer.innerHTML = Settings_10.Strings.INPUT_LOOPING;
+                }
+                else {
+                    this.progressContainer.innerHTML = Settings_10.Strings.INPUT_REJECTED;
+                }
+            }
+        };
+        initLBA.prototype.showTapeContent = function () {
+            var controller = Settings_10.Settings.controller();
+            var tapeContent = controller.getTapeContent();
+            var headPosition = controller.getHeadPosition();
+            var displayedChars = Settings_10.Settings.tapeDisplayedChars;
+            var offset = (displayedChars - 1) / 2;
+            var startIndex = headPosition - offset;
+            if (startIndex < 0) {
+                var buffer = [];
+                for (var i = 0; i < -startIndex; i++) {
+                    buffer.push("_");
+                }
+                tapeContent = buffer.concat(tapeContent);
+                startIndex = 0;
+            }
+            if (startIndex + displayedChars > tapeContent.length) {
+                var delta = startIndex + displayedChars - tapeContent.length;
+                for (var i = 0; i < delta; i++) {
+                    tapeContent.push("_");
+                }
+            }
+            var displayedContent = tapeContent.slice(startIndex, startIndex + displayedChars);
+            for (var i = 0; i < displayedChars; i++) {
+                this.tapeContainer.children[i].innerHTML = displayedContent[i];
+            }
+        };
+        initLBA.prototype.bindRecognitionEvents = function () {
+            var disabledClass = Settings_10.Settings.disabledButtonClass;
+            var fastForwardEnabled = true;
+            var stepEnabled = true;
+            var stopEnabled = false;
+            var self = this;
+            var fastForwardStatus = function (enabled) {
+                fastForwardEnabled = enabled;
+                self.fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+            };
+            var stepStatus = function (enabled) {
+                stepEnabled = enabled;
+                self.stepRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+            };
+            var stopStatus = function (enabled) {
+                stopEnabled = enabled;
+                self.stopRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+            };
+            this.fastRecognition.addEventListener("click", function () {
+                if (fastForwardEnabled) {
+                    Settings_10.Settings.automatonRenderer.lock();
+                    var input = self.testCase();
+                    var controller = Settings_10.Settings.controller();
+                    controller.fastForward(input);
+                    self.highlightCurrentStates();
+                    self.progressContainer.style.display = "";
+                    self.showAcceptanceStatus();
+                    self.tapeContainer.style.display = "";
+                    self.showTapeContent();
+                    fastForwardStatus(false);
+                    stepStatus(false);
+                    stopStatus(true);
+                    self.testCaseInput.disabled = true;
+                }
+            });
+            this.stopRecognition.addEventListener("click", function () {
+                if (stopEnabled) {
+                    Settings_10.Settings.controller().stop();
+                    Settings_10.Settings.automatonRenderer.recognitionDim();
+                    Settings_10.Settings.automatonRenderer.unlock();
                     self.progressContainer.style.color = "black";
                     self.progressContainer.style.display = "none";
                     self.tapeContainer.style.display = "none";
@@ -2691,11 +3345,11 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
                     stopStatus(true);
                     self.testCaseInput.disabled = true;
                     var input = self.testCase();
-                    var controller = Settings_8.Settings.controller();
+                    var controller = Settings_10.Settings.controller();
                     if (controller.isStopped()) {
                         controller.reset();
-                        Settings_8.Settings.automatonRenderer.lock();
-                        var sidebar = Utils_9.utils.id(Settings_8.Settings.sidebarID);
+                        Settings_10.Settings.automatonRenderer.lock();
+                        var sidebar = Utils_11.utils.id(Settings_10.Settings.sidebarID);
                         var width = sidebar.offsetWidth;
                         width -= 10;
                         width -= 1;
@@ -2718,23 +3372,23 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
             });
             this.multipleCaseButton.addEventListener("click", function () {
                 var testCases = self.multipleCaseArea.value.split("\n");
-                var controller = Settings_8.Settings.controller();
+                var controller = Settings_10.Settings.controller();
                 self.multipleCaseResults.innerHTML = "";
-                for (var _i = 0, testCases_2 = testCases; _i < testCases_2.length; _i++) {
-                    var input = testCases_2[_i];
+                for (var _i = 0, testCases_3 = testCases; _i < testCases_3.length; _i++) {
+                    var input = testCases_3[_i];
                     controller.fastForward(input);
-                    var result = Utils_9.utils.create("span");
+                    var result = Utils_11.utils.create("span");
                     if (controller.accepts()) {
-                        result.style.color = Settings_8.Settings.acceptedTestCaseColor;
-                        result.innerHTML = Settings_8.Strings.INPUT_ACCEPTED;
+                        result.style.color = Settings_10.Settings.acceptedTestCaseColor;
+                        result.innerHTML = Settings_10.Strings.INPUT_ACCEPTED;
                     }
                     else {
-                        result.style.color = Settings_8.Settings.rejectedTestCaseColor;
+                        result.style.color = Settings_10.Settings.rejectedTestCaseColor;
                         if (controller.exhausted()) {
-                            result.innerHTML = Settings_8.Strings.INPUT_LOOPING.split("<br>").join(" ");
+                            result.innerHTML = Settings_10.Strings.INPUT_LOOPING.split("<br>").join(" ");
                         }
                         else {
-                            result.innerHTML = Settings_8.Strings.INPUT_REJECTED;
+                            result.innerHTML = Settings_10.Strings.INPUT_REJECTED;
                         }
                     }
                     self.multipleCaseResults.appendChild(result);
@@ -2744,25 +3398,25 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
         initLBA.prototype.bindShortcuts = function () {
             var self = this;
             if (!this.boundShortcuts) {
-                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.focusTestCase, function () {
+                System_4.System.bindShortcut(Settings_10.Settings.shortcuts.focusTestCase, function () {
                     self.testCaseInput.focus();
                 }, this.shortcutGroup);
-                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.fastForward, function () {
+                System_4.System.bindShortcut(Settings_10.Settings.shortcuts.fastForward, function () {
                     self.fastRecognition.click();
                 }, this.shortcutGroup);
-                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.step, function () {
+                System_4.System.bindShortcut(Settings_10.Settings.shortcuts.step, function () {
                     self.stepRecognition.click();
                 }, this.shortcutGroup);
-                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.stop, function () {
+                System_4.System.bindShortcut(Settings_10.Settings.shortcuts.stop, function () {
                     self.stopRecognition.click();
                 }, this.shortcutGroup);
-                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.multipleRecognition, function () {
+                System_4.System.bindShortcut(Settings_10.Settings.shortcuts.multipleRecognition, function () {
                     self.multipleCaseButton.click();
                 }, this.shortcutGroup);
                 this.boundShortcuts = true;
             }
             this.testCaseInput.addEventListener("keydown", function (e) {
-                if (e.keyCode == Keyboard_6.Keyboard.keys[Settings_8.Settings.shortcuts.dimTestCase[0]]) {
+                if (e.keyCode == Keyboard_8.Keyboard.keys[Settings_10.Settings.shortcuts.dimTestCase[0]]) {
                     if (self.testCaseInput == document.activeElement) {
                         self.testCaseInput.blur();
                     }
@@ -2782,13 +3436,13 @@ define("lists/InitializerList", ["require", "exports", "machines/FA/initializer"
     __export(initializer_2);
     __export(initializer_3);
 });
-define("Initializer", ["require", "exports", "Utils"], function (require, exports, Utils_10) {
+define("Initializer", ["require", "exports", "Utils"], function (require, exports, Utils_12) {
     "use strict";
     var Initializer = (function () {
         function Initializer() {
         }
         Initializer.exec = function (initList) {
-            Utils_10.utils.foreach(initList, function (index, obj) {
+            Utils_12.utils.foreach(initList, function (index, obj) {
                 obj.init();
             });
         };
@@ -2796,7 +3450,7 @@ define("Initializer", ["require", "exports", "Utils"], function (require, export
     }());
     exports.Initializer = Initializer;
 });
-define("Settings", ["require", "exports", "lists/MachineList", "lists/ControllerList", "lists/LanguageList", "lists/InitializerList", "Initializer", "Utils"], function (require, exports, automata, controllers, lang, init, Initializer_1, Utils_11) {
+define("Settings", ["require", "exports", "lists/MachineList", "lists/ControllerList", "lists/LanguageList", "lists/InitializerList", "Initializer", "Utils"], function (require, exports, automata, controllers, lang, init, Initializer_1, Utils_13) {
     "use strict";
     var Settings;
     (function (Settings) {
@@ -2826,7 +3480,7 @@ define("Settings", ["require", "exports", "lists/MachineList", "lists/Controller
         Settings.stateLabelFontColor = "black";
         Settings.stateInitialMarkLength = 40;
         Settings.stateInitialMarkHeadLength = 15;
-        Settings.stateInitialMarkAngle = Utils_11.utils.toRadians(20);
+        Settings.stateInitialMarkAngle = Utils_13.utils.toRadians(20);
         Settings.stateInitialMarkColor = "blue";
         Settings.stateInitialMarkThickness = 2;
         Settings.stateHighlightPalette = {
@@ -2845,7 +3499,7 @@ define("Settings", ["require", "exports", "lists/MachineList", "lists/Controller
         Settings.edgeHighlightColor = "red";
         Settings.edgeArrowThickness = 2;
         Settings.edgeArrowLength = 30;
-        Settings.edgeArrowAngle = Utils_11.utils.toRadians(30);
+        Settings.edgeArrowAngle = Utils_13.utils.toRadians(30);
         Settings.edgeTextFontFamily = "arial";
         Settings.edgeTextFontSize = 20;
         Settings.edgeTextFontColor = "black";
@@ -2905,7 +3559,7 @@ define("Settings", ["require", "exports", "lists/MachineList", "lists/Controller
                     };
                 }
             }
-            Utils_11.utils.foreach(machineList, function (key, value) {
+            Utils_13.utils.foreach(machineList, function (key, value) {
                 Settings.machines[key] = value;
             });
             Initializer_1.Initializer.exec(Settings.initializerMap);
@@ -2930,7 +3584,7 @@ define("Settings", ["require", "exports", "lists/MachineList", "lists/Controller
     })(Settings = exports.Settings || (exports.Settings = {}));
     exports.Strings = Settings.language.strings;
 });
-define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_9, Utils_12) {
+define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_11, Utils_14) {
     "use strict";
     var Edge = (function () {
         function Edge() {
@@ -2944,7 +3598,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             this.curved = false;
             this.forcedRender = false;
             this.deleted = false;
-            this.defaultColor = Settings_9.Settings.edgeStrokeColor;
+            this.defaultColor = Settings_11.Settings.edgeStrokeColor;
             this.color = this.defaultColor;
             this.body = [];
             this.head = [];
@@ -3021,9 +3675,9 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
         };
         Edge.prototype.render = function (canvas) {
             var preservedOrigin = this.origin
-                && Utils_12.utils.samePoint(this.prevOriginPosition, this.origin.getPosition());
+                && Utils_14.utils.samePoint(this.prevOriginPosition, this.origin.getPosition());
             var preservedTarget = this.target
-                && Utils_12.utils.samePoint(this.prevTargetPosition, this.target.getPosition());
+                && Utils_14.utils.samePoint(this.prevTargetPosition, this.target.getPosition());
             if (!preservedOrigin || !preservedTarget || this.forcedRender) {
                 this.renderBody(canvas);
                 this.renderHead(canvas);
@@ -3054,8 +3708,8 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             var angle = Math.atan2(dy, dx);
             var sin = Math.sin(angle);
             var cos = Math.cos(angle);
-            var offsetX = Settings_9.Settings.stateRadius * cos;
-            var offsetY = Settings_9.Settings.stateRadius * sin;
+            var offsetX = Settings_11.Settings.stateRadius * cos;
+            var offsetY = Settings_11.Settings.stateRadius * sin;
             return {
                 x: offsetX,
                 y: offsetY
@@ -3084,7 +3738,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             }
             var dx = target.x - origin.x;
             var dy = target.y - origin.y;
-            var radius = Settings_9.Settings.stateRadius;
+            var radius = Settings_11.Settings.stateRadius;
             var offsets = this.stateCenterOffsets(dx, dy);
             if (dx * dx + dy * dy > radius * radius) {
                 origin.x += offsets.x;
@@ -3113,23 +3767,23 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 this.body.pop();
             }
             while (this.body.length < length) {
-                this.body.push(Utils_12.utils.line(canvas, 0, 0, 0, 0));
+                this.body.push(Utils_14.utils.line(canvas, 0, 0, 0, 0));
             }
             return true;
         };
         Edge.prototype.loop = function (canvas) {
-            var radius = Settings_9.Settings.stateRadius;
+            var radius = Settings_11.Settings.stateRadius;
             var pos = this.origin.getPosition();
             if (this.adjustBodyLength(canvas, 4)) {
                 for (var _i = 0, _a = this.body; _i < _a.length; _i++) {
                     var elem = _a[_i];
-                    elem.attr("stroke-width", Settings_9.Settings.edgeArrowThickness);
+                    elem.attr("stroke-width", Settings_11.Settings.edgeArrowThickness);
                 }
             }
-            this.body[0].attr("path", Utils_12.utils.linePath(pos.x + radius, pos.y, pos.x + 2 * radius, pos.y));
-            this.body[1].attr("path", Utils_12.utils.linePath(pos.x + 2 * radius, pos.y, pos.x + 2 * radius, pos.y - 2 * radius));
-            this.body[2].attr("path", Utils_12.utils.linePath(pos.x + 2 * radius, pos.y - 2 * radius, pos.x, pos.y - 2 * radius));
-            this.body[3].attr("path", Utils_12.utils.linePath(pos.x, pos.y - 2 * radius, pos.x, pos.y - radius));
+            this.body[0].attr("path", Utils_14.utils.linePath(pos.x + radius, pos.y, pos.x + 2 * radius, pos.y));
+            this.body[1].attr("path", Utils_14.utils.linePath(pos.x + 2 * radius, pos.y, pos.x + 2 * radius, pos.y - 2 * radius));
+            this.body[2].attr("path", Utils_14.utils.linePath(pos.x + 2 * radius, pos.y - 2 * radius, pos.x, pos.y - 2 * radius));
+            this.body[3].attr("path", Utils_14.utils.linePath(pos.x, pos.y - 2 * radius, pos.x, pos.y - radius));
         };
         Edge.prototype.curve = function (canvas, origin, target) {
             var dx = target.x - origin.x;
@@ -3147,21 +3801,21 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             if (this.adjustBodyLength(canvas, 3)) {
                 for (var _i = 0, _a = this.body; _i < _a.length; _i++) {
                     var elem = _a[_i];
-                    elem.attr("stroke-width", Settings_9.Settings.edgeArrowThickness);
+                    elem.attr("stroke-width", Settings_11.Settings.edgeArrowThickness);
                 }
             }
-            this.body[0].attr("path", Utils_12.utils.linePath(origin.x, origin.y, origin.x + offsets.x + dx * 0.125, origin.y + offsets.y + dy * 0.125));
-            this.body[1].attr("path", Utils_12.utils.linePath(origin.x + offsets.x + dx * 0.125, origin.y + offsets.y + dy * 0.125, origin.x + offsets.x + dx * 0.875, origin.y + offsets.y + dy * 0.875));
-            this.body[2].attr("path", Utils_12.utils.linePath(origin.x + offsets.x + dx * 0.875, origin.y + offsets.y + dy * 0.875, target.x, target.y));
+            this.body[0].attr("path", Utils_14.utils.linePath(origin.x, origin.y, origin.x + offsets.x + dx * 0.125, origin.y + offsets.y + dy * 0.125));
+            this.body[1].attr("path", Utils_14.utils.linePath(origin.x + offsets.x + dx * 0.125, origin.y + offsets.y + dy * 0.125, origin.x + offsets.x + dx * 0.875, origin.y + offsets.y + dy * 0.875));
+            this.body[2].attr("path", Utils_14.utils.linePath(origin.x + offsets.x + dx * 0.875, origin.y + offsets.y + dy * 0.875, target.x, target.y));
         };
         Edge.prototype.normal = function (canvas, origin, target) {
             if (this.adjustBodyLength(canvas, 1)) {
                 for (var _i = 0, _a = this.body; _i < _a.length; _i++) {
                     var elem = _a[_i];
-                    elem.attr("stroke-width", Settings_9.Settings.edgeArrowThickness);
+                    elem.attr("stroke-width", Settings_11.Settings.edgeArrowThickness);
                 }
             }
-            this.body[0].attr("path", Utils_12.utils.linePath(origin.x, origin.y, target.x, target.y));
+            this.body[0].attr("path", Utils_14.utils.linePath(origin.x, origin.y, target.x, target.y));
         };
         Edge.prototype.renderHead = function (canvas) {
             if (!this.target) {
@@ -3173,7 +3827,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             var dy;
             if (this.origin == this.target) {
                 var pos = this.origin.getPosition();
-                var radius = Settings_9.Settings.stateRadius;
+                var radius = Settings_11.Settings.stateRadius;
                 origin = {
                     x: pos.x,
                     y: pos.y - 2 * radius
@@ -3209,26 +3863,26 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 dx -= offsets.x;
                 dy -= offsets.y;
             }
-            var arrowLength = Settings_9.Settings.edgeArrowLength;
-            var alpha = Settings_9.Settings.edgeArrowAngle;
+            var arrowLength = Settings_11.Settings.edgeArrowLength;
+            var alpha = Settings_11.Settings.edgeArrowAngle;
             var edgeLength = Math.sqrt(dx * dx + dy * dy);
             var u = 1 - arrowLength / edgeLength;
             var ref = {
                 x: origin.x + u * dx,
                 y: origin.y + u * dy
             };
-            var p1 = Utils_12.utils.rotatePoint(ref, target, alpha);
-            var p2 = Utils_12.utils.rotatePoint(ref, target, -alpha);
+            var p1 = Utils_14.utils.rotatePoint(ref, target, alpha);
+            var p2 = Utils_14.utils.rotatePoint(ref, target, -alpha);
             if (!this.head.length) {
-                this.head.push(Utils_12.utils.line(canvas, 0, 0, 0, 0));
-                this.head.push(Utils_12.utils.line(canvas, 0, 0, 0, 0));
+                this.head.push(Utils_14.utils.line(canvas, 0, 0, 0, 0));
+                this.head.push(Utils_14.utils.line(canvas, 0, 0, 0, 0));
                 for (var _i = 0, _a = this.head; _i < _a.length; _i++) {
                     var elem = _a[_i];
-                    elem.attr("stroke-width", Settings_9.Settings.edgeArrowThickness);
+                    elem.attr("stroke-width", Settings_11.Settings.edgeArrowThickness);
                 }
             }
-            this.head[0].attr("path", Utils_12.utils.linePath(p1.x, p1.y, target.x, target.y));
-            this.head[1].attr("path", Utils_12.utils.linePath(p2.x, p2.y, target.x, target.y));
+            this.head[0].attr("path", Utils_14.utils.linePath(p1.x, p1.y, target.x, target.y));
+            this.head[1].attr("path", Utils_14.utils.linePath(p2.x, p2.y, target.x, target.y));
         };
         Edge.prototype.preparedText = function () {
             return this.textList.join("\n");
@@ -3239,7 +3893,7 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             var x;
             var y;
             if (this.origin == this.target) {
-                var radius = Settings_9.Settings.stateRadius;
+                var radius = Settings_11.Settings.stateRadius;
                 x = origin.x + radius;
                 y = origin.y - 2 * radius;
             }
@@ -3258,10 +3912,10 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
             }
             if (!this.textContainer) {
                 this.textContainer = canvas.text(x, y, this.preparedText());
-                this.textContainer.attr("font-family", Settings_9.Settings.edgeTextFontFamily);
-                this.textContainer.attr("font-size", Settings_9.Settings.edgeTextFontSize);
-                this.textContainer.attr("stroke", Settings_9.Settings.edgeTextFontColor);
-                this.textContainer.attr("fill", Settings_9.Settings.edgeTextFontColor);
+                this.textContainer.attr("font-family", Settings_11.Settings.edgeTextFontFamily);
+                this.textContainer.attr("font-size", Settings_11.Settings.edgeTextFontSize);
+                this.textContainer.attr("stroke", Settings_11.Settings.edgeTextFontColor);
+                this.textContainer.attr("fill", Settings_11.Settings.edgeTextFontColor);
             }
             else {
                 this.textContainer.attr("x", x);
@@ -3270,25 +3924,25 @@ define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (
                 this.textContainer.transform("");
             }
             var angleRad = Math.atan2(target.y - origin.y, target.x - origin.x);
-            var angle = Utils_12.utils.toDegrees(angleRad);
+            var angle = Utils_14.utils.toDegrees(angleRad);
             if (angle < -90 || angle > 90) {
                 angle = (angle + 180) % 360;
             }
             this.textContainer.rotate(angle);
-            y -= Settings_9.Settings.edgeTextFontSize * .6;
-            y -= Settings_9.Settings.edgeTextFontSize * (this.textList.length - 1) * .7;
+            y -= Settings_11.Settings.edgeTextFontSize * .6;
+            y -= Settings_11.Settings.edgeTextFontSize * (this.textList.length - 1) * .7;
             this.textContainer.attr("y", y);
         };
         return Edge;
     }());
     exports.Edge = Edge;
 });
-define("interface/EdgeUtils", ["require", "exports", "Settings"], function (require, exports, Settings_10) {
+define("interface/EdgeUtils", ["require", "exports", "Settings"], function (require, exports, Settings_12) {
     "use strict";
     var EdgeUtils;
     (function (EdgeUtils) {
         function addEdgeData(edge, data) {
-            var controller = Settings_10.Settings.controller();
+            var controller = Settings_12.Settings.controller();
             edge.addText(controller.edgeDataToText(data));
             edge.addData(data);
             controller.createEdge(edge.getOrigin(), edge.getTarget(), data);
@@ -3296,13 +3950,13 @@ define("interface/EdgeUtils", ["require", "exports", "Settings"], function (requ
         EdgeUtils.addEdgeData = addEdgeData;
     })(EdgeUtils = exports.EdgeUtils || (exports.EdgeUtils = {}));
 });
-define("Persistence", ["require", "exports", "interface/Edge", "interface/EdgeUtils", "Settings", "interface/State"], function (require, exports, Edge_1, EdgeUtils_1, Settings_11, State_1) {
+define("Persistence", ["require", "exports", "interface/Edge", "interface/EdgeUtils", "Settings", "interface/State"], function (require, exports, Edge_1, EdgeUtils_1, Settings_13, State_1) {
     "use strict";
     var Persistence;
     (function (Persistence) {
         function save(stateList, edgeList, initialState) {
             var result = [
-                Settings_11.Settings.Machine[Settings_11.Settings.currentMachine],
+                Settings_13.Settings.Machine[Settings_13.Settings.currentMachine],
                 [],
                 [],
                 -1
@@ -3348,7 +4002,7 @@ define("Persistence", ["require", "exports", "interface/Edge", "interface/EdgeUt
                 loadedData.error = true;
                 return loadedData;
             }
-            var machineType = Settings_11.Settings.Machine[Settings_11.Settings.currentMachine];
+            var machineType = Settings_13.Settings.Machine[Settings_13.Settings.currentMachine];
             var validation = obj[0] == machineType
                 && obj[1] instanceof Array
                 && obj[2] instanceof Array
@@ -3371,7 +4025,7 @@ define("Persistence", ["require", "exports", "interface/Edge", "interface/EdgeUt
         Persistence.load = load;
         function loadStates(dataObj, result, callback) {
             var nameToIndex = {};
-            var controller = Settings_11.Settings.controller();
+            var controller = Settings_13.Settings.controller();
             var i = 0;
             for (var _i = 0, _a = dataObj[1]; _i < _a.length; _i++) {
                 var data = _a[_i];
@@ -3450,7 +4104,7 @@ define("Memento", ["require", "exports"], function (require, exports) {
     }());
     exports.Memento = Memento;
 });
-define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "Persistence", "Prompt", "Settings", "interface/State", "System", "interface/Table", "Utils"], function (require, exports, Edge_2, Persistence_1, Prompt_4, Settings_12, State_2, System_4, Table_1, Utils_13) {
+define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "Persistence", "Prompt", "Settings", "interface/State", "System", "interface/Table", "Utils"], function (require, exports, Edge_2, Persistence_1, Prompt_4, Settings_14, State_2, System_5, Table_1, Utils_15) {
     "use strict";
     var AutomatonRenderer = (function () {
         function AutomatonRenderer(canvas, node, memento) {
@@ -3475,12 +4129,12 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.bindShortcuts();
             this.bindFormalDefinitionListener();
             var self = this;
-            System_4.System.addLanguageChangeObserver({
+            System_5.System.addLanguageChangeObserver({
                 onLanguageChange: function () {
                     self.bindFormalDefinitionListener();
                 }
             });
-            System_4.System.addMachineChangeObserver({
+            System_5.System.addMachineChangeObserver({
                 onMachineChange: function () {
                     self.bindFormalDefinitionListener();
                 }
@@ -3499,7 +4153,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.edgeList = [];
             this.initialState = null;
             this.clearSelection();
-            Settings_12.Settings.controller().clear();
+            Settings_14.Settings.controller().clear();
         };
         AutomatonRenderer.prototype.empty = function () {
             return this.stateList.length == 0;
@@ -3512,7 +4166,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.frozenMemento = true;
             var loadedData = Persistence_1.Persistence.load(content);
             if (loadedData.error) {
-                alert(Settings_12.Strings.INVALID_FILE);
+                alert(Settings_14.Strings.INVALID_FILE);
                 return;
             }
             this.stateList = this.stateList.concat(loadedData.stateList);
@@ -3544,7 +4198,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             }
             for (var _b = 0, stateNames_1 = stateNames; _b < stateNames_1.length; _b++) {
                 var name_2 = stateNames_1[_b];
-                nameMapping[name_2].applyPalette(Settings_12.Settings.stateRecognitionPalette);
+                nameMapping[name_2].applyPalette(Settings_14.Settings.stateRecognitionPalette);
             }
             for (var _c = 0, _d = this.stateList; _c < _d.length; _c++) {
                 var state = _d[_c];
@@ -3560,21 +4214,21 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.highlightedState = null;
         };
         AutomatonRenderer.prototype.lock = function () {
-            System_4.System.lockShortcutGroup(Settings_12.Settings.canvasShortcutID);
+            System_5.System.lockShortcutGroup(Settings_14.Settings.canvasShortcutID);
             this.locked = true;
         };
         AutomatonRenderer.prototype.unlock = function () {
-            System_4.System.unlockShortcutGroup(Settings_12.Settings.canvasShortcutID);
+            System_5.System.unlockShortcutGroup(Settings_14.Settings.canvasShortcutID);
             this.locked = false;
         };
         AutomatonRenderer.prototype.stateManualCreation = function () {
-            var stateRadius = Settings_12.Settings.stateRadius;
+            var stateRadius = Settings_14.Settings.stateRadius;
             this.newStateAt(stateRadius, stateRadius);
         };
         AutomatonRenderer.prototype.edgeManualCreation = function () {
             if (!this.locked) {
                 var self_1 = this;
-                Prompt_4.Prompt.simple(Settings_12.Strings.EDGE_MANUAL_CREATION, 2, function (data) {
+                Prompt_4.Prompt.simple(Settings_14.Strings.EDGE_MANUAL_CREATION, 2, function (data) {
                     var edge = new Edge_2.Edge();
                     for (var _i = 0, _a = self_1.stateList; _i < _a.length; _i++) {
                         var state = _a[_i];
@@ -3591,7 +4245,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                         self_1.finishEdge(edge.getTarget());
                     }
                     else {
-                        alert(Settings_12.Strings.ERROR_INVALID_STATE_NAME);
+                        alert(Settings_14.Strings.ERROR_INVALID_STATE_NAME);
                     }
                 });
             }
@@ -3604,19 +4258,19 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     self.memento.push(self.save());
                 }
                 if (!definitionContainer) {
-                    definitionContainer = Utils_13.utils.create("div");
-                    Settings_12.Settings.sidebar.updateFormalDefinition(definitionContainer);
+                    definitionContainer = Utils_15.utils.create("div");
+                    Settings_14.Settings.sidebar.updateFormalDefinition(definitionContainer);
                 }
                 definitionContainer.innerHTML = self.buildFormalDefinition();
             };
-            Settings_12.Settings.controller().setEditingCallback(callback);
+            Settings_14.Settings.controller().setEditingCallback(callback);
             callback();
         };
         AutomatonRenderer.prototype.buildFormalDefinition = function () {
-            var formalDefinition = Settings_12.Settings.controller().formalDefinition();
+            var formalDefinition = Settings_14.Settings.controller().formalDefinition();
             var tupleSequence = formalDefinition.tupleSequence;
             var content = "M = (" + tupleSequence.join(", ") + ")";
-            content += Settings_12.Strings.DEFINITION_WHERE_SUFFIX + "<br>";
+            content += Settings_14.Strings.DEFINITION_WHERE_SUFFIX + "<br>";
             for (var _i = 0, _a = formalDefinition.parameterSequence; _i < _a.length; _i++) {
                 var parameter = _a[_i];
                 var value = formalDefinition.parameterValues[parameter];
@@ -3630,7 +4284,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 }
                 else if (type == "undefined") {
                     content += "<span class='none'>";
-                    content += Settings_12.Strings.NO_INITIAL_STATE;
+                    content += Settings_14.Strings.NO_INITIAL_STATE;
                     content += "</span>";
                 }
                 else if (value.hasOwnProperty("list")) {
@@ -3639,7 +4293,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                         var table = new Table_1.Table(list.length, list[0].length);
                         for (var i = 0; i < list.length; i++) {
                             for (var j = 0; j < list[i].length; j++) {
-                                table.add(Utils_13.utils.create("span", {
+                                table.add(Utils_15.utils.create("span", {
                                     innerHTML: list[i][j]
                                 }));
                             }
@@ -3650,7 +4304,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     }
                     else {
                         content += "<span class='none'>";
-                        content += Settings_12.Strings.NO_TRANSITIONS;
+                        content += Settings_14.Strings.NO_TRANSITIONS;
                         content += "</span>";
                     }
                 }
@@ -3668,7 +4322,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     this.highlightedState.removePalette();
                     this.highlightedState.render(this.canvas);
                 }
-                state.applyPalette(Settings_12.Settings.stateHighlightPalette);
+                state.applyPalette(Settings_14.Settings.stateHighlightPalette);
                 this.highlightedState = state;
                 state.render(this.canvas);
                 this.updateEditableState(state);
@@ -3679,7 +4333,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 this.highlightedState.removePalette();
                 this.highlightedState.render(this.canvas);
                 this.highlightedState = null;
-                Settings_12.Settings.sidebar.unsetSelectedEntityContent();
+                Settings_14.Settings.sidebar.unsetSelectedEntityContent();
             }
         };
         AutomatonRenderer.prototype.selectEdge = function (edge) {
@@ -3689,7 +4343,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     this.highlightedEdge.removeCustomColor();
                     this.highlightedEdge.render(this.canvas);
                 }
-                edge.setCustomColor(Settings_12.Settings.edgeHighlightColor);
+                edge.setCustomColor(Settings_14.Settings.edgeHighlightColor);
                 this.highlightedEdge = edge;
                 edge.render(this.canvas);
                 this.updateEditableEdge(edge);
@@ -3700,31 +4354,31 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 this.highlightedEdge.removeCustomColor();
                 this.highlightedEdge.render(this.canvas);
                 this.highlightedEdge = null;
-                Settings_12.Settings.sidebar.unsetSelectedEntityContent();
+                Settings_14.Settings.sidebar.unsetSelectedEntityContent();
             }
         };
         AutomatonRenderer.prototype.updateEditableState = function (state) {
-            Settings_12.Settings.sidebar.unsetSelectedEntityContent();
+            Settings_14.Settings.sidebar.unsetSelectedEntityContent();
             if (state) {
-                Settings_12.Settings.sidebar.setSelectedEntityContent(this.showEditableState(state));
+                Settings_14.Settings.sidebar.setSelectedEntityContent(this.showEditableState(state));
             }
         };
         AutomatonRenderer.prototype.updateEditableEdge = function (edge) {
-            Settings_12.Settings.sidebar.unsetSelectedEntityContent();
+            Settings_14.Settings.sidebar.unsetSelectedEntityContent();
             if (edge) {
-                Settings_12.Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
+                Settings_14.Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
             }
         };
         AutomatonRenderer.prototype.showEditableState = function (state) {
-            var container = Utils_13.utils.create("div");
+            var container = Utils_15.utils.create("div");
             var table = new Table_1.Table(4, 3);
             var canvas = this.canvas;
             var self = this;
-            var renameButton = Utils_13.utils.create("input", {
+            var renameButton = Utils_15.utils.create("input", {
                 type: "button",
-                value: Settings_12.Strings.RENAME_STATE,
+                value: Settings_14.Strings.RENAME_STATE,
                 click: function () {
-                    var message = new Prompt_4.Prompt(Settings_12.Strings.STATE_RENAME_ACTION);
+                    var message = new Prompt_4.Prompt(Settings_14.Strings.STATE_RENAME_ACTION);
                     message.addInput({
                         validator: function (content) {
                             return content.length <= 6;
@@ -3733,49 +4387,49 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     message.show();
                 }
             });
-            var toggleInitialButton = Utils_13.utils.create("input", {
+            var toggleInitialButton = Utils_15.utils.create("input", {
                 type: "button",
-                value: Settings_12.Strings.TOGGLE_PROPERTY,
+                value: Settings_14.Strings.TOGGLE_PROPERTY,
                 click: function () {
                     self.setInitialState(state);
                     state.render(canvas);
-                    $("#entity_initial").html(state.isInitial() ? Settings_12.Strings.YES
-                        : Settings_12.Strings.NO);
+                    $("#entity_initial").html(state.isInitial() ? Settings_14.Strings.YES
+                        : Settings_14.Strings.NO);
                 }
             });
-            var toggleFinalButton = Utils_13.utils.create("input", {
+            var toggleFinalButton = Utils_15.utils.create("input", {
                 type: "button",
-                value: Settings_12.Strings.TOGGLE_PROPERTY,
+                value: Settings_14.Strings.TOGGLE_PROPERTY,
                 click: function () {
                     self.changeFinalFlag(state, !state.isFinal());
                     state.render(canvas);
-                    $("#entity_final").html(state.isFinal() ? Settings_12.Strings.YES
-                        : Settings_12.Strings.NO);
+                    $("#entity_final").html(state.isFinal() ? Settings_14.Strings.YES
+                        : Settings_14.Strings.NO);
                 }
             });
-            var deleteButton = Utils_13.utils.create("input", {
+            var deleteButton = Utils_15.utils.create("input", {
                 type: "button",
-                value: Settings_12.Strings.DELETE_STATE,
+                value: Settings_14.Strings.DELETE_STATE,
                 click: function () {
                     self.deleteState(state);
                     self.clearSelection();
-                    Settings_12.Settings.sidebar.unsetSelectedEntityContent();
+                    Settings_14.Settings.sidebar.unsetSelectedEntityContent();
                 }
             });
-            table.add(Utils_13.utils.create("span", { innerHTML: Settings_12.Strings.STATE_NAME + ":" }));
-            table.add(Utils_13.utils.create("span", { innerHTML: state.getName(),
+            table.add(Utils_15.utils.create("span", { innerHTML: Settings_14.Strings.STATE_NAME + ":" }));
+            table.add(Utils_15.utils.create("span", { innerHTML: state.getName(),
                 className: "property_value",
                 id: "entity_name" }));
             table.add(renameButton);
-            table.add(Utils_13.utils.create("span", { innerHTML: Settings_12.Strings.STATE_IS_INITIAL + ":" }));
-            table.add(Utils_13.utils.create("span", { innerHTML: state.isInitial() ? Settings_12.Strings.YES
-                    : Settings_12.Strings.NO,
+            table.add(Utils_15.utils.create("span", { innerHTML: Settings_14.Strings.STATE_IS_INITIAL + ":" }));
+            table.add(Utils_15.utils.create("span", { innerHTML: state.isInitial() ? Settings_14.Strings.YES
+                    : Settings_14.Strings.NO,
                 className: "property_value",
                 id: "entity_initial" }));
             table.add(toggleInitialButton);
-            table.add(Utils_13.utils.create("span", { innerHTML: Settings_12.Strings.STATE_IS_FINAL + ":" }));
-            table.add(Utils_13.utils.create("span", { innerHTML: state.isFinal() ? Settings_12.Strings.YES
-                    : Settings_12.Strings.NO,
+            table.add(Utils_15.utils.create("span", { innerHTML: Settings_14.Strings.STATE_IS_FINAL + ":" }));
+            table.add(Utils_15.utils.create("span", { innerHTML: state.isFinal() ? Settings_14.Strings.YES
+                    : Settings_14.Strings.NO,
                 className: "property_value",
                 id: "entity_final" }));
             table.add(toggleFinalButton);
@@ -3834,15 +4488,15 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             }
         };
         AutomatonRenderer.prototype.showEditableEdge = function (edge) {
-            var container = Utils_13.utils.create("div");
+            var container = Utils_15.utils.create("div");
             var table = new Table_1.Table(5, 3);
             var canvas = this.canvas;
             var self = this;
-            var changeOriginButton = Utils_13.utils.create("input", {
+            var changeOriginButton = Utils_15.utils.create("input", {
                 type: "button",
-                value: Settings_12.Strings.CHANGE_PROPERTY,
+                value: Settings_14.Strings.CHANGE_PROPERTY,
                 click: function () {
-                    var newOrigin = prompt(Settings_12.Strings.EDGE_ENTER_NEW_ORIGIN);
+                    var newOrigin = prompt(Settings_14.Strings.EDGE_ENTER_NEW_ORIGIN);
                     if (newOrigin !== null) {
                         for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
                             var state = _a[_i];
@@ -3858,11 +4512,11 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     }
                 }
             });
-            var changeTargetButton = Utils_13.utils.create("input", {
+            var changeTargetButton = Utils_15.utils.create("input", {
                 type: "button",
-                value: Settings_12.Strings.CHANGE_PROPERTY,
+                value: Settings_14.Strings.CHANGE_PROPERTY,
                 click: function () {
-                    var newTarget = prompt(Settings_12.Strings.EDGE_ENTER_NEW_TARGET);
+                    var newTarget = prompt(Settings_14.Strings.EDGE_ENTER_NEW_TARGET);
                     if (newTarget !== null) {
                         for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
                             var state = _a[_i];
@@ -3878,13 +4532,13 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     }
                 }
             });
-            var changeTransitionButton = Utils_13.utils.create("input", {
+            var changeTransitionButton = Utils_15.utils.create("input", {
                 type: "button",
-                value: Settings_12.Strings.CHANGE_PROPERTY,
+                value: Settings_14.Strings.CHANGE_PROPERTY,
                 click: function () {
                     var transitionSelector = $("#entity_transition_list").get(0);
                     var selectedIndex = transitionSelector.selectedIndex;
-                    var controller = Settings_12.Settings.controller();
+                    var controller = Settings_14.Settings.controller();
                     controller.edgePrompt(function (data, content) {
                         var origin = edge.getOrigin();
                         var target = edge.getTarget();
@@ -3898,13 +4552,13 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     });
                 }
             });
-            var deleteTransitionButton = Utils_13.utils.create("input", {
+            var deleteTransitionButton = Utils_15.utils.create("input", {
                 type: "button",
-                value: Settings_12.Strings.DELETE_SELECTED_TRANSITION,
+                value: Settings_14.Strings.DELETE_SELECTED_TRANSITION,
                 click: function () {
                     var transitionSelector = $("#entity_transition_list").get(0);
                     var selectedIndex = transitionSelector.selectedIndex;
-                    var controller = Settings_12.Settings.controller();
+                    var controller = Settings_14.Settings.controller();
                     var origin = edge.getOrigin();
                     var target = edge.getTarget();
                     var dataList = edge.getDataList();
@@ -3914,7 +4568,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     if (dataList.length == 0) {
                         self.deleteEdge(edge);
                         self.clearSelection();
-                        Settings_12.Settings.sidebar.unsetSelectedEntityContent();
+                        Settings_14.Settings.sidebar.unsetSelectedEntityContent();
                     }
                     else {
                         edge.render(self.canvas);
@@ -3922,38 +4576,38 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     }
                 }
             });
-            var deleteAllButton = Utils_13.utils.create("input", {
-                title: Utils_13.utils.printShortcut(Settings_12.Settings.shortcuts.deleteEntity),
+            var deleteAllButton = Utils_15.utils.create("input", {
+                title: Utils_15.utils.printShortcut(Settings_14.Settings.shortcuts.deleteEntity),
                 type: "button",
-                value: Settings_12.Strings.DELETE_ALL_TRANSITIONS,
+                value: Settings_14.Strings.DELETE_ALL_TRANSITIONS,
                 click: function () {
                     self.deleteEdge(edge);
                     self.clearSelection();
-                    Settings_12.Settings.sidebar.unsetSelectedEntityContent();
+                    Settings_14.Settings.sidebar.unsetSelectedEntityContent();
                 }
             });
-            table.add(Utils_13.utils.create("span", { innerHTML: Settings_12.Strings.ORIGIN + ":" }));
-            table.add(Utils_13.utils.create("span", { innerHTML: edge.getOrigin().getName(),
+            table.add(Utils_15.utils.create("span", { innerHTML: Settings_14.Strings.ORIGIN + ":" }));
+            table.add(Utils_15.utils.create("span", { innerHTML: edge.getOrigin().getName(),
                 className: "property_value",
                 id: "entity_origin" }));
             table.add(changeOriginButton);
-            table.add(Utils_13.utils.create("span", { innerHTML: Settings_12.Strings.TARGET + ":" }));
-            table.add(Utils_13.utils.create("span", { innerHTML: edge.getTarget().getName(),
+            table.add(Utils_15.utils.create("span", { innerHTML: Settings_14.Strings.TARGET + ":" }));
+            table.add(Utils_15.utils.create("span", { innerHTML: edge.getTarget().getName(),
                 className: "property_value",
                 id: "entity_target" }));
             table.add(changeTargetButton);
-            var textSelector = Utils_13.utils.create("select", {
+            var textSelector = Utils_15.utils.create("select", {
                 id: "entity_transition_list"
             });
             var textList = edge.getTextList();
             var i = 0;
             for (var _i = 0, textList_1 = textList; _i < textList_1.length; _i++) {
                 var text = textList_1[_i];
-                var option = Utils_13.utils.create("option", { value: i, innerHTML: text });
+                var option = Utils_15.utils.create("option", { value: i, innerHTML: text });
                 textSelector.appendChild(option);
                 i++;
             }
-            table.add(Utils_13.utils.create("span", { innerHTML: Settings_12.Strings.TRANSITIONS + ":" }));
+            table.add(Utils_15.utils.create("span", { innerHTML: Settings_14.Strings.TRANSITIONS + ":" }));
             table.add(textSelector);
             table.add(changeTransitionButton);
             table.add(deleteTransitionButton, 3);
@@ -3997,11 +4651,11 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             state.drag(function () {
                 self.updateEdges();
             }, function (distanceSquared, event) {
-                if (!self.locked && distanceSquared <= Settings_12.Settings.stateDragTolerance) {
+                if (!self.locked && distanceSquared <= Settings_14.Settings.stateDragTolerance) {
                     if (self.edgeMode) {
                         self.finishEdge(state);
                     }
-                    else if (Utils_13.utils.isRightClick(event)) {
+                    else if (Utils_15.utils.isRightClick(event)) {
                         self.beginEdge(state);
                     }
                     else if (state == self.highlightedState) {
@@ -4025,7 +4679,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.edgeMode = false;
             var origin = this.currentEdge.getOrigin();
             var edgeText = function (callback, fallback) {
-                var controller = Settings_12.Settings.controller();
+                var controller = Settings_14.Settings.controller();
                 controller.edgePrompt(function (data, content) {
                     controller.createEdge(origin, state, data);
                     callback(data, content);
@@ -4095,7 +4749,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         AutomatonRenderer.prototype.clearSelection = function () {
             this.highlightedState = null;
             this.highlightedEdge = null;
-            Settings_12.Settings.sidebar.unsetSelectedEntityContent();
+            Settings_14.Settings.sidebar.unsetSelectedEntityContent();
             if (this.edgeMode) {
                 this.edgeMode = false;
                 this.currentEdge.remove();
@@ -4110,12 +4764,12 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 this.bindStateEvents(state_5);
                 var self_2 = this;
                 var stateNamePrompt_1 = function () {
-                    Prompt_4.Prompt.simple(Settings_12.Strings.STATE_MANUAL_CREATION, 1, function (data) {
+                    Prompt_4.Prompt.simple(Settings_14.Strings.STATE_MANUAL_CREATION, 1, function (data) {
                         var name = data[0];
                         for (var _i = 0, _a = self_2.stateList; _i < _a.length; _i++) {
                             var state_6 = _a[_i];
                             if (state_6.getName() == name) {
-                                alert(Settings_12.Strings.DUPLICATE_STATE_NAME);
+                                alert(Settings_14.Strings.DUPLICATE_STATE_NAME);
                                 return stateNamePrompt_1();
                             }
                         }
@@ -4138,10 +4792,10 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             }
             state.render(this.canvas);
             this.stateList.push(state);
-            Settings_12.Settings.controller().createState(state);
+            Settings_14.Settings.controller().createState(state);
         };
         AutomatonRenderer.prototype.setInitialState = function (state) {
-            var controller = Settings_12.Settings.controller();
+            var controller = Settings_14.Settings.controller();
             if (state == this.initialState) {
                 state.setInitial(false);
                 controller.changeInitialFlag(state);
@@ -4160,7 +4814,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         };
         AutomatonRenderer.prototype.changeFinalFlag = function (state, value) {
             state.setFinal(value);
-            Settings_12.Settings.controller().changeFinalFlag(state);
+            Settings_14.Settings.controller().changeFinalFlag(state);
         };
         AutomatonRenderer.prototype.deleteState = function (state) {
             for (var i = 0; i < this.edgeList.length; i++) {
@@ -4181,7 +4835,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     break;
                 }
             }
-            Settings_12.Settings.controller().deleteState(state);
+            Settings_14.Settings.controller().deleteState(state);
         };
         AutomatonRenderer.prototype.deleteEdge = function (edge) {
             for (var i = 0; i < this.edgeList.length; i++) {
@@ -4191,7 +4845,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     var origin = edge.getOrigin();
                     var target = edge.getTarget();
                     var dataLists = edge.getDataList();
-                    var controller = Settings_12.Settings.controller();
+                    var controller = Settings_14.Settings.controller();
                     for (var _i = 0, dataLists_1 = dataLists; _i < dataLists_1.length; _i++) {
                         var data = dataLists_1[_i];
                         controller.deleteEdge(origin, target, data);
@@ -4227,14 +4881,14 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         };
         AutomatonRenderer.prototype.bindShortcuts = function () {
             var self = this;
-            var group = Settings_12.Settings.canvasShortcutID;
-            System_4.System.bindShortcut(Settings_12.Settings.shortcuts.toggleInitial, function () {
+            var group = Settings_14.Settings.canvasShortcutID;
+            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.toggleInitial, function () {
                 self.toggleInitial();
             }, group);
-            System_4.System.bindShortcut(Settings_12.Settings.shortcuts.toggleFinal, function () {
+            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.toggleFinal, function () {
                 self.toggleFinal();
             }, group);
-            System_4.System.bindShortcut(Settings_12.Settings.shortcuts.dimSelection, function () {
+            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.dimSelection, function () {
                 if (self.edgeMode) {
                     self.edgeMode = false;
                     self.currentEdge.remove();
@@ -4243,7 +4897,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 self.dimState();
                 self.dimEdge();
             }, group);
-            System_4.System.bindShortcut(Settings_12.Settings.shortcuts.deleteEntity, function () {
+            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.deleteEntity, function () {
                 var highlightedState = self.highlightedState;
                 var highlightedEdge = self.highlightedEdge;
                 if (highlightedState) {
@@ -4254,13 +4908,13 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 }
                 self.clearSelection();
             }, group);
-            System_4.System.bindShortcut(Settings_12.Settings.shortcuts.clearMachine, function () {
-                var confirmation = confirm(Settings_12.Strings.CLEAR_CONFIRMATION);
+            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.clearMachine, function () {
+                var confirmation = confirm(Settings_14.Strings.CLEAR_CONFIRMATION);
                 if (confirmation) {
                     self.clear();
                 }
             }, group);
-            System_4.System.bindShortcut(Settings_12.Settings.shortcuts.left, function () {
+            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.left, function () {
                 self.moveStateSelection(function (attempt, highlighted) {
                     return attempt.getPosition().x < highlighted.getPosition().x;
                 }, function (attempt, currBest, highlighted) {
@@ -4279,7 +4933,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     return dy < targetDy;
                 });
             }, group);
-            System_4.System.bindShortcut(Settings_12.Settings.shortcuts.right, function () {
+            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.right, function () {
                 self.moveStateSelection(function (attempt, highlighted) {
                     return attempt.getPosition().x > highlighted.getPosition().x;
                 }, function (attempt, currBest, highlighted) {
@@ -4298,7 +4952,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     return dy < targetDy;
                 });
             }, group);
-            System_4.System.bindShortcut(Settings_12.Settings.shortcuts.up, function () {
+            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.up, function () {
                 self.moveStateSelection(function (attempt, highlighted) {
                     return attempt.getPosition().y < highlighted.getPosition().y;
                 }, function (attempt, currBest, highlighted) {
@@ -4317,7 +4971,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     return dx < targetDx;
                 });
             }, group);
-            System_4.System.bindShortcut(Settings_12.Settings.shortcuts.down, function () {
+            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.down, function () {
                 self.moveStateSelection(function (attempt, highlighted) {
                     return attempt.getPosition().y > highlighted.getPosition().y;
                 }, function (attempt, currBest, highlighted) {
@@ -4336,12 +4990,12 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     return dx < targetDx;
                 });
             }, group);
-            System_4.System.bindShortcut(Settings_12.Settings.shortcuts.undo, function () {
+            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.undo, function () {
                 self.undo();
             }, group);
         };
         AutomatonRenderer.prototype.selectionThreshold = function () {
-            return 2 * Settings_12.Settings.stateRadius;
+            return 2 * Settings_14.Settings.stateRadius;
         };
         AutomatonRenderer.prototype.moveStateSelection = function (isViable, isBetterCandidate) {
             var highlightedState = this.highlightedState;
@@ -4364,7 +5018,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
     }());
     exports.AutomatonRenderer = AutomatonRenderer;
 });
-define("interface/Mainbar", ["require", "exports", "interface/AutomatonRenderer", "Memento", "interface/Renderer", "Settings"], function (require, exports, AutomatonRenderer_1, Memento_1, Renderer_3, Settings_13) {
+define("interface/Mainbar", ["require", "exports", "interface/AutomatonRenderer", "Memento", "interface/Renderer", "Settings"], function (require, exports, AutomatonRenderer_1, Memento_1, Renderer_3, Settings_15) {
     "use strict";
     var Mainbar = (function (_super) {
         __extends(Mainbar, _super);
@@ -4393,10 +5047,10 @@ define("interface/Mainbar", ["require", "exports", "interface/AutomatonRenderer"
             var canvas = this.canvas;
             var node = this.node;
             var memento = new Memento_1.Memento(function () {
-                return Settings_13.Settings.undoMaxAmount;
+                return Settings_15.Settings.undoMaxAmount;
             });
             this.automatonRenderer = new AutomatonRenderer_1.AutomatonRenderer(canvas, node, memento);
-            Settings_13.Settings.automatonRenderer = this.automatonRenderer;
+            Settings_15.Settings.automatonRenderer = this.automatonRenderer;
         };
         Mainbar.prototype.onRender = function () {
             this.automatonRenderer.render();
@@ -4405,7 +5059,7 @@ define("interface/Mainbar", ["require", "exports", "interface/AutomatonRenderer"
     }(Renderer_3.Renderer));
     exports.Mainbar = Mainbar;
 });
-define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/Renderer", "Settings", "Settings", "System", "interface/Table", "Utils"], function (require, exports, Menu_3, Renderer_4, Settings_14, Settings_15, System_5, Table_2, Utils_14) {
+define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/Renderer", "Settings", "Settings", "System", "interface/Table", "Utils"], function (require, exports, Menu_4, Renderer_4, Settings_16, Settings_17, System_6, Table_2, Utils_16) {
     "use strict";
     var Sidebar = (function (_super) {
         __extends(Sidebar, _super);
@@ -4414,9 +5068,9 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             this.otherMenus = [];
             this.build();
             var self = this;
-            System_5.System.addLanguageChangeObserver({
+            System_6.System.addLanguageChangeObserver({
                 onLanguageChange: function () {
-                    Utils_14.utils.id(Settings_14.Settings.sidebarID).innerHTML = "";
+                    Utils_16.utils.id(Settings_16.Settings.sidebarID).innerHTML = "";
                     self.build();
                     self.render();
                 }
@@ -4424,12 +5078,12 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
         }
         Sidebar.prototype.build = function () {
             this.mainMenus = {
-                settings: new Menu_3.Menu(Settings_15.Strings.SETTINGS),
-                fileManipulation: new Menu_3.Menu(Settings_15.Strings.FILE_MENUBAR),
-                selectedEntity: new Menu_3.Menu(Settings_15.Strings.SELECTED_ENTITY),
-                formalDefinition: new Menu_3.Menu(Settings_15.Strings.FORMAL_DEFINITION),
-                machineSelection: new Menu_3.Menu(Settings_15.Strings.SELECT_MACHINE),
-                actionMenu: new Menu_3.Menu(Settings_15.Strings.ACTION_LIST)
+                settings: new Menu_4.Menu(Settings_17.Strings.SETTINGS),
+                fileManipulation: new Menu_4.Menu(Settings_17.Strings.FILE_MENUBAR),
+                selectedEntity: new Menu_4.Menu(Settings_17.Strings.SELECTED_ENTITY),
+                formalDefinition: new Menu_4.Menu(Settings_17.Strings.FORMAL_DEFINITION),
+                machineSelection: new Menu_4.Menu(Settings_17.Strings.SELECT_MACHINE),
+                actionMenu: new Menu_4.Menu(Settings_17.Strings.ACTION_LIST)
             };
             this.buildSettings();
             this.buildFileManipulation();
@@ -4461,17 +5115,17 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
         };
         Sidebar.prototype.onBind = function () {
             var self = this;
-            Utils_14.utils.foreach(this.mainMenus, function (name, menu) {
+            Utils_16.utils.foreach(this.mainMenus, function (name, menu) {
                 menu.bind(self.node);
             });
             for (var _i = 0, _a = this.otherMenus; _i < _a.length; _i++) {
                 var menu = _a[_i];
                 menu.bind(this.node);
             }
-            Settings_14.Settings.sidebar = this;
+            Settings_16.Settings.sidebar = this;
         };
         Sidebar.prototype.onRender = function () {
-            Utils_14.utils.foreach(this.mainMenus, function (name, menu) {
+            Utils_16.utils.foreach(this.mainMenus, function (name, menu) {
                 menu.render();
             });
             this.renderDynamicMenus();
@@ -4487,7 +5141,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 var menu = _a[_i];
                 $(menu.html()).remove();
             }
-            this.otherMenus = Settings_14.Settings.machines[machine].sidebar;
+            this.otherMenus = Settings_16.Settings.machines[machine].sidebar;
             for (var _b = 0, _c = this.otherMenus; _b < _c.length; _b++) {
                 var menu = _c[_b];
                 menu.bind(this.node);
@@ -4497,10 +5151,10 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             var settings = this.mainMenus.settings;
             settings.clear();
             var table = new Table_2.Table(2, 2);
-            var undoMaxAmountInput = Utils_14.utils.create("input", {
+            var undoMaxAmountInput = Utils_16.utils.create("input", {
                 className: "property_value",
                 type: "text",
-                value: Settings_14.Settings.undoMaxAmount
+                value: Settings_16.Settings.undoMaxAmount
             });
             var originalMaxCount;
             undoMaxAmountInput.addEventListener("focus", function () {
@@ -4510,30 +5164,30 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 var value = parseInt(this.value);
                 if (!isNaN(value) && value >= 1) {
                     if (originalMaxCount >= value
-                        || confirm(Settings_15.Strings.MEMORY_CONSUMPTION_WARNING)) {
-                        Settings_14.Settings.undoMaxAmount = value;
+                        || confirm(Settings_17.Strings.MEMORY_CONSUMPTION_WARNING)) {
+                        Settings_16.Settings.undoMaxAmount = value;
                     }
-                    this.value = Settings_14.Settings.undoMaxAmount;
+                    this.value = Settings_16.Settings.undoMaxAmount;
                 }
             });
             this.buildLanguageSelection(table);
-            table.add(Utils_14.utils.create("span", { innerHTML: Settings_15.Strings.UNDO_MAX_COUNT + ":" }));
+            table.add(Utils_16.utils.create("span", { innerHTML: Settings_17.Strings.UNDO_MAX_COUNT + ":" }));
             table.add(undoMaxAmountInput);
             settings.add(table.html());
             settings.toggle();
         };
         Sidebar.prototype.buildLanguageSelection = function (table) {
-            var select = Utils_14.utils.create("select");
-            var languages = Settings_14.Settings.languages;
+            var select = Utils_16.utils.create("select");
+            var languages = Settings_16.Settings.languages;
             var languageTable = {};
             var i = 0;
-            Utils_14.utils.foreach(languages, function (moduleName, obj) {
-                var option = Utils_14.utils.create("option");
+            Utils_16.utils.foreach(languages, function (moduleName, obj) {
+                var option = Utils_16.utils.create("option");
                 option.value = i.toString();
                 option.innerHTML = obj.strings.LANGUAGE_NAME;
                 select.appendChild(option);
                 languageTable[i] = moduleName;
-                if (obj == Settings_14.Settings.language) {
+                if (obj == Settings_16.Settings.language) {
                     select.selectedIndex = i;
                 }
                 i++;
@@ -4543,32 +5197,32 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 var option = node.options[node.selectedIndex];
                 var index = option.value;
                 var name = option.innerHTML;
-                var confirmation = confirm(Settings_15.Strings.CHANGE_LANGUAGE.replace("%", name));
+                var confirmation = confirm(Settings_17.Strings.CHANGE_LANGUAGE.replace("%", name));
                 if (confirmation) {
-                    System_5.System.changeLanguage(languages[languageTable[index]]);
+                    System_6.System.changeLanguage(languages[languageTable[index]]);
                 }
             });
-            table.add(Utils_14.utils.create("span", { innerHTML: Settings_15.Strings.SYSTEM_LANGUAGE + ":" }));
+            table.add(Utils_16.utils.create("span", { innerHTML: Settings_17.Strings.SYSTEM_LANGUAGE + ":" }));
             table.add(select);
         };
         Sidebar.prototype.buildFileManipulation = function () {
             var fileManipulation = this.mainMenus.fileManipulation;
             fileManipulation.clear();
-            var save = Utils_14.utils.create("input", {
+            var save = Utils_16.utils.create("input", {
                 className: "file_manip_btn",
                 type: "button",
-                value: Settings_15.Strings.SAVE,
+                value: Settings_17.Strings.SAVE,
                 click: function () {
-                    var content = Settings_14.Settings.automatonRenderer.save();
+                    var content = Settings_16.Settings.automatonRenderer.save();
                     var blob = new Blob([content], { type: "text/plain; charset=utf-8" });
                     saveAs(blob, "file.txt");
                 }
             });
-            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.save, function () {
+            System_6.System.bindShortcut(Settings_16.Settings.shortcuts.save, function () {
                 save.click();
             });
             fileManipulation.add(save);
-            var fileSelector = Utils_14.utils.create("input", {
+            var fileSelector = Utils_16.utils.create("input", {
                 id: "file_selector",
                 type: "file"
             });
@@ -4578,50 +5232,50 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 if (file) {
                     var reader = new FileReader();
                     reader.onload = function (e) {
-                        Settings_14.Settings.automatonRenderer.load(e.target.result);
+                        Settings_16.Settings.automatonRenderer.load(e.target.result);
                     };
                     reader.readAsText(file);
                 }
             });
-            var open = Utils_14.utils.create("input", {
+            var open = Utils_16.utils.create("input", {
                 className: "file_manip_btn",
                 type: "button",
-                value: Settings_15.Strings.OPEN,
+                value: Settings_17.Strings.OPEN,
                 click: function () {
                     fileSelector.click();
                     this.blur();
                 }
             });
-            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.open, function () {
+            System_6.System.bindShortcut(Settings_16.Settings.shortcuts.open, function () {
                 open.click();
             });
             fileManipulation.add(open);
         };
         Sidebar.prototype.buildSelectedEntityArea = function () {
-            var none = Utils_14.utils.create("span", {
+            var none = Utils_16.utils.create("span", {
                 className: "none",
-                innerHTML: Settings_15.Strings.NO_SELECTED_ENTITY
+                innerHTML: Settings_17.Strings.NO_SELECTED_ENTITY
             });
             this.mainMenus.selectedEntity.add(none);
         };
         Sidebar.prototype.buildMachineSelection = function () {
-            var table = new Table_2.Table(Settings_14.Settings.machineSelRows, Settings_14.Settings.machineSelColumns);
+            var table = new Table_2.Table(Settings_16.Settings.machineSelRows, Settings_16.Settings.machineSelColumns);
             var machineButtonMapping = {};
             var self = this;
-            Utils_14.utils.foreach(Settings_14.Settings.machines, function (type, props) {
-                var button = Utils_14.utils.create("input");
+            Utils_16.utils.foreach(Settings_16.Settings.machines, function (type, props) {
+                var button = Utils_16.utils.create("input");
                 button.classList.add("machine_selection_btn");
                 button.type = "button";
                 button.value = props.name;
-                button.disabled = (type == Settings_14.Settings.currentMachine);
+                button.disabled = (type == Settings_16.Settings.currentMachine);
                 button.addEventListener("click", function () {
-                    if (Settings_14.Settings.automatonRenderer.empty()
-                        || confirm(Settings_15.Strings.CHANGE_MACHINE_WARNING)) {
-                        Settings_14.Settings.automatonRenderer.clear();
-                        machineButtonMapping[Settings_14.Settings.currentMachine].disabled = false;
+                    if (Settings_16.Settings.automatonRenderer.empty()
+                        || confirm(Settings_17.Strings.CHANGE_MACHINE_WARNING)) {
+                        Settings_16.Settings.automatonRenderer.clear();
+                        machineButtonMapping[Settings_16.Settings.currentMachine].disabled = false;
                         machineButtonMapping[type].disabled = true;
                         machineButtonMapping[type].blur();
-                        System_5.System.changeMachine(type);
+                        System_6.System.changeMachine(type);
                         self.loadMachine(type);
                         self.renderDynamicMenus();
                     }
@@ -4629,7 +5283,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
                 table.add(button);
                 machineButtonMapping[type] = button;
             });
-            System_5.System.bindShortcut(["M"], function () {
+            System_6.System.bindShortcut(["M"], function () {
                 var buttons = document.querySelectorAll(".machine_selection_btn");
                 for (var i = 0; i < buttons.length; i++) {
                     var button = buttons[i];
@@ -4642,43 +5296,43 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
             var machineSelection = this.mainMenus.machineSelection;
             machineSelection.clear();
             machineSelection.add(table.html());
-            this.loadMachine(Settings_14.Settings.currentMachine);
+            this.loadMachine(Settings_16.Settings.currentMachine);
         };
         Sidebar.prototype.buildActionMenu = function () {
-            var table = new Table_2.Table(Settings_14.Settings.machineActionRows, Settings_14.Settings.machineActionColumns);
-            var createState = Utils_14.utils.create("input", {
-                title: Settings_15.Strings.CREATE_STATE_INSTRUCTIONS,
+            var table = new Table_2.Table(Settings_16.Settings.machineActionRows, Settings_16.Settings.machineActionColumns);
+            var createState = Utils_16.utils.create("input", {
+                title: Settings_17.Strings.CREATE_STATE_INSTRUCTIONS,
                 type: "button",
-                value: Settings_15.Strings.CREATE_STATE,
+                value: Settings_17.Strings.CREATE_STATE,
                 click: function () {
-                    Settings_14.Settings.automatonRenderer.stateManualCreation();
+                    Settings_16.Settings.automatonRenderer.stateManualCreation();
                 }
             });
             table.add(createState);
-            var createEdge = Utils_14.utils.create("input", {
-                title: Settings_15.Strings.CREATE_EDGE_INSTRUCTIONS,
+            var createEdge = Utils_16.utils.create("input", {
+                title: Settings_17.Strings.CREATE_EDGE_INSTRUCTIONS,
                 type: "button",
-                value: Settings_15.Strings.CREATE_EDGE,
+                value: Settings_17.Strings.CREATE_EDGE,
                 click: function () {
-                    Settings_14.Settings.automatonRenderer.edgeManualCreation();
+                    Settings_16.Settings.automatonRenderer.edgeManualCreation();
                 }
             });
             table.add(createEdge);
-            var clearMachine = Utils_14.utils.create("input", {
-                title: Utils_14.utils.printShortcut(Settings_14.Settings.shortcuts.clearMachine),
+            var clearMachine = Utils_16.utils.create("input", {
+                title: Utils_16.utils.printShortcut(Settings_16.Settings.shortcuts.clearMachine),
                 type: "button",
-                value: Settings_15.Strings.CLEAR_MACHINE,
+                value: Settings_17.Strings.CLEAR_MACHINE,
                 click: function () {
-                    System_5.System.emitKeyEvent(Settings_14.Settings.shortcuts.clearMachine);
+                    System_6.System.emitKeyEvent(Settings_16.Settings.shortcuts.clearMachine);
                 }
             });
             table.add(clearMachine);
-            var undo = Utils_14.utils.create("input", {
-                title: Utils_14.utils.printShortcut(Settings_14.Settings.shortcuts.undo),
+            var undo = Utils_16.utils.create("input", {
+                title: Utils_16.utils.printShortcut(Settings_16.Settings.shortcuts.undo),
                 type: "button",
-                value: Settings_15.Strings.UNDO,
+                value: Settings_17.Strings.UNDO,
                 click: function () {
-                    System_5.System.emitKeyEvent(Settings_14.Settings.shortcuts.undo);
+                    System_6.System.emitKeyEvent(Settings_16.Settings.shortcuts.undo);
                 }
             });
             table.add(undo);
@@ -4691,7 +5345,7 @@ define("interface/Sidebar", ["require", "exports", "interface/Menu", "interface/
     }(Renderer_4.Renderer));
     exports.Sidebar = Sidebar;
 });
-define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "interface/Sidebar", "Utils"], function (require, exports, Mainbar_1, Settings_16, Sidebar_1, Utils_15) {
+define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "interface/Sidebar", "Utils"], function (require, exports, Mainbar_1, Settings_18, Sidebar_1, Utils_17) {
     "use strict";
     var UI = (function () {
         function UI() {
@@ -4706,20 +5360,20 @@ define("interface/UI", ["require", "exports", "interface/Mainbar", "Settings", "
             console.log("Interface ready.");
         };
         UI.prototype.bindSidebar = function (renderer) {
-            renderer.bind(Utils_15.utils.id(Settings_16.Settings.sidebarID));
+            renderer.bind(Utils_17.utils.id(Settings_18.Settings.sidebarID));
             this.sidebarRenderer = renderer;
         };
         UI.prototype.bindMain = function (renderer) {
-            renderer.bind(Utils_15.utils.id(Settings_16.Settings.mainbarID));
+            renderer.bind(Utils_17.utils.id(Settings_18.Settings.mainbarID));
             this.mainRenderer = renderer;
         };
         return UI;
     }());
     exports.UI = UI;
 });
-define("main", ["require", "exports", "Settings", "System", "interface/UI"], function (require, exports, Settings_17, System_6, UI_1) {
+define("main", ["require", "exports", "Settings", "System", "interface/UI"], function (require, exports, Settings_19, System_7, UI_1) {
     "use strict";
-    Settings_17.Settings.update();
+    Settings_19.Settings.update();
     $(document).ready(function () {
         var ui = new UI_1.UI();
         ui.render();
@@ -4727,7 +5381,7 @@ define("main", ["require", "exports", "Settings", "System", "interface/UI"], fun
             var activeElementTag = document.activeElement.tagName.toLowerCase();
             var inhibitors = ["input", "textarea"];
             if (inhibitors.indexOf(activeElementTag) == -1) {
-                return System_6.System.keyEvent(e);
+                return System_7.System.keyEvent(e);
             }
             return true;
         });

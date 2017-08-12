@@ -217,7 +217,7 @@ export class LBA {
 		return result;
 	}
 
-	// Returns the input alphabet of this LBA.
+	// Returns the tape alphabet of this LBA.
 	public getTapeAlphabet(): string[] {
 		let result = [];
 		for (let member in this.tapeAlphabet) {
