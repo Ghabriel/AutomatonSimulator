@@ -1402,6 +1402,7 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
             this.headPosition = 0;
             this.calculationSteps = 0;
             this.inputLength = 0;
+            this.accepting = false;
         }
         LBA.prototype.addState = function (name) {
             this.stateList.push(name);
@@ -1560,6 +1561,7 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
             this.headPosition = 0;
             this.calculationSteps = 0;
             this.inputLength = input.length;
+            this.accepting = false;
         };
         LBA.prototype.getTapeContent = function () {
             return this.tape;
@@ -1588,6 +1590,9 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
                 error = true;
             }
             if (error) {
+                if (this.accepts()) {
+                    this.accepting = true;
+                }
                 this.currentState = null;
             }
         };
@@ -1603,6 +1608,7 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
             }
             this.headPosition = 0;
             this.calculationSteps = 0;
+            this.accepting = false;
         };
         LBA.prototype.clear = function () {
             this.stateList = [];
@@ -1616,9 +1622,15 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
             this.tape = [];
             this.headPosition = 0;
             this.calculationSteps = 0;
+            this.accepting = false;
         };
         LBA.prototype.accepts = function () {
-            return this.finalStates.contains(this.currentState);
+            if (this.accepting) {
+                return true;
+            }
+            var result = this.finalStates.contains(this.currentState);
+            result = result && this.headPosition >= this.tape.length;
+            return result;
         };
         LBA.prototype.error = function () {
             return this.currentState === null;
@@ -1627,10 +1639,13 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
             return this.stateList.length - this.numRemovedStates;
         };
         LBA.prototype.exhausted = function () {
+            if (this.accepts()) {
+                return false;
+            }
             var q = this.numStates();
             var n = this.inputLength;
             var g = Object.keys(this.tapeAlphabet).length;
-            return this.calculationSteps > q * n * Math.pow(g, n) && !this.accepts();
+            return this.calculationSteps > q * n * Math.pow(g, n);
         };
         LBA.prototype.isInputSymbol = function (symbol) {
             return /[a-z]/.test(symbol);

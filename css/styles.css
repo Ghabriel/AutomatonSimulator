@@ -193,6 +193,7 @@ span.none {
 
 #multiple_recognition > * {
 	display: table-cell;
+	font-family: sans-serif;
 	font-size: 16px;
 	vertical-align: top;
 }
