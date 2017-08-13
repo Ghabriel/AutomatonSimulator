@@ -2,6 +2,7 @@
 /// <reference path="../defs/jQuery.d.ts" />
 
 import {AutomatonRenderer} from "./AutomatonRenderer"
+import {JSONHandler} from "../persistence/JSONHandler"
 import {Memento} from "../Memento"
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
@@ -37,7 +38,11 @@ export class Mainbar extends Renderer {
 		let memento = new Memento<string>(function() {
 			return Settings.undoMaxAmount;
 		});
-		this.automatonRenderer = new AutomatonRenderer(canvas, node, memento);
+
+		let persistenceHandler = new JSONHandler();
+
+		this.automatonRenderer = new AutomatonRenderer(canvas, node,
+									memento, persistenceHandler);
 		Settings.automatonRenderer = this.automatonRenderer;
 	}
 

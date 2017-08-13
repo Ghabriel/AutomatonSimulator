@@ -3,6 +3,69 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+define("Keyboard", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var Keyboard;
+    (function (Keyboard) {
+        Keyboard.keys = {
+            "A": 65,
+            "B": 66,
+            "C": 67,
+            "D": 68,
+            "E": 69,
+            "F": 70,
+            "G": 71,
+            "H": 72,
+            "I": 73,
+            "J": 74,
+            "K": 75,
+            "L": 76,
+            "M": 77,
+            "N": 78,
+            "O": 79,
+            "P": 80,
+            "Q": 81,
+            "R": 82,
+            "S": 83,
+            "T": 84,
+            "U": 85,
+            "V": 86,
+            "W": 87,
+            "X": 88,
+            "Y": 89,
+            "Z": 90,
+            "0": 48,
+            "1": 49,
+            "2": 50,
+            "3": 51,
+            "4": 52,
+            "5": 53,
+            "6": 54,
+            "7": 55,
+            "8": 56,
+            "9": 57,
+            "ENTER": 13,
+            "SHIFT": 16,
+            "SPACE": 32,
+            "ESC": 27,
+            "DELETE": 46,
+            "LEFT": 37,
+            "UP": 38,
+            "RIGHT": 39,
+            "DOWN": 40,
+            "+": 61,
+            "-": 173
+        };
+        Keyboard.symbols = {
+            delta: "δ",
+            epsilon: "ε",
+            gamma: "Γ",
+            sigma: "Σ",
+            leftArrow: "←",
+            rightArrow: "→"
+        };
+    })(Keyboard = exports.Keyboard || (exports.Keyboard = {}));
+});
 define("lists/MachineList", ["require", "exports"], function (require, exports) {
     "use strict";
     (function (Machine) {
@@ -809,192 +872,7 @@ define("machines/FA/FA", ["require", "exports", "datastructures/Queue", "datastr
     }());
     exports.FA = FA;
 });
-define("Keyboard", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var Keyboard;
-    (function (Keyboard) {
-        Keyboard.keys = {
-            "A": 65,
-            "B": 66,
-            "C": 67,
-            "D": 68,
-            "E": 69,
-            "F": 70,
-            "G": 71,
-            "H": 72,
-            "I": 73,
-            "J": 74,
-            "K": 75,
-            "L": 76,
-            "M": 77,
-            "N": 78,
-            "O": 79,
-            "P": 80,
-            "Q": 81,
-            "R": 82,
-            "S": 83,
-            "T": 84,
-            "U": 85,
-            "V": 86,
-            "W": 87,
-            "X": 88,
-            "Y": 89,
-            "Z": 90,
-            "0": 48,
-            "1": 49,
-            "2": 50,
-            "3": 51,
-            "4": 52,
-            "5": 53,
-            "6": 54,
-            "7": 55,
-            "8": 56,
-            "9": 57,
-            "ENTER": 13,
-            "SHIFT": 16,
-            "SPACE": 32,
-            "ESC": 27,
-            "DELETE": 46,
-            "LEFT": 37,
-            "UP": 38,
-            "RIGHT": 39,
-            "DOWN": 40,
-            "+": 61,
-            "-": 173
-        };
-        Keyboard.symbols = {
-            delta: "δ",
-            epsilon: "ε",
-            gamma: "Γ",
-            sigma: "Σ",
-            leftArrow: "←",
-            rightArrow: "→"
-        };
-    })(Keyboard = exports.Keyboard || (exports.Keyboard = {}));
-});
-define("System", ["require", "exports", "Keyboard", "Settings"], function (require, exports, Keyboard_1, Settings_2) {
-    "use strict";
-    var modifiers = ["alt", "ctrl", "shift"];
-    function propertyName(type) {
-        return type + "Key";
-    }
-    var System = (function () {
-        function System() {
-        }
-        System.changeLanguage = function (language) {
-            Settings_2.Settings.changeLanguage(language);
-            for (var _i = 0, _a = this.languageChangeObservers; _i < _a.length; _i++) {
-                var listener = _a[_i];
-                listener.onLanguageChange();
-            }
-        };
-        System.changeMachine = function (type) {
-            Settings_2.Settings.changeMachine(type);
-            for (var _i = 0, _a = this.machineChangeObservers; _i < _a.length; _i++) {
-                var listener = _a[_i];
-                listener.onMachineChange();
-            }
-        };
-        System.addLanguageChangeObserver = function (observer) {
-            this.languageChangeObservers.push(observer);
-        };
-        System.addMachineChangeObserver = function (observer) {
-            this.machineChangeObservers.push(observer);
-        };
-        System.emitKeyEvent = function (keys) {
-            var event = {
-                preventDefault: function () { }
-            };
-            for (var _i = 0, modifiers_1 = modifiers; _i < modifiers_1.length; _i++) {
-                var modifier = modifiers_1[_i];
-                event[propertyName(modifier)] = false;
-            }
-            for (var _a = 0, keys_1 = keys; _a < keys_1.length; _a++) {
-                var key = keys_1[_a];
-                if (modifiers.indexOf(key) >= 0) {
-                    event[propertyName(key)] = true;
-                }
-                else {
-                    event["keyCode"] = Keyboard_1.Keyboard.keys[key.toUpperCase()];
-                }
-            }
-            this.keyEvent(event);
-        };
-        System.keyEvent = function (event) {
-            var triggered = false;
-            for (var _i = 0, _a = this.keyboardObservers; _i < _a.length; _i++) {
-                var observer = _a[_i];
-                var keys = observer.keys;
-                if (!this.locked(observer) && this.shortcutMatches(event, keys)) {
-                    observer.callback();
-                    triggered = true;
-                }
-            }
-            if (triggered) {
-                event.preventDefault();
-                return false;
-            }
-            return true;
-        };
-        System.bindShortcut = function (keys, callback, group) {
-            this.keyboardObservers.push({
-                keys: keys,
-                callback: callback,
-                group: group
-            });
-        };
-        System.lockShortcutGroup = function (group) {
-            this.lockedGroups[group] = true;
-        };
-        System.unlockShortcutGroup = function (group) {
-            delete this.lockedGroups[group];
-        };
-        System.blockEvents = function () {
-            this.eventBlock = true;
-        };
-        System.unblockEvents = function () {
-            this.eventBlock = false;
-        };
-        System.shortcutMatches = function (event, keys) {
-            if (this.eventBlock) {
-                return false;
-            }
-            var expectedModifiers = [];
-            for (var _i = 0, keys_2 = keys; _i < keys_2.length; _i++) {
-                var key = keys_2[_i];
-                if (modifiers.indexOf(key) >= 0) {
-                    expectedModifiers.push(key);
-                    if (!event[propertyName(key)]) {
-                        return false;
-                    }
-                }
-                else if (event.keyCode != Keyboard_1.Keyboard.keys[key]) {
-                    return false;
-                }
-            }
-            for (var _a = 0, modifiers_2 = modifiers; _a < modifiers_2.length; _a++) {
-                var modifier = modifiers_2[_a];
-                if (expectedModifiers.indexOf(modifier) == -1) {
-                    if (event[propertyName(modifier)]) {
-                        return false;
-                    }
-                }
-            }
-            return true;
-        };
-        System.locked = function (observer) {
-            return this.lockedGroups.hasOwnProperty(observer.group);
-        };
-        System.keyboardObservers = [];
-        System.languageChangeObservers = [];
-        System.machineChangeObservers = [];
-        System.eventBlock = false;
-        System.lockedGroups = {};
-        return System;
-    }());
-    exports.System = System;
-});
-define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils"], function (require, exports, Keyboard_2, Settings_3, System_1, Utils_3) {
+define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils"], function (require, exports, Keyboard_1, Settings_2, System_1, Utils_3) {
     "use strict";
     var Prompt = (function () {
         function Prompt(message) {
@@ -1020,12 +898,12 @@ define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils
                 id: "system_prompt"
             });
             container.innerHTML = this.message + "<br>";
-            var mainbar = Utils_3.utils.id(Settings_3.Settings.mainbarID);
+            var mainbar = Utils_3.utils.id(Settings_2.Settings.mainbarID);
             var inputIdPrefix = "system_prompt_input_";
             var dismiss = function () {
                 document.body.removeChild(blocker);
                 System_1.System.unblockEvents();
-                $(container).slideUp(Settings_3.Settings.promptSlideInterval, function () {
+                $(container).slideUp(Settings_2.Settings.promptSlideInterval, function () {
                     mainbar.removeChild(container);
                 });
             };
@@ -1044,7 +922,7 @@ define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils
             };
             var ok = Utils_3.utils.create("input", {
                 type: "button",
-                value: Settings_3.Strings.PROMPT_CONFIRM,
+                value: Settings_2.Strings.PROMPT_CONFIRM,
                 click: function () {
                     var allValid = true;
                     var contents = [];
@@ -1064,7 +942,7 @@ define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils
             });
             var cancel = Utils_3.utils.create("input", {
                 type: "button",
-                value: Settings_3.Strings.PROMPT_CANCEL,
+                value: Settings_2.Strings.PROMPT_CANCEL,
                 click: function () {
                     dismiss();
                     if (self.abortCallback) {
@@ -1088,16 +966,16 @@ define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils
                 isInputText = isInputText && input.type == "text";
                 if (isInputText) {
                     input.addEventListener("keydown", function (e) {
-                        if (e.keyCode == Keyboard_2.Keyboard.keys.ENTER) {
+                        if (e.keyCode == Keyboard_1.Keyboard.keys.ENTER) {
                             ok.click();
                         }
-                        else if (e.keyCode == Keyboard_2.Keyboard.keys.ESC) {
+                        else if (e.keyCode == Keyboard_1.Keyboard.keys.ESC) {
                             cancel.click();
                         }
                     });
                     input.addEventListener("keyup", function (e) {
-                        var isEnter = (e.keyCode == Keyboard_2.Keyboard.keys.ENTER);
-                        var isEsc = (e.keyCode == Keyboard_2.Keyboard.keys.ESC);
+                        var isEnter = (e.keyCode == Keyboard_1.Keyboard.keys.ENTER);
+                        var isEsc = (e.keyCode == Keyboard_1.Keyboard.keys.ESC);
                         if (!isEnter && !isEsc) {
                             ok.disabled = !allInputsValid();
                         }
@@ -1113,7 +991,7 @@ define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils
             System_1.System.blockEvents();
             $(container).toggle();
             mainbar.insertBefore(container, mainbar.children[0]);
-            $(container).slideDown(Settings_3.Settings.promptSlideInterval, function () {
+            $(container).slideDown(Settings_2.Settings.promptSlideInterval, function () {
                 inputs[0].focus();
             });
         };
@@ -1125,19 +1003,19 @@ define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils
                 id: "system_prompt"
             });
             container.innerHTML = message + "<br>";
-            var mainbar = Utils_3.utils.id(Settings_3.Settings.mainbarID);
+            var mainbar = Utils_3.utils.id(Settings_2.Settings.mainbarID);
             var completedInteraction = false;
             var dismiss = function () {
                 document.body.removeChild(blocker);
                 System_1.System.unblockEvents();
-                $(container).slideUp(Settings_3.Settings.promptSlideInterval, function () {
+                $(container).slideUp(Settings_2.Settings.promptSlideInterval, function () {
                     mainbar.removeChild(container);
                 });
             };
             var inputs = [];
             var ok = Utils_3.utils.create("input", {
                 type: "button",
-                value: Settings_3.Strings.PROMPT_CONFIRM,
+                value: Settings_2.Strings.PROMPT_CONFIRM,
                 click: function () {
                     if (completedInteraction) {
                         return;
@@ -1154,7 +1032,7 @@ define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils
             });
             var cancel = Utils_3.utils.create("input", {
                 type: "button",
-                value: Settings_3.Strings.PROMPT_CANCEL,
+                value: Settings_2.Strings.PROMPT_CANCEL,
                 click: function () {
                     if (completedInteraction) {
                         return;
@@ -1171,10 +1049,10 @@ define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils
                     type: "text"
                 });
                 input.addEventListener("keydown", function (e) {
-                    if (e.keyCode == Keyboard_2.Keyboard.keys.ENTER) {
+                    if (e.keyCode == Keyboard_1.Keyboard.keys.ENTER) {
                         ok.click();
                     }
-                    else if (e.keyCode == Keyboard_2.Keyboard.keys.ESC) {
+                    else if (e.keyCode == Keyboard_1.Keyboard.keys.ESC) {
                         cancel.click();
                     }
                 });
@@ -1187,7 +1065,7 @@ define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils
             System_1.System.blockEvents();
             $(container).toggle();
             mainbar.insertBefore(container, mainbar.children[0]);
-            $(container).slideDown(Settings_3.Settings.promptSlideInterval, function () {
+            $(container).slideDown(Settings_2.Settings.promptSlideInterval, function () {
                 inputs[0].focus();
             });
         };
@@ -1195,7 +1073,7 @@ define("Prompt", ["require", "exports", "Keyboard", "Settings", "System", "Utils
     }());
     exports.Prompt = Prompt;
 });
-define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Keyboard", "Prompt", "Settings", "Utils"], function (require, exports, FA_1, Keyboard_3, Prompt_1, Settings_4, Utils_4) {
+define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Keyboard", "Prompt", "Settings", "Utils"], function (require, exports, FA_1, Keyboard_2, Prompt_1, Settings_3, Utils_4) {
     "use strict";
     var FAController = (function () {
         function FAController() {
@@ -1206,9 +1084,9 @@ define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Key
         }
         FAController.prototype.edgePrompt = function (callback, fallback) {
             var self = this;
-            var prompt = new Prompt_1.Prompt(Settings_4.Strings.FA_ENTER_EDGE_CONTENT);
+            var prompt = new Prompt_1.Prompt(Settings_3.Strings.FA_ENTER_EDGE_CONTENT);
             prompt.addInput({
-                placeholder: Settings_4.Strings.FA_ENTER_EDGE_PLACEHOLDER_1,
+                placeholder: Settings_3.Strings.FA_ENTER_EDGE_PLACEHOLDER_1,
                 validator: Utils_4.utils.optionalSymbolValidator
             });
             prompt.onSuccess(function (data) {
@@ -1218,7 +1096,7 @@ define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Key
             prompt.show();
         };
         FAController.prototype.edgeDataToText = function (data) {
-            var epsilon = Keyboard_3.Keyboard.symbols.epsilon;
+            var epsilon = Keyboard_2.Keyboard.symbols.epsilon;
             return data[0] || epsilon;
         };
         FAController.prototype.createState = function (state) {
@@ -1325,8 +1203,8 @@ define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Key
         };
         FAController.prototype.formalDefinition = function () {
             var machine = this.machine;
-            var delta = Keyboard_3.Keyboard.symbols.delta;
-            var sigma = Keyboard_3.Keyboard.symbols.sigma;
+            var delta = Keyboard_2.Keyboard.symbols.delta;
+            var sigma = Keyboard_2.Keyboard.symbols.sigma;
             var result = {
                 tupleSequence: ["Q", sigma, delta, "q0", "F"],
                 parameterSequence: ["Q", sigma, "q0", "F", delta],
@@ -1351,7 +1229,7 @@ define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Key
                 list: []
             };
             var callback = function (source, target, input) {
-                input = input || Keyboard_3.Keyboard.symbols.epsilon;
+                input = input || Keyboard_2.Keyboard.symbols.epsilon;
                 transitions.list.push([source, target, input]);
             };
             this.machine.transitionIteration(callback);
@@ -1621,7 +1499,7 @@ define("machines/PDA/PDA", ["require", "exports", "datastructures/UnorderedSet",
     }());
     exports.PDA = PDA;
 });
-define("machines/PDA/PDAController", ["require", "exports", "machines/PDA/PDA", "Keyboard", "Prompt", "Settings", "Utils"], function (require, exports, PDA_1, Keyboard_4, Prompt_2, Settings_5, Utils_6) {
+define("machines/PDA/PDAController", ["require", "exports", "machines/PDA/PDA", "Keyboard", "Prompt", "Settings", "Utils"], function (require, exports, PDA_1, Keyboard_3, Prompt_2, Settings_4, Utils_6) {
     "use strict";
     var PDAController = (function () {
         function PDAController() {
@@ -1632,17 +1510,17 @@ define("machines/PDA/PDAController", ["require", "exports", "machines/PDA/PDA", 
         }
         PDAController.prototype.edgePrompt = function (callback, fallback) {
             var self = this;
-            var prompt = new Prompt_2.Prompt(Settings_5.Strings.PDA_ENTER_EDGE_CONTENT);
+            var prompt = new Prompt_2.Prompt(Settings_4.Strings.PDA_ENTER_EDGE_CONTENT);
             prompt.addInput({
-                placeholder: Settings_5.Strings.PDA_ENTER_EDGE_PLACEHOLDER_1,
+                placeholder: Settings_4.Strings.PDA_ENTER_EDGE_PLACEHOLDER_1,
                 validator: Utils_6.utils.optionalSymbolValidator
             });
             prompt.addInput({
-                placeholder: Settings_5.Strings.PDA_ENTER_EDGE_PLACEHOLDER_2,
+                placeholder: Settings_4.Strings.PDA_ENTER_EDGE_PLACEHOLDER_2,
                 validator: Utils_6.utils.optionalSymbolValidator
             });
             prompt.addInput({
-                placeholder: Settings_5.Strings.PDA_ENTER_EDGE_PLACEHOLDER_3
+                placeholder: Settings_4.Strings.PDA_ENTER_EDGE_PLACEHOLDER_3
             });
             prompt.onSuccess(function (data) {
                 callback(data, self.edgeDataToText(data));
@@ -1651,7 +1529,7 @@ define("machines/PDA/PDAController", ["require", "exports", "machines/PDA/PDA", 
             prompt.show();
         };
         PDAController.prototype.edgeDataToText = function (data) {
-            var epsilon = Keyboard_4.Keyboard.symbols.epsilon;
+            var epsilon = Keyboard_3.Keyboard.symbols.epsilon;
             var input = data[0] || epsilon;
             var stackRead = data[1] || epsilon;
             var stackWrite = data[2] || epsilon;
@@ -1761,9 +1639,9 @@ define("machines/PDA/PDAController", ["require", "exports", "machines/PDA/PDA", 
         };
         PDAController.prototype.formalDefinition = function () {
             var machine = this.machine;
-            var delta = Keyboard_4.Keyboard.symbols.delta;
-            var gamma = Keyboard_4.Keyboard.symbols.gamma;
-            var sigma = Keyboard_4.Keyboard.symbols.sigma;
+            var delta = Keyboard_3.Keyboard.symbols.delta;
+            var gamma = Keyboard_3.Keyboard.symbols.gamma;
+            var sigma = Keyboard_3.Keyboard.symbols.sigma;
             var result = {
                 tupleSequence: ["Q", sigma, gamma, delta, "q0", "Z0", "F"],
                 parameterSequence: ["Q", sigma, gamma, "q0", "Z0", "F", delta],
@@ -1790,7 +1668,7 @@ define("machines/PDA/PDAController", ["require", "exports", "machines/PDA/PDA", 
                 list: []
             };
             var callback = function (source, data, input, stackRead) {
-                var epsilon = Keyboard_4.Keyboard.symbols.epsilon;
+                var epsilon = Keyboard_3.Keyboard.symbols.epsilon;
                 input = input || epsilon;
                 stackRead = stackRead || epsilon;
                 var stackWrite = data[1] || epsilon;
@@ -2109,7 +1987,7 @@ define("machines/LBA/LBA", ["require", "exports", "datastructures/UnorderedSet",
     }());
     exports.LBA = LBA;
 });
-define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machines/LBA/LBA", "Prompt", "Settings", "Utils"], function (require, exports, Keyboard_5, LBA_1, Prompt_3, Settings_6, Utils_8) {
+define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machines/LBA/LBA", "Prompt", "Settings", "Utils"], function (require, exports, Keyboard_4, LBA_1, Prompt_3, Settings_5, Utils_8) {
     "use strict";
     var LBAController = (function () {
         function LBAController() {
@@ -2120,24 +1998,24 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
         }
         LBAController.prototype.edgePrompt = function (callback, fallback) {
             var self = this;
-            var prompt = new Prompt_3.Prompt(Settings_6.Strings.LBA_ENTER_EDGE_CONTENT);
+            var prompt = new Prompt_3.Prompt(Settings_5.Strings.LBA_ENTER_EDGE_CONTENT);
             prompt.addInput({
-                placeholder: Settings_6.Strings.LBA_ENTER_EDGE_PLACEHOLDER_1,
+                placeholder: Settings_5.Strings.LBA_ENTER_EDGE_PLACEHOLDER_1,
                 validator: Utils_8.utils.singleSymbolValidator
             });
             prompt.addInput({
-                placeholder: Settings_6.Strings.LBA_ENTER_EDGE_PLACEHOLDER_2,
+                placeholder: Settings_5.Strings.LBA_ENTER_EDGE_PLACEHOLDER_2,
                 validator: Utils_8.utils.singleSymbolValidator
             });
             prompt.addInput({
                 initializer: function () {
                     var node = Utils_8.utils.create("select");
                     node.appendChild(Utils_8.utils.create("option", {
-                        innerHTML: Keyboard_5.Keyboard.symbols.leftArrow,
+                        innerHTML: Keyboard_4.Keyboard.symbols.leftArrow,
                         value: "<"
                     }));
                     node.appendChild(Utils_8.utils.create("option", {
-                        innerHTML: Keyboard_5.Keyboard.symbols.rightArrow,
+                        innerHTML: Keyboard_4.Keyboard.symbols.rightArrow,
                         value: ">"
                     }));
                     return node;
@@ -2150,7 +2028,7 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
             prompt.show();
         };
         LBAController.prototype.edgeDataToText = function (data) {
-            var symbols = Keyboard_5.Keyboard.symbols;
+            var symbols = Keyboard_4.Keyboard.symbols;
             var epsilon = symbols.epsilon;
             var formatted = [
                 data[0] || epsilon,
@@ -2273,9 +2151,9 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
         };
         LBAController.prototype.formalDefinition = function () {
             var machine = this.machine;
-            var delta = Keyboard_5.Keyboard.symbols.delta;
-            var gamma = Keyboard_5.Keyboard.symbols.gamma;
-            var sigma = Keyboard_5.Keyboard.symbols.sigma;
+            var delta = Keyboard_4.Keyboard.symbols.delta;
+            var gamma = Keyboard_4.Keyboard.symbols.gamma;
+            var sigma = Keyboard_4.Keyboard.symbols.sigma;
             var result = {
                 tupleSequence: ["Q", sigma, gamma, delta, "q0", "B", "F"],
                 parameterSequence: ["Q", sigma, gamma, "q0", "B", "F", delta],
@@ -2301,7 +2179,7 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
             var transitions = {
                 list: []
             };
-            var arrows = [Keyboard_5.Keyboard.symbols.leftArrow, Keyboard_5.Keyboard.symbols.rightArrow];
+            var arrows = [Keyboard_4.Keyboard.symbols.leftArrow, Keyboard_4.Keyboard.symbols.rightArrow];
             var callback = function (source, target, input) {
                 transitions.list.push([
                     source,
@@ -2495,7 +2373,7 @@ define("lists/LanguageList", ["require", "exports", "languages/Portuguese", "lan
     __export(Portuguese_1);
     __export(English_1);
 });
-define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_1, Settings_7, Utils_9) {
+define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings", "Utils"], function (require, exports, Renderer_1, Settings_6, Utils_9) {
     "use strict";
     var Menu = (function (_super) {
         __extends(Menu, _super);
@@ -2534,7 +2412,7 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
             var self = this;
             title.addEventListener("click", function () {
                 if (!$(content).is(":animated")) {
-                    $(content).slideToggle(Settings_7.Settings.menuSlideInterval, function () {
+                    $(content).slideToggle(Settings_6.Settings.menuSlideInterval, function () {
                         self.updateArrow();
                     });
                 }
@@ -2573,7 +2451,7 @@ define("interface/Menu", ["require", "exports", "interface/Renderer", "Settings"
     }(Renderer_1.Renderer));
     exports.Menu = Menu;
 });
-define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "System", "Utils"], function (require, exports, Keyboard_6, Menu_1, Settings_8, System_2, Utils_10) {
+define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "System", "Utils"], function (require, exports, Keyboard_5, Menu_1, Settings_7, System_2, Utils_10) {
     "use strict";
     var initFA = (function () {
         function initFA() {
@@ -2591,20 +2469,20 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
         initFA.prototype.init = function () {
             console.log("[FA] Initializing...");
             var menuList = [];
-            var recognitionMenu = new Menu_1.Menu(Settings_8.Strings.RECOGNITION);
+            var recognitionMenu = new Menu_1.Menu(Settings_7.Strings.RECOGNITION);
             var rows = [];
             this.buildTestCaseInput(rows);
             this.buildRecognitionControls(rows);
             this.buildRecognitionProgress(rows);
             this.addRows(rows, recognitionMenu);
             menuList.push(recognitionMenu);
-            var multipleRecognitionMenu = new Menu_1.Menu(Settings_8.Strings.MULTIPLE_RECOGNITION);
+            var multipleRecognitionMenu = new Menu_1.Menu(Settings_7.Strings.MULTIPLE_RECOGNITION);
             rows = [];
             this.buildMultipleRecognition(rows);
             this.addRows(rows, multipleRecognitionMenu);
             menuList.push(multipleRecognitionMenu);
             this.bindRecognitionEvents();
-            Settings_8.Settings.machines[Settings_8.Settings.Machine.FA].sidebar = menuList;
+            Settings_7.Settings.machines[Settings_7.Settings.Machine.FA].sidebar = menuList;
             console.log("[FA] Initialized successfully");
         };
         initFA.prototype.onEnter = function () {
@@ -2635,30 +2513,30 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
         initFA.prototype.buildTestCaseInput = function (container) {
             this.testCaseInput = Utils_10.utils.create("input", {
                 type: "text",
-                placeholder: Settings_8.Strings.TEST_CASE
+                placeholder: Settings_7.Strings.TEST_CASE
             });
             container.push([this.testCaseInput]);
         };
         initFA.prototype.highlightCurrentStates = function () {
-            var states = Settings_8.Settings.controller().currentStates();
-            Settings_8.Settings.automatonRenderer.recognitionHighlight(states);
+            var states = Settings_7.Settings.controller().currentStates();
+            Settings_7.Settings.automatonRenderer.recognitionHighlight(states);
         };
         initFA.prototype.buildRecognitionControls = function (container) {
-            var disabledClass = Settings_8.Settings.disabledButtonClass;
+            var disabledClass = Settings_7.Settings.disabledButtonClass;
             this.fastRecognition = Utils_10.utils.create("img", {
                 className: "image_button",
                 src: "images/fastforward.svg",
-                title: Settings_8.Strings.FAST_RECOGNITION
+                title: Settings_7.Strings.FAST_RECOGNITION
             });
             this.stopRecognition = Utils_10.utils.create("img", {
                 className: "image_button " + disabledClass,
                 src: "images/stop.svg",
-                title: Settings_8.Strings.STOP_RECOGNITION
+                title: Settings_7.Strings.STOP_RECOGNITION
             });
             this.stepRecognition = Utils_10.utils.create("img", {
                 className: "image_button",
                 src: "images/play.svg",
-                title: Settings_8.Strings.STEP_RECOGNITION
+                title: Settings_7.Strings.STEP_RECOGNITION
             });
             container.push([this.fastRecognition, this.stepRecognition,
                 this.stopRecognition]);
@@ -2672,8 +2550,8 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
         };
         initFA.prototype.buildMultipleRecognition = function (container) {
             this.multipleCaseArea = Utils_10.utils.create("textarea");
-            this.multipleCaseArea.rows = Settings_8.Settings.multRecognitionAreaRows;
-            this.multipleCaseArea.cols = Settings_8.Settings.multRecognitionAreaCols;
+            this.multipleCaseArea.rows = Settings_7.Settings.multRecognitionAreaRows;
+            this.multipleCaseArea.cols = Settings_7.Settings.multRecognitionAreaCols;
             this.multipleCaseResults = Utils_10.utils.create("div");
             var testCaseArea = Utils_10.utils.create("div", {
                 id: "multiple_recognition"
@@ -2684,22 +2562,22 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
             this.multipleCaseButton = Utils_10.utils.create("img", {
                 className: "image_button",
                 src: "images/play.svg",
-                title: Settings_8.Strings.START_MULTIPLE_RECOGNITION
+                title: Settings_7.Strings.START_MULTIPLE_RECOGNITION
             });
             container.push([this.multipleCaseButton]);
         };
         initFA.prototype.showAcceptanceStatus = function () {
-            if (Settings_8.Settings.controller().accepts()) {
-                this.progressContainer.style.color = Settings_8.Settings.acceptedTestCaseColor;
-                this.progressContainer.innerHTML = Settings_8.Strings.INPUT_ACCEPTED;
+            if (Settings_7.Settings.controller().accepts()) {
+                this.progressContainer.style.color = Settings_7.Settings.acceptedTestCaseColor;
+                this.progressContainer.innerHTML = Settings_7.Strings.INPUT_ACCEPTED;
             }
             else {
-                this.progressContainer.style.color = Settings_8.Settings.rejectedTestCaseColor;
-                this.progressContainer.innerHTML = Settings_8.Strings.INPUT_REJECTED;
+                this.progressContainer.style.color = Settings_7.Settings.rejectedTestCaseColor;
+                this.progressContainer.innerHTML = Settings_7.Strings.INPUT_REJECTED;
             }
         };
         initFA.prototype.bindRecognitionEvents = function () {
-            var disabledClass = Settings_8.Settings.disabledButtonClass;
+            var disabledClass = Settings_7.Settings.disabledButtonClass;
             var fastForwardEnabled = true;
             var stepEnabled = true;
             var stopEnabled = false;
@@ -2718,9 +2596,9 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
             };
             this.fastRecognition.addEventListener("click", function () {
                 if (fastForwardEnabled) {
-                    Settings_8.Settings.automatonRenderer.lock();
+                    Settings_7.Settings.automatonRenderer.lock();
                     var input = self.testCase();
-                    var controller = Settings_8.Settings.controller();
+                    var controller = Settings_7.Settings.controller();
                     controller.fastForward(input);
                     self.highlightCurrentStates();
                     self.progressContainer.style.display = "";
@@ -2733,9 +2611,9 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
             });
             this.stopRecognition.addEventListener("click", function () {
                 if (stopEnabled) {
-                    Settings_8.Settings.controller().stop();
-                    Settings_8.Settings.automatonRenderer.recognitionDim();
-                    Settings_8.Settings.automatonRenderer.unlock();
+                    Settings_7.Settings.controller().stop();
+                    Settings_7.Settings.automatonRenderer.recognitionDim();
+                    Settings_7.Settings.automatonRenderer.unlock();
                     self.progressContainer.style.color = "black";
                     self.progressContainer.style.display = "none";
                     fastForwardStatus(true);
@@ -2750,11 +2628,11 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
                     stopStatus(true);
                     self.testCaseInput.disabled = true;
                     var input = self.testCase();
-                    var controller = Settings_8.Settings.controller();
+                    var controller = Settings_7.Settings.controller();
                     if (controller.isStopped()) {
-                        Settings_8.Settings.automatonRenderer.lock();
+                        Settings_7.Settings.automatonRenderer.lock();
                         self.progressContainer.style.display = "";
-                        var sidebar = Utils_10.utils.id(Settings_8.Settings.sidebarID);
+                        var sidebar = Utils_10.utils.id(Settings_7.Settings.sidebarID);
                         var width = sidebar.offsetWidth;
                         width -= 10;
                         width -= 1;
@@ -2781,19 +2659,19 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
             });
             this.multipleCaseButton.addEventListener("click", function () {
                 var testCases = self.multipleCaseArea.value.split("\n");
-                var controller = Settings_8.Settings.controller();
+                var controller = Settings_7.Settings.controller();
                 self.multipleCaseResults.innerHTML = "";
                 for (var _i = 0, testCases_1 = testCases; _i < testCases_1.length; _i++) {
                     var input = testCases_1[_i];
                     controller.fastForward(input);
                     var result = Utils_10.utils.create("span");
                     if (controller.accepts()) {
-                        result.style.color = Settings_8.Settings.acceptedTestCaseColor;
-                        result.innerHTML = Settings_8.Strings.INPUT_ACCEPTED;
+                        result.style.color = Settings_7.Settings.acceptedTestCaseColor;
+                        result.innerHTML = Settings_7.Strings.INPUT_ACCEPTED;
                     }
                     else {
-                        result.style.color = Settings_8.Settings.rejectedTestCaseColor;
-                        result.innerHTML = Settings_8.Strings.INPUT_REJECTED;
+                        result.style.color = Settings_7.Settings.rejectedTestCaseColor;
+                        result.innerHTML = Settings_7.Strings.INPUT_REJECTED;
                     }
                     self.multipleCaseResults.appendChild(result);
                 }
@@ -2802,25 +2680,25 @@ define("machines/FA/initializer", ["require", "exports", "Keyboard", "interface/
         initFA.prototype.bindShortcuts = function () {
             var self = this;
             if (!this.boundShortcuts) {
-                System_2.System.bindShortcut(Settings_8.Settings.shortcuts.focusTestCase, function () {
+                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.focusTestCase, function () {
                     self.testCaseInput.focus();
                 }, this.shortcutGroup);
-                System_2.System.bindShortcut(Settings_8.Settings.shortcuts.fastForward, function () {
+                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.fastForward, function () {
                     self.fastRecognition.click();
                 }, this.shortcutGroup);
-                System_2.System.bindShortcut(Settings_8.Settings.shortcuts.step, function () {
+                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.step, function () {
                     self.stepRecognition.click();
                 }, this.shortcutGroup);
-                System_2.System.bindShortcut(Settings_8.Settings.shortcuts.stop, function () {
+                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.stop, function () {
                     self.stopRecognition.click();
                 }, this.shortcutGroup);
-                System_2.System.bindShortcut(Settings_8.Settings.shortcuts.multipleRecognition, function () {
+                System_2.System.bindShortcut(Settings_7.Settings.shortcuts.multipleRecognition, function () {
                     self.multipleCaseButton.click();
                 }, this.shortcutGroup);
                 this.boundShortcuts = true;
             }
             this.testCaseInput.addEventListener("keydown", function (e) {
-                if (e.keyCode == Keyboard_6.Keyboard.keys[Settings_8.Settings.shortcuts.dimTestCase[0]]) {
+                if (e.keyCode == Keyboard_5.Keyboard.keys[Settings_7.Settings.shortcuts.dimTestCase[0]]) {
                     if (self.testCaseInput == document.activeElement) {
                         self.testCaseInput.blur();
                     }
@@ -2877,7 +2755,7 @@ define("interface/Table", ["require", "exports", "interface/Renderer", "Utils"],
     }(Renderer_2.Renderer));
     exports.Table = Table;
 });
-define("machines/PDA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "System", "Utils"], function (require, exports, Keyboard_7, Menu_2, Settings_9, System_3, Utils_12) {
+define("machines/PDA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "System", "Utils"], function (require, exports, Keyboard_6, Menu_2, Settings_8, System_3, Utils_12) {
     "use strict";
     var initPDA = (function () {
         function initPDA() {
@@ -2896,7 +2774,7 @@ define("machines/PDA/initializer", ["require", "exports", "Keyboard", "interface
         initPDA.prototype.init = function () {
             console.log("[PDA] Initializing...");
             var menuList = [];
-            var recognitionMenu = new Menu_2.Menu(Settings_9.Strings.RECOGNITION);
+            var recognitionMenu = new Menu_2.Menu(Settings_8.Strings.RECOGNITION);
             var rows = [];
             this.buildTestCaseInput(rows);
             this.buildRecognitionControls(rows);
@@ -2904,14 +2782,14 @@ define("machines/PDA/initializer", ["require", "exports", "Keyboard", "interface
             this.buildRecognitionProgress(rows);
             this.addRows(rows, recognitionMenu);
             menuList.push(recognitionMenu);
-            var multipleRecognitionMenu = new Menu_2.Menu(Settings_9.Strings.MULTIPLE_RECOGNITION);
+            var multipleRecognitionMenu = new Menu_2.Menu(Settings_8.Strings.MULTIPLE_RECOGNITION);
             rows = [];
             this.buildMultipleRecognition(rows);
             this.addRows(rows, multipleRecognitionMenu);
             multipleRecognitionMenu.toggle();
             menuList.push(multipleRecognitionMenu);
             this.bindRecognitionEvents();
-            Settings_9.Settings.machines[Settings_9.Settings.Machine.PDA].sidebar = menuList;
+            Settings_8.Settings.machines[Settings_8.Settings.Machine.PDA].sidebar = menuList;
             console.log("[PDA] Initialized successfully");
         };
         initPDA.prototype.onEnter = function () {
@@ -2942,31 +2820,31 @@ define("machines/PDA/initializer", ["require", "exports", "Keyboard", "interface
         initPDA.prototype.buildTestCaseInput = function (container) {
             var input = Utils_12.utils.create("input", {
                 type: "text",
-                placeholder: Settings_9.Strings.TEST_CASE
+                placeholder: Settings_8.Strings.TEST_CASE
             });
             container.push([input]);
             this.testCaseInput = input;
         };
         initPDA.prototype.highlightCurrentStates = function () {
-            var states = Settings_9.Settings.controller().currentStates();
-            Settings_9.Settings.automatonRenderer.recognitionHighlight(states);
+            var states = Settings_8.Settings.controller().currentStates();
+            Settings_8.Settings.automatonRenderer.recognitionHighlight(states);
         };
         initPDA.prototype.buildRecognitionControls = function (container) {
-            var disabledClass = Settings_9.Settings.disabledButtonClass;
+            var disabledClass = Settings_8.Settings.disabledButtonClass;
             this.fastRecognition = Utils_12.utils.create("img", {
                 className: "image_button",
                 src: "images/fastforward.svg",
-                title: Settings_9.Strings.FAST_RECOGNITION
+                title: Settings_8.Strings.FAST_RECOGNITION
             });
             this.stopRecognition = Utils_12.utils.create("img", {
                 className: "image_button " + disabledClass,
                 src: "images/stop.svg",
-                title: Settings_9.Strings.STOP_RECOGNITION
+                title: Settings_8.Strings.STOP_RECOGNITION
             });
             this.stepRecognition = Utils_12.utils.create("img", {
                 className: "image_button",
                 src: "images/play.svg",
-                title: Settings_9.Strings.STEP_RECOGNITION
+                title: Settings_8.Strings.STEP_RECOGNITION
             });
             container.push([this.fastRecognition, this.stepRecognition,
                 this.stopRecognition]);
@@ -2987,8 +2865,8 @@ define("machines/PDA/initializer", ["require", "exports", "Keyboard", "interface
         };
         initPDA.prototype.buildMultipleRecognition = function (container) {
             this.multipleCaseArea = Utils_12.utils.create("textarea");
-            this.multipleCaseArea.rows = Settings_9.Settings.multRecognitionAreaRows;
-            this.multipleCaseArea.cols = Settings_9.Settings.multRecognitionAreaCols;
+            this.multipleCaseArea.rows = Settings_8.Settings.multRecognitionAreaRows;
+            this.multipleCaseArea.cols = Settings_8.Settings.multRecognitionAreaCols;
             this.multipleCaseResults = Utils_12.utils.create("div");
             var testCaseArea = Utils_12.utils.create("div", {
                 id: "multiple_recognition"
@@ -2999,28 +2877,28 @@ define("machines/PDA/initializer", ["require", "exports", "Keyboard", "interface
             this.multipleCaseButton = Utils_12.utils.create("img", {
                 className: "image_button",
                 src: "images/play.svg",
-                title: Settings_9.Strings.START_MULTIPLE_RECOGNITION
+                title: Settings_8.Strings.START_MULTIPLE_RECOGNITION
             });
             container.push([this.multipleCaseButton]);
         };
         initPDA.prototype.showAcceptanceStatus = function () {
-            var controller = Settings_9.Settings.controller();
+            var controller = Settings_8.Settings.controller();
             if (controller.accepts()) {
-                this.progressContainer.style.color = Settings_9.Settings.acceptedTestCaseColor;
-                this.progressContainer.innerHTML = Settings_9.Strings.INPUT_ACCEPTED;
+                this.progressContainer.style.color = Settings_8.Settings.acceptedTestCaseColor;
+                this.progressContainer.innerHTML = Settings_8.Strings.INPUT_ACCEPTED;
             }
             else {
-                this.progressContainer.style.color = Settings_9.Settings.rejectedTestCaseColor;
-                this.progressContainer.innerHTML = Settings_9.Strings.INPUT_REJECTED;
+                this.progressContainer.style.color = Settings_8.Settings.rejectedTestCaseColor;
+                this.progressContainer.innerHTML = Settings_8.Strings.INPUT_REJECTED;
             }
         };
         initPDA.prototype.showStackContent = function () {
-            var controller = Settings_9.Settings.controller();
+            var controller = Settings_8.Settings.controller();
             var stackContent = controller.getStackContent();
             this.stackContainer.innerHTML = stackContent.join("<br>");
         };
         initPDA.prototype.bindRecognitionEvents = function () {
-            var disabledClass = Settings_9.Settings.disabledButtonClass;
+            var disabledClass = Settings_8.Settings.disabledButtonClass;
             var fastForwardEnabled = true;
             var stepEnabled = true;
             var stopEnabled = false;
@@ -3039,9 +2917,9 @@ define("machines/PDA/initializer", ["require", "exports", "Keyboard", "interface
             };
             this.fastRecognition.addEventListener("click", function () {
                 if (fastForwardEnabled) {
-                    Settings_9.Settings.automatonRenderer.lock();
+                    Settings_8.Settings.automatonRenderer.lock();
                     var input = self.testCase();
-                    var controller = Settings_9.Settings.controller();
+                    var controller = Settings_8.Settings.controller();
                     controller.fastForward(input);
                     self.highlightCurrentStates();
                     self.progressContainer.style.display = "";
@@ -3056,9 +2934,9 @@ define("machines/PDA/initializer", ["require", "exports", "Keyboard", "interface
             });
             this.stopRecognition.addEventListener("click", function () {
                 if (stopEnabled) {
-                    Settings_9.Settings.controller().stop();
-                    Settings_9.Settings.automatonRenderer.recognitionDim();
-                    Settings_9.Settings.automatonRenderer.unlock();
+                    Settings_8.Settings.controller().stop();
+                    Settings_8.Settings.automatonRenderer.recognitionDim();
+                    Settings_8.Settings.automatonRenderer.unlock();
                     self.progressContainer.style.color = "black";
                     self.progressContainer.style.display = "none";
                     self.stackContainer.style.display = "none";
@@ -3074,11 +2952,11 @@ define("machines/PDA/initializer", ["require", "exports", "Keyboard", "interface
                     stopStatus(true);
                     self.testCaseInput.disabled = true;
                     var input = self.testCase();
-                    var controller = Settings_9.Settings.controller();
+                    var controller = Settings_8.Settings.controller();
                     if (controller.isStopped()) {
                         controller.reset();
-                        Settings_9.Settings.automatonRenderer.lock();
-                        var sidebar = Utils_12.utils.id(Settings_9.Settings.sidebarID);
+                        Settings_8.Settings.automatonRenderer.lock();
+                        var sidebar = Utils_12.utils.id(Settings_8.Settings.sidebarID);
                         var width = sidebar.offsetWidth;
                         width -= 10;
                         width -= 1;
@@ -3101,19 +2979,19 @@ define("machines/PDA/initializer", ["require", "exports", "Keyboard", "interface
             });
             this.multipleCaseButton.addEventListener("click", function () {
                 var testCases = self.multipleCaseArea.value.split("\n");
-                var controller = Settings_9.Settings.controller();
+                var controller = Settings_8.Settings.controller();
                 self.multipleCaseResults.innerHTML = "";
                 for (var _i = 0, testCases_2 = testCases; _i < testCases_2.length; _i++) {
                     var input = testCases_2[_i];
                     controller.fastForward(input);
                     var result = Utils_12.utils.create("span");
                     if (controller.accepts()) {
-                        result.style.color = Settings_9.Settings.acceptedTestCaseColor;
-                        result.innerHTML = Settings_9.Strings.INPUT_ACCEPTED;
+                        result.style.color = Settings_8.Settings.acceptedTestCaseColor;
+                        result.innerHTML = Settings_8.Strings.INPUT_ACCEPTED;
                     }
                     else {
-                        result.style.color = Settings_9.Settings.rejectedTestCaseColor;
-                        result.innerHTML = Settings_9.Strings.INPUT_REJECTED;
+                        result.style.color = Settings_8.Settings.rejectedTestCaseColor;
+                        result.innerHTML = Settings_8.Strings.INPUT_REJECTED;
                     }
                     self.multipleCaseResults.appendChild(result);
                 }
@@ -3122,25 +3000,25 @@ define("machines/PDA/initializer", ["require", "exports", "Keyboard", "interface
         initPDA.prototype.bindShortcuts = function () {
             var self = this;
             if (!this.boundShortcuts) {
-                System_3.System.bindShortcut(Settings_9.Settings.shortcuts.focusTestCase, function () {
+                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.focusTestCase, function () {
                     self.testCaseInput.focus();
                 }, this.shortcutGroup);
-                System_3.System.bindShortcut(Settings_9.Settings.shortcuts.fastForward, function () {
+                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.fastForward, function () {
                     self.fastRecognition.click();
                 }, this.shortcutGroup);
-                System_3.System.bindShortcut(Settings_9.Settings.shortcuts.step, function () {
+                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.step, function () {
                     self.stepRecognition.click();
                 }, this.shortcutGroup);
-                System_3.System.bindShortcut(Settings_9.Settings.shortcuts.stop, function () {
+                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.stop, function () {
                     self.stopRecognition.click();
                 }, this.shortcutGroup);
-                System_3.System.bindShortcut(Settings_9.Settings.shortcuts.multipleRecognition, function () {
+                System_3.System.bindShortcut(Settings_8.Settings.shortcuts.multipleRecognition, function () {
                     self.multipleCaseButton.click();
                 }, this.shortcutGroup);
                 this.boundShortcuts = true;
             }
             this.testCaseInput.addEventListener("keydown", function (e) {
-                if (e.keyCode == Keyboard_7.Keyboard.keys[Settings_9.Settings.shortcuts.dimTestCase[0]]) {
+                if (e.keyCode == Keyboard_6.Keyboard.keys[Settings_8.Settings.shortcuts.dimTestCase[0]]) {
                     if (self.testCaseInput == document.activeElement) {
                         self.testCaseInput.blur();
                     }
@@ -3151,7 +3029,7 @@ define("machines/PDA/initializer", ["require", "exports", "Keyboard", "interface
     }());
     exports.initPDA = initPDA;
 });
-define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "System", "Utils"], function (require, exports, Keyboard_8, Menu_3, Settings_10, System_4, Utils_13) {
+define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface/Menu", "Settings", "System", "Utils"], function (require, exports, Keyboard_7, Menu_3, Settings_9, System_4, Utils_13) {
     "use strict";
     var initLBA = (function () {
         function initLBA() {
@@ -3170,7 +3048,7 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
         initLBA.prototype.init = function () {
             console.log("[LBA] Initializing...");
             var menuList = [];
-            var recognitionMenu = new Menu_3.Menu(Settings_10.Strings.RECOGNITION);
+            var recognitionMenu = new Menu_3.Menu(Settings_9.Strings.RECOGNITION);
             var rows = [];
             this.buildTestCaseInput(rows);
             this.buildRecognitionControls(rows);
@@ -3178,13 +3056,13 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
             this.buildRecognitionProgress(rows);
             this.addRows(rows, recognitionMenu);
             menuList.push(recognitionMenu);
-            var multipleRecognitionMenu = new Menu_3.Menu(Settings_10.Strings.MULTIPLE_RECOGNITION);
+            var multipleRecognitionMenu = new Menu_3.Menu(Settings_9.Strings.MULTIPLE_RECOGNITION);
             rows = [];
             this.buildMultipleRecognition(rows);
             this.addRows(rows, multipleRecognitionMenu);
             menuList.push(multipleRecognitionMenu);
             this.bindRecognitionEvents();
-            Settings_10.Settings.machines[Settings_10.Settings.Machine.LBA].sidebar = menuList;
+            Settings_9.Settings.machines[Settings_9.Settings.Machine.LBA].sidebar = menuList;
             console.log("[LBA] Initialized successfully");
         };
         initLBA.prototype.onEnter = function () {
@@ -3215,31 +3093,31 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
         initLBA.prototype.buildTestCaseInput = function (container) {
             var input = Utils_13.utils.create("input", {
                 type: "text",
-                placeholder: Settings_10.Strings.TEST_CASE
+                placeholder: Settings_9.Strings.TEST_CASE
             });
             container.push([input]);
             this.testCaseInput = input;
         };
         initLBA.prototype.highlightCurrentStates = function () {
-            var states = Settings_10.Settings.controller().currentStates();
-            Settings_10.Settings.automatonRenderer.recognitionHighlight(states);
+            var states = Settings_9.Settings.controller().currentStates();
+            Settings_9.Settings.automatonRenderer.recognitionHighlight(states);
         };
         initLBA.prototype.buildRecognitionControls = function (container) {
-            var disabledClass = Settings_10.Settings.disabledButtonClass;
+            var disabledClass = Settings_9.Settings.disabledButtonClass;
             this.fastRecognition = Utils_13.utils.create("img", {
                 className: "image_button",
                 src: "images/fastforward.svg",
-                title: Settings_10.Strings.FAST_RECOGNITION
+                title: Settings_9.Strings.FAST_RECOGNITION
             });
             this.stopRecognition = Utils_13.utils.create("img", {
                 className: "image_button " + disabledClass,
                 src: "images/stop.svg",
-                title: Settings_10.Strings.STOP_RECOGNITION
+                title: Settings_9.Strings.STOP_RECOGNITION
             });
             this.stepRecognition = Utils_13.utils.create("img", {
                 className: "image_button",
                 src: "images/play.svg",
-                title: Settings_10.Strings.STEP_RECOGNITION
+                title: Settings_9.Strings.STEP_RECOGNITION
             });
             container.push([this.fastRecognition, this.stepRecognition,
                 this.stopRecognition]);
@@ -3249,7 +3127,7 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
                 id: "tape"
             });
             this.tapeContainer.style.display = "none";
-            var displayedChars = Settings_10.Settings.tapeDisplayedChars;
+            var displayedChars = Settings_9.Settings.tapeDisplayedChars;
             for (var i = 0; i < displayedChars; i++) {
                 var cell = Utils_13.utils.create("div", {
                     className: "tape_cell"
@@ -3268,8 +3146,8 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
         };
         initLBA.prototype.buildMultipleRecognition = function (container) {
             this.multipleCaseArea = Utils_13.utils.create("textarea");
-            this.multipleCaseArea.rows = Settings_10.Settings.multRecognitionAreaRows;
-            this.multipleCaseArea.cols = Settings_10.Settings.multRecognitionAreaCols;
+            this.multipleCaseArea.rows = Settings_9.Settings.multRecognitionAreaRows;
+            this.multipleCaseArea.cols = Settings_9.Settings.multRecognitionAreaCols;
             this.multipleCaseResults = Utils_13.utils.create("div");
             var testCaseArea = Utils_13.utils.create("div", {
                 id: "multiple_recognition"
@@ -3280,31 +3158,31 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
             this.multipleCaseButton = Utils_13.utils.create("img", {
                 className: "image_button",
                 src: "images/play.svg",
-                title: Settings_10.Strings.START_MULTIPLE_RECOGNITION
+                title: Settings_9.Strings.START_MULTIPLE_RECOGNITION
             });
             container.push([this.multipleCaseButton]);
         };
         initLBA.prototype.showAcceptanceStatus = function () {
-            var controller = Settings_10.Settings.controller();
+            var controller = Settings_9.Settings.controller();
             if (controller.accepts()) {
-                this.progressContainer.style.color = Settings_10.Settings.acceptedTestCaseColor;
-                this.progressContainer.innerHTML = Settings_10.Strings.INPUT_ACCEPTED;
+                this.progressContainer.style.color = Settings_9.Settings.acceptedTestCaseColor;
+                this.progressContainer.innerHTML = Settings_9.Strings.INPUT_ACCEPTED;
             }
             else {
-                this.progressContainer.style.color = Settings_10.Settings.rejectedTestCaseColor;
+                this.progressContainer.style.color = Settings_9.Settings.rejectedTestCaseColor;
                 if (controller.exhausted()) {
-                    this.progressContainer.innerHTML = Settings_10.Strings.INPUT_LOOPING;
+                    this.progressContainer.innerHTML = Settings_9.Strings.INPUT_LOOPING;
                 }
                 else {
-                    this.progressContainer.innerHTML = Settings_10.Strings.INPUT_REJECTED;
+                    this.progressContainer.innerHTML = Settings_9.Strings.INPUT_REJECTED;
                 }
             }
         };
         initLBA.prototype.showTapeContent = function () {
-            var controller = Settings_10.Settings.controller();
+            var controller = Settings_9.Settings.controller();
             var tapeContent = controller.getTapeContent();
             var headPosition = controller.getHeadPosition();
-            var displayedChars = Settings_10.Settings.tapeDisplayedChars;
+            var displayedChars = Settings_9.Settings.tapeDisplayedChars;
             var offset = (displayedChars - 1) / 2;
             var startIndex = headPosition - offset;
             if (startIndex < 0) {
@@ -3327,7 +3205,7 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
             }
         };
         initLBA.prototype.bindRecognitionEvents = function () {
-            var disabledClass = Settings_10.Settings.disabledButtonClass;
+            var disabledClass = Settings_9.Settings.disabledButtonClass;
             var fastForwardEnabled = true;
             var stepEnabled = true;
             var stopEnabled = false;
@@ -3346,9 +3224,9 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
             };
             this.fastRecognition.addEventListener("click", function () {
                 if (fastForwardEnabled) {
-                    Settings_10.Settings.automatonRenderer.lock();
+                    Settings_9.Settings.automatonRenderer.lock();
                     var input = self.testCase();
-                    var controller = Settings_10.Settings.controller();
+                    var controller = Settings_9.Settings.controller();
                     controller.fastForward(input);
                     self.highlightCurrentStates();
                     self.progressContainer.style.display = "";
@@ -3363,9 +3241,9 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
             });
             this.stopRecognition.addEventListener("click", function () {
                 if (stopEnabled) {
-                    Settings_10.Settings.controller().stop();
-                    Settings_10.Settings.automatonRenderer.recognitionDim();
-                    Settings_10.Settings.automatonRenderer.unlock();
+                    Settings_9.Settings.controller().stop();
+                    Settings_9.Settings.automatonRenderer.recognitionDim();
+                    Settings_9.Settings.automatonRenderer.unlock();
                     self.progressContainer.style.color = "black";
                     self.progressContainer.style.display = "none";
                     self.tapeContainer.style.display = "none";
@@ -3381,11 +3259,11 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
                     stopStatus(true);
                     self.testCaseInput.disabled = true;
                     var input = self.testCase();
-                    var controller = Settings_10.Settings.controller();
+                    var controller = Settings_9.Settings.controller();
                     if (controller.isStopped()) {
                         controller.reset();
-                        Settings_10.Settings.automatonRenderer.lock();
-                        var sidebar = Utils_13.utils.id(Settings_10.Settings.sidebarID);
+                        Settings_9.Settings.automatonRenderer.lock();
+                        var sidebar = Utils_13.utils.id(Settings_9.Settings.sidebarID);
                         var width = sidebar.offsetWidth;
                         width -= 10;
                         width -= 1;
@@ -3408,23 +3286,23 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
             });
             this.multipleCaseButton.addEventListener("click", function () {
                 var testCases = self.multipleCaseArea.value.split("\n");
-                var controller = Settings_10.Settings.controller();
+                var controller = Settings_9.Settings.controller();
                 self.multipleCaseResults.innerHTML = "";
                 for (var _i = 0, testCases_3 = testCases; _i < testCases_3.length; _i++) {
                     var input = testCases_3[_i];
                     controller.fastForward(input);
                     var result = Utils_13.utils.create("span");
                     if (controller.accepts()) {
-                        result.style.color = Settings_10.Settings.acceptedTestCaseColor;
-                        result.innerHTML = Settings_10.Strings.INPUT_ACCEPTED;
+                        result.style.color = Settings_9.Settings.acceptedTestCaseColor;
+                        result.innerHTML = Settings_9.Strings.INPUT_ACCEPTED;
                     }
                     else {
-                        result.style.color = Settings_10.Settings.rejectedTestCaseColor;
+                        result.style.color = Settings_9.Settings.rejectedTestCaseColor;
                         if (controller.exhausted()) {
-                            result.innerHTML = Settings_10.Strings.INPUT_LOOPING.split("<br>").join(" ");
+                            result.innerHTML = Settings_9.Strings.INPUT_LOOPING.split("<br>").join(" ");
                         }
                         else {
-                            result.innerHTML = Settings_10.Strings.INPUT_REJECTED;
+                            result.innerHTML = Settings_9.Strings.INPUT_REJECTED;
                         }
                     }
                     self.multipleCaseResults.appendChild(result);
@@ -3434,25 +3312,25 @@ define("machines/LBA/initializer", ["require", "exports", "Keyboard", "interface
         initLBA.prototype.bindShortcuts = function () {
             var self = this;
             if (!this.boundShortcuts) {
-                System_4.System.bindShortcut(Settings_10.Settings.shortcuts.focusTestCase, function () {
+                System_4.System.bindShortcut(Settings_9.Settings.shortcuts.focusTestCase, function () {
                     self.testCaseInput.focus();
                 }, this.shortcutGroup);
-                System_4.System.bindShortcut(Settings_10.Settings.shortcuts.fastForward, function () {
+                System_4.System.bindShortcut(Settings_9.Settings.shortcuts.fastForward, function () {
                     self.fastRecognition.click();
                 }, this.shortcutGroup);
-                System_4.System.bindShortcut(Settings_10.Settings.shortcuts.step, function () {
+                System_4.System.bindShortcut(Settings_9.Settings.shortcuts.step, function () {
                     self.stepRecognition.click();
                 }, this.shortcutGroup);
-                System_4.System.bindShortcut(Settings_10.Settings.shortcuts.stop, function () {
+                System_4.System.bindShortcut(Settings_9.Settings.shortcuts.stop, function () {
                     self.stopRecognition.click();
                 }, this.shortcutGroup);
-                System_4.System.bindShortcut(Settings_10.Settings.shortcuts.multipleRecognition, function () {
+                System_4.System.bindShortcut(Settings_9.Settings.shortcuts.multipleRecognition, function () {
                     self.multipleCaseButton.click();
                 }, this.shortcutGroup);
                 this.boundShortcuts = true;
             }
             this.testCaseInput.addEventListener("keydown", function (e) {
-                if (e.keyCode == Keyboard_8.Keyboard.keys[Settings_10.Settings.shortcuts.dimTestCase[0]]) {
+                if (e.keyCode == Keyboard_7.Keyboard.keys[Settings_9.Settings.shortcuts.dimTestCase[0]]) {
                     if (self.testCaseInput == document.activeElement) {
                         self.testCaseInput.blur();
                     }
@@ -3619,6 +3497,128 @@ define("Settings", ["require", "exports", "lists/MachineList", "lists/Controller
         Settings.changeMachine = changeMachine;
     })(Settings = exports.Settings || (exports.Settings = {}));
     exports.Strings = Settings.language.strings;
+});
+define("System", ["require", "exports", "Keyboard", "Settings"], function (require, exports, Keyboard_8, Settings_10) {
+    "use strict";
+    var modifiers = ["alt", "ctrl", "shift"];
+    function propertyName(type) {
+        return type + "Key";
+    }
+    var System = (function () {
+        function System() {
+        }
+        System.changeLanguage = function (language) {
+            Settings_10.Settings.changeLanguage(language);
+            for (var _i = 0, _a = this.languageChangeObservers; _i < _a.length; _i++) {
+                var listener = _a[_i];
+                listener.onLanguageChange();
+            }
+        };
+        System.changeMachine = function (type) {
+            Settings_10.Settings.changeMachine(type);
+            for (var _i = 0, _a = this.machineChangeObservers; _i < _a.length; _i++) {
+                var listener = _a[_i];
+                listener.onMachineChange();
+            }
+        };
+        System.addLanguageChangeObserver = function (observer) {
+            this.languageChangeObservers.push(observer);
+        };
+        System.addMachineChangeObserver = function (observer) {
+            this.machineChangeObservers.push(observer);
+        };
+        System.emitKeyEvent = function (keys) {
+            var event = {
+                preventDefault: function () { }
+            };
+            for (var _i = 0, modifiers_1 = modifiers; _i < modifiers_1.length; _i++) {
+                var modifier = modifiers_1[_i];
+                event[propertyName(modifier)] = false;
+            }
+            for (var _a = 0, keys_1 = keys; _a < keys_1.length; _a++) {
+                var key = keys_1[_a];
+                if (modifiers.indexOf(key) >= 0) {
+                    event[propertyName(key)] = true;
+                }
+                else {
+                    event["keyCode"] = Keyboard_8.Keyboard.keys[key.toUpperCase()];
+                }
+            }
+            this.keyEvent(event);
+        };
+        System.keyEvent = function (event) {
+            var triggered = false;
+            for (var _i = 0, _a = this.keyboardObservers; _i < _a.length; _i++) {
+                var observer = _a[_i];
+                var keys = observer.keys;
+                if (!this.locked(observer) && this.shortcutMatches(event, keys)) {
+                    observer.callback();
+                    triggered = true;
+                }
+            }
+            if (triggered) {
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        };
+        System.bindShortcut = function (keys, callback, group) {
+            this.keyboardObservers.push({
+                keys: keys,
+                callback: callback,
+                group: group
+            });
+        };
+        System.lockShortcutGroup = function (group) {
+            this.lockedGroups[group] = true;
+        };
+        System.unlockShortcutGroup = function (group) {
+            delete this.lockedGroups[group];
+        };
+        System.blockEvents = function () {
+            this.eventBlock = true;
+        };
+        System.unblockEvents = function () {
+            this.eventBlock = false;
+        };
+        System.shortcutMatches = function (event, keys) {
+            if (this.eventBlock) {
+                return false;
+            }
+            var expectedModifiers = [];
+            for (var _i = 0, keys_2 = keys; _i < keys_2.length; _i++) {
+                var key = keys_2[_i];
+                if (modifiers.indexOf(key) >= 0) {
+                    expectedModifiers.push(key);
+                    if (!event[propertyName(key)]) {
+                        return false;
+                    }
+                }
+                else if (event.keyCode != Keyboard_8.Keyboard.keys[key]) {
+                    return false;
+                }
+            }
+            for (var _a = 0, modifiers_2 = modifiers; _a < modifiers_2.length; _a++) {
+                var modifier = modifiers_2[_a];
+                if (expectedModifiers.indexOf(modifier) == -1) {
+                    if (event[propertyName(modifier)]) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        };
+        System.locked = function (observer) {
+            return this.lockedGroups.hasOwnProperty(observer.group);
+        };
+        System.keyboardObservers = [];
+        System.languageChangeObservers = [];
+        System.machineChangeObservers = [];
+        System.eventBlock = false;
+        System.lockedGroups = {};
+        return System;
+    }());
+    exports.System = System;
 });
 define("interface/Edge", ["require", "exports", "Settings", "Utils"], function (require, exports, Settings_11, Utils_16) {
     "use strict";
@@ -3986,132 +3986,6 @@ define("interface/EdgeUtils", ["require", "exports", "Settings"], function (requ
         EdgeUtils.addEdgeData = addEdgeData;
     })(EdgeUtils = exports.EdgeUtils || (exports.EdgeUtils = {}));
 });
-define("Persistence", ["require", "exports", "interface/Edge", "interface/EdgeUtils", "Settings", "interface/State"], function (require, exports, Edge_1, EdgeUtils_1, Settings_13, State_1) {
-    "use strict";
-    var Persistence;
-    (function (Persistence) {
-        function save(stateList, edgeList, initialState) {
-            var result = [
-                Settings_13.Settings.Machine[Settings_13.Settings.currentMachine],
-                [],
-                [],
-                -1
-            ];
-            var i = 0;
-            for (var _i = 0, stateList_1 = stateList; _i < stateList_1.length; _i++) {
-                var state = stateList_1[_i];
-                var position = state.getPosition();
-                result[1].push([
-                    state.getName(),
-                    state.isFinal() ? 1 : 0,
-                    position.x,
-                    position.y
-                ]);
-                if (state == initialState) {
-                    result[3] = i;
-                }
-                i++;
-            }
-            for (var _a = 0, edgeList_1 = edgeList; _a < edgeList_1.length; _a++) {
-                var edge = edgeList_1[_a];
-                result[2].push([
-                    edge.getOrigin().getName(),
-                    edge.getTarget().getName(),
-                    edge.getDataList()
-                ]);
-            }
-            return JSON.stringify(result);
-        }
-        Persistence.save = save;
-        function load(content) {
-            var loadedData = {
-                error: false,
-                initialState: null,
-                stateList: [],
-                edgeList: []
-            };
-            var obj = [];
-            try {
-                obj = JSON.parse(content);
-            }
-            catch (e) {
-                loadedData.error = true;
-                return loadedData;
-            }
-            var machineType = Settings_13.Settings.Machine[Settings_13.Settings.currentMachine];
-            var validation = obj[0] == machineType
-                && obj[1] instanceof Array
-                && obj[2] instanceof Array
-                && typeof obj[3] == "number"
-                && obj.length == 4;
-            if (!validation) {
-                loadedData.error = true;
-                return loadedData;
-            }
-            var connections = {};
-            var nameToIndex = loadStates(obj, loadedData, function (state) {
-                connections[state.getName()] = {};
-            });
-            if (!loadEdges(obj, loadedData, nameToIndex, connections)) {
-                loadedData.error = true;
-                return loadedData;
-            }
-            return loadedData;
-        }
-        Persistence.load = load;
-        function loadStates(dataObj, result, callback) {
-            var nameToIndex = {};
-            var controller = Settings_13.Settings.controller();
-            var i = 0;
-            for (var _i = 0, _a = dataObj[1]; _i < _a.length; _i++) {
-                var data = _a[_i];
-                var isInitial = (dataObj[3] == i);
-                var state = new State_1.State();
-                state.setName(data[0]);
-                state.setInitial(isInitial);
-                state.setFinal(!!data[1]);
-                state.setPosition(data[2], data[3]);
-                if (isInitial) {
-                    result.initialState = state;
-                }
-                nameToIndex[data[0]] = i;
-                callback(state);
-                result.stateList.push(state);
-                controller.createState(state);
-                i++;
-            }
-            return nameToIndex;
-        }
-        function loadEdges(data, result, nameToIndex, connections) {
-            var states = result.stateList;
-            for (var _i = 0, _a = data[2]; _i < _a.length; _i++) {
-                var edgeData = _a[_i];
-                if (edgeData.length != 3) {
-                    return false;
-                }
-                var edge = new Edge_1.Edge();
-                var originName = edgeData[0];
-                var targetName = edgeData[1];
-                var origin = states[nameToIndex[originName]];
-                var target = states[nameToIndex[targetName]];
-                edge.setOrigin(origin);
-                edge.setTarget(target);
-                if (connections[targetName].hasOwnProperty(originName)) {
-                    var opposite = connections[targetName][originName];
-                    opposite.setCurveFlag(true);
-                    edge.setCurveFlag(true);
-                }
-                for (var _b = 0, _c = edgeData[2]; _b < _c.length; _b++) {
-                    var data_1 = _c[_b];
-                    EdgeUtils_1.EdgeUtils.addEdgeData(edge, data_1);
-                }
-                connections[originName][targetName] = edge;
-                result.edgeList.push(edge);
-            }
-            return true;
-        }
-    })(Persistence = exports.Persistence || (exports.Persistence = {}));
-});
 define("Memento", ["require", "exports"], function (require, exports) {
     "use strict";
     var Memento = (function () {
@@ -4140,10 +4014,13 @@ define("Memento", ["require", "exports"], function (require, exports) {
     }());
     exports.Memento = Memento;
 });
-define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "Persistence", "Prompt", "Settings", "interface/State", "System", "interface/Table", "Utils"], function (require, exports, Edge_2, Persistence_1, Prompt_4, Settings_14, State_2, System_5, Table_1, Utils_17) {
+define("persistence/PersistenceHandler", ["require", "exports"], function (require, exports) {
+    "use strict";
+});
+define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "Prompt", "Settings", "interface/State", "System", "interface/Table", "Utils"], function (require, exports, Edge_1, Prompt_4, Settings_13, State_1, System_5, Table_1, Utils_17) {
     "use strict";
     var AutomatonRenderer = (function () {
-        function AutomatonRenderer(canvas, node, memento) {
+        function AutomatonRenderer(canvas, node, memento, persistenceHandler) {
             this.canvas = null;
             this.node = null;
             this.stateList = [];
@@ -4159,6 +4036,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.canvas = canvas;
             this.memento = memento;
             this.node = node;
+            this.persistenceHandler = persistenceHandler;
         }
         AutomatonRenderer.prototype.render = function () {
             this.bindEvents();
@@ -4189,20 +4067,20 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.edgeList = [];
             this.initialState = null;
             this.clearSelection();
-            Settings_14.Settings.controller().clear();
+            Settings_13.Settings.controller().clear();
         };
         AutomatonRenderer.prototype.empty = function () {
             return this.stateList.length == 0;
         };
         AutomatonRenderer.prototype.save = function () {
-            return Persistence_1.Persistence.save(this.stateList, this.edgeList, this.initialState);
+            return this.persistenceHandler.save(this.stateList, this.edgeList, this.initialState);
         };
         AutomatonRenderer.prototype.load = function (content, pushResult) {
             if (pushResult === void 0) { pushResult = true; }
             this.frozenMemento = true;
-            var loadedData = Persistence_1.Persistence.load(content);
+            var loadedData = this.persistenceHandler.load(content);
             if (loadedData.error) {
-                alert(Settings_14.Strings.INVALID_FILE);
+                alert(Settings_13.Strings.INVALID_FILE);
                 return;
             }
             this.stateList = this.stateList.concat(loadedData.stateList);
@@ -4234,7 +4112,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             }
             for (var _b = 0, stateNames_1 = stateNames; _b < stateNames_1.length; _b++) {
                 var name_2 = stateNames_1[_b];
-                nameMapping[name_2].applyPalette(Settings_14.Settings.stateRecognitionPalette);
+                nameMapping[name_2].applyPalette(Settings_13.Settings.stateRecognitionPalette);
             }
             for (var _c = 0, _d = this.stateList; _c < _d.length; _c++) {
                 var state = _d[_c];
@@ -4250,22 +4128,22 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             this.highlightedState = null;
         };
         AutomatonRenderer.prototype.lock = function () {
-            System_5.System.lockShortcutGroup(Settings_14.Settings.canvasShortcutID);
+            System_5.System.lockShortcutGroup(Settings_13.Settings.canvasShortcutID);
             this.locked = true;
         };
         AutomatonRenderer.prototype.unlock = function () {
-            System_5.System.unlockShortcutGroup(Settings_14.Settings.canvasShortcutID);
+            System_5.System.unlockShortcutGroup(Settings_13.Settings.canvasShortcutID);
             this.locked = false;
         };
         AutomatonRenderer.prototype.stateManualCreation = function () {
-            var stateRadius = Settings_14.Settings.stateRadius;
+            var stateRadius = Settings_13.Settings.stateRadius;
             this.newStateAt(stateRadius, stateRadius);
         };
         AutomatonRenderer.prototype.edgeManualCreation = function () {
             if (!this.locked) {
                 var self_1 = this;
-                Prompt_4.Prompt.simple(Settings_14.Strings.EDGE_MANUAL_CREATION, 2, function (data) {
-                    var edge = new Edge_2.Edge();
+                Prompt_4.Prompt.simple(Settings_13.Strings.EDGE_MANUAL_CREATION, 2, function (data) {
+                    var edge = new Edge_1.Edge();
                     for (var _i = 0, _a = self_1.stateList; _i < _a.length; _i++) {
                         var state = _a[_i];
                         var name_3 = state.getName();
@@ -4281,7 +4159,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                         self_1.finishEdge(edge.getTarget());
                     }
                     else {
-                        alert(Settings_14.Strings.ERROR_INVALID_STATE_NAME);
+                        alert(Settings_13.Strings.ERROR_INVALID_STATE_NAME);
                     }
                 });
             }
@@ -4295,18 +4173,18 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 }
                 if (!definitionContainer) {
                     definitionContainer = Utils_17.utils.create("div");
-                    Settings_14.Settings.sidebar.updateFormalDefinition(definitionContainer);
+                    Settings_13.Settings.sidebar.updateFormalDefinition(definitionContainer);
                 }
                 definitionContainer.innerHTML = self.buildFormalDefinition();
             };
-            Settings_14.Settings.controller().setEditingCallback(callback);
+            Settings_13.Settings.controller().setEditingCallback(callback);
             callback();
         };
         AutomatonRenderer.prototype.buildFormalDefinition = function () {
-            var formalDefinition = Settings_14.Settings.controller().formalDefinition();
+            var formalDefinition = Settings_13.Settings.controller().formalDefinition();
             var tupleSequence = formalDefinition.tupleSequence;
             var content = "M = (" + tupleSequence.join(", ") + ")";
-            content += Settings_14.Strings.DEFINITION_WHERE_SUFFIX + "<br>";
+            content += Settings_13.Strings.DEFINITION_WHERE_SUFFIX + "<br>";
             for (var _i = 0, _a = formalDefinition.parameterSequence; _i < _a.length; _i++) {
                 var parameter = _a[_i];
                 var value = formalDefinition.parameterValues[parameter];
@@ -4320,7 +4198,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 }
                 else if (type == "undefined") {
                     content += "<span class='none'>";
-                    content += Settings_14.Strings.NO_INITIAL_STATE;
+                    content += Settings_13.Strings.NO_INITIAL_STATE;
                     content += "</span>";
                 }
                 else if (value.hasOwnProperty("list")) {
@@ -4340,7 +4218,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     }
                     else {
                         content += "<span class='none'>";
-                        content += Settings_14.Strings.NO_TRANSITIONS;
+                        content += Settings_13.Strings.NO_TRANSITIONS;
                         content += "</span>";
                     }
                 }
@@ -4358,7 +4236,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     this.highlightedState.removePalette();
                     this.highlightedState.render(this.canvas);
                 }
-                state.applyPalette(Settings_14.Settings.stateHighlightPalette);
+                state.applyPalette(Settings_13.Settings.stateHighlightPalette);
                 this.highlightedState = state;
                 state.render(this.canvas);
                 this.updateEditableState(state);
@@ -4369,7 +4247,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 this.highlightedState.removePalette();
                 this.highlightedState.render(this.canvas);
                 this.highlightedState = null;
-                Settings_14.Settings.sidebar.unsetSelectedEntityContent();
+                Settings_13.Settings.sidebar.unsetSelectedEntityContent();
             }
         };
         AutomatonRenderer.prototype.selectEdge = function (edge) {
@@ -4379,7 +4257,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     this.highlightedEdge.removeCustomColor();
                     this.highlightedEdge.render(this.canvas);
                 }
-                edge.setCustomColor(Settings_14.Settings.edgeHighlightColor);
+                edge.setCustomColor(Settings_13.Settings.edgeHighlightColor);
                 this.highlightedEdge = edge;
                 edge.render(this.canvas);
                 this.updateEditableEdge(edge);
@@ -4390,19 +4268,19 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 this.highlightedEdge.removeCustomColor();
                 this.highlightedEdge.render(this.canvas);
                 this.highlightedEdge = null;
-                Settings_14.Settings.sidebar.unsetSelectedEntityContent();
+                Settings_13.Settings.sidebar.unsetSelectedEntityContent();
             }
         };
         AutomatonRenderer.prototype.updateEditableState = function (state) {
-            Settings_14.Settings.sidebar.unsetSelectedEntityContent();
+            Settings_13.Settings.sidebar.unsetSelectedEntityContent();
             if (state) {
-                Settings_14.Settings.sidebar.setSelectedEntityContent(this.showEditableState(state));
+                Settings_13.Settings.sidebar.setSelectedEntityContent(this.showEditableState(state));
             }
         };
         AutomatonRenderer.prototype.updateEditableEdge = function (edge) {
-            Settings_14.Settings.sidebar.unsetSelectedEntityContent();
+            Settings_13.Settings.sidebar.unsetSelectedEntityContent();
             if (edge) {
-                Settings_14.Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
+                Settings_13.Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
             }
         };
         AutomatonRenderer.prototype.showEditableState = function (state) {
@@ -4412,9 +4290,9 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             var self = this;
             var renameButton = Utils_17.utils.create("input", {
                 type: "button",
-                value: Settings_14.Strings.RENAME_STATE,
+                value: Settings_13.Strings.RENAME_STATE,
                 click: function () {
-                    var message = new Prompt_4.Prompt(Settings_14.Strings.STATE_RENAME_ACTION);
+                    var message = new Prompt_4.Prompt(Settings_13.Strings.STATE_RENAME_ACTION);
                     message.addInput({
                         validator: function (content) {
                             return content.length <= 6;
@@ -4425,47 +4303,47 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             });
             var toggleInitialButton = Utils_17.utils.create("input", {
                 type: "button",
-                value: Settings_14.Strings.TOGGLE_PROPERTY,
+                value: Settings_13.Strings.TOGGLE_PROPERTY,
                 click: function () {
                     self.setInitialState(state);
                     state.render(canvas);
-                    $("#entity_initial").html(state.isInitial() ? Settings_14.Strings.YES
-                        : Settings_14.Strings.NO);
+                    $("#entity_initial").html(state.isInitial() ? Settings_13.Strings.YES
+                        : Settings_13.Strings.NO);
                 }
             });
             var toggleFinalButton = Utils_17.utils.create("input", {
                 type: "button",
-                value: Settings_14.Strings.TOGGLE_PROPERTY,
+                value: Settings_13.Strings.TOGGLE_PROPERTY,
                 click: function () {
                     self.changeFinalFlag(state, !state.isFinal());
                     state.render(canvas);
-                    $("#entity_final").html(state.isFinal() ? Settings_14.Strings.YES
-                        : Settings_14.Strings.NO);
+                    $("#entity_final").html(state.isFinal() ? Settings_13.Strings.YES
+                        : Settings_13.Strings.NO);
                 }
             });
             var deleteButton = Utils_17.utils.create("input", {
                 type: "button",
-                value: Settings_14.Strings.DELETE_STATE,
+                value: Settings_13.Strings.DELETE_STATE,
                 click: function () {
                     self.deleteState(state);
                     self.clearSelection();
-                    Settings_14.Settings.sidebar.unsetSelectedEntityContent();
+                    Settings_13.Settings.sidebar.unsetSelectedEntityContent();
                 }
             });
-            table.add(Utils_17.utils.create("span", { innerHTML: Settings_14.Strings.STATE_NAME + ":" }));
+            table.add(Utils_17.utils.create("span", { innerHTML: Settings_13.Strings.STATE_NAME + ":" }));
             table.add(Utils_17.utils.create("span", { innerHTML: state.getName(),
                 className: "property_value",
                 id: "entity_name" }));
             table.add(renameButton);
-            table.add(Utils_17.utils.create("span", { innerHTML: Settings_14.Strings.STATE_IS_INITIAL + ":" }));
-            table.add(Utils_17.utils.create("span", { innerHTML: state.isInitial() ? Settings_14.Strings.YES
-                    : Settings_14.Strings.NO,
+            table.add(Utils_17.utils.create("span", { innerHTML: Settings_13.Strings.STATE_IS_INITIAL + ":" }));
+            table.add(Utils_17.utils.create("span", { innerHTML: state.isInitial() ? Settings_13.Strings.YES
+                    : Settings_13.Strings.NO,
                 className: "property_value",
                 id: "entity_initial" }));
             table.add(toggleInitialButton);
-            table.add(Utils_17.utils.create("span", { innerHTML: Settings_14.Strings.STATE_IS_FINAL + ":" }));
-            table.add(Utils_17.utils.create("span", { innerHTML: state.isFinal() ? Settings_14.Strings.YES
-                    : Settings_14.Strings.NO,
+            table.add(Utils_17.utils.create("span", { innerHTML: Settings_13.Strings.STATE_IS_FINAL + ":" }));
+            table.add(Utils_17.utils.create("span", { innerHTML: state.isFinal() ? Settings_13.Strings.YES
+                    : Settings_13.Strings.NO,
                 className: "property_value",
                 id: "entity_final" }));
             table.add(toggleFinalButton);
@@ -4530,9 +4408,9 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             var self = this;
             var changeOriginButton = Utils_17.utils.create("input", {
                 type: "button",
-                value: Settings_14.Strings.CHANGE_PROPERTY,
+                value: Settings_13.Strings.CHANGE_PROPERTY,
                 click: function () {
-                    var newOrigin = prompt(Settings_14.Strings.EDGE_ENTER_NEW_ORIGIN);
+                    var newOrigin = prompt(Settings_13.Strings.EDGE_ENTER_NEW_ORIGIN);
                     if (newOrigin !== null) {
                         for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
                             var state = _a[_i];
@@ -4550,9 +4428,9 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             });
             var changeTargetButton = Utils_17.utils.create("input", {
                 type: "button",
-                value: Settings_14.Strings.CHANGE_PROPERTY,
+                value: Settings_13.Strings.CHANGE_PROPERTY,
                 click: function () {
-                    var newTarget = prompt(Settings_14.Strings.EDGE_ENTER_NEW_TARGET);
+                    var newTarget = prompt(Settings_13.Strings.EDGE_ENTER_NEW_TARGET);
                     if (newTarget !== null) {
                         for (var _i = 0, _a = self.stateList; _i < _a.length; _i++) {
                             var state = _a[_i];
@@ -4570,11 +4448,11 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             });
             var changeTransitionButton = Utils_17.utils.create("input", {
                 type: "button",
-                value: Settings_14.Strings.CHANGE_PROPERTY,
+                value: Settings_13.Strings.CHANGE_PROPERTY,
                 click: function () {
                     var transitionSelector = $("#entity_transition_list").get(0);
                     var selectedIndex = transitionSelector.selectedIndex;
-                    var controller = Settings_14.Settings.controller();
+                    var controller = Settings_13.Settings.controller();
                     controller.edgePrompt(function (data, content) {
                         var origin = edge.getOrigin();
                         var target = edge.getTarget();
@@ -4590,11 +4468,11 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             });
             var deleteTransitionButton = Utils_17.utils.create("input", {
                 type: "button",
-                value: Settings_14.Strings.DELETE_SELECTED_TRANSITION,
+                value: Settings_13.Strings.DELETE_SELECTED_TRANSITION,
                 click: function () {
                     var transitionSelector = $("#entity_transition_list").get(0);
                     var selectedIndex = transitionSelector.selectedIndex;
-                    var controller = Settings_14.Settings.controller();
+                    var controller = Settings_13.Settings.controller();
                     var origin = edge.getOrigin();
                     var target = edge.getTarget();
                     var dataList = edge.getDataList();
@@ -4604,7 +4482,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     if (dataList.length == 0) {
                         self.deleteEdge(edge);
                         self.clearSelection();
-                        Settings_14.Settings.sidebar.unsetSelectedEntityContent();
+                        Settings_13.Settings.sidebar.unsetSelectedEntityContent();
                     }
                     else {
                         edge.render(self.canvas);
@@ -4613,21 +4491,21 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 }
             });
             var deleteAllButton = Utils_17.utils.create("input", {
-                title: Utils_17.utils.printShortcut(Settings_14.Settings.shortcuts.deleteEntity),
+                title: Utils_17.utils.printShortcut(Settings_13.Settings.shortcuts.deleteEntity),
                 type: "button",
-                value: Settings_14.Strings.DELETE_ALL_TRANSITIONS,
+                value: Settings_13.Strings.DELETE_ALL_TRANSITIONS,
                 click: function () {
                     self.deleteEdge(edge);
                     self.clearSelection();
-                    Settings_14.Settings.sidebar.unsetSelectedEntityContent();
+                    Settings_13.Settings.sidebar.unsetSelectedEntityContent();
                 }
             });
-            table.add(Utils_17.utils.create("span", { innerHTML: Settings_14.Strings.ORIGIN + ":" }));
+            table.add(Utils_17.utils.create("span", { innerHTML: Settings_13.Strings.ORIGIN + ":" }));
             table.add(Utils_17.utils.create("span", { innerHTML: edge.getOrigin().getName(),
                 className: "property_value",
                 id: "entity_origin" }));
             table.add(changeOriginButton);
-            table.add(Utils_17.utils.create("span", { innerHTML: Settings_14.Strings.TARGET + ":" }));
+            table.add(Utils_17.utils.create("span", { innerHTML: Settings_13.Strings.TARGET + ":" }));
             table.add(Utils_17.utils.create("span", { innerHTML: edge.getTarget().getName(),
                 className: "property_value",
                 id: "entity_target" }));
@@ -4643,7 +4521,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 textSelector.appendChild(option);
                 i++;
             }
-            table.add(Utils_17.utils.create("span", { innerHTML: Settings_14.Strings.TRANSITIONS + ":" }));
+            table.add(Utils_17.utils.create("span", { innerHTML: Settings_13.Strings.TRANSITIONS + ":" }));
             table.add(textSelector);
             table.add(changeTransitionButton);
             table.add(deleteTransitionButton, 3);
@@ -4687,7 +4565,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             state.drag(function () {
                 self.updateEdges();
             }, function (distanceSquared, event) {
-                if (!self.locked && distanceSquared <= Settings_14.Settings.stateDragTolerance) {
+                if (!self.locked && distanceSquared <= Settings_13.Settings.stateDragTolerance) {
                     if (self.edgeMode) {
                         self.finishEdge(state);
                     }
@@ -4708,14 +4586,14 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         };
         AutomatonRenderer.prototype.beginEdge = function (state) {
             this.edgeMode = true;
-            this.currentEdge = new Edge_2.Edge();
+            this.currentEdge = new Edge_1.Edge();
             this.currentEdge.setOrigin(state);
         };
         AutomatonRenderer.prototype.finishEdge = function (state) {
             this.edgeMode = false;
             var origin = this.currentEdge.getOrigin();
             var edgeText = function (callback, fallback) {
-                var controller = Settings_14.Settings.controller();
+                var controller = Settings_13.Settings.controller();
                 controller.edgePrompt(function (data, content) {
                     controller.createEdge(origin, state, data);
                     callback(data, content);
@@ -4785,7 +4663,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         AutomatonRenderer.prototype.clearSelection = function () {
             this.highlightedState = null;
             this.highlightedEdge = null;
-            Settings_14.Settings.sidebar.unsetSelectedEntityContent();
+            Settings_13.Settings.sidebar.unsetSelectedEntityContent();
             if (this.edgeMode) {
                 this.edgeMode = false;
                 this.currentEdge.remove();
@@ -4794,18 +4672,18 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         };
         AutomatonRenderer.prototype.newStateAt = function (x, y) {
             if (!this.locked) {
-                var state_5 = new State_2.State();
+                var state_5 = new State_1.State();
                 state_5.setPosition(x, y);
                 this.selectState(state_5);
                 this.bindStateEvents(state_5);
                 var self_2 = this;
                 var stateNamePrompt_1 = function () {
-                    Prompt_4.Prompt.simple(Settings_14.Strings.STATE_MANUAL_CREATION, 1, function (data) {
+                    Prompt_4.Prompt.simple(Settings_13.Strings.STATE_MANUAL_CREATION, 1, function (data) {
                         var name = data[0];
                         for (var _i = 0, _a = self_2.stateList; _i < _a.length; _i++) {
                             var state_6 = _a[_i];
                             if (state_6.getName() == name) {
-                                alert(Settings_14.Strings.DUPLICATE_STATE_NAME);
+                                alert(Settings_13.Strings.DUPLICATE_STATE_NAME);
                                 return stateNamePrompt_1();
                             }
                         }
@@ -4828,10 +4706,10 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
             }
             state.render(this.canvas);
             this.stateList.push(state);
-            Settings_14.Settings.controller().createState(state);
+            Settings_13.Settings.controller().createState(state);
         };
         AutomatonRenderer.prototype.setInitialState = function (state) {
-            var controller = Settings_14.Settings.controller();
+            var controller = Settings_13.Settings.controller();
             if (state == this.initialState) {
                 state.setInitial(false);
                 controller.changeInitialFlag(state);
@@ -4850,7 +4728,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         };
         AutomatonRenderer.prototype.changeFinalFlag = function (state, value) {
             state.setFinal(value);
-            Settings_14.Settings.controller().changeFinalFlag(state);
+            Settings_13.Settings.controller().changeFinalFlag(state);
         };
         AutomatonRenderer.prototype.deleteState = function (state) {
             for (var i = 0; i < this.edgeList.length; i++) {
@@ -4871,7 +4749,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     break;
                 }
             }
-            Settings_14.Settings.controller().deleteState(state);
+            Settings_13.Settings.controller().deleteState(state);
         };
         AutomatonRenderer.prototype.deleteEdge = function (edge) {
             for (var i = 0; i < this.edgeList.length; i++) {
@@ -4881,7 +4759,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     var origin = edge.getOrigin();
                     var target = edge.getTarget();
                     var dataLists = edge.getDataList();
-                    var controller = Settings_14.Settings.controller();
+                    var controller = Settings_13.Settings.controller();
                     for (var _i = 0, dataLists_1 = dataLists; _i < dataLists_1.length; _i++) {
                         var data = dataLists_1[_i];
                         controller.deleteEdge(origin, target, data);
@@ -4917,14 +4795,14 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
         };
         AutomatonRenderer.prototype.bindShortcuts = function () {
             var self = this;
-            var group = Settings_14.Settings.canvasShortcutID;
-            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.toggleInitial, function () {
+            var group = Settings_13.Settings.canvasShortcutID;
+            System_5.System.bindShortcut(Settings_13.Settings.shortcuts.toggleInitial, function () {
                 self.toggleInitial();
             }, group);
-            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.toggleFinal, function () {
+            System_5.System.bindShortcut(Settings_13.Settings.shortcuts.toggleFinal, function () {
                 self.toggleFinal();
             }, group);
-            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.dimSelection, function () {
+            System_5.System.bindShortcut(Settings_13.Settings.shortcuts.dimSelection, function () {
                 if (self.edgeMode) {
                     self.edgeMode = false;
                     self.currentEdge.remove();
@@ -4933,7 +4811,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 self.dimState();
                 self.dimEdge();
             }, group);
-            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.deleteEntity, function () {
+            System_5.System.bindShortcut(Settings_13.Settings.shortcuts.deleteEntity, function () {
                 var highlightedState = self.highlightedState;
                 var highlightedEdge = self.highlightedEdge;
                 if (highlightedState) {
@@ -4944,13 +4822,13 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                 }
                 self.clearSelection();
             }, group);
-            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.clearMachine, function () {
-                var confirmation = confirm(Settings_14.Strings.CLEAR_CONFIRMATION);
+            System_5.System.bindShortcut(Settings_13.Settings.shortcuts.clearMachine, function () {
+                var confirmation = confirm(Settings_13.Strings.CLEAR_CONFIRMATION);
                 if (confirmation) {
                     self.clear();
                 }
             }, group);
-            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.left, function () {
+            System_5.System.bindShortcut(Settings_13.Settings.shortcuts.left, function () {
                 self.moveStateSelection(function (attempt, highlighted) {
                     return attempt.getPosition().x < highlighted.getPosition().x;
                 }, function (attempt, currBest, highlighted) {
@@ -4969,7 +4847,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     return dy < targetDy;
                 });
             }, group);
-            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.right, function () {
+            System_5.System.bindShortcut(Settings_13.Settings.shortcuts.right, function () {
                 self.moveStateSelection(function (attempt, highlighted) {
                     return attempt.getPosition().x > highlighted.getPosition().x;
                 }, function (attempt, currBest, highlighted) {
@@ -4988,7 +4866,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     return dy < targetDy;
                 });
             }, group);
-            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.up, function () {
+            System_5.System.bindShortcut(Settings_13.Settings.shortcuts.up, function () {
                 self.moveStateSelection(function (attempt, highlighted) {
                     return attempt.getPosition().y < highlighted.getPosition().y;
                 }, function (attempt, currBest, highlighted) {
@@ -5007,7 +4885,7 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     return dx < targetDx;
                 });
             }, group);
-            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.down, function () {
+            System_5.System.bindShortcut(Settings_13.Settings.shortcuts.down, function () {
                 self.moveStateSelection(function (attempt, highlighted) {
                     return attempt.getPosition().y > highlighted.getPosition().y;
                 }, function (attempt, currBest, highlighted) {
@@ -5026,12 +4904,12 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     return dx < targetDx;
                 });
             }, group);
-            System_5.System.bindShortcut(Settings_14.Settings.shortcuts.undo, function () {
+            System_5.System.bindShortcut(Settings_13.Settings.shortcuts.undo, function () {
                 self.undo();
             }, group);
         };
         AutomatonRenderer.prototype.selectionThreshold = function () {
-            return 2 * Settings_14.Settings.stateRadius;
+            return 2 * Settings_13.Settings.stateRadius;
         };
         AutomatonRenderer.prototype.moveStateSelection = function (isViable, isBetterCandidate) {
             var highlightedState = this.highlightedState;
@@ -5054,7 +4932,134 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
     }());
     exports.AutomatonRenderer = AutomatonRenderer;
 });
-define("interface/Mainbar", ["require", "exports", "interface/AutomatonRenderer", "Memento", "interface/Renderer", "Settings"], function (require, exports, AutomatonRenderer_1, Memento_1, Renderer_3, Settings_15) {
+define("persistence/JSONHandler", ["require", "exports", "interface/Edge", "interface/EdgeUtils", "Settings", "interface/State"], function (require, exports, Edge_2, EdgeUtils_1, Settings_14, State_2) {
+    "use strict";
+    var JSONHandler = (function () {
+        function JSONHandler() {
+        }
+        JSONHandler.prototype.save = function (stateList, edgeList, initialState) {
+            var result = [
+                Settings_14.Settings.Machine[Settings_14.Settings.currentMachine],
+                [],
+                [],
+                -1
+            ];
+            var i = 0;
+            for (var _i = 0, stateList_1 = stateList; _i < stateList_1.length; _i++) {
+                var state = stateList_1[_i];
+                var position = state.getPosition();
+                result[1].push([
+                    state.getName(),
+                    state.isFinal() ? 1 : 0,
+                    position.x,
+                    position.y
+                ]);
+                if (state == initialState) {
+                    result[3] = i;
+                }
+                i++;
+            }
+            for (var _a = 0, edgeList_1 = edgeList; _a < edgeList_1.length; _a++) {
+                var edge = edgeList_1[_a];
+                result[2].push([
+                    edge.getOrigin().getName(),
+                    edge.getTarget().getName(),
+                    edge.getDataList()
+                ]);
+            }
+            return JSON.stringify(result);
+        };
+        JSONHandler.prototype.load = function (content) {
+            var loadedData = {
+                error: false,
+                initialState: null,
+                stateList: [],
+                edgeList: []
+            };
+            var obj = [];
+            try {
+                obj = JSON.parse(content);
+            }
+            catch (e) {
+                loadedData.error = true;
+                return loadedData;
+            }
+            var machineType = Settings_14.Settings.Machine[Settings_14.Settings.currentMachine];
+            var validation = obj[0] == machineType
+                && obj[1] instanceof Array
+                && obj[2] instanceof Array
+                && typeof obj[3] == "number"
+                && obj.length == 4;
+            if (!validation) {
+                loadedData.error = true;
+                return loadedData;
+            }
+            var connections = {};
+            var nameToIndex = this.loadStates(obj, loadedData, function (state) {
+                connections[state.getName()] = {};
+            });
+            if (!this.loadEdges(obj, loadedData, nameToIndex, connections)) {
+                loadedData.error = true;
+                return loadedData;
+            }
+            return loadedData;
+        };
+        JSONHandler.prototype.loadStates = function (dataObj, result, callback) {
+            var nameToIndex = {};
+            var controller = Settings_14.Settings.controller();
+            var i = 0;
+            for (var _i = 0, _a = dataObj[1]; _i < _a.length; _i++) {
+                var data = _a[_i];
+                var isInitial = (dataObj[3] == i);
+                var state = new State_2.State();
+                state.setName(data[0]);
+                state.setInitial(isInitial);
+                state.setFinal(!!data[1]);
+                state.setPosition(data[2], data[3]);
+                if (isInitial) {
+                    result.initialState = state;
+                }
+                nameToIndex[data[0]] = i;
+                callback(state);
+                result.stateList.push(state);
+                controller.createState(state);
+                i++;
+            }
+            return nameToIndex;
+        };
+        JSONHandler.prototype.loadEdges = function (data, result, nameToIndex, connections) {
+            var states = result.stateList;
+            for (var _i = 0, _a = data[2]; _i < _a.length; _i++) {
+                var edgeData = _a[_i];
+                if (edgeData.length != 3) {
+                    return false;
+                }
+                var edge = new Edge_2.Edge();
+                var originName = edgeData[0];
+                var targetName = edgeData[1];
+                var origin = states[nameToIndex[originName]];
+                var target = states[nameToIndex[targetName]];
+                edge.setOrigin(origin);
+                edge.setTarget(target);
+                if (connections[targetName].hasOwnProperty(originName)) {
+                    var opposite = connections[targetName][originName];
+                    opposite.setCurveFlag(true);
+                    edge.setCurveFlag(true);
+                }
+                for (var _b = 0, _c = edgeData[2]; _b < _c.length; _b++) {
+                    var data_1 = _c[_b];
+                    EdgeUtils_1.EdgeUtils.addEdgeData(edge, data_1);
+                }
+                connections[originName][targetName] = edge;
+                result.edgeList.push(edge);
+            }
+            return true;
+        };
+        return JSONHandler;
+    }());
+    exports.JSONHandler = JSONHandler;
+});
+define("interface/Mainbar", ["require", "exports", "interface/AutomatonRenderer", "persistence/JSONHandler", "Memento", "interface/Renderer", "Settings"], function (require, exports, AutomatonRenderer_1, JSONHandler_1, Memento_1, Renderer_3, Settings_15) {
     "use strict";
     var Mainbar = (function (_super) {
         __extends(Mainbar, _super);
@@ -5085,7 +5090,8 @@ define("interface/Mainbar", ["require", "exports", "interface/AutomatonRenderer"
             var memento = new Memento_1.Memento(function () {
                 return Settings_15.Settings.undoMaxAmount;
             });
-            this.automatonRenderer = new AutomatonRenderer_1.AutomatonRenderer(canvas, node, memento);
+            var persistenceHandler = new JSONHandler_1.JSONHandler();
+            this.automatonRenderer = new AutomatonRenderer_1.AutomatonRenderer(canvas, node, memento, persistenceHandler);
             Settings_15.Settings.automatonRenderer = this.automatonRenderer;
         };
         Mainbar.prototype.onRender = function () {

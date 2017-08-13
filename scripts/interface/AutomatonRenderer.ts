@@ -1,7 +1,7 @@
 import {Edge} from "./Edge"
 import {EdgeUtils} from "./EdgeUtils"
 import {Memento} from "../Memento"
-import {Persistence} from "../Persistence"
+import {PersistenceHandler} from "../persistence/PersistenceHandler"
 import {Prompt, ValuedHTMLElement} from "../Prompt"
 import {Settings, Strings} from "../Settings"
 import {State} from "./State"
@@ -10,10 +10,13 @@ import {Table} from "./Table"
 import {Point, utils} from "../Utils"
 
 export class AutomatonRenderer {
-	constructor(canvas: RaphaelPaper, node: Element, memento: Memento<string>) {
+	constructor(canvas: RaphaelPaper, node: Element,
+				memento: Memento<string>,
+				persistenceHandler: PersistenceHandler) {
 		this.canvas = canvas;
 		this.memento = memento;
 		this.node = node;
+		this.persistenceHandler = persistenceHandler;
 	}
 
 	public render(): void {
@@ -58,14 +61,15 @@ export class AutomatonRenderer {
 	}
 
 	public save(): string {
-		return Persistence.save(this.stateList, this.edgeList, this.initialState);
+		return this.persistenceHandler.save(this.stateList,
+					this.edgeList, this.initialState);
 	}
 
 	public load(content: string, pushResult: boolean = true): void {
 		// Blocks changes to the memento until the load process is complete
 		this.frozenMemento = true;
 
-		let loadedData = Persistence.load(content);
+		let loadedData = this.persistenceHandler.load(content);
 		if (loadedData.error) {
 			alert(Strings.INVALID_FILE);
 			return;
@@ -1064,4 +1068,6 @@ export class AutomatonRenderer {
 	private locked: boolean = false;
 	private memento: Memento<string> = null;
 	private frozenMemento: boolean = false;
+
+	private persistenceHandler: PersistenceHandler;
 }

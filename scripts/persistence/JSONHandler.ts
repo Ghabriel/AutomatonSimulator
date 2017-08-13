@@ -1,21 +1,15 @@
-import {Edge} from "./interface/Edge"
-import {EdgeUtils} from "./interface/EdgeUtils"
-import {Settings} from "./Settings"
-import {State} from "./interface/State"
-import {UnorderedSet} from "./datastructures/UnorderedSet"
+import {Edge} from "../interface/Edge"
+import {EdgeUtils} from "../interface/EdgeUtils"
+import {AutomatonSummary, PersistenceHandler} from "./PersistenceHandler"
+import {Settings} from "../Settings"
+import {State} from "../interface/State"
+import {UnorderedSet} from "../datastructures/UnorderedSet"
 
 type StateNameMapping = {[n: string]: number};
 type ConnectionMapping = {[n: string]: {[m: string]: Edge}};
 
-interface AutomatonSummary {
-	error: boolean,
-	initialState: State,
-	stateList: State[],
-	edgeList: Edge[]
-}
-
-export namespace Persistence {
-	export function save(stateList: State[], edgeList: Edge[],
+export class JSONHandler implements PersistenceHandler {
+	public save(stateList: State[], edgeList: Edge[],
 						 initialState: State): string {
 		let result: any = [
 			Settings.Machine[Settings.currentMachine], // automaton type
@@ -52,7 +46,7 @@ export namespace Persistence {
 		return JSON.stringify(result);
 	}
 
-	export function load(content: string): AutomatonSummary {
+	public load(content: string): AutomatonSummary {
 		let loadedData: AutomatonSummary = {
 			error: false,
 			initialState: null,
@@ -81,10 +75,10 @@ export namespace Persistence {
 		}
 
 		let connections: ConnectionMapping = {};
-		let nameToIndex = loadStates(obj, loadedData, function(state: State) {
+		let nameToIndex = this.loadStates(obj, loadedData, function(state: State) {
 			connections[state.getName()] = {};
 		});
-		if (!loadEdges(obj, loadedData, nameToIndex, connections)) {
+		if (!this.loadEdges(obj, loadedData, nameToIndex, connections)) {
 			loadedData.error = true;
 			return loadedData;
 		}
@@ -92,7 +86,7 @@ export namespace Persistence {
 		return loadedData;
 	}
 
-	function loadStates(dataObj: any, result: AutomatonSummary,
+	private loadStates(dataObj: any, result: AutomatonSummary,
 						callback: (State) => void): StateNameMapping {
 		let nameToIndex: StateNameMapping = {};
 		let controller = Settings.controller();
@@ -120,7 +114,7 @@ export namespace Persistence {
 		return nameToIndex;
 	}
 
-	function loadEdges(data: any, result: AutomatonSummary,
+	private loadEdges(data: any, result: AutomatonSummary,
 					   nameToIndex: StateNameMapping,
 					   connections: ConnectionMapping): boolean {
 		let states = result.stateList;
