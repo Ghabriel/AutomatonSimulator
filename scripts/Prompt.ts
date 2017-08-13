@@ -127,7 +127,13 @@ export class Prompt {
 						ok.click();
 					} else if (e.keyCode == Keyboard.keys.ESC) {
 						cancel.click();
-					} else {
+					}
+				});
+
+				input.addEventListener("keyup", function(e) {
+					let isEnter = (e.keyCode == Keyboard.keys.ENTER);
+					let isEsc = (e.keyCode == Keyboard.keys.ESC);
+					if (!isEnter && !isEsc) {
 						ok.disabled = !allInputsValid();
 					}
 				});
@@ -136,6 +142,9 @@ export class Prompt {
 			inputs.push(input);
 			container.appendChild(input);
 		}
+
+		// Initial validity state
+		ok.disabled = !allInputsValid();
 
 		container.appendChild(ok);
 		container.appendChild(cancel);

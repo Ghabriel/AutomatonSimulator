@@ -15,18 +15,20 @@ export class LBAController implements Controller {
 					  fallback?: () => void): void {
 		let self = this;
 		let prompt = new Prompt(Strings.LBA_ENTER_EDGE_CONTENT);
+
+		// read
 		prompt.addInput({
-			placeholder: Strings.LBA_ENTER_EDGE_PLACEHOLDER_1
+			placeholder: Strings.LBA_ENTER_EDGE_PLACEHOLDER_1,
+			validator: utils.singleSymbolValidator
 		});
 
+		// write
 		prompt.addInput({
-			placeholder: Strings.LBA_ENTER_EDGE_PLACEHOLDER_2
+			placeholder: Strings.LBA_ENTER_EDGE_PLACEHOLDER_2,
+			validator: utils.singleSymbolValidator
 		});
 
-		// prompt.addInput({
-		// 	placeholder: Strings.LBA_ENTER_EDGE_PLACEHOLDER_3
-		// });
-
+		// move direction
 		prompt.addInput({
 			initializer: function() {
 				let node = <HTMLSelectElement> utils.create("select");

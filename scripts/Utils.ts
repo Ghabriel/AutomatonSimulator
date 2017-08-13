@@ -114,4 +114,14 @@ export namespace utils {
 	export function printShortcut(keys: string[]): string {
 		return keys.join(" ").toLowerCase();
 	}
+
+	// Can be used by the machines to sanitize user input
+	export function optionalSymbolValidator(input: string): boolean {
+		return input.length <= 1;
+	}
+
+	// Can be used by the machines to sanitize user input
+	export function singleSymbolValidator(input: string): boolean {
+		return input.length == 1;
+	}
 }

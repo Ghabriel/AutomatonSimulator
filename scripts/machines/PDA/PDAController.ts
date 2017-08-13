@@ -4,6 +4,7 @@ import {Keyboard} from "../../Keyboard"
 import {Prompt} from "../../Prompt"
 import {State} from "../../interface/State"
 import {Strings} from "../../Settings"
+import {utils} from "../../Utils"
 
 export class PDAController implements Controller {
 	constructor() {
@@ -15,14 +16,20 @@ export class PDAController implements Controller {
 
 		let self = this;
 		let prompt = new Prompt(Strings.PDA_ENTER_EDGE_CONTENT);
+
+		// read (input)
 		prompt.addInput({
-			placeholder: Strings.PDA_ENTER_EDGE_PLACEHOLDER_1
+			placeholder: Strings.PDA_ENTER_EDGE_PLACEHOLDER_1,
+			validator: utils.optionalSymbolValidator
 		});
 
+		// read (stack)
 		prompt.addInput({
-			placeholder: Strings.PDA_ENTER_EDGE_PLACEHOLDER_2
+			placeholder: Strings.PDA_ENTER_EDGE_PLACEHOLDER_2,
+			validator: utils.optionalSymbolValidator
 		});
 
+		// write (stack)
 		prompt.addInput({
 			placeholder: Strings.PDA_ENTER_EDGE_PLACEHOLDER_3
 		});
@@ -215,7 +222,11 @@ export class PDAController implements Controller {
 
 		let callback = function(source: string, data: TransitionInformation,
 								input: string, stackRead: string) {
-			transitions.list.push([source, input, stackRead, data[0], data[1]]);
+			let epsilon = Keyboard.symbols.epsilon;
+			input = input || epsilon;
+			stackRead = stackRead || epsilon;
+			let stackWrite = data[1] || epsilon;
+			transitions.list.push([source, input, stackRead, data[0], stackWrite]);
 		};
 
 		this.machine.transitionIteration(callback);

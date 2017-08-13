@@ -51,6 +51,7 @@ export namespace portuguese {
 		PDA: "Autômato de Pilha",
 		LBA: "Autômato Linearmente Limitado",
 		FA_ENTER_EDGE_CONTENT: "Digite o conteúdo da aresta (até 1 caractere):",
+		FA_ENTER_EDGE_PLACEHOLDER_1: "símbolo",
 		PDA_ENTER_EDGE_CONTENT: "Digite o símbolo de entrada, símbolo de pilha lido e símbolo(s) de pilha escrito(s)",
 		PDA_ENTER_EDGE_PLACEHOLDER_1: "ler (entrada)",
 		PDA_ENTER_EDGE_PLACEHOLDER_2: "ler (pilha)",

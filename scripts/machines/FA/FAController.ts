@@ -4,6 +4,7 @@ import {Keyboard} from "../../Keyboard"
 import {Prompt} from "../../Prompt"
 import {State} from "../../interface/State"
 import {Strings} from "../../Settings"
+import {utils} from "../../Utils"
 
 export class FAController implements Controller {
 	constructor() {
@@ -14,9 +15,20 @@ export class FAController implements Controller {
 					  fallback?: () => void): void {
 
 		let self = this;
-		Prompt.simple(Strings.FA_ENTER_EDGE_CONTENT, 1, function(data) {
+		let prompt = new Prompt(Strings.FA_ENTER_EDGE_CONTENT);
+
+		prompt.addInput({
+			placeholder: Strings.FA_ENTER_EDGE_PLACEHOLDER_1,
+			validator: utils.optionalSymbolValidator
+		});
+
+		prompt.onSuccess(function(data) {
 			callback(data, self.edgeDataToText(data));
-		}, fallback);
+		});
+
+		prompt.onAbort(fallback);
+
+		prompt.show();
 	}
 
 	public edgeDataToText(data: string[]): string {
@@ -182,6 +194,7 @@ export class FAController implements Controller {
 			list: []
 		};
 		let callback = function(source: string, target: string, input: string) {
+			input = input || Keyboard.symbols.epsilon;
 			transitions.list.push([source, target, input]);
 		};
 		this.machine.transitionIteration(callback);

@@ -51,6 +51,7 @@ export namespace english {
 		PDA: "Pushdown Automaton",
 		LBA: "Linearly Bounded Automaton",
 		FA_ENTER_EDGE_CONTENT: "Enter the edge content (up to 1 character):",
+		FA_ENTER_EDGE_PLACEHOLDER_1: "symbol",
 		PDA_ENTER_EDGE_CONTENT: "Enter the input symbol, stack symbol read and stack symbol(s) written:",
 		PDA_ENTER_EDGE_PLACEHOLDER_1: "read (input)",
 		PDA_ENTER_EDGE_PLACEHOLDER_2: "read (stack)",
