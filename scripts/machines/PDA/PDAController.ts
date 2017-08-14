@@ -216,7 +216,19 @@ export class PDAController implements Controller {
 	}
 
 	private transitionTable(): any {
+		let symbols = Keyboard.symbols;
+		let epsilon = symbols.epsilon;
+		let gamma = symbols.gamma;
+		let sigma = symbols.sigma;
+
 		let transitions = {
+			header: [
+				"Q",
+				sigma + " ∪ {" + epsilon + "}",
+				gamma,
+				"Q",
+				gamma + "*"
+			],
 			list: []
 		};
 

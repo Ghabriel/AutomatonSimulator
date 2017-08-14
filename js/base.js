@@ -1225,12 +1225,20 @@ define("machines/FA/FAController", ["require", "exports", "machines/FA/FA", "Key
             return this.stateMapping[state.getName()];
         };
         FAController.prototype.transitionTable = function () {
+            var symbols = Keyboard_2.Keyboard.symbols;
+            var epsilon = symbols.epsilon;
+            var sigma = symbols.sigma;
             var transitions = {
+                header: [
+                    "Q",
+                    sigma + " ∪ {" + epsilon + "}",
+                    "Q"
+                ],
                 list: []
             };
             var callback = function (source, target, input) {
                 input = input || Keyboard_2.Keyboard.symbols.epsilon;
-                transitions.list.push([source, target, input]);
+                transitions.list.push([source, input, target]);
             };
             this.machine.transitionIteration(callback);
             return transitions;
@@ -1664,7 +1672,18 @@ define("machines/PDA/PDAController", ["require", "exports", "machines/PDA/PDA", 
             return this.stateMapping[state.getName()];
         };
         PDAController.prototype.transitionTable = function () {
+            var symbols = Keyboard_3.Keyboard.symbols;
+            var epsilon = symbols.epsilon;
+            var gamma = symbols.gamma;
+            var sigma = symbols.sigma;
             var transitions = {
+                header: [
+                    "Q",
+                    sigma + " ∪ {" + epsilon + "}",
+                    gamma,
+                    "Q",
+                    gamma + "*"
+                ],
                 list: []
             };
             var callback = function (source, data, input, stackRead) {
@@ -2176,7 +2195,18 @@ define("machines/LBA/LBAController", ["require", "exports", "Keyboard", "machine
             return this.stateMapping[state.getName()];
         };
         LBAController.prototype.transitionTable = function () {
+            var symbols = Keyboard_4.Keyboard.symbols;
+            var gamma = symbols.gamma;
+            var leftArrow = symbols.leftArrow;
+            var rightArrow = symbols.rightArrow;
             var transitions = {
+                header: [
+                    "Q",
+                    gamma,
+                    "Q",
+                    gamma,
+                    "{" + leftArrow + "," + rightArrow + "}"
+                ],
                 list: []
             };
             var arrows = [Keyboard_4.Keyboard.symbols.leftArrow, Keyboard_4.Keyboard.symbols.rightArrow];
@@ -4202,9 +4232,15 @@ define("interface/AutomatonRenderer", ["require", "exports", "interface/Edge", "
                     content += "</span>";
                 }
                 else if (value.hasOwnProperty("list")) {
+                    var header = value.header;
                     var list = value.list;
                     if (list.length > 0) {
-                        var table = new Table_1.Table(list.length, list[0].length);
+                        var table = new Table_1.Table(1 + list.length, list[0].length);
+                        for (var i = 0; i < header.length; i++) {
+                            table.add(Utils_17.utils.create("span", {
+                                innerHTML: header[i]
+                            }));
+                        }
                         for (var i = 0; i < list.length; i++) {
                             for (var j = 0; j < list[i].length; j++) {
                                 table.add(Utils_17.utils.create("span", {

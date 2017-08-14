@@ -219,9 +219,17 @@ export class AutomatonRenderer {
 				content += Strings.NO_INITIAL_STATE;
 				content += "</span>";
 			} else if (value.hasOwnProperty("list")) {
+				let header: string[] = value.header;
 				let list: string[][] = value.list;
 				if (list.length > 0) {
-					let table = new Table(list.length, list[0].length);
+					let table = new Table(1 + list.length, list[0].length);
+
+					for (let i = 0; i < header.length; i++) {
+						table.add(utils.create("span", {
+							innerHTML: header[i]
+						}));
+					}
+
 					for (let i = 0; i < list.length; i++) {
 						for (let j = 0; j < list[i].length; j++) {
 							table.add(utils.create("span", {
@@ -229,6 +237,7 @@ export class AutomatonRenderer {
 							}));
 						}
 					}
+
 					content += "<table id='transition_table'>";
 					content += table.html().innerHTML;
 					content += "</table>";

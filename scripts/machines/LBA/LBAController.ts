@@ -239,7 +239,19 @@ export class LBAController implements Controller {
 	}
 
 	private transitionTable(): any {
+		let symbols = Keyboard.symbols;
+		let gamma = symbols.gamma;
+		let leftArrow = symbols.leftArrow;
+		let rightArrow = symbols.rightArrow;
+
 		let transitions = {
+			header: [
+				"Q",
+				gamma,
+				"Q",
+				gamma,
+				"{" + leftArrow + "," + rightArrow + "}"
+			],
 			list: []
 		};
 

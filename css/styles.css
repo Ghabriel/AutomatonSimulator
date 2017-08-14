@@ -187,6 +187,10 @@ span.none {
 	padding: 5px;
 }
 
+#transition_table tr:first-child td {
+	background-color: #DDD;
+}
+
 #multiple_recognition {
 	display: table;
 }

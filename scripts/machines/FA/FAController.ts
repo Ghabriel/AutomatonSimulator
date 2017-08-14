@@ -190,13 +190,24 @@ export class FAController implements Controller {
 	}
 
 	private transitionTable(): any {
+		let symbols = Keyboard.symbols;
+		let epsilon = symbols.epsilon;
+		let sigma = symbols.sigma;
+
 		let transitions = {
+			header: [
+				"Q",
+				sigma + " ∪ {" + epsilon + "}",
+				"Q"
+			],
 			list: []
 		};
+
 		let callback = function(source: string, target: string, input: string) {
 			input = input || Keyboard.symbols.epsilon;
-			transitions.list.push([source, target, input]);
+			transitions.list.push([source, input, target]);
 		};
+
 		this.machine.transitionIteration(callback);
 		return transitions;
 	}
