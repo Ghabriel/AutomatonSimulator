@@ -1,3 +1,4 @@
+import {GUI} from "./GUI"
 import {Settings} from "../Settings"
 import {State} from "./State"
 import {Point, utils} from "../Utils"
@@ -93,7 +94,7 @@ export class Edge {
 		this.color = this.defaultColor;
 	}
 
-	public render(canvas: RaphaelPaper): void {
+	public render(canvas: GUI.Canvas): void {
 		let preservedOrigin = this.origin
 						   && utils.samePoint(this.prevOriginPosition,
 											  this.origin.getPosition());
@@ -150,7 +151,7 @@ export class Edge {
 		};
 	}
 
-	private renderBody(canvas: RaphaelPaper): void {
+	private renderBody(canvas: GUI.Canvas): void {
 		let origin = this.origin.getPosition();
 		let target: typeof origin;
 		if (!this.target) {
@@ -205,7 +206,7 @@ export class Edge {
 	// Adjusts the length of the this.body array so that it is equal to
 	// a given value. Returns a flag indicating if any change was made
 	// to this.body.
-	private adjustBodyLength(canvas: RaphaelPaper, length: number): boolean {
+	private adjustBodyLength(canvas: GUI.Canvas, length: number): boolean {
 		if (this.body.length == length) {
 			return false;
 		}
@@ -223,7 +224,7 @@ export class Edge {
 	}
 
 	// Renders a loop-style body.
-	private loop(canvas: RaphaelPaper): void {
+	private loop(canvas: GUI.Canvas): void {
 		let radius = Settings.stateRadius;
 		let pos = this.origin.getPosition();
 		if (this.adjustBodyLength(canvas, 4)) {
@@ -251,7 +252,7 @@ export class Edge {
 	}
 
 	// Renders a curved body.
-	private curve(canvas: RaphaelPaper, origin: Point, target: Point): void {
+	private curve(canvas: GUI.Canvas, origin: Point, target: Point): void {
 		let dx = target.x - origin.x;
 		let dy = target.y - origin.y;
 
@@ -293,7 +294,7 @@ export class Edge {
 	}
 
 	// Renders a normal body (i.e a straight line)
-	private normal(canvas: RaphaelPaper, origin: Point, target: Point): void {
+	private normal(canvas: GUI.Canvas, origin: Point, target: Point): void {
 		if (this.adjustBodyLength(canvas, 1)) {
 			for (let elem of this.body) {
 				elem.attr("stroke-width", Settings.edgeArrowThickness);
@@ -305,7 +306,7 @@ export class Edge {
 		));
 	}
 
-	private renderHead(canvas: RaphaelPaper): void {
+	private renderHead(canvas: GUI.Canvas): void {
 		if (!this.target) {
 			// Don't render the head of the arrow if there's no target
 			// TODO: change this behavior?
@@ -398,7 +399,7 @@ export class Edge {
 		return this.textList.join("\n");
 	}
 
-	private renderText(canvas: RaphaelPaper): void {
+	private renderText(canvas: GUI.Canvas): void {
 		// We can assume that there's a target state, since
 		// otherwise we wouldn't be rendering the text.
 		let origin = this.origin.getPosition();
@@ -492,7 +493,7 @@ export class Edge {
 	private defaultColor = Settings.edgeStrokeColor;
 	private color: string = this.defaultColor;
 
-	private body: RaphaelElement[] = [];
-	private head: RaphaelElement[] = [];
-	private textContainer: RaphaelElement = null;
+	private body: GUI.Element[] = [];
+	private head: GUI.Element[] = [];
+	private textContainer: GUI.Element = null;
 }

@@ -1,6 +1,8 @@
 /// <reference path="defs/jQuery.d.ts" />
 /// <reference path="defs/raphael.d.ts" />
 
+import {GUI} from "./interface/GUI"
+
 export interface Point {
 	x: number;
 	y: number;
@@ -59,7 +61,7 @@ export namespace utils {
 	}
 
 	// Draws a line from (x1,y1) to (x2,y2)
-	export function line(canvas: RaphaelPaper, x1: number, y1: number, x2: number, y2: number) {
+	export function line(canvas: GUI.Canvas, x1: number, y1: number, x2: number, y2: number) {
 		var line = canvas.path(this.linePath(x1, y1, x2, y2));
 		// TODO: make the stroke color flexible
 		line.attr("stroke", "black");

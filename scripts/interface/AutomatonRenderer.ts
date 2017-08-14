@@ -1,5 +1,6 @@
 import {Edge} from "./Edge"
 import {EdgeUtils} from "./EdgeUtils"
+import {GUI} from "./GUI"
 import {Memento} from "../Memento"
 import {PersistenceHandler} from "../persistence/PersistenceHandler"
 import {Prompt, ValuedHTMLElement} from "../Prompt"
@@ -10,7 +11,7 @@ import {Table} from "./Table"
 import {Point, utils} from "../Utils"
 
 export class AutomatonRenderer {
-	constructor(canvas: RaphaelPaper, node: Element,
+	constructor(canvas: GUI.Canvas, node: Element,
 				memento: Memento<string>,
 				persistenceHandler: PersistenceHandler) {
 		this.canvas = canvas;
@@ -1063,7 +1064,7 @@ export class AutomatonRenderer {
 		}
 	}
 
-	private canvas: RaphaelPaper = null;
+	private canvas: GUI.Canvas = null;
 	private node: Element = null;
 	private stateList: State[] = [];
 	// TODO: find a better data structure than a simple array

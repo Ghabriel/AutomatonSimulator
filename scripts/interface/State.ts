@@ -1,6 +1,7 @@
 /// <reference path="../defs/raphael.d.ts" />
 
 import {Browser} from "../Browser"
+import {GUI} from "./GUI"
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
 import {StatePalette} from "../StatePalette"
@@ -77,14 +78,14 @@ export class State {
 		}
 	}
 
-	public render(canvas: RaphaelPaper): void {
+	public render(canvas: GUI.Canvas): void {
 		this.renderBody(canvas);
 		this.renderInitialMark(canvas);
 		this.renderFinalMark(canvas);
 		this.renderText(canvas);
 	}
 
-	public node(): RaphaelElement {
+	public node(): GUI.Element {
 		return this.body;
 	}
 
@@ -171,7 +172,7 @@ export class State {
 		return this.palette.ringStrokeWidth;
 	}
 
-	private renderBody(canvas: RaphaelPaper): void {
+	private renderBody(canvas: GUI.Canvas): void {
 		if (!this.body) {
 			this.body = canvas.circle(this.x, this.y, this.radius);
 		} else {
@@ -221,7 +222,7 @@ export class State {
 		];
 	}
 
-	private renderInitialMark(canvas?: RaphaelPaper): void {
+	private renderInitialMark(canvas?: GUI.Canvas): void {
 		if (this.initial) {
 			let length = Settings.stateInitialMarkLength;
 			let x = this.x - this.radius;
@@ -283,7 +284,7 @@ export class State {
 		}
 	}
 
-	private renderFinalMark(canvas: RaphaelPaper): void {
+	private renderFinalMark(canvas: GUI.Canvas): void {
 		if (this.final) {
 			if (!this.ring) {
 				this.ring = canvas.circle(this.x, this.y, Settings.stateRingRadius);
@@ -302,7 +303,7 @@ export class State {
 		}
 	}
 
-	private renderText(canvas?: RaphaelPaper): void {
+	private renderText(canvas?: GUI.Canvas): void {
 		if (!this.textContainer) {
 			this.textContainer = canvas.text(this.x, this.y, this.name);
 			this.textContainer.attr("font-family", Settings.stateLabelFontFamily);
@@ -356,8 +357,8 @@ export class State {
 	};
 	private palette: StatePalette = this.defaultPalette;
 
-	private body: RaphaelElement = null;
-	private ring: RaphaelElement = null;
-	private arrowParts: RaphaelElement[] = [];
-	private textContainer: RaphaelElement = null;
+	private body: GUI.Element = null;
+	private ring: GUI.Element = null;
+	private arrowParts: GUI.Element[] = [];
+	private textContainer: GUI.Element = null;
 }

@@ -2,6 +2,7 @@
 /// <reference path="../defs/jQuery.d.ts" />
 
 import {AutomatonRenderer} from "./AutomatonRenderer"
+import {GUI} from "./GUI"
 import {JSONHandler} from "../persistence/JSONHandler"
 import {Memento} from "../Memento"
 import {Renderer} from "./Renderer"
@@ -50,6 +51,6 @@ export class Mainbar extends Renderer {
 		this.automatonRenderer.render();
 	}
 
-	private canvas: RaphaelPaper = null;
+	private canvas: GUI.Canvas = null;
 	private automatonRenderer: AutomatonRenderer = null;
 }
