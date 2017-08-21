@@ -142,7 +142,8 @@ export class FAController implements Controller {
 	}
 
 	public finished(input: string): boolean {
-		return this.stepIndex >= input.length;
+		let started = (this.stepIndex >= 0);
+		return started && (this.machine.error() || this.stepIndex >= input.length);
 	}
 
 	public isStopped(): boolean {

@@ -153,7 +153,6 @@ export class PDAController implements Controller {
 	}
 
 	public finished(input: string): boolean {
-		// TODO
 		return this.stepIndex >= 0 && this.machine.halted();
 	}
 

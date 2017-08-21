@@ -234,16 +234,13 @@ export class initFA {
 					finished = controller.finished(input);
 				}
 
-				let position = controller.stepPosition();
-				let displayedText = input.substr(position);
-				if (displayedText == "") {
-					self.showAcceptanceStatus();
-				} else {
-					self.progressContainer.innerHTML = displayedText;
-				}
-
 				if (finished) {
+					self.showAcceptanceStatus();
 					stepStatus(false);
+				} else {
+					let position = controller.stepPosition();
+					let displayedText = input.substr(position);
+					self.progressContainer.innerHTML = displayedText;
 				}
 			}
 		});
