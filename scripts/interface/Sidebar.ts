@@ -155,6 +155,12 @@ export class Sidebar extends Renderer {
 		let languageTable = {};
 		let i = 0;
 		utils.foreach(languages, function(moduleName, obj) {
+			// There might be an extra field called "__esModule",
+			// we need to skip it
+			if (!obj.strings) {
+				return;
+			}
+
 			let option = <HTMLOptionElement> utils.create("option");
 			option.value = i.toString();
 			option.innerHTML = obj.strings.LANGUAGE_NAME;
