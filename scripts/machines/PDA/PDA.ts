@@ -8,6 +8,8 @@ type Alphabet = {[i: string]: number};
 type InternalTransitionInformation = [Index, string][];
 export type TransitionInformation = [State, string];
 
+let EPSILON_KEY = "";
+
 export class PDA {
 	// Adds a state to this PDA, marking it as the initial state
 	// if there are no other states in this PDA.
@@ -223,7 +225,7 @@ export class PDA {
 		this.stack = ["$"];
 	}
 
-	// Reads a character from the tape, triggering state changes to this PDA.
+	// Reads a character from the input, triggering state changes to this PDA.
 	public read(): void {
 		if (this.error()) {
 			return;
@@ -238,7 +240,6 @@ export class PDA {
 			let transitions = this.transitions[this.currentState];
 			if (transitions.hasOwnProperty(input)) {
 				let indexedByStack = transitions[input];
-				console.log(indexedByStack);
 				let stackTop = this.stack[this.stack.length - 1];
 				if (indexedByStack.hasOwnProperty(stackTop)) {
 					let possibilities = indexedByStack[stackTop];
@@ -252,9 +253,24 @@ export class PDA {
 						this.stack.push(stackWrite[i]);
 					}
 
-					console.log("[INPUT]", this.input);
-					console.log("[STACK]", this.stack);
-					console.log("-----------------------");
+					error = false;
+				}
+			}
+
+			if (transitions.hasOwnProperty(EPSILON_KEY)) {
+				let indexedByStack = transitions[EPSILON_KEY];
+				let stackTop = this.stack[this.stack.length - 1];
+				if (indexedByStack.hasOwnProperty(stackTop)) {
+					let possibilities = indexedByStack[stackTop];
+					// TODO: implement non-determinism
+					this.currentState = possibilities[0][0];
+					this.stack.pop();
+
+					let stackWrite = possibilities[0][1];
+					for (let i = 0; i < stackWrite.length; i++) {
+						this.stack.push(stackWrite[i]);
+					}
+
 					error = false;
 				}
 			}
@@ -263,11 +279,12 @@ export class PDA {
 		if (error) {
 			// goes to the error state
 			this.currentState = null;
+			this.input = "";
 		}
 	}
 
 	public halted(): boolean {
-		return this.input.length == 0;
+		return (this.input || "").length == 0;
 	}
 
 	// Resets this PDA, making it return to its initial state and
@@ -311,10 +328,12 @@ export class PDA {
 	}
 
 	private addSymbol(location: string, symbol: string): void {
-		if (!this[location].hasOwnProperty(symbol)) {
-			this[location][symbol] = 0;
+		if (symbol.length > 0) {
+			if (!this[location].hasOwnProperty(symbol)) {
+				this[location][symbol] = 0;
+			}
+			this[location][symbol]++;
 		}
-		this[location][symbol]++;
 	}
 
 	private addInputSymbol(symbol: string): void {
@@ -326,9 +345,11 @@ export class PDA {
 	}
 
 	public removeSymbol(location: string, symbol: string): void {
-		this[location][symbol]--;
-		if (this[location][symbol] == 0) {
-			delete this[location][symbol];
+		if (symbol.length > 0) {
+			this[location][symbol]--;
+			if (this[location][symbol] == 0) {
+				delete this[location][symbol];
+			}
 		}
 	}
 
