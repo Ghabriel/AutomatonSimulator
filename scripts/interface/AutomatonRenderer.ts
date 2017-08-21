@@ -1,6 +1,7 @@
 import {Edge} from "./Edge"
 import {EdgeUtils} from "./EdgeUtils"
 import {GUI} from "./GUI"
+import {Keyboard} from "../Keyboard"
 import {Memento} from "../Memento"
 import {PersistenceHandler} from "../persistence/PersistenceHandler"
 import {Prompt, ValuedHTMLElement} from "../Prompt"
@@ -210,18 +211,27 @@ export class AutomatonRenderer {
 		for (let parameter of formalDefinition.parameterSequence) {
 			let value = formalDefinition.parameterValues[parameter];
 			let type = typeof value;
-			content += parameter + " = ";
 			if (type == "number" || type == "string") {
+				content += parameter + " = ";
 				content += value;
 			} else if (value instanceof Array) {
+				content += parameter + " = ";
 				content += "{" + value.join(", ") + "}";
 			} else if (type == "undefined") {
+				content += parameter + " = ";
 				content += "<span class='none'>";
 				content += Strings.NO_INITIAL_STATE;
 				content += "</span>";
 			} else if (value.hasOwnProperty("list")) {
+				let domain: string = value.domain;
+				let codomain: string = value.codomain;
 				let header: string[] = value.header;
 				let list: string[][] = value.list;
+				let arrow = Keyboard.symbols.rightArrow;
+
+				content += parameter + ": ";
+				content += domain + " " + arrow + " " + codomain;
+
 				if (list.length > 0) {
 					let table = new Table(1 + list.length, list[0].length);
 
@@ -243,6 +253,7 @@ export class AutomatonRenderer {
 					content += table.html().innerHTML;
 					content += "</table>";
 				} else {
+					content += "<br>";
 					content += "<span class='none'>";
 					content += Strings.NO_TRANSITIONS;
 					content += "</span>";

@@ -194,12 +194,16 @@ export class FAController implements Controller {
 		let epsilon = symbols.epsilon;
 		let sigma = symbols.sigma;
 
+		let fields = [
+			"Q",
+			sigma + " ∪ {" + epsilon + "}",
+			"Q"
+		];
+
 		let transitions = {
-			header: [
-				"Q",
-				sigma + " ∪ {" + epsilon + "}",
-				"Q"
-			],
+			domain: [fields[0], "(" + fields[1] + ")"].join(" x "),
+			codomain: fields[2],
+			header: fields,
 			list: []
 		};
 

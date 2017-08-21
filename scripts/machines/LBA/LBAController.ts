@@ -244,14 +244,18 @@ export class LBAController implements Controller {
 		let leftArrow = symbols.leftArrow;
 		let rightArrow = symbols.rightArrow;
 
+		let fields = [
+			"Q",
+			gamma,
+			"Q",
+			gamma,
+			"{" + leftArrow + "," + rightArrow + "}"
+		];
+
 		let transitions = {
-			header: [
-				"Q",
-				gamma,
-				"Q",
-				gamma,
-				"{" + leftArrow + "," + rightArrow + "}"
-			],
+			domain: [fields[0], fields[1]].join(" x "),
+			codomain: [fields[2], fields[3], fields[4]].join(" x "),
+			header: fields,
 			list: []
 		};
 

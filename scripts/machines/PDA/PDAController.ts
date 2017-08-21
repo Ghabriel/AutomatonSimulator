@@ -221,14 +221,18 @@ export class PDAController implements Controller {
 		let gamma = symbols.gamma;
 		let sigma = symbols.sigma;
 
+		let fields = [
+			"Q",
+			sigma + " ∪ {" + epsilon + "}",
+			gamma,
+			"Q",
+			gamma + "*"
+		];
+
 		let transitions = {
-			header: [
-				"Q",
-				sigma + " ∪ {" + epsilon + "}",
-				gamma,
-				"Q",
-				gamma + "*"
-			],
+			domain: [fields[0], "(" + fields[1] + ")", fields[2]].join(" x "),
+			codomain: [fields[3], fields[4]].join(" x "),
+			header: fields,
 			list: []
 		};
 
