@@ -74,6 +74,20 @@ export class Sidebar extends Renderer {
 		}
 	}
 
+	public changeMachineType(type: number): void {
+		Settings.automatonRenderer.clear();
+
+		this.machineButtonMapping[Settings.currentMachine].disabled = false;
+		this.machineButtonMapping[type].disabled = true;
+		// Firefox ignores keyboard events triggered while focusing
+		// a disabled input, so blur it.
+		this.machineButtonMapping[type].blur();
+		System.changeMachine(type);
+		this.loadMachine(type);
+		this.renderDynamicMenus();
+
+	}
+
 	protected onBind(): void {
 		let self = this;
 		utils.foreach(this.mainMenus, function(name, menu) {
@@ -251,7 +265,6 @@ export class Sidebar extends Renderer {
 
 	private buildMachineSelection(): void {
 		let table = new Table(Settings.machineSelRows, Settings.machineSelColumns);
-		let machineButtonMapping = {};
 		let self = this;
 		utils.foreach(Settings.machines, function(type, props) {
 			let button = <HTMLInputElement> utils.create("input");
@@ -262,20 +275,11 @@ export class Sidebar extends Renderer {
 			button.addEventListener("click", function() {
 				if (Settings.automatonRenderer.empty()
 				 || confirm(Strings.CHANGE_MACHINE_WARNING)) {
-					Settings.automatonRenderer.clear();
-
-					machineButtonMapping[Settings.currentMachine].disabled = false;
-					machineButtonMapping[type].disabled = true;
-					// Firefox ignores keyboard events triggered while focusing
-					// a disabled input, so blur it.
-					machineButtonMapping[type].blur();
-					System.changeMachine(type);
-					self.loadMachine(type);
-					self.renderDynamicMenus();
+					self.changeMachineType(type);
 				}
 			});
 			table.add(button);
-			machineButtonMapping[type] = button;
+			self.machineButtonMapping[type] = button;
 		});
 
 		System.bindShortcut(["M"], function() {
@@ -345,4 +349,5 @@ export class Sidebar extends Renderer {
 
 	private mainMenus;
 	private otherMenus: Menu[] = [];
+	private machineButtonMapping: {[type: number]: HTMLInputElement} = {};
 }

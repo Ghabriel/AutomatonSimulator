@@ -77,6 +77,10 @@ export class AutomatonRenderer {
 			return;
 		}
 
+		if (loadedData.aborted) {
+			return;
+		}
+
 		this.stateList = this.stateList.concat(loadedData.stateList);
 		this.edgeList = this.edgeList.concat(loadedData.edgeList);
 		// Only changes the initial state if the current automaton

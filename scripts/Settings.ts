@@ -11,6 +11,7 @@ import {utils} from "./Utils"
 
 interface MachineTraits {
 	name: string;
+	abbreviatedName: string;
 	sidebar: any[];
 	controller: Controller;
 	initializer: Initializable;
@@ -153,6 +154,7 @@ export namespace Settings {
 				// "sidebar" property is filled by the init* classes.
 				machineList[index] = {
 					name: language.strings[Machine[index]],
+					abbreviatedName: Machine[index],
 					sidebar: [],
 					controller: controllerMap[index],
 					initializer: initializerMap[index]

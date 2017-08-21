@@ -1,9 +1,10 @@
 import {Edge} from "../interface/Edge"
 import {EdgeUtils} from "../interface/EdgeUtils"
 import {AutomatonSummary, PersistenceHandler} from "./PersistenceHandler"
-import {Settings} from "../Settings"
+import {Settings, Strings} from "../Settings"
 import {State} from "../interface/State"
 import {UnorderedSet} from "../datastructures/UnorderedSet"
+import {utils} from "../Utils"
 
 type StateNameMapping = {[n: string]: number};
 type ConnectionMapping = {[n: string]: {[m: string]: Edge}};
@@ -48,6 +49,7 @@ export class JSONHandler implements PersistenceHandler {
 
 	public load(content: string): AutomatonSummary {
 		let loadedData: AutomatonSummary = {
+			aborted: false,
 			error: false,
 			initialState: null,
 			stateList: [],
@@ -63,15 +65,30 @@ export class JSONHandler implements PersistenceHandler {
 		}
 
 		let machineType = Settings.Machine[Settings.currentMachine];
-		let validation = obj[0] == machineType
-					  && obj[1] instanceof Array
-					  && obj[2] instanceof Array
-					  && typeof obj[3] == "number"
-					  && obj.length == 4;
+		let structureValidation = obj[1] instanceof Array
+							   && obj[2] instanceof Array
+							   && typeof obj[3] == "number"
+							   && obj.length == 4;
 
-		if (!validation) {
+		if (!structureValidation) {
 			loadedData.error = true;
 			return loadedData;
+		}
+
+		if (obj[0] != machineType) {
+			if (!confirm(Strings.DIFFERENT_MACHINE_FILE)) {
+				loadedData.aborted = true;
+				return loadedData;
+			}
+
+			utils.foreach(Settings.machines, function(index, traits) {
+				if (traits.abbreviatedName == obj[0]) {
+					Settings.sidebar.changeMachineType(index);
+					return false; // aborts the foreach
+				}
+
+				return true;
+			});
 		}
 
 		let connections: ConnectionMapping = {};

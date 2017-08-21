@@ -2,6 +2,7 @@ import {Edge} from "../interface/Edge"
 import {State} from "../interface/State"
 
 export interface AutomatonSummary {
+	aborted: boolean,
 	error: boolean,
 	initialState: State,
 	stateList: State[],

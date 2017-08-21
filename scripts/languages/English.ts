@@ -10,6 +10,7 @@ export namespace english {
 		SAVE: "Save",
 		OPEN: "Open",
 		INVALID_FILE: "Invalid file",
+		DIFFERENT_MACHINE_FILE: "This file contains a machine of a different type. Do you want to change the current machine type?",
 		PROMPT_CONFIRM: "Confirm",
 		PROMPT_CANCEL: "Cancel",
 		SELECTED_ENTITY: "Selected entity",

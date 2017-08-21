@@ -10,6 +10,7 @@ export namespace portuguese {
 		SAVE: "Salvar",
 		OPEN: "Abrir",
 		INVALID_FILE: "Arquivo inválido",
+		DIFFERENT_MACHINE_FILE: "Este arquivo contém uma máquina de um tipo diferente. Deseja alterar o tipo de máquina atual?",
 		PROMPT_CONFIRM: "Confirmar",
 		PROMPT_CANCEL: "Cancelar",
 		SELECTED_ENTITY: "Entidade selecionada",
