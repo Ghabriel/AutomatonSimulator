@@ -1,4 +1,4 @@
-import {FA} from "../machines/FA"
+import {FA} from "../machines/FA/FA"
 import {Node} from "./Node"
 import {Direction, VisitingCommand, RegexUtils} from "./RegexUtils"
 import {UnorderedSet} from "../datastructures/UnorderedSet"
