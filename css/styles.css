@@ -63,6 +63,10 @@ svg {
 	padding: 5px;
 }
 
+.menu .title:hover {
+	cursor: pointer;
+}
+
 .menu .content {
 	padding: 5px;
 	text-align: center;
@@ -89,8 +93,16 @@ svg {
 	margin-left: 20px;
 }
 
+.menu:hover {
+	background-color: #FF8;
+}
+
 .machine_selection_btn {
 	width: 100%;
+}
+
+.machine_selection_btn:disabled {
+	color: green;
 }
 
 .file_manip_btn:not(:last-child) {

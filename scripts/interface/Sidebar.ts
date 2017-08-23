@@ -30,9 +30,9 @@ export class Sidebar extends Renderer {
 		this.mainMenus = {
 			settings: new Menu(Strings.SETTINGS),
 			fileManipulation: new Menu(Strings.FILE_MENUBAR),
-			selectedEntity: new Menu(Strings.SELECTED_ENTITY),
-			formalDefinition: new Menu(Strings.FORMAL_DEFINITION),
 			machineSelection: new Menu(Strings.SELECT_MACHINE),
+			formalDefinition: new Menu(Strings.FORMAL_DEFINITION),
+			selectedEntity: new Menu(Strings.SELECTED_ENTITY),
 			actionMenu: new Menu(Strings.ACTION_LIST),
 		};
 
