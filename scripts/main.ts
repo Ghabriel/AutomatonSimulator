@@ -17,6 +17,9 @@ $(document).ready(function() {
 	let ui = new UI();
 	ui.render();
 
+	$("#sidebar").css("height", $("body").height());
+	$("#sidebar_content").css("max-height", $("#sidebar").height());
+
 	document.body.addEventListener("keydown", function(e) {
 		let activeElementTag = document.activeElement.tagName.toLowerCase();
 		let inhibitors = ["input", "textarea"];

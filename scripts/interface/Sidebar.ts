@@ -43,6 +43,10 @@ export class Sidebar extends Renderer {
 		this.buildActionMenu();
 		// this.loadMachine(Settings.currentMachine);
 
+		this.contentWrapper = <HTMLDivElement> utils.create("div", {
+			id: "sidebar_content"
+		});
+
 		// Re-binds all menus when the system language is changed
 		if (this.node) {
 			this.onBind();
@@ -90,12 +94,17 @@ export class Sidebar extends Renderer {
 
 	protected onBind(): void {
 		let self = this;
+
+		if (this.contentWrapper.parentElement === null) {
+			this.node.appendChild(this.contentWrapper);
+		}
+
 		utils.foreach(this.mainMenus, function(name, menu) {
-			menu.bind(self.node);
+			menu.bind(self.contentWrapper);
 		});
 
 		for (let menu of this.otherMenus) {
-			menu.bind(this.node);
+			menu.bind(this.contentWrapper);
 		}
 		Settings.sidebar = this;
 	}
@@ -347,6 +356,7 @@ export class Sidebar extends Renderer {
 		actionMenu.add(tableElement);
 	}
 
+	private contentWrapper: HTMLDivElement = null;
 	private mainMenus;
 	private otherMenus: Menu[] = [];
 	private machineButtonMapping: {[type: number]: HTMLInputElement} = {};

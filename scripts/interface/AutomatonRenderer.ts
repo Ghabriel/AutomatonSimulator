@@ -37,6 +37,8 @@ export class AutomatonRenderer {
 				self.bindFormalDefinitionListener();
 			}
 		});
+
+		this.load('["FA",[["q0",0,140,344],["q1",1,497,338],["q2",0,146,508],["q3",0,150,677],["kk",0,138,147],["eae",0,504,145],["men",1,824,150]],[["q0","q1",[["a"]]],["q0","q2",[["a"]]],["q2","q1",[["a"]]],["q2","q3",[["a"]]],["q3","q1",[["a"]]],["kk","eae",[["k"]]],["eae","men",[["k"]]],["q0","kk",[["k"]]]],0]');
 	}
 
 	public clear(): void {

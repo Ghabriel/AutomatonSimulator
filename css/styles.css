@@ -28,6 +28,11 @@ body {
 	padding-bottom: 2em;
 }
 
+#sidebar_content {
+	height: 100%;
+	overflow-y: scroll;
+}
+
 #mainbar {
 	padding: 5px;
 }
@@ -195,6 +200,7 @@ span.none {
 }
 
 #transition_table td {
+	background-color: white;
 	border: 1px solid black;
 	padding: 5px;
 }
