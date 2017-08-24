@@ -24,8 +24,8 @@ body {
 	width: 20%;
 }
 
-#sidebar > :last-child {
-	padding-bottom: 2em;
+#sidebar > :last-child:not(:empty) {
+	margin-bottom: 2em;
 }
 
 #sidebar_content {

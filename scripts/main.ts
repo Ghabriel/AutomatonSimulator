@@ -17,8 +17,19 @@ $(document).ready(function() {
 	let ui = new UI();
 	ui.render();
 
-	$("#sidebar").css("height", $("body").height());
-	$("#sidebar_content").css("max-height", $("#sidebar").height());
+	let resizeSidebar = function() {
+		let pageHeight = $("body").height();
+		let footerHeight = $("#footer").height();
+		console.log("[PAGE]", pageHeight);
+		console.log("[FOOTER]", footerHeight);
+		let contentHeight = pageHeight - footerHeight;
+		$("#wrapper").css("height", contentHeight);
+		$("#sidebar").css("height", contentHeight);
+		$("#sidebar_content").css("max-height", contentHeight);
+	};
+
+	$(window).resize(resizeSidebar);
+	resizeSidebar();
 
 	document.body.addEventListener("keydown", function(e) {
 		let activeElementTag = document.activeElement.tagName.toLowerCase();
