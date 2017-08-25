@@ -699,8 +699,8 @@ export class AutomatonRenderer {
 								fallback: () => void) {
 			let controller = Settings.controller();
 			controller.edgePrompt(function(data, content) {
-				controller.createEdge(origin, state, data);
 				callback(data, content);
+				controller.createEdge(origin, state, data);
 			}, fallback);
 		};
 
@@ -924,10 +924,9 @@ export class AutomatonRenderer {
 		// Blocks changes to the memento until the undo process is complete
 		this.frozenMemento = true;
 
-		this.clear();
 		let data = this.memento.pop();
-		let self = this;
 		if (data) {
+			this.clear();
 			this.load(data, false);
 		}
 
