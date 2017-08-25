@@ -340,27 +340,41 @@ export class AutomatonRenderer {
 		let table = new Table(4, 3);
 		let canvas = this.canvas;
 		let self = this;
+
+		let renameStatePrompt = function() {
+			let prompt = new Prompt(Strings.STATE_RENAME_ACTION);
+
+			prompt.addInput({
+				validator: function(content) {
+					return content.length <= 6;
+				}
+			});
+
+			prompt.onSuccess(function(data) {
+				let newName = data[0];
+				for (let state of self.stateList) {
+					if (state.getName() == newName) {
+						alert(Strings.DUPLICATE_STATE_NAME);
+						renameStatePrompt();
+						return;
+					}
+				}
+
+				Settings.controller().renameState(state, newName);
+				state.setName(newName);
+				state.render(canvas);
+				$("#entity_name").html(newName);
+			});
+
+			prompt.show();
+		};
+
 		let renameButton = utils.create("input", {
 			type: "button",
 			value: Strings.RENAME_STATE,
-			click: function() {
-				// Prompt.simple("Enter the new state name:", 1, function(data) {
-				// 	let newName = data[0];
-				// 	// TODO: check if the chosen name is already in use
-				// 	Settings.controller().renameState(state, newName);
-				// 	state.setName(newName);
-				// 	state.render(canvas);
-				// 	$("#entity_name").html(newName);
-				// });
-				let message = new Prompt(Strings.STATE_RENAME_ACTION);
-				message.addInput({
-					validator: function(content) {
-						return content.length <= 6;
-					}
-				});
-				message.show();
-			}
+			click: renameStatePrompt
 		});
+
 		let toggleInitialButton = utils.create("input", {
 			type: "button",
 			value: Strings.TOGGLE_PROPERTY,
@@ -371,6 +385,7 @@ export class AutomatonRenderer {
 															: Strings.NO);
 			}
 		});
+
 		let toggleFinalButton = utils.create("input", {
 			type: "button",
 			value: Strings.TOGGLE_PROPERTY,
@@ -381,6 +396,7 @@ export class AutomatonRenderer {
 														  : Strings.NO);
 			}
 		});
+
 		let deleteButton = utils.create("input", {
 			type: "button",
 			value: Strings.DELETE_STATE,

@@ -20,8 +20,6 @@ $(document).ready(function() {
 	let resizeSidebar = function() {
 		let pageHeight = $("body").height();
 		let footerHeight = $("#footer").height();
-		console.log("[PAGE]", pageHeight);
-		console.log("[FOOTER]", footerHeight);
 		let contentHeight = pageHeight - footerHeight;
 		$("#wrapper").css("height", contentHeight);
 		$("#sidebar").css("height", contentHeight);
