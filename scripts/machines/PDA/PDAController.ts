@@ -12,7 +12,7 @@ export class PDAController implements Controller {
 	}
 
 	public edgePrompt(callback: (data: string[], text: string) => void,
-					  fallback?: () => void): void {
+					  fallback?: () => void): Prompt {
 
 		let self = this;
 		let prompt = new Prompt(Strings.PDA_ENTER_EDGE_CONTENT);
@@ -40,7 +40,7 @@ export class PDAController implements Controller {
 
 		prompt.onAbort(fallback);
 
-		prompt.show();
+		return prompt;
 	}
 
 	public edgeDataToText(data: string[]): string {

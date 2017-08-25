@@ -1,3 +1,4 @@
+import {Prompt} from "./Prompt"
 import {State} from "./interface/State"
 
 export interface FormalDefinition {
@@ -14,7 +15,7 @@ export interface FormalDefinition {
 export interface Controller {
 	// Interface-related edge manipulation
 	edgePrompt(callback: (data: string[], text: string) => void,
-			   fallback?: () => void): void;
+			   fallback?: () => void): Prompt;
 
 	edgeDataToText(data: string[]): string;
 

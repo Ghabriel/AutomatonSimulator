@@ -541,7 +541,8 @@ export class AutomatonRenderer {
 				let transitionSelector = <HTMLSelectElement> $("#entity_transition_list").get(0);
 				let selectedIndex = transitionSelector.selectedIndex;
 				let controller = Settings.controller();
-				controller.edgePrompt(function(data, content) {
+
+				let prompt = controller.edgePrompt(function(data, content) {
 					// TODO: check if the new content conflicts with an already
 					// existing transition in this edge (e.g 0,1 -> 1,1)
 					let origin = edge.getOrigin();
@@ -554,6 +555,8 @@ export class AutomatonRenderer {
 					controller.createEdge(origin, target, data);
 					self.updateEditableEdge(edge);
 				});
+
+				prompt.show();
 			}
 		});
 		let deleteTransitionButton = utils.create("input", {
@@ -695,13 +698,31 @@ export class AutomatonRenderer {
 		this.edgeMode = false;
 		let origin = this.currentEdge.getOrigin();
 
-		let edgeText = function(callback: (d: string[], t: string) => void,
+		let edgeText = function(edge: Edge,
+								callback: (d: string[], t: string) => void,
 								fallback: () => void) {
 			let controller = Settings.controller();
-			controller.edgePrompt(function(data, content) {
+			let prompt = controller.edgePrompt(function(data, content) {
 				callback(data, content);
 				controller.createEdge(origin, state, data);
 			}, fallback);
+
+			let edgeOrigin = edge.getOrigin();
+			let edgeTarget = edge.getTarget();
+			let originPosition = edgeOrigin.getPosition();
+			let targetPosition = edgeTarget.getPosition();
+			if (edgeOrigin == edgeTarget) {
+				// Loop edge
+				let x = originPosition.x + edgeOrigin.getRadius();
+				let y = originPosition.y - edgeOrigin.getRadius();
+				prompt.setPosition(x, y);
+			} else {
+				let averageX = (originPosition.x + targetPosition.x) / 2;
+				let averageY = (originPosition.y + targetPosition.y) / 2;
+				prompt.setPosition(averageX, averageY);
+			}
+
+			prompt.show();
 		};
 
 		let self = this;
@@ -719,7 +740,7 @@ export class AutomatonRenderer {
 		// there's an edge in the opposite direction)
 		for (let edge of this.edgeList) {
 			if (edge.getOrigin() == origin && edge.getTarget() == state) {
-				edgeText(function(data, text) {
+				edgeText(edge, function(data, text) {
 					// Add the text to it instead and delete 'this.currentEdge'.
 					edge.addText(text);
 					edge.addData(data);
@@ -745,7 +766,7 @@ export class AutomatonRenderer {
 		this.currentEdge.render(this.canvas);
 		this.selectEdge(this.currentEdge);
 
-		edgeText(function(data, text) {
+		edgeText(self.currentEdge, function(data, text) {
 			self.currentEdge.addText(text);
 			self.currentEdge.addData(data);
 			self.bindEdgeEvents(self.currentEdge);
