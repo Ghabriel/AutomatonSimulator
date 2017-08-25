@@ -6,6 +6,7 @@ import {Memento} from "../Memento"
 import {PersistenceHandler} from "../persistence/PersistenceHandler"
 import {Prompt, ValuedHTMLElement} from "../Prompt"
 import {Settings, Strings} from "../Settings"
+import {Signal, SignalEmitter, SignalResponse} from "../SignalEmitter"
 import {State} from "./State"
 import {System} from "../System"
 import {Table} from "./Table"
@@ -19,6 +20,7 @@ export class AutomatonRenderer {
 		this.memento = memento;
 		this.node = node;
 		this.persistenceHandler = persistenceHandler;
+		SignalEmitter.addSignalObserver(this);
 	}
 
 	public render(): void {
@@ -180,6 +182,17 @@ export class AutomatonRenderer {
 		}
 	}
 
+	public receiveSignal(signal: Signal): SignalResponse {
+		if (signal.targetID == Settings.automatonRendererSignalID) {
+			return {
+				reacted: true,
+				response: this[signal.identifier].apply(this, signal.data)
+			};
+		}
+
+		return null;
+	}
+
 	// TODO: find a better name for this method
 	// (since it also handles saving the current state)
 	private bindFormalDefinitionListener(): void {
@@ -193,7 +206,11 @@ export class AutomatonRenderer {
 
 			if (!definitionContainer) {
 				definitionContainer = <HTMLDivElement> utils.create("div");
-				Settings.sidebar.updateFormalDefinition(definitionContainer);
+				SignalEmitter.emitSignal({
+					targetID: Settings.sidebarSignalID,
+					identifier: "updateFormalDefinition",
+					data: [definitionContainer]
+				});
 			}
 
 			definitionContainer.innerHTML = self.buildFormalDefinition();
@@ -292,7 +309,7 @@ export class AutomatonRenderer {
 			this.highlightedState.render(this.canvas);
 			this.highlightedState = null;
 
-			Settings.sidebar.unsetSelectedEntityContent();
+			this.unsetSelectedEntityContent();
 		}
 	}
 
@@ -317,21 +334,31 @@ export class AutomatonRenderer {
 			this.highlightedEdge.render(this.canvas);
 			this.highlightedEdge = null;
 
-			Settings.sidebar.unsetSelectedEntityContent();
+			this.unsetSelectedEntityContent();
 		}
 	}
 
 	private updateEditableState(state: State): void {
-		Settings.sidebar.unsetSelectedEntityContent();
 		if (state) {
-			Settings.sidebar.setSelectedEntityContent(this.showEditableState(state));
+			SignalEmitter.emitSignal({
+				targetID: Settings.sidebarSignalID,
+				identifier: "setSelectedEntityContent",
+				data: [this.showEditableState(state)]
+			});
+		} else {
+			this.unsetSelectedEntityContent();
 		}
 	}
 
 	private updateEditableEdge(edge: Edge): void {
-		Settings.sidebar.unsetSelectedEntityContent();
 		if (edge) {
-			Settings.sidebar.setSelectedEntityContent(this.showEditableEdge(edge));
+			SignalEmitter.emitSignal({
+				targetID: Settings.sidebarSignalID,
+				identifier: "setSelectedEntityContent",
+				data: [this.showEditableEdge(edge)]
+			});
+		} else {
+			this.unsetSelectedEntityContent();
 		}
 	}
 
@@ -403,7 +430,7 @@ export class AutomatonRenderer {
 			click: function() {
 				self.deleteState(state);
 				self.clearSelection();
-				Settings.sidebar.unsetSelectedEntityContent();
+				self.unsetSelectedEntityContent();
 			}
 		});
 
@@ -578,7 +605,7 @@ export class AutomatonRenderer {
 				if (dataList.length == 0) {
 					self.deleteEdge(edge);
 					self.clearSelection();
-					Settings.sidebar.unsetSelectedEntityContent();
+					self.unsetSelectedEntityContent();
 				} else {
 					edge.render(self.canvas);
 					self.updateEditableEdge(edge);
@@ -592,7 +619,7 @@ export class AutomatonRenderer {
 			click: function() {
 				self.deleteEdge(edge);
 				self.clearSelection();
-				Settings.sidebar.unsetSelectedEntityContent();
+				self.unsetSelectedEntityContent();
 			}
 		});
 
@@ -625,6 +652,14 @@ export class AutomatonRenderer {
 		table.add(deleteAllButton, 3);
 		container.appendChild(table.html());
 		return container;
+	}
+
+	private unsetSelectedEntityContent() {
+		SignalEmitter.emitSignal({
+			targetID: Settings.sidebarSignalID,
+			identifier: "unsetSelectedEntityContent",
+			data: []
+		});
 	}
 
 	private bindEvents(): void {
@@ -812,7 +847,7 @@ export class AutomatonRenderer {
 	private clearSelection(): void {
 		this.highlightedState = null;
 		this.highlightedEdge = null;
-		Settings.sidebar.unsetSelectedEntityContent();
+		this.unsetSelectedEntityContent();
 		if (this.edgeMode) {
 			this.edgeMode = false;
 			this.currentEdge.remove();

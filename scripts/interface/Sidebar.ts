@@ -6,6 +6,7 @@ import {Menu} from "./Menu"
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
 import {Strings} from "../Settings"
+import {Signal, SignalEmitter, SignalResponse} from "../SignalEmitter"
 import {System} from "../System"
 import {Table} from "./Table"
 import {utils} from "../Utils"
@@ -24,6 +25,8 @@ export class Sidebar extends Renderer {
 				self.render();
 			}
 		});
+
+		SignalEmitter.addSignalObserver(this);
 	}
 
 	// Constructs every menu that belongs to the sidebar.
@@ -54,19 +57,29 @@ export class Sidebar extends Renderer {
 		}
 	}
 
+	public receiveSignal(signal: Signal): SignalResponse {
+		if (signal.targetID == Settings.sidebarSignalID) {
+			return {
+				reacted: true,
+				response: this[signal.identifier].apply(this, signal.data)
+			};
+		}
+
+		return null;
+	}
+
 	// Sets the content of the "selected entity area".
 	public setSelectedEntityContent(content: HTMLElement): void {
 		let node = this.mainMenus.selectedEntity.content();
 		$(node.querySelector(".none")).hide();
+		this.clearSelectedEntityArea();
 		node.appendChild(content);
 	}
 
-	// Clears the "selected entity area".
+	// Clears the "selected entity area" and shows the "none container".
 	public unsetSelectedEntityContent(): void {
 		let node = this.mainMenus.selectedEntity.content();
-		while (node.children.length > 1) {
-			node.removeChild(node.children[node.children.length - 1]);
-		}
+		this.clearSelectedEntityArea();
 		$(node.querySelector(".none")).show();
 	}
 
@@ -80,7 +93,11 @@ export class Sidebar extends Renderer {
 	}
 
 	public changeMachineType(type: number): void {
-		Settings.automatonRenderer.clear();
+		SignalEmitter.emitSignal({
+			targetID: Settings.automatonRendererSignalID,
+			identifier: "clear",
+			data: []
+		});
 
 		this.machineButtonMapping[Settings.currentMachine].disabled = false;
 		this.machineButtonMapping[type].disabled = true;
@@ -106,7 +123,6 @@ export class Sidebar extends Renderer {
 		for (let menu of this.otherMenus) {
 			menu.bind(this.contentWrapper);
 		}
-		Settings.sidebar = this;
 	}
 
 	protected onRender(): void {
@@ -114,6 +130,14 @@ export class Sidebar extends Renderer {
 			menu.render();
 		});
 		this.renderDynamicMenus();
+	}
+
+	// Clears the "selected entity area" except for the "none container".
+	private clearSelectedEntityArea() {
+		let node = this.mainMenus.selectedEntity.content();
+		while (node.children.length > 1) {
+			node.removeChild(node.children[node.children.length - 1]);
+		}
 	}
 
 	private renderDynamicMenus(): void {
@@ -221,7 +245,12 @@ export class Sidebar extends Renderer {
 			type: "button",
 			value: Strings.SAVE,
 			click: function() {
-				let content = Settings.automatonRenderer.save();
+				let content = SignalEmitter.emitSignal({
+					targetID: Settings.automatonRendererSignalID,
+					identifier: "save",
+					data: []
+				});
+
 				let blob = new Blob([content], {type: "text/plain; charset=utf-8"});
 				saveAs(blob, "file.txt");
 			}
@@ -243,14 +272,17 @@ export class Sidebar extends Renderer {
 			if (file) {
 				let reader = new FileReader();
 				reader.onload = function(e) {
-					Settings.automatonRenderer.load((<any> e.target).result);
+					SignalEmitter.emitSignal({
+						targetID: Settings.automatonRendererSignalID,
+						identifier: "load",
+						data: [(<any> e.target).result]
+					});
 				};
 				reader.readAsText(file);
 			}
 		});
 		// TODO: do we need to append fileSelector to the DOM?
 		// fileManipulation.add(fileSelector);
-
 
 		let open = <HTMLInputElement> utils.create("input", {
 			className: "file_manip_btn",
@@ -285,8 +317,13 @@ export class Sidebar extends Renderer {
 			button.value = props.name;
 			button.disabled = (type == Settings.currentMachine);
 			button.addEventListener("click", function() {
-				if (Settings.automatonRenderer.empty()
-				 || confirm(Strings.CHANGE_MACHINE_WARNING)) {
+				let empty = SignalEmitter.emitSignal({
+					targetID: Settings.automatonRendererSignalID,
+					identifier: "empty",
+					data: []
+				});
+
+				if (empty || confirm(Strings.CHANGE_MACHINE_WARNING)) {
 					self.changeMachineType(type);
 				}
 			});
@@ -318,7 +355,11 @@ export class Sidebar extends Renderer {
 			type: "button",
 			value: Strings.CREATE_STATE,
 			click: function() {
-				Settings.automatonRenderer.stateManualCreation();
+				SignalEmitter.emitSignal({
+					targetID: Settings.automatonRendererSignalID,
+					identifier: "stateManualCreation",
+					data: []
+				});
 			}
 		});
 		table.add(createState);
@@ -328,7 +369,11 @@ export class Sidebar extends Renderer {
 			type: "button",
 			value: Strings.CREATE_EDGE,
 			click: function() {
-				Settings.automatonRenderer.edgeManualCreation();
+				SignalEmitter.emitSignal({
+					targetID: Settings.automatonRendererSignalID,
+					identifier: "edgeManualCreation",
+					data: []
+				});
 			}
 		});
 		table.add(createEdge);

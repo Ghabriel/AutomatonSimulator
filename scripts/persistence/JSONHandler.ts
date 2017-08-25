@@ -2,6 +2,7 @@ import {Edge} from "../interface/Edge"
 import {EdgeUtils} from "../interface/EdgeUtils"
 import {AutomatonSummary, PersistenceHandler} from "./PersistenceHandler"
 import {Settings, Strings} from "../Settings"
+import {SignalEmitter} from "../SignalEmitter"
 import {State} from "../interface/State"
 import {UnorderedSet} from "../datastructures/UnorderedSet"
 import {utils} from "../Utils"
@@ -83,7 +84,11 @@ export class JSONHandler implements PersistenceHandler {
 
 			utils.foreach(Settings.machines, function(index, traits) {
 				if (traits.abbreviatedName == obj[0]) {
-					Settings.sidebar.changeMachineType(index);
+					SignalEmitter.emitSignal({
+						targetID: Settings.sidebarSignalID,
+						identifier: "changeMachineType",
+						data: [index]
+					});
 					return false; // aborts the foreach
 				}
 

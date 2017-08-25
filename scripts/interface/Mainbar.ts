@@ -44,7 +44,6 @@ export class Mainbar extends Renderer {
 
 		this.automatonRenderer = new AutomatonRenderer(canvas, node,
 									memento, persistenceHandler);
-		Settings.automatonRenderer = this.automatonRenderer;
 	}
 
 	protected onRender(): void {

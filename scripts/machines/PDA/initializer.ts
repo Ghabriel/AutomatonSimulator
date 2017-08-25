@@ -2,6 +2,7 @@ import {Keyboard} from "../../Keyboard"
 import {PDAController} from "./PDAController"
 import {Menu} from "../../interface/Menu"
 import {Settings, Strings} from "../../Settings"
+import {SignalEmitter} from "../../SignalEmitter"
 import {System} from "../../System"
 import {Table} from "../../interface/Table"
 import {utils} from "../../Utils"
@@ -87,7 +88,11 @@ export class initPDA {
 
 	private highlightCurrentStates(): void {
 		let states = Settings.controller().currentStates();
-		Settings.automatonRenderer.recognitionHighlight(states);
+		SignalEmitter.emitSignal({
+			targetID: Settings.automatonRendererSignalID,
+			identifier: "recognitionHighlight",
+			data: [states]
+		});
 	}
 
 	private buildRecognitionControls(container: HTMLElement[][]): void {
@@ -200,7 +205,11 @@ export class initPDA {
 
 		this.fastRecognition.addEventListener("click", function() {
 			if (fastForwardEnabled) {
-				Settings.automatonRenderer.lock();
+				SignalEmitter.emitSignal({
+					targetID: Settings.automatonRendererSignalID,
+					identifier: "lock",
+					data: []
+				});
 				let input = self.testCase();
 				let controller = Settings.controller();
 				controller.fastForward(input);
@@ -222,8 +231,17 @@ export class initPDA {
 		this.stopRecognition.addEventListener("click", function() {
 			if (stopEnabled) {
 				Settings.controller().stop();
-				Settings.automatonRenderer.recognitionDim();
-				Settings.automatonRenderer.unlock();
+				SignalEmitter.emitSignal({
+					targetID: Settings.automatonRendererSignalID,
+					identifier: "recognitionDim",
+					data: []
+				});
+
+				SignalEmitter.emitSignal({
+					targetID: Settings.automatonRendererSignalID,
+					identifier: "unlock",
+					data: []
+				});
 
 				self.progressContainer.style.color = "black";
 				self.progressContainer.style.display = "none";
@@ -249,7 +267,11 @@ export class initPDA {
 				if (controller.isStopped()) {
 					controller.reset();
 
-					Settings.automatonRenderer.lock();
+					SignalEmitter.emitSignal({
+						targetID: Settings.automatonRendererSignalID,
+						identifier: "lock",
+						data: []
+					});
 					let sidebar = <HTMLDivElement> utils.id(Settings.sidebarID);
 					let width = sidebar.offsetWidth;
 					width -= 10; // twice the progress container padding

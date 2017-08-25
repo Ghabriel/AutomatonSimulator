@@ -21,6 +21,9 @@ export namespace Settings {
 	export const sidebarID = "sidebar";
 	export const mainbarID = "mainbar";
 
+	export const sidebarSignalID = "sidebar";
+	export const automatonRendererSignalID = "automatonRenderer";
+
 	export const disabledButtonClass = "disabled";
 
 	export const canvasShortcutID = "canvas";
@@ -125,11 +128,6 @@ export namespace Settings {
 
 	export var controllerMap: {[m: number]: Controller} = {};
 	export var initializerMap: {[m: number]: Initializable} = {};
-
-	// export var sidebar: Sidebar = null;
-	// export var automatonRenderer: AutomatonRenderer = null;
-	export var sidebar = null;
-	export var automatonRenderer = null;
 
 	export function controller(): Controller {
 		return this.machines[this.currentMachine].controller;
