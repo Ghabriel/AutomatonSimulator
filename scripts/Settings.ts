@@ -106,9 +106,8 @@ export namespace Settings {
 		focusTestCase: ["ctrl", "I"],
 		dimTestCase: ["ENTER"], // must be unitary since it's not bound via bindShortcut
 		fastForward: ["R"], // "R"ecognize (is there a better alternative?)
-		step: ["N"], // "N"ext step
-		stop: ["S"],
-		multipleRecognition: ["M"],
+		step: ["ENTER"],
+		stop: ["ESC"],
 	};
 
 	export const languages = lang;

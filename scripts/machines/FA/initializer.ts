@@ -290,10 +290,6 @@ export class initFA {
 				self.stopRecognition.click();
 			}, this.shortcutGroup);
 
-			System.bindShortcut(Settings.shortcuts.multipleRecognition, function() {
-				self.multipleCaseButton.click();
-			}, this.shortcutGroup);
-
 			this.boundShortcuts = true;
 		}
 
@@ -302,9 +298,7 @@ export class initFA {
 		// language is changed.
 		this.testCaseInput.addEventListener("keydown", function(e) {
 			if (e.keyCode == Keyboard.keys[Settings.shortcuts.dimTestCase[0]]) {
-				if (self.testCaseInput == document.activeElement) {
-					self.testCaseInput.blur();
-				}
+				self.testCaseInput.blur();
 			}
 		});
 	}
