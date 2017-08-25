@@ -40,6 +40,7 @@ export namespace portuguese {
 		CLEAR_MACHINE: "Limpar máquina",
 		CLEAR_CONFIRMATION: "Deseja realmente limpar o autômato?",
 		UNDO: "Desfazer",
+		REDO: "Refazer",
 		MENU_TOGGLE_INSTRUCTIONS: "clique para mostrar/esconder",
 		CREATE_STATE_INSTRUCTIONS: "clique duplo no local alvo",
 		CREATE_EDGE_INSTRUCTIONS: "clique direito na origem e então clique no destino",

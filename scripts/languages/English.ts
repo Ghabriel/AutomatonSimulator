@@ -40,6 +40,7 @@ export namespace english {
 		CLEAR_MACHINE: "Clear machine",
 		CLEAR_CONFIRMATION: "Do you really want to reset this automaton?",
 		UNDO: "Undo",
+		REDO: "Redo",
 		MENU_TOGGLE_INSTRUCTIONS: "click to toggle",
 		CREATE_STATE_INSTRUCTIONS: "double click on target position",
 		CREATE_EDGE_INSTRUCTIONS: "right click on origin then click on target",

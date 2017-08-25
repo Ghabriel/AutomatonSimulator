@@ -927,13 +927,22 @@ export class AutomatonRenderer {
 		// Blocks changes to the memento until the undo process is complete
 		this.frozenMemento = true;
 
-		let data = this.memento.pop();
+		let data = this.memento.undo();
 		if (data) {
 			this.clear();
 			this.load(data, false);
 		}
+	}
 
-		// this.frozenMemento = false;
+	private redo(): void {
+		// Blocks changes to the memento until the redo process is complete
+		this.frozenMemento = true;
+
+		let data = this.memento.redo();
+		if (data) {
+			this.clear();
+			this.load(data, false);
+		}
 	}
 
 	private bindShortcuts(): void {
@@ -1070,6 +1079,10 @@ export class AutomatonRenderer {
 
 		System.bindShortcut(Settings.shortcuts.undo, function() {
 			self.undo();
+		}, group);
+
+		System.bindShortcut(Settings.shortcuts.redo, function() {
+			self.redo();
 		}, group);
 	}
 

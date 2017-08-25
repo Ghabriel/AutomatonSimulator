@@ -31,7 +31,7 @@ export namespace Settings {
 	export const promptSlideInterval = 200;
 	export const machineSelRows = 3;
 	export const machineSelColumns = 1;
-	export const machineActionRows = 2;
+	export const machineActionRows = 3;
 	export const machineActionColumns = 2;
 
 	export const tapeDisplayedChars = 7; // should be odd
@@ -100,6 +100,7 @@ export namespace Settings {
 		up: ["UP"],
 		down: ["DOWN"],
 		undo: ["ctrl", "Z"],
+		redo: ["ctrl", "Y"],
 		// Recognition-related controls
 		focusTestCase: ["ctrl", "I"],
 		dimTestCase: ["ENTER"], // must be unitary since it's not bound via bindShortcut

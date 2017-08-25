@@ -89,7 +89,6 @@ export class Sidebar extends Renderer {
 		System.changeMachine(type);
 		this.loadMachine(type);
 		this.renderDynamicMenus();
-
 	}
 
 	protected onBind(): void {
@@ -330,16 +329,6 @@ export class Sidebar extends Renderer {
 		});
 		table.add(createEdge);
 
-		let clearMachine = <HTMLInputElement> utils.create("input", {
-			title: utils.printShortcut(Settings.shortcuts.clearMachine),
-			type: "button",
-			value: Strings.CLEAR_MACHINE,
-			click: function() {
-				System.emitKeyEvent(Settings.shortcuts.clearMachine);
-			}
-		});
-		table.add(clearMachine);
-
 		let undo = <HTMLInputElement> utils.create("input", {
 			title: utils.printShortcut(Settings.shortcuts.undo),
 			type: "button",
@@ -349,6 +338,26 @@ export class Sidebar extends Renderer {
 			}
 		});
 		table.add(undo);
+
+		let redo = <HTMLInputElement> utils.create("input", {
+			title: utils.printShortcut(Settings.shortcuts.redo),
+			type: "button",
+			value: Strings.REDO,
+			click: function() {
+				System.emitKeyEvent(Settings.shortcuts.redo);
+			}
+		});
+		table.add(redo);
+
+		let clearMachine = <HTMLInputElement> utils.create("input", {
+			title: utils.printShortcut(Settings.shortcuts.clearMachine),
+			type: "button",
+			value: Strings.CLEAR_MACHINE,
+			click: function() {
+				System.emitKeyEvent(Settings.shortcuts.clearMachine);
+			}
+		});
+		table.add(clearMachine, 2);
 
 		let actionMenu = this.mainMenus.actionMenu;
 		let tableElement = table.html();
