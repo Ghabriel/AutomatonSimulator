@@ -1,6 +1,7 @@
 /// <reference path="../defs/filesaver.d.ts" />
 
 import * as automata from "../lists/MachineList"
+import {Keyboard} from "../Keyboard"
 import {Menu} from "./Menu"
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
@@ -128,11 +129,8 @@ export class Sidebar extends Renderer {
 
 		this.otherMenus = Settings.machines[machine].sidebar;
 		for (let menu of this.otherMenus) {
-			menu.bind(this.node);
+			menu.bind(this.contentWrapper);
 		}
-
-		// TODO
-		// console.log(Settings.machines[Settings.currentMachine].name);
 	}
 
 	private buildSettings(): void {
@@ -141,7 +139,7 @@ export class Sidebar extends Renderer {
 
 		let table = new Table(2, 2);
 
-		let undoMaxAmountInput = utils.create("input", {
+		let undoMaxAmountInput = <HTMLInputElement> utils.create("input", {
 			className: "property_value",
 			type: "text",
 			value: Settings.undoMaxAmount
@@ -159,7 +157,13 @@ export class Sidebar extends Renderer {
 				 || confirm(Strings.MEMORY_CONSUMPTION_WARNING)) {
 					Settings.undoMaxAmount = value;
 				}
-				this.value = Settings.undoMaxAmount;
+				this.value = Settings.undoMaxAmount.toString();
+			}
+		});
+
+		undoMaxAmountInput.addEventListener("keyup", function(e) {
+			if (e.keyCode == Keyboard.keys.ENTER) {
+				this.blur();
 			}
 		});
 
