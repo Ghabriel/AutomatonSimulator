@@ -724,6 +724,7 @@ export class AutomatonRenderer {
 					edge.addText(text);
 					edge.addData(data);
 					edge.render(self.canvas);
+					self.selectEdge(edge);
 					clearCurrentEdge();
 				}, clearCurrentEdge);
 				return;
@@ -742,6 +743,7 @@ export class AutomatonRenderer {
 		this.currentEdge.setTarget(state);
 		// Renders the edge here to show it already attached to the target state.
 		this.currentEdge.render(this.canvas);
+		this.selectEdge(this.currentEdge);
 
 		edgeText(function(data, text) {
 			self.currentEdge.addText(text);
@@ -749,6 +751,7 @@ export class AutomatonRenderer {
 			self.bindEdgeEvents(self.currentEdge);
 			// Renders it again, this time to show the finished edge
 			self.currentEdge.render(self.canvas);
+			self.updateEditableEdge(self.currentEdge);
 			self.edgeList.push(self.currentEdge);
 			self.currentEdge = null;
 		}, function() {
