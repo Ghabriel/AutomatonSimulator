@@ -22,7 +22,7 @@ export class Memento<T> {
 	}
 
 	public undo(): T {
-		if (this.historyPointer >= this.offset) {
+		if (this.historyPointer >= this.offset && this.historyPointer > 0) {
 			this.historyPointer--;
 			return this.states[this.index()];
 		} else {

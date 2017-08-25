@@ -639,7 +639,13 @@ export class AutomatonRenderer {
 
 		let self = this;
 		$(this.node).dblclick(function(e) {
-			self.newStateAt(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
+			// Avoids a bug where double clicking a Prompt
+			// would trigger a state creation
+			if (e.target.tagName.toLowerCase() == "svg") {
+				let x = e.pageX - this.offsetLeft;
+				let y = e.pageY - this.offsetTop;
+				self.newStateAt(x, y);
+			}
 		});
 
 		$(this.node).contextmenu(function(e) {
@@ -875,8 +881,8 @@ export class AutomatonRenderer {
 		let controller = Settings.controller();
 		if (state == this.initialState) {
 			state.setInitial(false);
-			controller.changeInitialFlag(state);
 			this.initialState = null;
+			controller.changeInitialFlag(state);
 		} else {
 			if (this.initialState) {
 				this.initialState.setInitial(false);
@@ -885,8 +891,8 @@ export class AutomatonRenderer {
 			}
 
 			state.setInitial(true);
-			controller.changeInitialFlag(state);
 			this.initialState = state;
+			controller.changeInitialFlag(state);
 		}
 	}
 

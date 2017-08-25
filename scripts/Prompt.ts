@@ -102,8 +102,11 @@ export class Prompt {
 					}
 					contents.push(input.value);
 				}
-				dismiss();
-				self.successCallback(contents);
+
+				if (allValid) {
+					dismiss();
+					self.successCallback(contents);
+				}
 			}
 		});
 
