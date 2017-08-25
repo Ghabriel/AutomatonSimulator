@@ -126,4 +126,8 @@ export namespace utils {
 	export function singleSymbolValidator(input: string): boolean {
 		return input.length == 1;
 	}
+
+	export function nonEmptyStringValidator(input: string): boolean {
+		return input.length > 0;
+	}
 }

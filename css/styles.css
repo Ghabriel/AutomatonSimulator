@@ -140,10 +140,20 @@ div.row {
 	z-index: 3;
 }
 
+#system_prompt.floating {
+	border: 1px solid black;
+	display: inline-block;
+	position: absolute;
+}
+
 #system_prompt input, #system_prompt select {
 	margin-right: 5px;
 	text-align: center;
 	width: 100px;
+}
+
+#system_prompt input:last-child, #system_prompt select:last-child {
+	margin-right: 0;
 }
 
 .click_blocker {

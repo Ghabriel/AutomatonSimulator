@@ -25,6 +25,13 @@ export class Prompt {
 		this.inputs.push(properties);
 	}
 
+	public setPosition(x: number, y: number): void {
+		this.explicitPosition = {
+			x: x,
+			y: y
+		};
+	}
+
 	public onSuccess(callback: SuccessCallback): void {
 		this.successCallback = callback;
 	}
@@ -38,10 +45,17 @@ export class Prompt {
 			className: "click_blocker"
 		});
 
-		let container = utils.create("div", {
+		let container = <HTMLDivElement> utils.create("div", {
 			id: "system_prompt"
 		});
 		container.innerHTML = this.message + "<br>";
+
+		if (this.explicitPosition) {
+			container.classList.add("floating");
+			let mainbar = <HTMLElement> utils.id(Settings.mainbarID);
+			container.style.left = (mainbar.offsetLeft + this.explicitPosition.x) + "px";
+			container.style.top = (mainbar.offsetTop + this.explicitPosition.y) + "px";
+		}
 
 		let mainbar = utils.id(Settings.mainbarID);
 		const inputIdPrefix = "system_prompt_input_";
@@ -54,7 +68,7 @@ export class Prompt {
 			System.unblockEvents();
 
 			// Slides the container up and then removes it from the page
-			$(container).slideUp(Settings.promptSlideInterval, function() {
+			$(container).slideUp(Settings.promptSlideHideInterval, function() {
 				mainbar.removeChild(container);
 			});
 		};
@@ -158,7 +172,7 @@ export class Prompt {
 		$(container).toggle();
 		// Adds the prompt to the page
 		mainbar.insertBefore(container, mainbar.children[0]);
-		$(container).slideDown(Settings.promptSlideInterval, function() {
+		$(container).slideDown(Settings.promptSlideShowInterval, function() {
 			inputs[0].focus();
 		});
 	}
@@ -193,7 +207,7 @@ export class Prompt {
 			// Removes the keyboard block
 			System.unblockEvents();
 
-			$(container).slideUp(Settings.promptSlideInterval, function() {
+			$(container).slideUp(Settings.promptSlideHideInterval, function() {
 				mainbar.removeChild(container);
 			});
 		};
@@ -265,13 +279,14 @@ export class Prompt {
 		$(container).toggle();
 		// Adds the prompt to the page
 		mainbar.insertBefore(container, mainbar.children[0]);
-		$(container).slideDown(Settings.promptSlideInterval, function() {
+		$(container).slideDown(Settings.promptSlideShowInterval, function() {
 			inputs[0].focus();
 		});
 	}
 
 	private message: string;
 	private inputs: InputProperties[] = [];
+	private explicitPosition: {x: number, y: number} = null;
 	private successCallback: SuccessCallback = null;
 	private abortCallback: AbortCallback = null;
 }

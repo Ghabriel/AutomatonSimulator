@@ -28,7 +28,8 @@ export namespace Settings {
 	export var undoMaxAmount = 2;
 
 	export const menuSlideInterval = 300;
-	export const promptSlideInterval = 200;
+	export const promptSlideHideInterval = 100;
+	export const promptSlideShowInterval = 200;
 	export const machineSelRows = 3;
 	export const machineSelColumns = 1;
 	export const machineActionRows = 3;

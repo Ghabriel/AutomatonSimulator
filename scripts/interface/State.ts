@@ -24,6 +24,10 @@ export class State {
 		};
 	}
 
+	public getRadius(): number {
+		return this.radius;
+	}
+
 	public setInitial(flag: boolean): void {
 		this.initial = flag;
 	}

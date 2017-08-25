@@ -755,6 +755,7 @@ export class AutomatonRenderer {
 			self.edgeList.push(self.currentEdge);
 			self.currentEdge = null;
 		}, function() {
+			self.updateEditableEdge(null);
 			clearCurrentEdge();
 
 			// We might have set the opposite edge curve flag, so
@@ -801,7 +802,16 @@ export class AutomatonRenderer {
 
 			let self = this;
 			let stateNamePrompt = function() {
-				Prompt.simple(Strings.STATE_MANUAL_CREATION, 1, function(data) {
+				let prompt = new Prompt(Strings.STATE_MANUAL_CREATION);
+
+				prompt.addInput({
+					validator: utils.nonEmptyStringValidator
+				});
+
+				let radius = state.getRadius();
+				prompt.setPosition(x + radius, y - radius);
+
+				prompt.onSuccess(function(data) {
 					let name = data[0];
 					for (let state of self.stateList) {
 						if (state.getName() == name) {
@@ -813,11 +823,15 @@ export class AutomatonRenderer {
 					state.setName(name);
 					self.onStateCreation(state);
 					self.updateEditableState(state);
-				}, function() {
+				});
+
+				prompt.onAbort(function() {
 					self.highlightedState = null;
 					state.remove();
 					self.updateEditableState(null);
 				});
+
+				prompt.show();
 			};
 
 			stateNamePrompt();
