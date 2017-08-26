@@ -8,6 +8,15 @@ type Alphabet = {[i: string]: number};
 type InternalTransitionInformation = [Index, string][];
 export type TransitionInformation = [State, string];
 
+export interface Action {
+	stepIndex: number;
+	currentInput: string;
+	currentStack: string[];
+	stackWrite: string;
+	consumesInput: boolean;
+	targetState: Index;
+}
+
 let EPSILON_KEY = "";
 
 export class PDA {
@@ -221,8 +230,16 @@ export class PDA {
 	}
 
 	public setInput(input: string): void {
+		console.log("PDA::setInput(" + input + ")");
 		this.input = input;
 		this.stack = ["$"];
+		this.stepIndex = 0;
+		this.actionTree = this.getPossibleActions();
+		this.halt = false;
+	}
+
+	public getActionTree(): Action[] {
+		return this.actionTree;
 	}
 
 	// Reads a character from the input, triggering state changes to this PDA.
@@ -231,60 +248,52 @@ export class PDA {
 			return;
 		}
 
-		let error = true;
-		let input = this.input[0];
+		console.log("PDA::read()");
 
-		console.log("[INPUT]", this.input);
-		console.log("[STACK]", this.stack);
-		if (this.transitions.hasOwnProperty(this.currentState + "")) {
-			let transitions = this.transitions[this.currentState];
-			if (transitions.hasOwnProperty(input)) {
-				let indexedByStack = transitions[input];
-				let stackTop = this.stack[this.stack.length - 1];
-				if (indexedByStack.hasOwnProperty(stackTop)) {
-					let possibilities = indexedByStack[stackTop];
-					// TODO: implement non-determinism
-					this.currentState = possibilities[0][0];
-					this.input = this.input.substr(1);
-					this.stack.pop();
+		let actionTree = this.actionTree;
 
-					let stackWrite = possibilities[0][1];
-					for (let i = 0; i < stackWrite.length; i++) {
-						this.stack.push(stackWrite[i]);
-					}
-
-					error = false;
-				}
-			}
-
-			if (transitions.hasOwnProperty(EPSILON_KEY)) {
-				let indexedByStack = transitions[EPSILON_KEY];
-				let stackTop = this.stack[this.stack.length - 1];
-				if (indexedByStack.hasOwnProperty(stackTop)) {
-					let possibilities = indexedByStack[stackTop];
-					// TODO: implement non-determinism
-					this.currentState = possibilities[0][0];
-					this.stack.pop();
-
-					let stackWrite = possibilities[0][1];
-					for (let i = 0; i < stackWrite.length; i++) {
-						this.stack.push(stackWrite[i]);
-					}
-
-					error = false;
-				}
-			}
-		}
-
-		if (error) {
+		if (actionTree.length == 0) {
 			// goes to the error state
 			this.currentState = null;
 			this.input = "";
+			this.halt = true;
+			return;
+		}
+
+		let nextAction = actionTree[actionTree.length - 1];
+
+		if (nextAction.stepIndex <= this.stepIndex) {
+			console.log("[BACKTRACK]");
+		}
+
+		this.processAction(nextAction);
+		this.actionTree.pop();
+		this.halt = false;
+
+		let possibleActions = this.getPossibleActions();
+		for (let action of possibleActions) {
+			this.actionTree.push(action);
 		}
 	}
 
+	// private printActionTree(actionTree: Action[]): string {
+	// 	let result: string[] = [];
+
+	// 	for (let action of actionTree) {
+	// 		let content: string[] = [];
+	// 		content.push(action.currentInput);
+	// 		content.push(action.currentStack.join(""));
+	// 		content.push(action.consumesInput ? "YES" : "NO");
+	// 		content.push(action.stackWrite);
+	// 		content.push(this.stateList[action.targetState]);
+	// 		result.push(content.join(", "));
+	// 	}
+
+	// 	return "[\n" + result.join("\n") + "\n]";
+	// }
+
 	public halted(): boolean {
-		return (this.input || "").length == 0;
+		return this.halt;
 	}
 
 	// Resets this PDA, making it return to its initial state and
@@ -325,6 +334,64 @@ export class PDA {
 	// Returns the number of states of this PDA.
 	public numStates(): number {
 		return this.stateList.length - this.numRemovedStates;
+	}
+
+	private getPossibleActions(): Action[] {
+		let availableTransitions = this.transitions[this.currentState];
+		let result: Action[] = [];
+		let self = this;
+
+		let handleInputSymbol = function(inputSymbol) {
+			if (availableTransitions.hasOwnProperty(inputSymbol)) {
+				let indexedByStack = availableTransitions[inputSymbol];
+				// TODO: handle empty stack
+				let stackTop = self.stack[self.stack.length - 1];
+				if (indexedByStack.hasOwnProperty(stackTop)) {
+					let groups = indexedByStack[stackTop];
+					for (let group of groups) {
+						let stackCopy: typeof self.stack = [];
+						for (let symbol of self.stack) {
+							stackCopy.push(symbol);
+						}
+
+						result.push({
+							stepIndex: self.stepIndex + 1,
+							currentInput: self.input,
+							currentStack: stackCopy,
+							consumesInput: inputSymbol != EPSILON_KEY,
+							stackWrite: group[1],
+							targetState: group[0]
+						});
+					}
+				}
+			}
+		};
+
+		if (this.input.length > 0) {
+			handleInputSymbol(this.input[0]);
+		}
+
+		handleInputSymbol(EPSILON_KEY);
+
+		return result;
+	}
+
+	private processAction(action: Action): void {
+		this.stepIndex = action.stepIndex;
+		this.input = action.currentInput;
+		this.stack = action.currentStack;
+
+		if (action.consumesInput) {
+			this.input = this.input.slice(1);
+		}
+
+		this.stack.pop();
+
+		for (let i = 0; i < action.stackWrite.length; i++) {
+			this.stack.push(action.stackWrite[i]);
+		}
+
+		this.currentState = action.targetState;
 	}
 
 	private addSymbol(location: string, symbol: string): void {
@@ -387,4 +454,7 @@ export class PDA {
 	private stack: string[] = [];
 
 	private input: string = null;
+	private stepIndex: number;
+	private actionTree: Action[] = [];
+	private halt: boolean = true;
 }

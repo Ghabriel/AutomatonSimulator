@@ -1,5 +1,5 @@
 import {Controller, FormalDefinition} from "../../Controller"
-import {PDA, TransitionInformation} from "./PDA"
+import {Action, PDA, TransitionInformation} from "./PDA"
 import {Keyboard} from "../../Keyboard"
 import {Prompt} from "../../Prompt"
 import {State} from "../../interface/State"
@@ -26,7 +26,7 @@ export class PDAController implements Controller {
 		// read (stack)
 		prompt.addInput({
 			placeholder: Strings.PDA_ENTER_EDGE_PLACEHOLDER_2,
-			validator: utils.optionalSymbolValidator
+			validator: utils.singleSymbolValidator
 		});
 
 		// write (stack)
@@ -166,6 +166,10 @@ export class PDAController implements Controller {
 
 	public getStackContent(): string[] {
 		return this.machine.getStackContent();
+	}
+
+	public getActionTree(): Action[] {
+		return this.machine.getActionTree();
 	}
 
 	public currentStates(): string[] {

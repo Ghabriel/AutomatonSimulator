@@ -262,7 +262,7 @@ export class initPDA {
 				self.testCaseInput.disabled = true;
 
 				let input = self.testCase();
-				let controller = Settings.controller();
+				let controller = <PDAController> Settings.controller();
 
 				if (controller.isStopped()) {
 					controller.reset();
@@ -285,6 +285,7 @@ export class initPDA {
 				if (!finished) {
 					controller.step(input);
 					self.highlightCurrentStates();
+					console.log("[ACTION TREE]", controller.getActionTree());
 					finished = controller.finished(input);
 
 					self.showStackContent();
