@@ -89,9 +89,6 @@ export class FA {
 		if (input == "") {
 			let epsTransitions = this.epsilonTransitions;
 			epsTransitions[source].erase(target);
-			if (epsTransitions[input].empty()) {
-				delete epsTransitions[input];
-			}
 		} else if (transitions.hasOwnProperty(input)) {
 			transitions[input].erase(target);
 			if (transitions[input].empty()) {
