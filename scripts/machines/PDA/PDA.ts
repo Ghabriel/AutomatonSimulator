@@ -8,13 +8,22 @@ type Alphabet = {[i: string]: number};
 type InternalTransitionInformation = [Index, string][];
 export type TransitionInformation = [State, string];
 
-export interface Action {
+interface Action {
 	stepIndex: number;
 	currentInput: string;
 	currentStack: string[];
-	stackRead: string;
+	inputRead: string;
 	stackWrite: string;
 	targetState: Index;
+}
+
+export interface ActionInformation {
+	stepIndex: number;
+	currentInput: string;
+	currentStack: string[];
+	inputRead: string;
+	stackWrite: string;
+	targetState: State;
 }
 
 let EPSILON_KEY = "";
@@ -237,8 +246,20 @@ export class PDA {
 		this.halt = false;
 	}
 
-	public getActionTree(): Action[] {
-		return this.actionTree;
+	public getActionTree(): ActionInformation[] {
+		let result: ActionInformation[] = [];
+		for (let action of this.actionTree) {
+			result.push({
+				stepIndex: action.stepIndex,
+				currentInput: action.currentInput,
+				currentStack: action.currentStack,
+				inputRead: action.inputRead,
+				stackWrite: action.stackWrite,
+				targetState: this.stateList[action.targetState]
+			});
+		}
+
+		return result;
 	}
 
 	// Reads a character from the input, triggering state changes to this PDA.
@@ -312,6 +333,9 @@ export class PDA {
 		}
 
 		this.stack = [];
+		this.stepIndex = 0;
+		this.actionTree = [];
+		this.halt = true;
 	}
 
 	// Clears this PDA, making it effectively equal to new PDA().
@@ -325,6 +349,9 @@ export class PDA {
 		this.numRemovedStates = 0;
 		this.currentState = null;
 		this.stack = [];
+		this.stepIndex = 0;
+		this.actionTree = [];
+		this.halt = true;
 	}
 
 	// Checks if this PDA accepts in its current state.
@@ -364,7 +391,7 @@ export class PDA {
 							stepIndex: self.stepIndex + 1,
 							currentInput: self.input,
 							currentStack: stackCopy,
-							stackRead: inputSymbol,
+							inputRead: inputSymbol,
 							stackWrite: group[1],
 							targetState: group[0]
 						});
@@ -387,7 +414,7 @@ export class PDA {
 		this.input = action.currentInput;
 		this.stack = action.currentStack;
 
-		if (action.stackRead != EPSILON_KEY) {
+		if (action.inputRead != EPSILON_KEY) {
 			this.input = this.input.slice(1);
 		}
 

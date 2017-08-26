@@ -1,5 +1,5 @@
 import {Controller, FormalDefinition} from "../../Controller"
-import {Action, PDA, TransitionInformation} from "./PDA"
+import {ActionInformation, PDA, TransitionInformation} from "./PDA"
 import {Keyboard} from "../../Keyboard"
 import {Prompt} from "../../Prompt"
 import {State} from "../../interface/State"
@@ -121,12 +121,11 @@ export class PDAController implements Controller {
 	}
 
 	public fastForward(input: string): void {
-		// TODO
-		console.log("PDAController::fastForward() not implemented");
-		// this.machine.reset();
-		// for (let i = 0; i < input.length; i++) {
-		// 	this.machine.read(input[i]);
-		// }
+		this.machine.reset();
+		this.machine.setInput(input);
+		while (!this.machine.halted()) {
+			this.machine.read();
+		}
 	}
 
 	public step(input: string): void {
@@ -168,7 +167,7 @@ export class PDAController implements Controller {
 		return this.machine.getStackContent();
 	}
 
-	public getActionTree(): Action[] {
+	public getActionTree(): ActionInformation[] {
 		return this.machine.getActionTree();
 	}
 

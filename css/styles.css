@@ -186,10 +186,19 @@ div.row {
 	word-wrap: break-word;
 }
 
-#action_tree {
-	font-size: 200%;
-	word-break: break-all;
+#action_tree .entry td {
+	background-color: white;
+	border: 1px solid black;
+	padding: 5px;
 	word-wrap: break-word;
+}
+
+#action_tree .entry tr td:first-child {
+	background-color: #DDD;
+}
+
+#action_tree .empty tr td:last-child {
+	word-break: break-all;
 }
 
 #tape {

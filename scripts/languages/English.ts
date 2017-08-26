@@ -74,6 +74,7 @@ export namespace english {
 		INPUT_ACCEPTED: "accepted",
 		INPUT_REJECTED: "rejected",
 		INPUT_LOOPING: "rejected<br>(looping)",
+		EMPTY: "empty",
 		ERROR_INVALID_STATE_NAME: "Invalid state name",
 	};
 }

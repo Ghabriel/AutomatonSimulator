@@ -196,6 +196,7 @@ export class initPDA {
 	private showActionTree(): void {
 		let controller = <PDAController> Settings.controller();
 		let actionTree = controller.getActionTree();
+		let epsilon = Keyboard.symbols.epsilon;
 
 		this.actionTreeContainer.innerHTML = "";
 
@@ -204,13 +205,34 @@ export class initPDA {
 				className: "entry"
 			});
 
-			let content: string[] = [];
-			content.push(action.currentInput);
-			content.push(action.currentStack.join(""));
-			content.push(action.stackRead);
-			content.push(action.stackWrite);
-			content.push(action.targetState.toString());
-			container.innerHTML = "[" + content.join(", ") + "]";
+			let table = new Table(5, 2);
+			let fieldValues = [
+				"Input",
+				action.currentInput,
+				"Stack",
+				action.currentStack.join(""),
+				"Read (input)",
+				action.inputRead || epsilon,
+				"Write",
+				action.stackWrite || epsilon,
+				"Target state",
+				action.targetState.toString(),
+			];
+
+			for (let fieldValue of fieldValues) {
+				let fieldContainer = utils.create("span", {
+					innerHTML: fieldValue
+				});
+
+				if (fieldValue.length == 0) {
+					fieldContainer.classList.add("none");
+					fieldContainer.innerHTML = Strings.EMPTY;
+				}
+
+				table.add(fieldContainer);
+			}
+
+			container.appendChild(table.html());
 
 			this.actionTreeContainer.appendChild(container);
 		}

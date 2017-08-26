@@ -74,6 +74,7 @@ export namespace portuguese {
 		INPUT_ACCEPTED: "aceito",
 		INPUT_REJECTED: "rejeitado",
 		INPUT_LOOPING: "rejeitado<br>(looping)",
+		EMPTY: "vazio",
 		ERROR_INVALID_STATE_NAME: "Nome de estado inválido",
 	};
 }
