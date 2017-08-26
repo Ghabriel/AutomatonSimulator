@@ -18,6 +18,7 @@ export class initPDA {
 		this.buildTestCaseInput(rows);
 		this.buildRecognitionControls(rows);
 		this.buildStack(rows);
+		this.buildActionTree(rows);
 		this.buildRecognitionProgress(rows);
 
 		this.addRows(rows, recognitionMenu);
@@ -57,6 +58,7 @@ export class initPDA {
 	private stopRecognition: HTMLImageElement = null;
 	private progressContainer: HTMLDivElement = null;
 	private stackContainer: HTMLDivElement = null;
+	private actionTreeContainer: HTMLDivElement = null;
 	private multipleCaseArea: HTMLTextAreaElement = null;
 	private multipleCaseResults: HTMLDivElement = null;
 	private multipleCaseButton: HTMLImageElement = null;
@@ -130,6 +132,16 @@ export class initPDA {
 		container.push([this.stackContainer]);
 	}
 
+	private buildActionTree(container: HTMLElement[][]): void {
+		this.actionTreeContainer = <HTMLDivElement> utils.create("div", {
+			id: "action_tree"
+		});
+
+		this.actionTreeContainer.style.display = "none";
+
+		container.push([this.actionTreeContainer]);
+	}
+
 	private buildRecognitionProgress(container: HTMLElement[][]): void {
 		this.progressContainer = <HTMLDivElement> utils.create("div", {
 			id: "recognition_progress"
@@ -178,7 +190,30 @@ export class initPDA {
 		let stackContent = controller.getStackContent();
 
 		// TODO
-		this.stackContainer.innerHTML = stackContent.join("<br>");
+		this.stackContainer.innerHTML = stackContent.join("");
+	}
+
+	private showActionTree(): void {
+		let controller = <PDAController> Settings.controller();
+		let actionTree = controller.getActionTree();
+
+		this.actionTreeContainer.innerHTML = "";
+
+		for (let action of actionTree) {
+			let container = <HTMLDivElement> utils.create("div", {
+				className: "entry"
+			});
+
+			let content: string[] = [];
+			content.push(action.currentInput);
+			content.push(action.currentStack.join(""));
+			content.push(action.stackRead);
+			content.push(action.stackWrite);
+			content.push(action.targetState.toString());
+			container.innerHTML = "[" + content.join(", ") + "]";
+
+			this.actionTreeContainer.appendChild(container);
+		}
 	}
 
 	private bindRecognitionEvents(): void {
@@ -221,6 +256,9 @@ export class initPDA {
 				self.stackContainer.style.display = "";
 				self.showStackContent();
 
+				self.actionTreeContainer.style.display = "";
+				self.showActionTree();
+
 				fastForwardStatus(false);
 				stepStatus(false);
 				stopStatus(true);
@@ -247,6 +285,7 @@ export class initPDA {
 				self.progressContainer.style.display = "none";
 
 				self.stackContainer.style.display = "none";
+				self.actionTreeContainer.style.display = "none";
 
 				fastForwardStatus(true);
 				stepStatus(true);
@@ -262,7 +301,7 @@ export class initPDA {
 				self.testCaseInput.disabled = true;
 
 				let input = self.testCase();
-				let controller = <PDAController> Settings.controller();
+				let controller = Settings.controller();
 
 				if (controller.isStopped()) {
 					controller.reset();
@@ -279,16 +318,17 @@ export class initPDA {
 					self.progressContainer.style.width = width + "px";
 
 					self.stackContainer.style.display = "";
+					self.actionTreeContainer.style.display = "";
 				}
 
 				let finished = controller.finished(input);
 				if (!finished) {
 					controller.step(input);
 					self.highlightCurrentStates();
-					console.log("[ACTION TREE]", controller.getActionTree());
 					finished = controller.finished(input);
 
 					self.showStackContent();
+					self.showActionTree();
 				}
 
 				if (finished) {

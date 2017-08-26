@@ -12,8 +12,8 @@ export interface Action {
 	stepIndex: number;
 	currentInput: string;
 	currentStack: string[];
+	stackRead: string;
 	stackWrite: string;
-	consumesInput: boolean;
 	targetState: Index;
 }
 
@@ -230,7 +230,6 @@ export class PDA {
 	}
 
 	public setInput(input: string): void {
-		console.log("PDA::setInput(" + input + ")");
 		this.input = input;
 		this.stack = ["$"];
 		this.stepIndex = 0;
@@ -273,6 +272,13 @@ export class PDA {
 		let possibleActions = this.getPossibleActions();
 		for (let action of possibleActions) {
 			this.actionTree.push(action);
+		}
+
+		let imminentBacktracking = (possibleActions.length == 0);
+		if (imminentBacktracking && this.input.length == 0 && this.accepts()) {
+			// prevent backtracking on the next call to read()
+			// since we found an accepting branch
+			this.halt = true;
 		}
 	}
 
@@ -358,7 +364,7 @@ export class PDA {
 							stepIndex: self.stepIndex + 1,
 							currentInput: self.input,
 							currentStack: stackCopy,
-							consumesInput: inputSymbol != EPSILON_KEY,
+							stackRead: inputSymbol,
 							stackWrite: group[1],
 							targetState: group[0]
 						});
@@ -381,7 +387,7 @@ export class PDA {
 		this.input = action.currentInput;
 		this.stack = action.currentStack;
 
-		if (action.consumesInput) {
+		if (action.stackRead != EPSILON_KEY) {
 			this.input = this.input.slice(1);
 		}
 

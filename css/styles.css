@@ -180,6 +180,18 @@ div.row {
 	text-overflow: ellipsis;
 }
 
+#stack {
+	font-size: 200%;
+	word-break: break-all;
+	word-wrap: break-word;
+}
+
+#action_tree {
+	font-size: 200%;
+	word-break: break-all;
+	word-wrap: break-word;
+}
+
 #tape {
 	background-color: #DDD;
 	border-collapse: collapse;
