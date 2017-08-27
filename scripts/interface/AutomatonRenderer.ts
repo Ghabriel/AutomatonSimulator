@@ -31,6 +31,21 @@ export class AutomatonRenderer {
 		System.addLanguageChangeObserver({
 			onLanguageChange: function() {
 				self.bindFormalDefinitionListener();
+
+				if (self.locked) {
+					self.recognitionDim();
+					self.unlock();
+				}
+
+				if (self.highlightedState) {
+					// Restores the "selected entity area" for states
+					self.updateEditableState(self.highlightedState);
+				}
+
+				if (self.highlightedEdge) {
+					// Restores the "selected entity area" for edges
+					self.updateEditableEdge(self.highlightedEdge);
+				}
 			}
 		});
 
@@ -116,7 +131,6 @@ export class AutomatonRenderer {
 		}
 	}
 
-	// TODO: make this method faster
 	public recognitionHighlight(stateNames: string[]): void {
 		let nameMapping: {[n: string]: State} = {};
 		for (let state of this.stateList) {
