@@ -268,8 +268,6 @@ export class PDA {
 			return;
 		}
 
-		console.log("PDA::read()");
-
 		let actionTree = this.actionTree;
 
 		if (actionTree.length == 0) {
@@ -282,9 +280,9 @@ export class PDA {
 
 		let nextAction = actionTree[actionTree.length - 1];
 
-		if (nextAction.stepIndex <= this.stepIndex) {
-			console.log("[BACKTRACK]");
-		}
+		// if (nextAction.stepIndex <= this.stepIndex) {
+		// 	console.log("[BACKTRACK]");
+		// }
 
 		this.processAction(nextAction);
 		this.actionTree.pop();

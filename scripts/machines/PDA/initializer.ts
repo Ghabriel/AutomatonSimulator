@@ -10,28 +10,12 @@ import {utils} from "../../Utils"
 export class initPDA {
 	public init(): void {
 		console.log("[PDA] Initializing...");
-		let menuList: Menu[] = [];
-
-		let recognitionMenu = new Menu(Strings.RECOGNITION);
-		let rows: HTMLElement[][] = [];
-
-		this.buildTestCaseInput(rows);
-		this.buildRecognitionControls(rows);
-		this.buildStack(rows);
-		this.buildActionTree(rows);
-		this.buildRecognitionProgress(rows);
-
-		this.addRows(rows, recognitionMenu);
-		menuList.push(recognitionMenu);
-
-		let multipleRecognitionMenu = new Menu(Strings.MULTIPLE_RECOGNITION);
-		rows = [];
-
-		this.buildMultipleRecognition(rows);
-
-		this.addRows(rows, multipleRecognitionMenu);
-		multipleRecognitionMenu.toggle();
-		menuList.push(multipleRecognitionMenu);
+		let menuList: Menu[] = [
+			this.buildRecognitionMenu(),
+			this.buildStackContentMenu(),
+			this.buildActionTreeMenu(),
+			this.buildMultipleRecognitionMenu()
+		];
 
 		this.bindRecognitionEvents();
 
@@ -62,6 +46,50 @@ export class initPDA {
 	private multipleCaseArea: HTMLTextAreaElement = null;
 	private multipleCaseResults: HTMLDivElement = null;
 	private multipleCaseButton: HTMLImageElement = null;
+
+	private buildRecognitionMenu(): Menu {
+		let recognitionMenu = new Menu(Strings.RECOGNITION);
+		let rows: HTMLElement[][] = [];
+
+		this.buildTestCaseInput(rows);
+		this.buildRecognitionControls(rows);
+		// this.buildStack(rows);
+		// this.buildActionTree(rows);
+		this.buildRecognitionProgress(rows);
+		this.addRows(rows, recognitionMenu);
+
+		return recognitionMenu;
+	}
+
+	private buildStackContentMenu(): Menu {
+		let stackMenu = new Menu(Strings.STACK_MENUBAR);
+		let rows: HTMLElement[][] = [];
+
+		this.buildStack(rows);
+		this.addRows(rows, stackMenu);
+
+		return stackMenu;
+	}
+
+	private buildActionTreeMenu(): Menu {
+		let actionTreeMenu = new Menu(Strings.ACTION_TREE_MENUBAR);
+		let rows: HTMLElement[][] = [];
+
+		this.buildActionTree(rows);
+		this.addRows(rows, actionTreeMenu);
+
+		return actionTreeMenu;
+	}
+
+	private buildMultipleRecognitionMenu(): Menu {
+		let multipleRecognitionMenu = new Menu(Strings.MULTIPLE_RECOGNITION);
+		let rows: HTMLElement[][] = [];
+
+		this.buildMultipleRecognition(rows);
+		this.addRows(rows, multipleRecognitionMenu);
+
+		return multipleRecognitionMenu;
+	}
 
 	private addRows(rows: HTMLElement[][], menu: Menu): void {
 		for (let row of rows) {
@@ -124,20 +152,24 @@ export class initPDA {
 
 	private buildStack(container: HTMLElement[][]): void {
 		this.stackContainer = <HTMLDivElement> utils.create("div", {
+			className: "none",
 			id: "stack"
 		});
 
-		this.stackContainer.style.display = "none";
+		// this.stackContainer.style.display = "none";
+		this.stackContainer.innerHTML = Strings.NO_RECOGNITION_IN_PROGRESS;
 
 		container.push([this.stackContainer]);
 	}
 
 	private buildActionTree(container: HTMLElement[][]): void {
 		this.actionTreeContainer = <HTMLDivElement> utils.create("div", {
+			className: "none",
 			id: "action_tree"
 		});
 
-		this.actionTreeContainer.style.display = "none";
+		// this.actionTreeContainer.style.display = "none";
+		this.actionTreeContainer.innerHTML = Strings.NO_RECOGNITION_IN_PROGRESS;
 
 		container.push([this.actionTreeContainer]);
 	}
@@ -176,6 +208,7 @@ export class initPDA {
 
 	private showAcceptanceStatus(): void {
 		let controller = <PDAController> Settings.controller();
+		this.progressContainer.style.display = "";
 		if (controller.accepts()) {
 			this.progressContainer.style.color = Settings.acceptedTestCaseColor;
 			this.progressContainer.innerHTML = Strings.INPUT_ACCEPTED;
@@ -190,6 +223,7 @@ export class initPDA {
 		let stackContent = controller.getStackContent();
 
 		// TODO
+		this.stackContainer.classList.remove("none");
 		this.stackContainer.innerHTML = stackContent.join("");
 	}
 
@@ -198,7 +232,13 @@ export class initPDA {
 		let actionTree = controller.getActionTree();
 		let epsilon = Keyboard.symbols.epsilon;
 
-		this.actionTreeContainer.innerHTML = "";
+		if (actionTree.length == 0) {
+			this.actionTreeContainer.classList.add("none");
+			this.actionTreeContainer.innerHTML = Strings.ACTION_TREE_NO_ACTIONS;
+		} else {
+			this.actionTreeContainer.classList.remove("none");
+			this.actionTreeContainer.innerHTML = "";
+		}
 
 		for (let action of actionTree) {
 			let container = <HTMLDivElement> utils.create("div", {
@@ -207,16 +247,11 @@ export class initPDA {
 
 			let table = new Table(5, 2);
 			let fieldValues = [
-				"Input",
-				action.currentInput,
-				"Stack",
-				action.currentStack.join(""),
-				"Read (input)",
-				action.inputRead || epsilon,
-				"Write",
-				action.stackWrite || epsilon,
-				"Target state",
-				action.targetState.toString(),
+				Strings.PDA_FIELD_INPUT, action.currentInput,
+				Strings.PDA_FIELD_STACK, action.currentStack.join(""),
+				Strings.PDA_FIELD_READ_INPUT, action.inputRead || epsilon,
+				Strings.PDA_FIELD_WRITE, action.stackWrite || epsilon,
+				Strings.PDA_FIELD_TARGET_STATE,	action.targetState.toString(),
 			];
 
 			for (let fieldValue of fieldValues) {
@@ -236,6 +271,16 @@ export class initPDA {
 
 			this.actionTreeContainer.appendChild(container);
 		}
+	}
+
+	private clearStackContent(): void {
+		this.stackContainer.classList.add("none");
+		this.stackContainer.innerHTML = Strings.NO_RECOGNITION_IN_PROGRESS;
+	}
+
+	private clearActionTree(): void {
+		this.actionTreeContainer.classList.add("none");
+		this.actionTreeContainer.innerHTML = Strings.NO_RECOGNITION_IN_PROGRESS;
 	}
 
 	private bindRecognitionEvents(): void {
@@ -272,13 +317,8 @@ export class initPDA {
 				controller.fastForward(input);
 				self.highlightCurrentStates();
 
-				self.progressContainer.style.display = "";
 				self.showAcceptanceStatus();
-
-				self.stackContainer.style.display = "";
 				self.showStackContent();
-
-				self.actionTreeContainer.style.display = "";
 				self.showActionTree();
 
 				fastForwardStatus(false);
@@ -306,8 +346,8 @@ export class initPDA {
 				self.progressContainer.style.color = "black";
 				self.progressContainer.style.display = "none";
 
-				self.stackContainer.style.display = "none";
-				self.actionTreeContainer.style.display = "none";
+				self.clearStackContent();
+				self.clearActionTree();
 
 				fastForwardStatus(true);
 				stepStatus(true);
@@ -339,8 +379,10 @@ export class initPDA {
 					width -= 1; // sidebar border
 					self.progressContainer.style.width = width + "px";
 
-					self.stackContainer.style.display = "";
-					self.actionTreeContainer.style.display = "";
+					// self.stackContainer.style.display = "";
+					// self.actionTreeContainer.style.display = "";
+					self.stackContainer.classList.remove("none");
+					self.actionTreeContainer.classList.remove("none");
 				}
 
 				let finished = controller.finished(input);
@@ -355,8 +397,8 @@ export class initPDA {
 
 				if (finished) {
 					stepStatus(false);
-					self.progressContainer.style.display = "";
 					self.showAcceptanceStatus();
+					self.clearActionTree();
 				}
 			}
 		});

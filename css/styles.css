@@ -180,20 +180,27 @@ div.row {
 	text-overflow: ellipsis;
 }
 
-#stack {
-	font-size: 200%;
-	word-break: break-all;
+#stack, #action_tree {
 	word-wrap: break-word;
 }
 
-#action_tree .entry td {
+#stack:not(.none) {
+	font-size: 200%;
+	word-break: break-all;
+}
+
+#action_tree:not(.none) .entry td {
 	background-color: white;
 	border: 1px solid black;
 	padding: 5px;
 	word-wrap: break-word;
 }
 
-#action_tree .entry tr td:first-child {
+#action_tree .entry:not(:last-child) {
+	opacity: 0.5;
+}
+
+#action_tree .entry:last-child tr td:first-child {
 	background-color: #DDD;
 }
 
@@ -218,10 +225,10 @@ div.row {
 }
 
 .tape_cell.center {
-	background-color: #FF8;
+	background-color: #FFFF80;
 }
 
-span.none {
+.none {
 	color: #888;
 	font-style: italic;
 }

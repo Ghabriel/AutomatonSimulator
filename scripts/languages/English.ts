@@ -75,6 +75,15 @@ export namespace english {
 		INPUT_REJECTED: "rejected",
 		INPUT_LOOPING: "rejected<br>(looping)",
 		EMPTY: "empty",
+		NO_RECOGNITION_IN_PROGRESS: "no recognition in progress",
+		STACK_MENUBAR: "Stack content",
+		ACTION_TREE_MENUBAR: "Possible next actions",
+		ACTION_TREE_NO_ACTIONS: "no possible actions",
+		PDA_FIELD_INPUT: "Input",
+		PDA_FIELD_STACK: "Stack",
+		PDA_FIELD_READ_INPUT: "Read (input)",
+		PDA_FIELD_WRITE: "Write",
+		PDA_FIELD_TARGET_STATE: "Target state",
 		ERROR_INVALID_STATE_NAME: "Invalid state name",
 	};
 }

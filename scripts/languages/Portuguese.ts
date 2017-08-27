@@ -75,6 +75,15 @@ export namespace portuguese {
 		INPUT_REJECTED: "rejeitado",
 		INPUT_LOOPING: "rejeitado<br>(looping)",
 		EMPTY: "vazio",
+		NO_RECOGNITION_IN_PROGRESS: "nenhum reconhecimento em andamento",
+		STACK_MENUBAR: "Conteúdo da pilha",
+		ACTION_TREE_MENUBAR: "Possíveis próximas ações",
+		ACTION_TREE_NO_ACTIONS: "nenhuma ação possível",
+		PDA_FIELD_INPUT: "Entrada",
+		PDA_FIELD_STACK: "Pilha",
+		PDA_FIELD_READ_INPUT: "Ler (entrada)",
+		PDA_FIELD_WRITE: "Escrever",
+		PDA_FIELD_TARGET_STATE: "Estado-destino",
 		ERROR_INVALID_STATE_NAME: "Nome de estado inválido",
 	};
 }
