@@ -1044,22 +1044,20 @@ export class AutomatonRenderer {
 	}
 
 	private undo(): void {
-		// Blocks changes to the memento until the undo process is complete
-		this.frozenMemento = true;
-
 		let data = this.memento.undo();
 		if (data) {
+			// Blocks changes to the memento until the undo process is complete
+			this.frozenMemento = true;
 			this.clear();
 			this.load(data, false);
 		}
 	}
 
 	private redo(): void {
-		// Blocks changes to the memento until the redo process is complete
-		this.frozenMemento = true;
-
 		let data = this.memento.redo();
 		if (data) {
+			// Blocks changes to the memento until the redo process is complete
+			this.frozenMemento = true;
 			this.clear();
 			this.load(data, false);
 		}
