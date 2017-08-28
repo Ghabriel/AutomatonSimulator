@@ -723,7 +723,9 @@ export class AutomatonRenderer {
 	private bindStateEvents(state: State) {
 		let canvas = this.canvas;
 		let self = this;
-		// TODO: separate left click/right click dragging handlers if possible
+		// Ideally, separating left click/right click dragging handlers would
+		// provide better usability. Unfortunately, many SVG frameworks don't
+		// allow such separation.
 		state.drag(function() {
 			self.updateEdges();
 		}, function(distanceSquared, event) {
@@ -1207,7 +1209,6 @@ export class AutomatonRenderer {
 	private canvas: GUI.Canvas = null;
 	private node: Element = null;
 	private stateList: State[] = [];
-	// TODO: find a better data structure than a simple array
 	private edgeList: Edge[] = [];
 	private highlightedState: State = null;
 	private highlightedEdge: Edge = null;

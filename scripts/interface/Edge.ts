@@ -313,7 +313,6 @@ export class Edge {
 	private renderHead(canvas: GUI.Canvas): void {
 		if (!this.target) {
 			// Don't render the head of the arrow if there's no target
-			// TODO: change this behavior?
 			return;
 		}
 
