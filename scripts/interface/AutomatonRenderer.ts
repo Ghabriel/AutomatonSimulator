@@ -823,6 +823,7 @@ export class AutomatonRenderer {
 			oppositeEdge.setCurveFlag(true);
 			oppositeEdge.render(this.canvas);
 		}
+
 		this.currentEdge.setTarget(state);
 		// Renders the edge here to show it already attached to the target state.
 		this.currentEdge.render(this.canvas);
@@ -983,18 +984,33 @@ export class AutomatonRenderer {
 	}
 
 	private deleteEdge(edge: Edge): void {
+		let origin = edge.getOrigin();
+		let target = edge.getTarget();
+		let dataLists = edge.getDataList();
+		let controller = Settings.controller();
+
+		// Searches for an existing edge that points
+		// to the opposite direction
+		for (let candidate of this.edgeList) {
+			if (candidate.getOrigin() == target && candidate.getTarget() == origin) {
+				// If found, un-curve it.
+				candidate.setCurveFlag(false);
+				candidate.render(this.canvas);
+				break;
+			}
+		}
+
+		// Removes the relevant transitions from the underlying structure
+		for (let data of dataLists) {
+			controller.deleteEdge(origin, target, data);
+		}
+
+		// Erases the edge from the screen and removes it
+		// from the edge array
 		for (let i = 0; i < this.edgeList.length; i++) {
 			if (this.edgeList[i] == edge) {
 				edge.remove();
 				this.edgeList.splice(i, 1);
-
-				let origin = edge.getOrigin();
-				let target = edge.getTarget();
-				let dataLists = edge.getDataList();
-				let controller = Settings.controller();
-				for (let data of dataLists) {
-					controller.deleteEdge(origin, target, data);
-				}
 				break;
 			}
 		}
