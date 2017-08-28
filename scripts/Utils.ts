@@ -37,7 +37,7 @@ export namespace utils {
 	}
 
 	// Iterates over an object, applying a callback to each property.
-	export function foreach(obj: Object, callback): void {
+	export function foreach<T>(obj: {[key: string]: T}, callback: (string, T) => boolean|void): void {
 		for (var i in obj) {
 			if (obj.hasOwnProperty(i)) {
 				if (callback(i, obj[i]) === false) {

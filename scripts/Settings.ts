@@ -118,7 +118,7 @@ export namespace Settings {
 		stop: ["ESC"],
 	};
 
-	export const languages = lang;
+	export const languages: {[moduleName: string]: any} = lang;
 
 	export const Machine = automata.Machine;
 
