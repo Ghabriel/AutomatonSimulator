@@ -16,6 +16,7 @@ export namespace GUI {
 		remove(): void;
 		rotate(degrees: number): Element;
 		transform(instructions: string): Element;
+		unclick(handler: Function): Element;
 	}
 
 	export interface Canvas {

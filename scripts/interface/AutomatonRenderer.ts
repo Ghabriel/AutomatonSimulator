@@ -817,10 +817,11 @@ export class AutomatonRenderer {
 
 		// There's no such edge yet, so continue the configure the new one.
 		if (oppositeEdge) {
+			this.currentEdge.setCurveFlag(true);
+
 			// Makes the opposite edge a curved one as well.
 			oppositeEdge.setCurveFlag(true);
 			oppositeEdge.render(this.canvas);
-			this.currentEdge.setCurveFlag(true);
 		}
 		this.currentEdge.setTarget(state);
 		// Renders the edge here to show it already attached to the target state.

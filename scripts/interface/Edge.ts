@@ -3,11 +3,31 @@ import {Settings} from "../Settings"
 import {State} from "./State"
 import {Point, utils} from "../Utils"
 
+enum EdgeType {
+	NORMAL,
+	LOOP,
+	CURVED
+}
+
 /**
  * Represents the visual representation of an edge,
  * which may contain multiple transitions.
  */
 export class Edge {
+	public constructor() {
+		let self = this;
+		this.clickCallback = function(e) {
+			for (let callback of self.clickHandlers) {
+				// Only call the callback if this edge is visible
+				// (in particular, this disables events for removed edges).
+				// TODO: currently removed this restriction, is it necessary?
+				// if (self.body.length > 0) {
+					callback.call(self);
+				// }
+			}
+		};
+	}
+
 	public setOrigin(origin: State): void {
 		this.origin = origin;
 	}
@@ -58,17 +78,8 @@ export class Edge {
 	}
 
 	public addClickHandler(callback: () => void): void {
-		let self = this;
-		for (let elem of this.body) {
-			elem.click(function(e) {
-				// Only call the callback if this edge is visible
-				// (in particular, this disables events for removed edges).
-				// TODO: currently removed this restriction, is it necessary?
-				// if (self.body.length > 0) {
-					callback.call(self);
-				// }
-			});
-		}
+		this.clickHandlers.push(callback);
+		this.rebindClickHandlers();
 	}
 
 	public remove(): void {
@@ -136,6 +147,14 @@ export class Edge {
 		// complete (i.e it already has a target state)
 		if (this.target) {
 			this.renderText(canvas);
+		}
+	}
+
+	// Re-binds all click events of this edge.
+	private rebindClickHandlers(): void {
+		for (let elem of this.body) {
+			elem.unclick(this.clickCallback);
+			elem.click(this.clickCallback);
 		}
 	}
 
@@ -207,34 +226,37 @@ export class Edge {
 		}
 	}
 
-	// Adjusts the length of the this.body array so that it is equal to
-	// a given value. Returns a flag indicating if any change was made
-	// to this.body.
-	private adjustBodyLength(canvas: GUI.Canvas, length: number): boolean {
-		if (this.body.length == length) {
-			return false;
-		}
-
+	// Adjusts the this.body array so that its length and its type
+	// is equal to given values. If the current type is different
+	// than the passed type, all event clicks are rebound to ensure
+	// that they still work properly with a body of a potentially
+	// different size.
+	private adjustBody(canvas: GUI.Canvas, length: number, type: EdgeType): void {
 		while (this.body.length > length) {
 			this.body[this.body.length - 1].remove();
 			this.body.pop();
 		}
 
+		// Expands the array to the correct length
 		while (this.body.length < length) {
 			this.body.push(utils.line(canvas, 0, 0, 0, 0));
 		}
 
-		return true;
+		if (type != this.currentEdgeType) {
+			this.currentEdgeType = type;
+
+			// Re-binds all click events
+			this.rebindClickHandlers();
+		}
 	}
 
 	// Renders a loop-style body.
 	private loop(canvas: GUI.Canvas): void {
 		let radius = Settings.stateRadius;
 		let pos = this.origin.getPosition();
-		if (this.adjustBodyLength(canvas, 4)) {
-			for (let elem of this.body) {
-				elem.attr("stroke-width", Settings.edgeArrowThickness);
-			}
+		this.adjustBody(canvas, 4, EdgeType.LOOP);
+		for (let elem of this.body) {
+			elem.attr("stroke-width", Settings.edgeArrowThickness);
 		}
 
 		this.body[0].attr("path", utils.linePath(
@@ -275,10 +297,9 @@ export class Edge {
 			y: distance * perpVector.y
 		};
 
-		if (this.adjustBodyLength(canvas, 3)) {
-			for (let elem of this.body) {
-				elem.attr("stroke-width", Settings.edgeArrowThickness);
-			}
+		this.adjustBody(canvas, 3, EdgeType.CURVED);
+		for (let elem of this.body) {
+			elem.attr("stroke-width", Settings.edgeArrowThickness);
 		}
 
 		this.body[0].attr("path", utils.linePath(
@@ -299,11 +320,11 @@ export class Edge {
 
 	// Renders a normal body (i.e a straight line)
 	private normal(canvas: GUI.Canvas, origin: Point, target: Point): void {
-		if (this.adjustBodyLength(canvas, 1)) {
-			for (let elem of this.body) {
-				elem.attr("stroke-width", Settings.edgeArrowThickness);
-			}
+		this.adjustBody(canvas, 1, EdgeType.NORMAL);
+		for (let elem of this.body) {
+			elem.attr("stroke-width", Settings.edgeArrowThickness);
 		}
+
 		this.body[0].attr("path", utils.linePath(
 			origin.x, origin.y,
 			target.x, target.y
@@ -496,7 +517,15 @@ export class Edge {
 	private defaultColor = Settings.edgeStrokeColor;
 	private color: string = this.defaultColor;
 
+	// The GUI components of this edge.
 	private body: GUI.Element[] = [];
 	private head: GUI.Element[] = [];
 	private textContainer: GUI.Element = null;
+
+	// The click events of this edge.
+	private clickHandlers: (() => void)[] = [];
+
+	private clickCallback: (Event) => void = null;
+
+	private currentEdgeType: EdgeType = null;
 }
