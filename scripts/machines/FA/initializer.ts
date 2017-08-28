@@ -242,11 +242,6 @@ export class initFA {
 						data: []
 					});
 					self.progressContainer.style.display = "";
-					let sidebar = <HTMLDivElement> utils.id(Settings.sidebarID);
-					let width = sidebar.offsetWidth;
-					width -= 10; // twice the progress container padding
-					width -= 1; // sidebar border
-					self.progressContainer.style.width = width + "px";
 				}
 
 				let finished = controller.finished(input);

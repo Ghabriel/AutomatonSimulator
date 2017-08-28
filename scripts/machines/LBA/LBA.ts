@@ -237,7 +237,7 @@ export class LBA {
 	}
 
 	public getTapeContent(): string[] {
-		return this.tape;
+		return this.tape.slice();
 	}
 
 	public getHeadPosition(): number {
