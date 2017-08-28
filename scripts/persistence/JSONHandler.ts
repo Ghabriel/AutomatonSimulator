@@ -10,6 +10,10 @@ import {utils} from "../Utils"
 type StateNameMapping = {[n: string]: number};
 type ConnectionMapping = {[n: string]: {[m: string]: Edge}};
 
+/**
+ * The default persistence handler used by the application. Stores
+ * and loads the program state in a compact, low-redundance JSON format.
+ */
 export class JSONHandler implements PersistenceHandler {
 	public save(stateList: State[], edgeList: Edge[],
 						 initialState: State): string {
@@ -92,7 +96,7 @@ export class JSONHandler implements PersistenceHandler {
 					return false; // aborts the foreach
 				}
 
-				return true;
+				return true; // continues the foreach
 			});
 		}
 

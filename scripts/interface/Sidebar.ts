@@ -11,6 +11,9 @@ import {System} from "../System"
 import {Table} from "./Table"
 import {utils} from "../Utils"
 
+/**
+ * Encapsulates the sidebar and all its behaviors.
+ */
 export class Sidebar extends Renderer {
 	constructor() {
 		super();

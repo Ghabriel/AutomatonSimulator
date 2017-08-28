@@ -7,6 +7,9 @@ import {Settings} from "../Settings"
 import {StatePalette} from "../StatePalette"
 import {utils} from "../Utils"
 
+/**
+ * Represents the visual representation of a state.
+ */
 export class State {
 	constructor() {
 		this.radius = Settings.stateRadius;

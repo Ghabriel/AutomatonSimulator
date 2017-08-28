@@ -3,6 +3,10 @@ import {Settings} from "../Settings"
 import {State} from "./State"
 import {Point, utils} from "../Utils"
 
+/**
+ * Represents the visual representation of an edge,
+ * which may contain multiple transitions.
+ */
 export class Edge {
 	public setOrigin(origin: State): void {
 		this.origin = origin;

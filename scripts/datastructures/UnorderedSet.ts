@@ -1,3 +1,7 @@
+/**
+ * Encapsulates an unordered set of either strings or numbers,
+ * which allow O(1) insertion, deletion and search.
+ */
 export class UnorderedSet<T extends string|number> {
 	insert(value: T): void {
 		if (!this.contains(value)) {

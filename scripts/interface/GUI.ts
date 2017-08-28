@@ -1,4 +1,8 @@
 
+/**
+ * Encapsulates the expected behaviors of the GUI framework used. Any
+ * framework that respects these interfaces can be used by the application.
+ */
 export namespace GUI {
 	export interface Element {
 		attr(key: string, value: any): void;

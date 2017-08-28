@@ -4,7 +4,14 @@ import {Renderer} from "./Renderer"
 import {Settings, Strings} from "../Settings"
 import {utils} from "../Utils"
 
+/**
+ * Represents a toggle-able menu with a variable number of children.
+ */
 export class Menu extends Renderer {
+	/**
+	 * Constructs a new menu with a given title.
+	 * @param {string} title The title of the menu.
+	 */
 	constructor(title: string) {
 		super();
 		this.title = title;

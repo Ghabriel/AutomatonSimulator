@@ -16,7 +16,16 @@ interface InputProperties {
 type SuccessCallback = (t: string[]) => void;
 type AbortCallback = () => void;
 
+/**
+ * Represents a message/input dialog that blocks
+ * other interactions with the page. You can think
+ * of it as a custom prompt()/confirm()/alert().
+ */
 export class Prompt {
+	/**
+	 * Constructs a Prompt with a given base message.
+	 * @param {string} message the base message of the prompt
+	 */
 	constructor(message: string) {
 		this.message = message;
 	}

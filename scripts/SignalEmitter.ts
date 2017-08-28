@@ -1,6 +1,3 @@
-// Allows easy modification if a better structure is found
-// export type Signal = any;
-
 export interface Signal {
 	targetID: string;
 	identifier: string;
@@ -16,6 +13,14 @@ export interface SignalObserver {
 	receiveSignal: (signal: Signal) => SignalResponse;
 }
 
+/**
+ * Encapsulates a general-purpose publish-subscribe system.
+ * Used mainly to decouple several parts of the application
+ * (e.g the mainbar and the sidebar). This class allows, for
+ * example, that the sidebar be completely removed and the
+ * mainbar continues to work perfectly, even when the latter
+ * sends signals to the former.
+ */
 export class SignalEmitter {
 	// Registers a new signal observer, which will be notified
 	// when any signal is transmitted.

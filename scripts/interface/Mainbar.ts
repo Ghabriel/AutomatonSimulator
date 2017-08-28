@@ -8,6 +8,9 @@ import {Memento} from "../Memento"
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
 
+/**
+ * The main container of the UI. Contains an instance of AutomatonRenderer.
+ */
 export class Mainbar extends Renderer {
 	constructor() {
 		super();

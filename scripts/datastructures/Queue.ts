@@ -1,3 +1,7 @@
+/**
+ * Represents a queue of an arbitrary type, providing O(1) or
+ * amortized O(1) complexity for all operations.
+ */
 export class Queue<T> {
 	push(value: T): void {
 		this.data.push(value);

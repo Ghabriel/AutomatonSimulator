@@ -1,4 +1,12 @@
+/**
+ * Represents a memento for a generic class, i.e a structure
+ * that allows undo/redo of a generic type state.
+ */
 export class Memento<T> {
+	/**
+	 * Constructs a memento with a given undo limit.
+	 * @param limit a function that should return the maximum undo count.
+	 */
 	constructor(limit: () => number) {
 		this.limit = limit;
 	}

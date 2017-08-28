@@ -13,6 +13,10 @@ import {UI} from "./interface/UI"
 // before System is defined.
 Settings.update();
 
+/**
+ * The entry point of the application. Starts when the page
+ * is completely loaded.
+ */
 $(document).ready(function() {
 	let ui = new UI();
 	ui.render();

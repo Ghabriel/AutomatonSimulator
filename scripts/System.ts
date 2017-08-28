@@ -29,6 +29,11 @@ function propertyName(type) {
 	return type + "Key";
 }
 
+/**
+ * Handles keybinding management and a publish-subscribe system
+ * for the main events of the application (i.e language-change
+ * and machine-change).
+ */
 export class System {
 	// Changes the system language and then notifies all
 	// the language change observers.
@@ -39,7 +44,8 @@ export class System {
 		}
 	}
 
-	// Notifies all machine change observers.
+	// Changes the current machine and then notifies all
+	// the machine change observers.
 	static changeMachine(type: number): void {
 		Settings.changeMachine(type);
 		for (let listener of this.machineChangeObservers) {
@@ -59,6 +65,8 @@ export class System {
 		this.machineChangeObservers.push(observer);
 	}
 
+	// Triggers a key event as if the user himself
+	// had pressed the corresponding keys.
 	static emitKeyEvent(keys: string[]): void {
 		let event = {
 			preventDefault: function() {}

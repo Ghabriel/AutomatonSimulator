@@ -12,6 +12,10 @@ import {System} from "../System"
 import {Table} from "./Table"
 import {Point, utils} from "../Utils"
 
+/**
+ * Manages the UI representation of the automaton being manipulated, including
+ * all related interactions.
+ */
 export class AutomatonRenderer {
 	constructor(canvas: GUI.Canvas, node: Element,
 				memento: Memento<string>,

@@ -17,6 +17,11 @@ interface MachineTraits {
 	initializer: Initializable;
 }
 
+/**
+ * Encapsulates the constants used by the application and
+ * other configurable variables (notably, the current language
+ * and the current machine).
+ */
 export namespace Settings {
 	export const sidebarID = "sidebar";
 	export const mainbarID = "mainbar";
@@ -129,13 +134,12 @@ export namespace Settings {
 	export var controllerMap: {[m: number]: Controller} = {};
 	export var initializerMap: {[m: number]: Initializable} = {};
 
+	// Helper method to get the current controller
 	export function controller(): Controller {
 		return this.machines[this.currentMachine].controller;
 	}
 
 	let firstUpdate = true;
-	// TODO: check if we only need to instantiate the controllers once or
-	// if it's needed everytime (like with the sidebar)
 	export function update(): void {
 		if (firstUpdate) {
 			for (let index in Machine) {

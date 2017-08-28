@@ -8,6 +8,9 @@ export interface Point {
 	y: number;
 }
 
+/**
+ * Utility functions in general that have no better place.
+ */
 export namespace utils {
 	export function select(selector: string): Element {
 		return document.querySelector(selector);
@@ -103,7 +106,7 @@ export namespace utils {
 
 	// Checks if two points are equal. If either point is null,
 	// returns false.
-	export function samePoint(p1: Point, p2: Point) {
+	export function samePoint(p1: Point, p2: Point): boolean {
 		return p1 && p2 && p1.x == p2.x && p1.y == p2.y;
 	}
 
@@ -127,6 +130,7 @@ export namespace utils {
 		return input.length == 1;
 	}
 
+	// Can be used by the machines to sanitize user input
 	export function nonEmptyStringValidator(input: string): boolean {
 		return input.length > 0;
 	}

@@ -1,6 +1,10 @@
 import {Renderer} from "./Renderer"
 import {utils} from "../Utils"
 
+/**
+ * Represents an easily expansible HTML table with a
+ * fixed number of rows and columns.
+ */
 export class Table extends Renderer {
 	constructor(numRows: number, numColumns: number) {
 		super();

@@ -1,9 +1,12 @@
-// Based on http://stackoverflow.com/a/16204644
+/**
+ * Encasulates information about the user browser.
+ */
 export namespace Browser {
 	const data = info();
 	export const name = data.name;
 	export const version = data.version;
 
+	// Based on http://stackoverflow.com/a/16204644
 	function info() {
 		let ua = navigator.userAgent.toLowerCase();
 		let test = function(regex: RegExp) {

@@ -12,6 +12,9 @@ export interface FormalDefinition {
 	parameterValues: {[p: string]: any};
 }
 
+/**
+ * Generic interface that specifies the mandatory methods of a controller.
+ */
 export interface Controller {
 	// Interface-related edge manipulation
 	edgePrompt(callback: (data: string[], text: string) => void,

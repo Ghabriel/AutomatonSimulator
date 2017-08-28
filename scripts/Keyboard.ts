@@ -1,3 +1,6 @@
+/**
+ * Encapsulates key codes and special symbols used by the application.
+ */
 export namespace Keyboard {
 	export const keys = {
 		"A": 65,
