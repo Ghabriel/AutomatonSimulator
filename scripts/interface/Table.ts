@@ -2,13 +2,11 @@ import {Renderer} from "./Renderer"
 import {utils} from "../Utils"
 
 /**
- * Represents an easily expansible HTML table with a
- * fixed number of rows and columns.
+ * Represents an easily expansible HTML table with a fixed number of columns.
  */
 export class Table extends Renderer {
-	constructor(numRows: number, numColumns: number) {
+	constructor(numColumns: number) {
 		super();
-		this.numRows = numRows;
 		this.numColumns = numColumns;
 		this.children = [];
 	}
@@ -23,10 +21,12 @@ export class Table extends Renderer {
 	public html(): HTMLTableElement {
 		let wrapper = utils.create("table");
 		let index = 0;
-		for (let i = 0; i < this.numRows; i++) {
+		while (index < this.children.length) {
 			let tr = utils.create("tr");
 			for (let j = 0; j < this.numColumns; j++) {
 				let td = <HTMLTableCellElement> utils.create("td");
+				// the following condition won't be true if the table
+				// is incomplete (e.g 9 cells in a table with 5 columns)
 				if (index < this.children.length) {
 					if (this.customColspans.hasOwnProperty(index + "")) {
 						let colSpan = this.customColspans[index];
@@ -48,7 +48,6 @@ export class Table extends Renderer {
 	}
 
 	private numColumns: number;
-	private numRows: number;
 	private customColspans: {[i: number]: number} = {};
 	private children: Element[];
 }

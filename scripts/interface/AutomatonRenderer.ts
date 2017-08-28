@@ -272,7 +272,7 @@ export class AutomatonRenderer {
 				content += domain + " " + arrow + " " + codomain;
 
 				if (list.length > 0) {
-					let table = new Table(1 + list.length, list[0].length);
+					let table = new Table(list[0].length);
 
 					for (let i = 0; i < header.length; i++) {
 						table.add(utils.create("span", {
@@ -382,7 +382,7 @@ export class AutomatonRenderer {
 
 	private showEditableState(state: State): HTMLDivElement {
 		let container = <HTMLDivElement> utils.create("div");
-		let table = new Table(4, 3);
+		let table = new Table(3);
 		let canvas = this.canvas;
 		let self = this;
 
@@ -457,19 +457,23 @@ export class AutomatonRenderer {
 										 className: "property_value",
 										 id: "entity_name" }));
 		table.add(renameButton);
+
 		table.add(utils.create("span", { innerHTML: Strings.STATE_IS_INITIAL + ":" }));
 		table.add(utils.create("span", { innerHTML: state.isInitial() ? Strings.YES
 																	  : Strings.NO,
 										 className: "property_value",
 										 id: "entity_initial" }));
 		table.add(toggleInitialButton);
+
 		table.add(utils.create("span", { innerHTML: Strings.STATE_IS_FINAL + ":" }));
 		table.add(utils.create("span", { innerHTML: state.isFinal() ? Strings.YES
 																	: Strings.NO,
 										 className: "property_value",
 										 id: "entity_final" }));
 		table.add(toggleFinalButton);
+
 		table.add(deleteButton, 3);
+
 		container.appendChild(table.html());
 		return container;
 	}
@@ -536,7 +540,7 @@ export class AutomatonRenderer {
 
 	private showEditableEdge(edge: Edge): HTMLDivElement {
 		let container = <HTMLDivElement> utils.create("div");
-		let table = new Table(5, 3);
+		let table = new Table(3);
 		let canvas = this.canvas;
 		let self = this;
 		let changeOriginButton = utils.create("input", {
@@ -646,6 +650,7 @@ export class AutomatonRenderer {
 										 className: "property_value",
 										 id: "entity_origin" }));
 		table.add(changeOriginButton);
+
 		table.add(utils.create("span", { innerHTML: Strings.TARGET + ":" }));
 		table.add(utils.create("span", { innerHTML: edge.getTarget().getName(),
 										 className: "property_value",
@@ -667,7 +672,9 @@ export class AutomatonRenderer {
 		table.add(changeTransitionButton);
 
 		table.add(deleteTransitionButton, 3);
+
 		table.add(deleteAllButton, 3);
+
 		container.appendChild(table.html());
 		return container;
 	}

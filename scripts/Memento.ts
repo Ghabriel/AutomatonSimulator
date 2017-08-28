@@ -5,6 +5,7 @@
 export class Memento<T> {
 	/**
 	 * Constructs a memento with a given undo limit.
+	 * Note that a negative limit implies unlimited undo/redo.
 	 * @param limit a function that should return the maximum undo count.
 	 */
 	constructor(limit: () => number) {

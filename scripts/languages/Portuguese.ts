@@ -6,6 +6,7 @@ export namespace portuguese {
 		SYSTEM_LANGUAGE: "Idioma do sistema",
 		UNDO_MAX_COUNT: "Quantidade de 'desfazer'",
 		MEMORY_CONSUMPTION_WARNING: "Aumentar o tamanho do histórico aumenta o consumo de memória. Deseja continuar?",
+		INFINITE_UNDO_WARNING: "Você está removendo o limite de 'desfazer', o que aumenta o consumo de memória. Deseja continuar?",
 		FILE_MENUBAR: "Manipulação de Arquivos",
 		SAVE: "Salvar",
 		OPEN: "Abrir",

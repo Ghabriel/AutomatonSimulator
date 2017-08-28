@@ -245,7 +245,7 @@ export class initPDA {
 				className: "entry"
 			});
 
-			let table = new Table(5, 2);
+			let table = new Table(2);
 			let fieldValues = [
 				Strings.PDA_FIELD_INPUT, action.currentInput,
 				Strings.PDA_FIELD_STACK, action.currentStack.join(""),

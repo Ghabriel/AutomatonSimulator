@@ -164,7 +164,7 @@ export class Sidebar extends Renderer {
 		let settings = this.mainMenus.settings;
 		settings.clear();
 
-		let table = new Table(2, 2);
+		let table = new Table(2);
 
 		let undoMaxAmountInput = <HTMLInputElement> utils.create("input", {
 			className: "property_value",
@@ -179,9 +179,15 @@ export class Sidebar extends Renderer {
 
 		undoMaxAmountInput.addEventListener("blur", function() {
 			let value = parseInt(this.value);
-			if (!isNaN(value) && value >= 1) {
-				if (originalMaxCount >= value
-				 || confirm(Strings.MEMORY_CONSUMPTION_WARNING)) {
+			if (!isNaN(value)) {
+				let increasedMagnitude = (originalMaxCount >= 0 && value > originalMaxCount);
+				let becameNegative = (originalMaxCount >= 0 && value < 0);
+
+				let ok = (!increasedMagnitude && !becameNegative);
+				ok = ok || (increasedMagnitude && confirm(Strings.MEMORY_CONSUMPTION_WARNING));
+				ok = ok || (becameNegative && confirm(Strings.INFINITE_UNDO_WARNING));
+
+				if (ok) {
 					Settings.undoMaxAmount = value;
 				}
 				this.value = Settings.undoMaxAmount.toString();
@@ -311,7 +317,7 @@ export class Sidebar extends Renderer {
 	}
 
 	private buildMachineSelection(): void {
-		let table = new Table(Settings.machineSelRows, Settings.machineSelColumns);
+		let table = new Table(Settings.machineSelectionColumns);
 		let self = this;
 		utils.foreach(Settings.machines, function(type, props) {
 			let button = <HTMLInputElement> utils.create("input");
@@ -352,7 +358,7 @@ export class Sidebar extends Renderer {
 	}
 
 	private buildActionMenu(): void {
-		let table = new Table(Settings.machineActionRows, Settings.machineActionColumns);
+		let table = new Table(Settings.machineActionColumns);
 		let createState = <HTMLInputElement> utils.create("input", {
 			title: Strings.CREATE_STATE_INSTRUCTIONS,
 			type: "button",

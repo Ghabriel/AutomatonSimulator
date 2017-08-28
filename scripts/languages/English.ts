@@ -6,6 +6,7 @@ export namespace english {
 		SYSTEM_LANGUAGE: "System language",
 		UNDO_MAX_COUNT: "Undo max count",
 		MEMORY_CONSUMPTION_WARNING: "Increasing the history size increases the memory consumption. Do you wish to continue?",
+		INFINITE_UNDO_WARNING: "You are removing the undo limit restriction, which increases memory consumption. Do you wish to continue?",
 		FILE_MENUBAR: "File Manipulation",
 		SAVE: "Save",
 		OPEN: "Open",
