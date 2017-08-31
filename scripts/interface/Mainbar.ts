@@ -1,5 +1,4 @@
 /// <reference path="../defs/raphael.d.ts" />
-/// <reference path="../defs/jQuery.d.ts" />
 
 import {AutomatonRenderer} from "./AutomatonRenderer"
 import {GUI} from "./GUI"

@@ -105,7 +105,8 @@ $(INDEX):
 
 $(LIBNAMES):
 	$(eval PURENAME=$(patsubst $(LIB)/%, %, $@))
-	$(eval URL=$(shell cat $(LIBSFILE) | grep "^$(PURENAME):" | sed "s/^\([^:]\+\): \(.*\)/\2/")) #"
+	$(eval URL=$(shell cat $(LIBSFILE) | grep "^$(PURENAME):" | sed "s/^\([^:]\+\): \(.*\)/\2/"))
+	@#"
 	@echo "[   lib   ] $(PURENAME)"
 	@touch $@
 	@wget -O $@ -q $(URL)

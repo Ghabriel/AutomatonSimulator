@@ -43,7 +43,7 @@ export class Table extends Renderer {
 		return <HTMLTableElement> wrapper;
 	}
 
-	public onRender(): void {
+	protected onRender(): void {
 		this.node.appendChild(this.html());
 	}
 

@@ -1,4 +1,3 @@
-/// <reference path="defs/jQuery.d.ts" />
 /// <reference path="defs/raphael.d.ts" />
 
 import {GUI} from "./interface/GUI"

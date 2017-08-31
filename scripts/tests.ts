@@ -1,5 +1,3 @@
-/// <reference path="./defs/jQuery.d.ts" />
-
 import {FATests} from "./tests/FATests"
 import {PDATests} from "./tests/PDATests"
 import {Test} from "./tests/Test"

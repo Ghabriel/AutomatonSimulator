@@ -26,7 +26,22 @@ export class Menu extends Renderer {
 		this.children = [];
 	}
 
-	public onRender(): void {
+	public toggle(): void {
+		this.toggled = !this.toggled;
+		if (this.body) {
+			this.internalToggle();
+		}
+	}
+
+	public html(): HTMLDivElement {
+		return this.body;
+	}
+
+	public content(): HTMLDivElement {
+		return <HTMLDivElement> this.body.querySelector(".content");
+	}
+
+	protected onRender(): void {
 		let node = this.node;
 		let wrapper = utils.create("div");
 		wrapper.classList.add("menu");
@@ -65,21 +80,6 @@ export class Menu extends Renderer {
 		}
 
 		this.updateArrow();
-	}
-
-	public toggle(): void {
-		this.toggled = !this.toggled;
-		if (this.body) {
-			this.internalToggle();
-		}
-	}
-
-	public html(): HTMLDivElement {
-		return this.body;
-	}
-
-	public content(): HTMLDivElement {
-		return <HTMLDivElement> this.body.querySelector(".content");
 	}
 
 	private updateArrow(): void {
