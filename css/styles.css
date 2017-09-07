@@ -189,6 +189,11 @@ div.row {
 	word-break: break-all;
 }
 
+#stack > .top {
+	color: blue;
+	text-decoration: underline;
+}
+
 #action_tree:not(.none) .entry td {
 	background-color: white;
 	border: 1px solid black;

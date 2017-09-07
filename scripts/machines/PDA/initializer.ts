@@ -222,9 +222,15 @@ export class initPDA {
 		let controller = <PDAController> Settings.controller();
 		let stackContent = controller.getStackContent();
 
-		// TODO
 		this.stackContainer.classList.remove("none");
-		this.stackContainer.innerHTML = stackContent.join("");
+		this.stackContainer.innerHTML = "";
+		for (let i = stackContent.length - 1; i >= 0; i--) {
+			let span = utils.create("span");
+			span.innerHTML = stackContent[i];
+			this.stackContainer.appendChild(span);
+		}
+
+		this.stackContainer.children[0].classList.add("top");
 	}
 
 	private showActionTree(): void {

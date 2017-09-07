@@ -86,7 +86,7 @@ export class PDA {
 		let transitions = this.transitions[source];
 		let input = data[0];
 		let stackRead = data[1];
-		let stackWrite = data[2];
+		let stackWrite = data[2].split("").reverse().join("");
 
 		if (!transitions.hasOwnProperty(input)) {
 			transitions[input] = {};
@@ -111,7 +111,7 @@ export class PDA {
 		let transitions = this.transitions[source];
 		let input = data[0];
 		let stackRead = data[1];
-		let stackWrite = data[2];
+		let stackWrite = data[2].split("").reverse().join("");
 
 		if (transitions.hasOwnProperty(input)) {
 			if (transitions[input].hasOwnProperty(stackRead)) {
@@ -273,6 +273,12 @@ export class PDA {
 		}
 
 		let actionTree = this.actionTree;
+
+		// makes it possible for PDAs to accept empty strings
+		if (this.input.length == 0 && this.accepts()) {
+			this.halt = true;
+			return;
+		}
 
 		if (actionTree.length == 0) {
 			// goes to the error state
