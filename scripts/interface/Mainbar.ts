@@ -49,9 +49,9 @@ export class Mainbar extends Renderer {
 	}
 
 	protected onRender(): void {
-		this.automatonRenderer.render();
+		this.automatonRenderer!.render();
 	}
 
-	private canvas: GUI.Canvas = null;
-	private automatonRenderer: AutomatonRenderer = null;
+	private canvas: GUI.Canvas|null = null;
+	private automatonRenderer: AutomatonRenderer|null = null;
 }

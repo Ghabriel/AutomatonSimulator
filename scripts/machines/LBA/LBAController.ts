@@ -193,7 +193,7 @@ export class LBAController implements Controller {
 		let result: string[] = [];
 
 		if (!this.machine.error()) {
-			result.push(state);
+			result.push(state!);
 		}
 
 		return result;
@@ -256,7 +256,7 @@ export class LBAController implements Controller {
 			domain: [fields[0], fields[1]].join(" x "),
 			codomain: [fields[2], fields[3], fields[4]].join(" x "),
 			header: fields,
-			list: []
+			list: <[string, string, string, string, string][]> []
 		};
 
 		let arrows = [Keyboard.symbols.leftArrow, Keyboard.symbols.rightArrow];

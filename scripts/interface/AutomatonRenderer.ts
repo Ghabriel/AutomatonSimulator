@@ -193,7 +193,7 @@ export class AutomatonRenderer {
 
 				if (edge.getOrigin() && edge.getTarget()) {
 					self.currentEdge = edge;
-					self.finishEdge(edge.getTarget());
+					self.finishEdge(edge.getTarget()!);
 				} else {
 					alert(Strings.ERROR_INVALID_STATE_NAME);
 				}
@@ -201,7 +201,7 @@ export class AutomatonRenderer {
 		}
 	}
 
-	public receiveSignal(signal: Signal): SignalResponse {
+	public receiveSignal(signal: Signal): SignalResponse|null {
 		if (signal.targetID == Settings.automatonRendererSignalID) {
 			return {
 				reacted: true,
@@ -215,7 +215,7 @@ export class AutomatonRenderer {
 	// TODO: find a better name for this method
 	// (since it also handles saving the current state)
 	private bindFormalDefinitionListener(): void {
-		let definitionContainer: HTMLDivElement = null;
+		let definitionContainer: HTMLDivElement;
 		let self = this;
 		let callback = function() {
 			// Saves the current state to the memento if it's not frozen
@@ -357,7 +357,7 @@ export class AutomatonRenderer {
 		}
 	}
 
-	private updateEditableState(state: State): void {
+	private updateEditableState(state: State|null): void {
 		if (state) {
 			SignalEmitter.emitSignal({
 				targetID: Settings.sidebarSignalID,
@@ -369,7 +369,7 @@ export class AutomatonRenderer {
 		}
 	}
 
-	private updateEditableEdge(edge: Edge): void {
+	private updateEditableEdge(edge: Edge|null): void {
 		if (edge) {
 			SignalEmitter.emitSignal({
 				targetID: Settings.sidebarSignalID,
@@ -487,8 +487,8 @@ export class AutomatonRenderer {
 		let origin = newEdge.getOrigin();
 		let target = newEdge.getTarget();
 
-		let oppositeEdge: Edge = null;
-		let mergedEdge: Edge = null;
+		let oppositeEdge: Edge|null = null;
+		let mergedEdge: Edge|null = null;
 		let edgeIndex: number = -1;
 		let pendingRemoval: boolean = false;
 
@@ -532,7 +532,7 @@ export class AutomatonRenderer {
 
 		if (pendingRemoval && edgeIndex > -1) {
 			if (this.highlightedEdge == newEdge) {
-				this.selectEdge(mergedEdge);
+				this.selectEdge(mergedEdge!);
 			}
 			newEdge.remove();
 			this.edgeList.splice(edgeIndex, 1);
@@ -595,8 +595,8 @@ export class AutomatonRenderer {
 				let prompt = controller.edgePrompt(function(data, content) {
 					// TODO: check if the new content conflicts with an already
 					// existing transition in this edge (e.g 0,1 -> 1,1)
-					let origin = edge.getOrigin();
-					let target = edge.getTarget();
+					let origin = edge.getOrigin()!;
+					let target = edge.getTarget()!;
 					let dataList = edge.getDataList();
 					controller.deleteEdge(origin, target, dataList[selectedIndex]);
 					edge.getDataList()[selectedIndex] = data;
@@ -619,8 +619,8 @@ export class AutomatonRenderer {
 				let selectedIndex = transitionSelector.selectedIndex;
 
 				let controller = Settings.controller();
-				let origin = edge.getOrigin();
-				let target = edge.getTarget();
+				let origin = edge.getOrigin()!;
+				let target = edge.getTarget()!;
 				let dataList = edge.getDataList();
 
 				controller.deleteEdge(origin, target, dataList[selectedIndex]);
@@ -649,13 +649,13 @@ export class AutomatonRenderer {
 		});
 
 		table.add(utils.create("span", { innerHTML: Strings.ORIGIN + ":" }));
-		table.add(utils.create("span", { innerHTML: edge.getOrigin().getName(),
+		table.add(utils.create("span", { innerHTML: edge.getOrigin()!.getName(),
 										 className: "property_value",
 										 id: "entity_origin" }));
 		table.add(changeOriginButton);
 
 		table.add(utils.create("span", { innerHTML: Strings.TARGET + ":" }));
-		table.add(utils.create("span", { innerHTML: edge.getTarget().getName(),
+		table.add(utils.create("span", { innerHTML: edge.getTarget()!.getName(),
 										 className: "property_value",
 										 id: "entity_target" }));
 		table.add(changeTargetButton);
@@ -767,7 +767,12 @@ export class AutomatonRenderer {
 
 	private finishEdge(state: State): void {
 		this.edgeMode = false;
-		let origin = this.currentEdge.getOrigin();
+		if (!this.currentEdge) {
+			// shouldn't happen, just for type safety
+			throw Error();
+		}
+
+		let origin = this.currentEdge.getOrigin()!;
 
 		let edgeText = function(edge: Edge,
 								callback: (d: string[], t: string) => void,
@@ -778,8 +783,8 @@ export class AutomatonRenderer {
 				controller.createEdge(origin, state, data);
 			}, fallback);
 
-			let edgeOrigin = edge.getOrigin();
-			let edgeTarget = edge.getTarget();
+			let edgeOrigin = edge.getOrigin()!;
+			let edgeTarget = edge.getTarget()!;
 			let originPosition = edgeOrigin.getPosition();
 			let targetPosition = edgeTarget.getPosition();
 			if (edgeOrigin == edgeTarget) {
@@ -798,10 +803,10 @@ export class AutomatonRenderer {
 
 		let self = this;
 
-		let oppositeEdge: Edge = null;
+		let oppositeEdge: Edge|null = null;
 
 		let clearCurrentEdge = function() {
-			self.currentEdge.remove();
+			self.currentEdge!.remove();
 			self.currentEdge = null;
 		};
 
@@ -839,7 +844,12 @@ export class AutomatonRenderer {
 		this.currentEdge.render(this.canvas);
 		this.selectEdge(this.currentEdge);
 
-		edgeText(self.currentEdge, function(data, text) {
+		edgeText(self.currentEdge!, function(data, text) {
+			if (!self.currentEdge) {
+				// shouldn't happen, just for type safety
+				throw Error();
+			}
+
 			self.currentEdge.addText(text);
 			self.currentEdge.addData(data);
 			self.bindEdgeEvents(self.currentEdge);
@@ -866,8 +876,8 @@ export class AutomatonRenderer {
 			x: e.pageX - elem.offsetLeft,
 			y: e.pageY - elem.offsetTop
 		};
-		this.currentEdge.setVirtualTarget(target);
-		this.currentEdge.render(this.canvas);
+		this.currentEdge!.setVirtualTarget(target);
+		this.currentEdge!.render(this.canvas);
 	}
 
 	private updateEdges(): void {
@@ -882,7 +892,7 @@ export class AutomatonRenderer {
 		this.unsetSelectedEntityContent();
 		if (this.edgeMode) {
 			this.edgeMode = false;
-			this.currentEdge.remove();
+			this.currentEdge!.remove();
 			this.currentEdge = null;
 		}
 	}
@@ -994,8 +1004,8 @@ export class AutomatonRenderer {
 	}
 
 	private deleteEdge(edge: Edge): void {
-		let origin = edge.getOrigin();
-		let target = edge.getTarget();
+		let origin = edge.getOrigin()!;
+		let target = edge.getTarget()!;
 		let dataLists = edge.getDataList();
 		let controller = Settings.controller();
 
@@ -1080,7 +1090,7 @@ export class AutomatonRenderer {
 		System.bindShortcut(Settings.shortcuts.dimSelection, function() {
 			if (self.edgeMode) {
 				self.edgeMode = false;
-				self.currentEdge.remove();
+				self.currentEdge!.remove();
 				self.currentEdge = null;
 			}
 			self.dimState();
@@ -1212,11 +1222,11 @@ export class AutomatonRenderer {
 	}
 
 	private moveStateSelection(isViable: (attempt: State, highlighted: State) => boolean,
-				isBetterCandidate: (attempt: State, currBest: State,
+				isBetterCandidate: (attempt: State, currBest: State|null,
 									highlighted: State) => boolean): void {
 		let highlightedState = this.highlightedState;
 		if (highlightedState) {
-			let target: State = null;
+			let target: State|null = null;
 			for (let state of this.stateList) {
 				if (isViable(state, highlightedState)) {
 					if (isBetterCandidate(state, target, highlightedState)) {
@@ -1231,18 +1241,18 @@ export class AutomatonRenderer {
 		}
 	}
 
-	private canvas: GUI.Canvas = null;
-	private node: Element = null;
+	private canvas: GUI.Canvas;
+	private node: Element;
 	private stateList: State[] = [];
 	private edgeList: Edge[] = [];
-	private highlightedState: State = null;
-	private highlightedEdge: Edge = null;
-	private initialState: State = null;
+	private highlightedState: State|null = null;
+	private highlightedEdge: Edge|null = null;
+	private initialState: State|null = null;
 	private edgeMode: boolean = false;
-	private currentEdge: Edge = null;
+	private currentEdge: Edge|null = null;
 
 	private locked: boolean = false;
-	private memento: Memento<string> = null;
+	private memento: Memento<string>;
 	private frozenMemento: boolean = false;
 
 	private persistenceHandler: PersistenceHandler;

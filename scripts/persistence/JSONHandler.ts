@@ -16,7 +16,7 @@ type ConnectionMapping = {[n: string]: {[m: string]: Edge}};
  */
 export class JSONHandler implements PersistenceHandler {
 	public save(stateList: State[], edgeList: Edge[],
-						 initialState: State): string {
+						 initialState: State|null): string {
 		let result: any = [
 			Settings.Machine[Settings.currentMachine], // automaton type
 			[], // state list
@@ -43,8 +43,8 @@ export class JSONHandler implements PersistenceHandler {
 
 		for (let edge of edgeList) {
 			result[2].push([
-				edge.getOrigin().getName(),
-				edge.getTarget().getName(),
+				edge.getOrigin()!.getName(),
+				edge.getTarget()!.getName(),
 				edge.getDataList()
 			]);
 		}

@@ -209,7 +209,7 @@ export class FAController implements Controller {
 			domain: [fields[0], "(" + fields[1] + ")"].join(" x "),
 			codomain: fields[2],
 			header: fields,
-			list: []
+			list: <[string, string, string][]> []
 		};
 
 		let callback = function(source: string, target: string, input: string) {

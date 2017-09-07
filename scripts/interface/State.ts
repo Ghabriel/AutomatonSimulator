@@ -92,19 +92,24 @@ export class State {
 		this.renderText(canvas);
 	}
 
-	public node(): GUI.Element {
+	public node(): GUI.Element|null {
 		return this.body;
 	}
 
-	public html(): SVGElement {
-		if (this.body) {
-			return this.body.node;
+	public html(): SVGElement|null {
+		if (!this.body) {
+			return null;
 		}
-		return null;
+
+		return this.body.node;
 	}
 
 	public drag(moveCallback: (event?: any) => void,
 				endCallback: (distSquared: number, event: any) => boolean): void {
+
+		if (!this.body) {
+			throw Error("Cannot call drag() on a non-rendered state");
+		}
 
 		let self = this;
 
@@ -113,7 +118,7 @@ export class State {
 			let position = self.getPosition();
 			this.ox = position.x;
 			this.oy = position.y;
-			return null;
+			return {};
 		};
 
 		// This is used to optimize the dragging process. The
@@ -135,7 +140,7 @@ export class State {
 			}
 
 			moveController = (moveController + 1) % callbackFrequency;
-			return null;
+			return {};
 		};
 
 		let end = function(event) {
@@ -154,7 +159,7 @@ export class State {
 			// detachment of edges in low callback frequency rates
 			// after the dragging has stopped.
 			moveCallback.call(this, event);
-			return null;
+			return {};
 		};
 
 		this.body.drag(move, begin, end);
@@ -253,6 +258,11 @@ export class State {
 				bottomLine.attr("path", utils.linePath(botOffsets.x + x, botOffsets.y + y,
 													   x, y));
 			} else {
+				if (!canvas) {
+					// shouldn't happen, just for type safety
+					throw Error();
+				}
+
 				let strokeColor = Settings.stateInitialMarkColor;
 				let strokeWidth = Settings.stateInitialMarkThickness;
 
@@ -312,7 +322,7 @@ export class State {
 
 	private renderText(canvas?: GUI.Canvas): void {
 		if (!this.textContainer) {
-			this.textContainer = canvas.text(this.x, this.y, this.name);
+			this.textContainer = canvas!.text(this.x, this.y, this.name);
 			this.textContainer.attr("font-family", Settings.stateLabelFontFamily);
 			this.textContainer.attr("font-size", Settings.stateLabelFontSize);
 			this.textContainer.attr("stroke", Settings.stateLabelFontColor);
@@ -328,7 +338,7 @@ export class State {
 	private setVisualPosition(x: number, y: number): void {
 		this.setPosition(x, y);
 
-		this.body.attr({
+		this.body!.attr({
 			cx: x,
 			cy: y
 		});
@@ -364,8 +374,8 @@ export class State {
 	};
 	private palette: StatePalette = this.defaultPalette;
 
-	private body: GUI.Element = null;
-	private ring: GUI.Element = null;
+	private body: GUI.Element|null = null;
+	private ring: GUI.Element|null = null;
 	private arrowParts: GUI.Element[] = [];
-	private textContainer: GUI.Element = null;
+	private textContainer: GUI.Element|null = null;
 }

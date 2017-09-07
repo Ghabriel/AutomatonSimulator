@@ -30,7 +30,7 @@ export class Memento<T> {
 		}
 	}
 
-	public undo(): T {
+	public undo(): T|null {
 		if (this.historyPointer > 0) {
 			this.historyPointer--;
 			return this.states[this.index()];
@@ -39,7 +39,7 @@ export class Memento<T> {
 		}
 	}
 
-	public redo(): T {
+	public redo(): T|null {
 		if (this.states[this.index() + 1]) {
 			this.historyPointer++;
 			return this.states[this.index()];

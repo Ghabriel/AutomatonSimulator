@@ -176,7 +176,7 @@ export class PDAController implements Controller {
 		let result: string[] = [];
 
 		if (!this.machine.error()) {
-			result.push(state);
+			result.push(state!);
 		}
 
 		return result;
@@ -235,7 +235,7 @@ export class PDAController implements Controller {
 			domain: [fields[0], "(" + fields[1] + ")", fields[2]].join(" x "),
 			codomain: [fields[3], fields[4]].join(" x "),
 			header: fields,
-			list: []
+			list: <[string, string, string, string, string][]> []
 		};
 
 		let callback = function(source: string, data: TransitionInformation,

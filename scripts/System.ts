@@ -4,7 +4,7 @@ import {Settings} from "./Settings"
 interface KeyboardObserver {
 	keys: string[];
 	callback: () => void;
-	group: string;
+	group?: string;
 }
 
 interface KeyboardKeyPress {
@@ -142,7 +142,7 @@ export class System {
 			return false;
 		}
 
-		let expectedModifiers = [];
+		let expectedModifiers: string[] = [];
 		for (let key of keys) {
 			if (modifiers.indexOf(key) >= 0) {
 				expectedModifiers.push(key);
@@ -168,6 +168,10 @@ export class System {
 
 	// Checks if a given keyboard observer is locked.
 	private static locked(observer: KeyboardObserver): boolean {
+		if (!observer.group) {
+			return false;
+		}
+
 		return this.lockedGroups.hasOwnProperty(observer.group);
 	}
 

@@ -52,8 +52,10 @@ export class Prompt {
 		this.successCallback = callback;
 	}
 
-	public onAbort(callback: AbortCallback): void {
-		this.abortCallback = callback;
+	public onAbort(callback: AbortCallback|null|undefined): void {
+		if (callback) {
+			this.abortCallback = callback;
+		}
 	}
 
 	public show(): void {
@@ -121,7 +123,9 @@ export class Prompt {
 
 				if (allValid) {
 					dismiss();
-					self.successCallback(contents);
+					if (self.successCallback) {
+						self.successCallback(contents);
+					}
 				}
 			}
 		});
@@ -141,7 +145,7 @@ export class Prompt {
 			let input: ValuedHTMLElement;
 
 			if (this.inputs[i].initializer) {
-				input = this.inputs[i].initializer();
+				input = this.inputs[i].initializer!();
 			} else {
 				input = <HTMLInputElement> utils.create("input", {
 					type: "text",
@@ -306,7 +310,7 @@ export class Prompt {
 
 	private message: string;
 	private inputs: InputProperties[] = [];
-	private explicitPosition: {x: number, y: number} = null;
-	private successCallback: SuccessCallback = null;
-	private abortCallback: AbortCallback = null;
+	private explicitPosition: {x: number, y: number}|null = null;
+	private successCallback: SuccessCallback|null = null;
+	private abortCallback: AbortCallback|null = null;
 }

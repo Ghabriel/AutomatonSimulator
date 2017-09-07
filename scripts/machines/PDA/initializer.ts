@@ -36,16 +36,16 @@ export class initPDA {
 
 	readonly shortcutGroup = "PDA";
 	private boundShortcuts = false;
-	private testCaseInput: HTMLInputElement = null;
-	private fastRecognition: HTMLImageElement = null;
-	private stepRecognition: HTMLImageElement = null;
-	private stopRecognition: HTMLImageElement = null;
-	private progressContainer: HTMLDivElement = null;
-	private stackContainer: HTMLDivElement = null;
-	private actionTreeContainer: HTMLDivElement = null;
-	private multipleCaseArea: HTMLTextAreaElement = null;
-	private multipleCaseResults: HTMLDivElement = null;
-	private multipleCaseButton: HTMLImageElement = null;
+	private testCaseInput: HTMLInputElement;
+	private fastRecognition: HTMLImageElement;
+	private stepRecognition: HTMLImageElement;
+	private stopRecognition: HTMLImageElement;
+	private progressContainer: HTMLDivElement;
+	private stackContainer: HTMLDivElement;
+	private actionTreeContainer: HTMLDivElement;
+	private multipleCaseArea: HTMLTextAreaElement;
+	private multipleCaseResults: HTMLDivElement;
+	private multipleCaseButton: HTMLImageElement;
 
 	private buildRecognitionMenu(): Menu {
 		let recognitionMenu = new Menu(Strings.RECOGNITION);

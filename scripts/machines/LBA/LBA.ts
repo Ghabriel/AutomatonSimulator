@@ -145,7 +145,7 @@ export class LBA {
 	}
 
 	// Returns the name of the initial state.
-	public getInitialState(): State {
+	public getInitialState(): State|undefined {
 		return this.stateList[this.initialState];
 	}
 
@@ -164,19 +164,23 @@ export class LBA {
 		let result: State[] = [];
 		let self = this;
 		this.finalStates.forEach(function(index) {
-			result.push(self.stateList[index]);
+			result.push(self.stateList[index]!);
 		});
 		return result;
 	}
 
 	// Returns the current state of this LBA.
-	public getCurrentState(): State {
+	public getCurrentState(): State|undefined {
+		if (this.currentState === null) {
+			return undefined;
+		}
+
 		return this.stateList[this.currentState];
 	}
 
 	// Returns a list containing all the states of this LBA.
 	public getStates(): State[] {
-		return this.stateList.filter(function(value) {
+		return (<State[]> this.stateList).filter(function(value) {
 			return value !== undefined;
 		});
 	}
@@ -185,17 +189,16 @@ export class LBA {
 	public transitionIteration(callback: (source: State,
 		data: TransitionInformation, input: string) => void): void {
 
-		let self = this;
 		for (let index in this.transitions) {
 			if (this.transitions.hasOwnProperty(index)) {
-				let sourceState = self.stateList[index];
+				let sourceState = this.stateList[index]!;
 				let stateTransitions = this.transitions[index];
 
 				for (let input in stateTransitions) {
 					if (stateTransitions.hasOwnProperty(input)) {
 						let internalInfo = stateTransitions[input];
 						let info: TransitionInformation = {
-							state: this.stateList[internalInfo.state],
+							state: this.stateList[internalInfo.state]!,
 							tapeSymbol: internalInfo.tapeSymbol,
 							direction: internalInfo.direction
 						};
@@ -208,7 +211,7 @@ export class LBA {
 
 	// Returns the input alphabet of this LBA.
 	public getInputAlphabet(): string[] {
-		let result = [];
+		let result: string[] = [];
 		for (let member in this.inputAlphabet) {
 			if (this.inputAlphabet.hasOwnProperty(member)) {
 				result.push(member);
@@ -219,7 +222,7 @@ export class LBA {
 
 	// Returns the tape alphabet of this LBA.
 	public getTapeAlphabet(): string[] {
-		let result = [];
+		let result: string[] = [];
 		for (let member in this.tapeAlphabet) {
 			if (this.tapeAlphabet.hasOwnProperty(member)) {
 				result.push(member);
@@ -254,7 +257,7 @@ export class LBA {
 		let input = this.tape[this.headPosition];
 
 		if (this.transitions.hasOwnProperty(this.currentState + "")) {
-			let transitions = this.transitions[this.currentState];
+			let transitions = this.transitions[this.currentState!];
 			if (transitions.hasOwnProperty(input)) {
 				let info = transitions[input];
 				this.currentState = info.state;
@@ -319,6 +322,10 @@ export class LBA {
 	public accepts(): boolean {
 		if (this.accepting) {
 			return true;
+		}
+
+		if (this.currentState === null) {
+			return false;
 		}
 
 		let result = this.finalStates.contains(this.currentState);
@@ -395,7 +402,7 @@ export class LBA {
 		return this.stateList.length;
 	}
 
-	private stateList: State[] = []; // Q
+	private stateList: (State|undefined)[] = []; // Q
 	private inputAlphabet: Alphabet = {}; // sigma
 	private tapeAlphabet: Alphabet = {}; // gamma
 	private transitions: {
@@ -409,7 +416,7 @@ export class LBA {
 	private numRemovedStates: number = 0;
 
 	// Instantaneous configuration-related attributes
-	private currentState: Index = null;
+	private currentState: Index|null = null;
 	private tape: string[] = [];
 	private headPosition: number = 0;
 

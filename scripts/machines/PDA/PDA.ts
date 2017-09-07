@@ -157,7 +157,7 @@ export class PDA {
 	}
 
 	// Returns the name of the initial state.
-	public getInitialState(): State {
+	public getInitialState(): State|undefined {
 		return this.stateList[this.initialState];
 	}
 
@@ -176,19 +176,23 @@ export class PDA {
 		let result: State[] = [];
 		let self = this;
 		this.finalStates.forEach(function(index) {
-			result.push(self.stateList[index]);
+			result.push(self.stateList[index]!);
 		});
 		return result;
 	}
 
 	// Returns the current state of this PDA.
-	public getCurrentState(): State {
+	public getCurrentState(): State|undefined {
+		if (this.currentState === null) {
+			return undefined;
+		}
+
 		return this.stateList[this.currentState];
 	}
 
 	// Returns a list containing all the states of this PDA.
 	public getStates(): State[] {
-		return this.stateList.filter(function(value) {
+		return (<State[]> this.stateList).filter(function(value) {
 			return value !== undefined;
 		});
 	}
@@ -202,9 +206,9 @@ export class PDA {
 		utils.foreach(this.transitions, function(index, stateTransitions) {
 			utils.foreach(stateTransitions, function(input, indexedByStack) {
 				utils.foreach(indexedByStack, function(stackRead, info) {
-					let sourceState = self.stateList[index];
+					let sourceState = self.stateList[index]!;
 					for (let group of info) {
-						let targetState = self.stateList[group[0]];
+						let targetState = self.stateList[group[0]]!;
 						callback(sourceState, [targetState, group[1]], input, stackRead);
 					}
 				});
@@ -214,7 +218,7 @@ export class PDA {
 
 	// Returns the input alphabet of this PDA.
 	public getInputAlphabet(): string[] {
-		let result = [];
+		let result: string[] = [];
 		for (let member in this.inputAlphabet) {
 			if (this.inputAlphabet.hasOwnProperty(member)) {
 				result.push(member);
@@ -225,7 +229,7 @@ export class PDA {
 
 	// Returns the stack alphabet of this PDA.
 	public getStackAlphabet(): string[] {
-		let result = [];
+		let result: string[] = [];
 		for (let member in this.stackAlphabet) {
 			if (this.stackAlphabet.hasOwnProperty(member)) {
 				result.push(member);
@@ -255,7 +259,7 @@ export class PDA {
 				currentStack: action.currentStack,
 				inputRead: action.inputRead,
 				stackWrite: action.stackWrite,
-				targetState: this.stateList[action.targetState]
+				targetState: this.stateList[action.targetState]!
 			});
 		}
 
@@ -354,6 +358,10 @@ export class PDA {
 
 	// Checks if this PDA accepts in its current state.
 	public accepts(): boolean {
+		if (this.currentState === null) {
+			return false;
+		}
+
 		return this.finalStates.contains(this.currentState);
 	}
 
@@ -368,6 +376,10 @@ export class PDA {
 	}
 
 	private getPossibleActions(): Action[] {
+		if (this.currentState === null) {
+			return [];
+		}
+
 		let availableTransitions = this.transitions[this.currentState];
 		let result: Action[] = [];
 		let self = this;
@@ -465,7 +477,7 @@ export class PDA {
 		return this.stateList.length;
 	}
 
-	private stateList: State[] = []; // Q
+	private stateList: (State|undefined)[] = []; // Q
 	private inputAlphabet: Alphabet = {}; // sigma
 	private stackAlphabet: Alphabet = {}; // gamma
 	private transitions: {
@@ -481,10 +493,10 @@ export class PDA {
 	private numRemovedStates: number = 0;
 
 	// Instantaneous configuration-related attributes
-	private currentState: Index = null;
+	private currentState: Index|null = null;
 	private stack: string[] = [];
 
-	private input: string = null;
+	private input: string;
 	private stepIndex: number;
 	private actionTree: Action[] = [];
 	private halt: boolean = true;

@@ -10,7 +10,7 @@ export interface SignalResponse {
 }
 
 export interface SignalObserver {
-	receiveSignal: (signal: Signal) => SignalResponse;
+	receiveSignal: (signal: Signal) => SignalResponse|null;
 }
 
 /**

@@ -50,15 +50,15 @@ export class initLBA {
 
 	readonly shortcutGroup = "LBA";
 	private boundShortcuts = false;
-	private testCaseInput: HTMLInputElement = null;
-	private fastRecognition: HTMLImageElement = null;
-	private stepRecognition: HTMLImageElement = null;
-	private stopRecognition: HTMLImageElement = null;
-	private progressContainer: HTMLDivElement = null;
-	private tapeContainer: HTMLDivElement = null;
-	private multipleCaseArea: HTMLTextAreaElement = null;
-	private multipleCaseResults: HTMLDivElement = null;
-	private multipleCaseButton: HTMLImageElement = null;
+	private testCaseInput: HTMLInputElement;
+	private fastRecognition: HTMLImageElement;
+	private stepRecognition: HTMLImageElement;
+	private stopRecognition: HTMLImageElement;
+	private progressContainer: HTMLDivElement;
+	private tapeContainer: HTMLDivElement;
+	private multipleCaseArea: HTMLTextAreaElement;
+	private multipleCaseResults: HTMLDivElement;
+	private multipleCaseButton: HTMLImageElement;
 
 	private addRows(rows: HTMLElement[][], menu: Menu): void {
 		for (let row of rows) {

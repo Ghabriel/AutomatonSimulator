@@ -4,7 +4,7 @@ import {State} from "../interface/State"
 export interface AutomatonSummary {
 	aborted: boolean,
 	error: boolean,
-	initialState: State,
+	initialState: State|null,
 	stateList: State[],
 	edgeList: Edge[]
 }
@@ -14,6 +14,6 @@ export interface AutomatonSummary {
  * Any class that implements this interface can be used in AutomatonRenderer.
  */
 export interface PersistenceHandler {
-	save(stateList: State[], edgeList: Edge[], initialState: State): string;
+	save(stateList: State[], edgeList: Edge[], initialState: State|null): string;
 	load(content: string): AutomatonSummary;
 }

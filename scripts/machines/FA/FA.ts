@@ -46,6 +46,7 @@ export class FA {
 			this.unsetInitialState();
 		}
 
+		this.currentStates.erase(index);
 		this.finalStates.erase(index);
 
 		// TODO: do we really need to remove the state from the state list?
@@ -115,7 +116,7 @@ export class FA {
 	}
 
 	// Returns the name of the initial state.
-	public getInitialState(): State {
+	public getInitialState(): State|undefined {
 		return this.stateList[this.initialState];
 	}
 
@@ -134,7 +135,7 @@ export class FA {
 		let result: State[] = [];
 		let self = this;
 		this.finalStates.forEach(function(index) {
-			result.push(self.stateList[index]);
+			result.push(self.stateList[index]!);
 		});
 		return result;
 	}
@@ -144,14 +145,14 @@ export class FA {
 		let result: State[] = [];
 		let self = this;
 		this.currentStates.forEach(function(index) {
-			result.push(self.stateList[index]);
+			result.push(self.stateList[index]!);
 		});
 		return result;
 	}
 
 	// Returns a list containing all the states of this FA.
 	public getStates(): State[] {
-		return this.stateList.filter(function(value) {
+		return (<State[]> this.stateList).filter(function(value) {
 			return value !== undefined;
 		});
 	}
@@ -164,12 +165,12 @@ export class FA {
 		let self = this;
 		for (let index in this.transitions) {
 			if (this.transitions.hasOwnProperty(index)) {
-				let sourceState = self.stateList[index];
+				let sourceState = self.stateList[index]!;
 				let stateTransitions = this.transitions[index];
 				for (let input in stateTransitions) {
 					if (stateTransitions.hasOwnProperty(input)) {
 						stateTransitions[input].forEach(function(target: Index) {
-							let targetState = self.stateList[target];
+							let targetState = self.stateList[target]!;
 							callback(sourceState, targetState, input);
 						});
 					}
@@ -179,10 +180,10 @@ export class FA {
 
 		for (let index in this.epsilonTransitions) {
 			if (this.transitions.hasOwnProperty(index)) {
-				let sourceState = self.stateList[index];
+				let sourceState = self.stateList[index]!;
 				let stateTransitions = this.epsilonTransitions[index];
 				stateTransitions.forEach(function(target: Index) {
-					let targetState = self.stateList[target];
+					let targetState = self.stateList[target]!;
 					callback(sourceState, targetState, "");
 				});
 			}
@@ -191,7 +192,7 @@ export class FA {
 
 	// Returns the alphabet of this FA.
 	public alphabet(): string[] {
-		let result = [];
+		let result: string[] = [];
 		for (let member in this.alphabetSet) {
 			if (this.alphabetSet.hasOwnProperty(member)) {
 				result.push(member);
@@ -292,7 +293,7 @@ export class FA {
 		}
 	}
 
-	private stateList: State[] = [];
+	private stateList: (State|undefined)[] = [];
 	private alphabetSet: {[i: string]: number} = {};
 	private transitions: {
 		[index: number]: {

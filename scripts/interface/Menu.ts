@@ -33,11 +33,15 @@ export class Menu extends Renderer {
 		}
 	}
 
-	public html(): HTMLDivElement {
+	public html(): HTMLDivElement|null {
 		return this.body;
 	}
 
-	public content(): HTMLDivElement {
+	public content(): HTMLDivElement|null {
+		if (!this.body) {
+			return null;
+		}
+
 		return <HTMLDivElement> this.body.querySelector(".content");
 	}
 
@@ -83,8 +87,8 @@ export class Menu extends Renderer {
 	}
 
 	private updateArrow(): void {
-		let arrow = this.body.querySelector(".menu_arrow");
-		if ($(this.content()).css("display") == "none") {
+		let arrow = this.body!.querySelector(".menu_arrow");
+		if ($(this.content()!).css("display") == "none") {
 			arrow.innerHTML = "&#x25BA;";
 		} else {
 			arrow.innerHTML = "&#x25BC;";
@@ -92,10 +96,10 @@ export class Menu extends Renderer {
 	}
 
 	private internalToggle(): void {
-		$(this.content()).toggle();
+		$(this.content()!).toggle();
 	}
 
-	private body: HTMLDivElement = null;
+	private body: HTMLDivElement|null = null;
 	private title: string;
 	private children: Element[];
 	private toggled: boolean = false;

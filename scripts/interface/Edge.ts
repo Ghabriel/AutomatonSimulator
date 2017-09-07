@@ -32,7 +32,7 @@ export class Edge {
 		this.origin = origin;
 	}
 
-	public getOrigin(): State {
+	public getOrigin(): State|null {
 		return this.origin;
 	}
 
@@ -40,7 +40,7 @@ export class Edge {
 		this.target = target;
 	}
 
-	public getTarget(): State {
+	public getTarget(): State|null {
 		return this.target;
 	}
 
@@ -175,7 +175,7 @@ export class Edge {
 	}
 
 	private renderBody(canvas: GUI.Canvas): void {
-		let origin = this.origin.getPosition();
+		let origin = this.origin!.getPosition();
 		let target: typeof origin;
 		if (!this.target) {
 			if (this.virtualTarget) {
@@ -253,7 +253,7 @@ export class Edge {
 	// Renders a loop-style body.
 	private loop(canvas: GUI.Canvas): void {
 		let radius = Settings.stateRadius;
-		let pos = this.origin.getPosition();
+		let pos = this.origin!.getPosition();
 		this.adjustBody(canvas, 4, EdgeType.LOOP);
 		for (let elem of this.body) {
 			elem.attr("stroke-width", Settings.edgeArrowThickness);
@@ -372,7 +372,7 @@ export class Edge {
 			dy = target.y - origin.y;
 		} else {
 			// Non-loop case
-			origin = this.origin.getPosition();
+			origin = this.origin!.getPosition();
 			target = this.target.getPosition();
 
 			dx = target.x - origin.x;
@@ -426,8 +426,8 @@ export class Edge {
 	private renderText(canvas: GUI.Canvas): void {
 		// We can assume that there's a target state, since
 		// otherwise we wouldn't be rendering the text.
-		let origin = this.origin.getPosition();
-		let target = this.target.getPosition();
+		let origin = this.origin!.getPosition();
+		let target = this.target!.getPosition();
 		let x: number;
 		let y: number;
 
@@ -479,23 +479,23 @@ export class Edge {
 	}
 
 	// The state that this edge comes from
-	private origin: State = null;
+	private origin: State|null = null;
 
 	// The state that this edge points to
-	private target: State = null;
+	private target: State|null = null;
 
 	// The position where the origin state was when we last rendered
 	// this edge. Used to optimize rendering when both the origin and
 	// the target didn't move since the previous rendering.
-	private prevOriginPosition: Point = null;
+	private prevOriginPosition: Point;
 
 	// The position where the target state was when we last rendered
 	// this edge. See prevOriginPosition for more context.
-	private prevTargetPosition: Point = null;
+	private prevTargetPosition: Point;
 
 	// If this edge is not yet completed, it might point to
 	// a position in space rather than a state
-	private virtualTarget: Point = null;
+	private virtualTarget: Point|null = null;
 
 	// A list of texts written in this edge
 	private textList: string[] = [];
@@ -520,12 +520,12 @@ export class Edge {
 	// The GUI components of this edge.
 	private body: GUI.Element[] = [];
 	private head: GUI.Element[] = [];
-	private textContainer: GUI.Element = null;
+	private textContainer: GUI.Element|null = null;
 
 	// The click events of this edge.
 	private clickHandlers: (() => void)[] = [];
 
-	private clickCallback: (Event) => void = null;
+	private clickCallback: (Event) => void;
 
-	private currentEdgeType: EdgeType = null;
+	private currentEdgeType: EdgeType;
 }

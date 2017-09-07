@@ -48,7 +48,6 @@ export class Sidebar extends Renderer {
 		this.buildSelectedEntityArea();
 		this.buildMachineSelection();
 		this.buildActionMenu();
-		// this.loadMachine(Settings.currentMachine);
 
 		this.contentWrapper = <HTMLDivElement> utils.create("div", {
 			id: "sidebar_content"
@@ -60,7 +59,7 @@ export class Sidebar extends Renderer {
 		}
 	}
 
-	public receiveSignal(signal: Signal): SignalResponse {
+	public receiveSignal(signal: Signal): SignalResponse|null {
 		if (signal.targetID == Settings.sidebarSignalID) {
 			return {
 				reacted: true,
@@ -151,7 +150,10 @@ export class Sidebar extends Renderer {
 
 	private loadMachine(machine: automata.Machine): void {
 		for (let menu of this.otherMenus) {
-			$(menu.html()).remove();
+			let body = menu.html();
+			if (body) {
+				$(body).remove();
+			}
 		}
 
 		this.otherMenus = Settings.machines[machine].sidebar;
@@ -423,7 +425,7 @@ export class Sidebar extends Renderer {
 		actionMenu.add(tableElement);
 	}
 
-	private contentWrapper: HTMLDivElement = null;
+	private contentWrapper: HTMLDivElement;
 	private mainMenus;
 	private otherMenus: Menu[] = [];
 	private machineButtonMapping: {[type: number]: HTMLInputElement} = {};

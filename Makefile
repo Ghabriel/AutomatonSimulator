@@ -46,7 +46,7 @@ $(JS)/$(MAINFILE): $(TSFILES)
 		touch $(JS)/$(JSBASE); \
 		truncate -s 0 $(JS)/$(JSBASE); \
 	else\
-		tsc --removeComments --noImplicitReturns --module amd --outFile $(JS)/$(JSBASE) $(MAINTS); \
+		tsc --strictNullChecks --removeComments --noImplicitReturns --module amd --outFile $(JS)/$(JSBASE) $(MAINTS); \
 	fi
 
 	@if [ "$(COMPRESS)" = "1" ]; then \
