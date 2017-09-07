@@ -171,7 +171,8 @@ export class AutomatonRenderer {
 
 	public stateManualCreation(): void {
 		let stateRadius = Settings.stateRadius;
-		this.newStateAt(stateRadius, stateRadius);
+		let initialMarkLength = Settings.stateInitialMarkLength;
+		this.newStateAt(stateRadius + initialMarkLength, stateRadius);
 	}
 
 	public edgeManualCreation(): void {
@@ -604,6 +605,8 @@ export class AutomatonRenderer {
 					controller.createEdge(origin, target, data);
 					self.updateEditableEdge(edge);
 				});
+
+				prompt.setDefaultValues(edge.getDataList()[selectedIndex]);
 
 				prompt.show();
 			}

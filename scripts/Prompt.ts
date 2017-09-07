@@ -8,6 +8,7 @@ export interface ValuedHTMLElement extends HTMLElement {
 }
 
 interface InputProperties {
+	defaultValue?: string;
 	initializer?: () => ValuedHTMLElement;
 	placeholder?: string;
 	validator?: (v: string) => boolean;
@@ -39,6 +40,12 @@ export class Prompt {
 			x: x,
 			y: y
 		};
+	}
+
+	public setDefaultValues(defaultValues: string[]): void {
+		for (let i = 0; i < defaultValues.length; i++) {
+			this.inputs[i].defaultValue = defaultValues[i];
+		}
 	}
 
 	public onSuccess(callback: SuccessCallback): void {
@@ -138,7 +145,8 @@ export class Prompt {
 			} else {
 				input = <HTMLInputElement> utils.create("input", {
 					type: "text",
-					placeholder: this.inputs[i].placeholder || ""
+					placeholder: this.inputs[i].placeholder || "",
+					value: this.inputs[i].defaultValue || ""
 				});
 			}
 
