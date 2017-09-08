@@ -26,9 +26,20 @@ export interface ActionInformation {
 	targetState: State;
 }
 
+export enum AcceptingHeuristic {
+	NEVER = 0,
+	ACCEPTING_STATE = 1,
+	EMPTY_STACK = 2,
+	BOTH = ACCEPTING_STATE | EMPTY_STACK
+}
+
 let EPSILON_KEY = "";
 
 export class PDA {
+	public setAcceptingHeuristic(heuristic: AcceptingHeuristic): void {
+		this.acceptingHeuristic = heuristic;
+	}
+
 	// Adds a state to this PDA, marking it as the initial state
 	// if there are no other states in this PDA.
 	public addState(name: State): Index {
@@ -368,7 +379,16 @@ export class PDA {
 			return false;
 		}
 
-		return this.finalStates.contains(this.currentState);
+		let result: boolean = false;
+		if (this.acceptingHeuristic & AcceptingHeuristic.ACCEPTING_STATE) {
+			result = result || this.finalStates.contains(this.currentState);
+		}
+
+		if (this.acceptingHeuristic & AcceptingHeuristic.EMPTY_STACK) {
+			result = result || (this.stack.length == 0);
+		}
+
+		return result;
 	}
 
 	// Checks if this PDA is in an error state, i.e. isn't in any state.
@@ -506,4 +526,6 @@ export class PDA {
 	private stepIndex: number;
 	private actionTree: Action[] = [];
 	private halt: boolean = true;
+
+	private acceptingHeuristic = AcceptingHeuristic.ACCEPTING_STATE;
 }

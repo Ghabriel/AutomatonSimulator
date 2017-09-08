@@ -1,4 +1,5 @@
 import {Keyboard} from "../../Keyboard"
+import {AcceptingHeuristic} from "./PDA"
 import {PDAController} from "./PDAController"
 import {Menu} from "../../interface/Menu"
 import {Settings, Strings} from "../../Settings"
@@ -40,6 +41,8 @@ export class initPDA {
 	private fastRecognition: HTMLImageElement;
 	private stepRecognition: HTMLImageElement;
 	private stopRecognition: HTMLImageElement;
+	private finalStateCheckbox: HTMLInputElement;
+	private emptyStackCheckbox: HTMLInputElement;
 	private progressContainer: HTMLDivElement;
 	private stackContainer: HTMLDivElement;
 	private actionTreeContainer: HTMLDivElement;
@@ -53,8 +56,7 @@ export class initPDA {
 
 		this.buildTestCaseInput(rows);
 		this.buildRecognitionControls(rows);
-		// this.buildStack(rows);
-		// this.buildActionTree(rows);
+		this.buildRecognitionOptions(rows);
 		this.buildRecognitionProgress(rows);
 		this.addRows(rows, recognitionMenu);
 
@@ -150,6 +152,28 @@ export class initPDA {
 						this.stopRecognition]);
 	}
 
+	private buildRecognitionOptions(container: HTMLElement[][]): void {
+		this.finalStateCheckbox = <HTMLInputElement> utils.create("input", {
+			checked: true,
+			type: "checkbox"
+		});
+
+		let finalStateLabel = <HTMLSpanElement> utils.create("span", {
+			innerHTML: Strings.ACCEPT_BY_FINAL_STATE
+		});
+
+		this.emptyStackCheckbox = <HTMLInputElement> utils.create("input", {
+			type: "checkbox"
+		});
+
+		let emptyStackLabel = <HTMLSpanElement> utils.create("span", {
+			innerHTML: Strings.ACCEPT_BY_EMPTY_STACK
+		});
+
+		container.push([this.finalStateCheckbox, finalStateLabel]);
+		container.push([this.emptyStackCheckbox, emptyStackLabel]);
+	}
+
 	private buildStack(container: HTMLElement[][]): void {
 		this.stackContainer = <HTMLDivElement> utils.create("div", {
 			className: "none",
@@ -222,15 +246,20 @@ export class initPDA {
 		let controller = <PDAController> Settings.controller();
 		let stackContent = controller.getStackContent();
 
-		this.stackContainer.classList.remove("none");
-		this.stackContainer.innerHTML = "";
-		for (let i = stackContent.length - 1; i >= 0; i--) {
-			let span = utils.create("span");
-			span.innerHTML = stackContent[i];
-			this.stackContainer.appendChild(span);
-		}
+		if (stackContent.length > 0) {
+			this.stackContainer.classList.remove("none");
+			this.stackContainer.innerHTML = "";
+			for (let i = stackContent.length - 1; i >= 0; i--) {
+				let span = utils.create("span");
+				span.innerHTML = stackContent[i];
+				this.stackContainer.appendChild(span);
+			}
 
-		this.stackContainer.children[0].classList.add("top");
+			this.stackContainer.children[0].classList.add("top");
+		} else {
+			this.stackContainer.classList.add("none");
+			this.stackContainer.innerHTML = Strings.EMPTY_STACK;
+		}
 	}
 
 	private showActionTree(): void {
@@ -294,6 +323,8 @@ export class initPDA {
 		let fastForwardEnabled = true;
 		let stepEnabled = true;
 		let stopEnabled = false;
+		let finalStateChecked = true;
+		let emptyStackChecked = false;
 		let self = this;
 
 		let fastForwardStatus = function(enabled) {
@@ -309,6 +340,23 @@ export class initPDA {
 		let stopStatus = function(enabled) {
 			stopEnabled = enabled;
 			self.stopRecognition.classList[enabled ? "remove" : "add"](disabledClass);
+		};
+
+		let updateAcceptingHeuristic = function() {
+			let heuristic: AcceptingHeuristic;
+
+			if (finalStateChecked && emptyStackChecked) {
+				heuristic = AcceptingHeuristic.BOTH;
+			} else if (finalStateChecked) {
+				heuristic = AcceptingHeuristic.ACCEPTING_STATE;
+			} else if (emptyStackChecked) {
+				heuristic = AcceptingHeuristic.EMPTY_STACK;
+			} else {
+				heuristic = AcceptingHeuristic.NEVER;
+			}
+
+			let controller = <PDAController> Settings.controller();
+			controller.setAcceptingHeuristic(heuristic);
 		};
 
 		this.fastRecognition.addEventListener("click", function() {
@@ -423,6 +471,16 @@ export class initPDA {
 				}
 				self.multipleCaseResults.appendChild(result);
 			}
+		});
+
+		this.finalStateCheckbox.addEventListener("change", function(e: Event) {
+			finalStateChecked = this.checked;
+			updateAcceptingHeuristic();
+		});
+
+		this.emptyStackCheckbox.addEventListener("change", function(e: Event) {
+			emptyStackChecked = this.checked;
+			updateAcceptingHeuristic();
 		});
 	}
 

@@ -1,5 +1,5 @@
 import {Controller, FormalDefinition} from "../../Controller"
-import {ActionInformation, PDA, TransitionInformation} from "./PDA"
+import {AcceptingHeuristic, ActionInformation, PDA, TransitionInformation} from "./PDA"
 import {Keyboard} from "../../Keyboard"
 import {Prompt} from "../../Prompt"
 import {State} from "../../interface/State"
@@ -169,6 +169,10 @@ export class PDAController implements Controller {
 
 	public getActionTree(): ActionInformation[] {
 		return this.machine.getActionTree();
+	}
+
+	public setAcceptingHeuristic(heuristic: AcceptingHeuristic): void {
+		this.machine.setAcceptingHeuristic(heuristic);
 	}
 
 	public currentStates(): string[] {
