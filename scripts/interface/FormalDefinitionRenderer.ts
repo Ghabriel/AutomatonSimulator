@@ -1,5 +1,6 @@
 import {AutomatonRenderer} from "./AutomatonRenderer"
 import {FormalDefinition, TransitionTable} from "../Controller"
+import {Edge} from "./Edge"
 import {Keyboard} from "../Keyboard"
 import {Settings, Strings} from "../Settings"
 import {Table} from "./Table"
@@ -71,44 +72,62 @@ export class FormalDefinitionRenderer {
 		}
 
 		let htmlTable = tableWrapper.html();
-		let self = this;
 
 		for (let i = 0; i < list.length; i++) {
-			let row = utils.create("tr");
+			let row = <HTMLTableRowElement> utils.create("tr");
 			for (let j = 0; j < list[i].length; j++) {
 				let cell = <HTMLTableCellElement> utils.create("td");
 				cell.innerHTML = list[i][j];
 				row.appendChild(cell);
 			}
 
-			(function(index) {
-				row.addEventListener("mouseenter", function() {
-					let automatonRenderer = self.automatonRenderer;
-					let edgeList = automatonRenderer.getEdgeList();
-					let data = metadata[index];
-
-					for (let edge of edgeList) {
-						let originName = edge.getOrigin()!.getName();
-						let targetName = edge.getTarget()!.getName();
-						let sameOrigin = (originName == data[0]);
-						let sameTarget = (targetName == data[1]);
-						if (sameOrigin && sameTarget) {
-							automatonRenderer.selectEdge(edge);
-							break;
-						}
-					}
-				});
-
-				row.addEventListener("mouseleave", function() {
-					// TODO
-				});
-			})(i);
-
+			this.bindRowEvents(row, metadata[i]);
 			htmlTable.appendChild(row);
 		}
 
 		htmlTable.id = "transition_table";
 		container.appendChild(htmlTable);
+	}
+
+	private bindRowEvents(row: HTMLTableRowElement, metadata: [string, string]): void {
+		let automatonRenderer = this.automatonRenderer;
+		let highlightedEdge: Edge|null = null;
+		let highlightPalette = Settings.edgeHighlightPalette;
+		let hoverPalette = Settings.edgeFormalDefinitionHoverPalette;
+
+		let unselect = function(): void {
+			if (!highlightedEdge) {
+				return;
+			}
+
+			if (automatonRenderer.isEdgeSelected(highlightedEdge)) {
+				highlightedEdge.applyPalette(highlightPalette);
+			} else {
+				highlightedEdge.removePalette();
+			}
+
+			highlightedEdge.render(automatonRenderer.getCanvas());
+			highlightedEdge = null;
+		};
+
+		row.addEventListener("mouseenter", function() {
+			let edgeList = automatonRenderer.getEdgeList();
+			for (let edge of edgeList) {
+				let originName = edge.getOrigin()!.getName();
+				let targetName = edge.getTarget()!.getName();
+				let sameOrigin = (originName == metadata[0]);
+				let sameTarget = (targetName == metadata[1]);
+				if (sameOrigin && sameTarget) {
+					unselect();
+					edge.applyPalette(hoverPalette);
+					edge.render(automatonRenderer.getCanvas());
+					highlightedEdge = edge;
+					break;
+				}
+			}
+		});
+
+		row.addEventListener("mouseleave", unselect);
 	}
 
 	private automatonRenderer: AutomatonRenderer;

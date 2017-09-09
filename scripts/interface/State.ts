@@ -4,7 +4,7 @@ import {Browser} from "../Browser"
 import {GUI} from "./GUI"
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
-import {StatePalette} from "../StatePalette"
+import {StatePalette} from "../Palette"
 import {utils} from "../Utils"
 
 /**
@@ -366,12 +366,7 @@ export class State {
 	private name: string = "";
 	private initialMarkOffsets: {x: number, y: number}[] = [];
 
-	private defaultPalette: StatePalette = {
-		fillColor: Settings.stateFillColor,
-		strokeColor: Settings.stateStrokeColor,
-		strokeWidth: Settings.stateStrokeWidth,
-		ringStrokeWidth: Settings.stateRingStrokeWidth
-	};
+	private defaultPalette: StatePalette = Settings.stateDefaultPalette;
 	private palette: StatePalette = this.defaultPalette;
 
 	private body: GUI.Element|null = null;

@@ -6,7 +6,7 @@ import * as init from "./lists/InitializerList"
 // import {Regex} from "./misc/Regex"
 import {Controller} from "./Controller"
 import {Initializable, Initializer} from "./Initializer"
-import {StatePalette} from "./StatePalette"
+import {StatePalette, EdgePalette} from "./Palette"
 import {utils} from "./Utils"
 
 interface MachineTraits {
@@ -49,10 +49,6 @@ export namespace Settings {
 	export const stateRadius = 32;
 	export const stateRingRadius = 27;
 	export const stateDragTolerance = 50;
-	export const stateFillColor = "white";
-	export const stateStrokeColor = "black";
-	export const stateStrokeWidth = 1;
-	export const stateRingStrokeWidth = 1;
 
 	export const stateLabelFontFamily = "arial";
 	export const stateLabelFontSize = 20;
@@ -63,6 +59,13 @@ export namespace Settings {
 	export const stateInitialMarkAngle = utils.toRadians(20);
 	export const stateInitialMarkColor = "blue";
 	export const stateInitialMarkThickness = 2;
+
+	export const stateDefaultPalette: StatePalette = {
+		fillColor: "white",
+		strokeColor: "black",
+		strokeWidth: 1,
+		ringStrokeWidth: 1
+	};
 
 	export const stateHighlightPalette: StatePalette = {
 		fillColor: "#FFD574",
@@ -78,16 +81,35 @@ export namespace Settings {
 		ringStrokeWidth: 2
 	};
 
-	export const edgeStrokeColor = "black";
-	export const edgeHighlightColor = "red";
+	export const edgeDefaultPalette: EdgePalette = {
+		strokeColor: "black",
+		arrowThickness: 2,
+		arrowLength: 30,
+		arrowAngle: utils.toRadians(30),
+		textFontFamily: "arial",
+		textFontSize: 20,
+		textFontColor: "black"
+	};
 
-	export const edgeArrowThickness = 2;
-	export const edgeArrowLength = 30;
-	export const edgeArrowAngle = utils.toRadians(30);
+	export const edgeHighlightPalette: EdgePalette = {
+		strokeColor: "red",
+		arrowThickness: edgeDefaultPalette.arrowThickness,
+		arrowLength: edgeDefaultPalette.arrowLength,
+		arrowAngle: edgeDefaultPalette.arrowAngle,
+		textFontFamily: edgeDefaultPalette.textFontFamily,
+		textFontSize: edgeDefaultPalette.textFontSize,
+		textFontColor: edgeDefaultPalette.textFontColor
+	};
 
-	export const edgeTextFontFamily = "arial";
-	export const edgeTextFontSize = 20;
-	export const edgeTextFontColor = "black";
+	export const edgeFormalDefinitionHoverPalette: EdgePalette = {
+		strokeColor: "purple",
+		arrowThickness: 3,
+		arrowLength: edgeDefaultPalette.arrowLength,
+		arrowAngle: edgeDefaultPalette.arrowAngle,
+		textFontFamily: edgeDefaultPalette.textFontFamily,
+		textFontSize: edgeDefaultPalette.textFontSize,
+		textFontColor: edgeDefaultPalette.textFontColor
+	};
 
 	export const acceptedTestCaseColor = "green";
 	export const rejectedTestCaseColor = "red";

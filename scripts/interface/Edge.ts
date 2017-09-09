@@ -1,6 +1,7 @@
 import {GUI} from "./GUI"
 import {Settings} from "../Settings"
 import {State} from "./State"
+import {EdgePalette} from "../Palette"
 import {Point, utils} from "../Utils"
 
 enum EdgeType {
@@ -101,12 +102,14 @@ export class Edge {
 		this.deleted = true;
 	}
 
-	public setCustomColor(color: string): void {
-		this.color = color;
+	public applyPalette(palette: EdgePalette): void {
+		this.palette = palette;
+		this.forcedRender = true;
 	}
 
-	public removeCustomColor(): void {
-		this.color = this.defaultColor;
+	public removePalette(): void {
+		this.palette = this.defaultPalette;
+		this.forcedRender = true;
 	}
 
 	public render(canvas: GUI.Canvas): void {
@@ -136,11 +139,11 @@ export class Edge {
 		}
 
 		for (let elem of this.body) {
-			elem.attr("stroke", this.strokeColor());
+			elem.attr("stroke", this.palette.strokeColor);
 		}
 
 		for (let elem of this.head) {
-			elem.attr("stroke", this.strokeColor());
+			elem.attr("stroke", this.palette.strokeColor);
 		}
 
 		// Only re-renders this edge's text if this edge is
@@ -156,10 +159,6 @@ export class Edge {
 			elem.unclick(this.clickCallback);
 			elem.click(this.clickCallback);
 		}
-	}
-
-	private strokeColor(): string {
-		return this.color;
 	}
 
 	private stateCenterOffsets(dx: number, dy: number): Point {
@@ -256,7 +255,7 @@ export class Edge {
 		let pos = this.origin!.getPosition();
 		this.adjustBody(canvas, 4, EdgeType.LOOP);
 		for (let elem of this.body) {
-			elem.attr("stroke-width", Settings.edgeArrowThickness);
+			elem.attr("stroke-width", this.palette.arrowThickness);
 		}
 
 		this.body[0].attr("path", utils.linePath(
@@ -299,7 +298,7 @@ export class Edge {
 
 		this.adjustBody(canvas, 3, EdgeType.CURVED);
 		for (let elem of this.body) {
-			elem.attr("stroke-width", Settings.edgeArrowThickness);
+			elem.attr("stroke-width", this.palette.arrowThickness);
 		}
 
 		this.body[0].attr("path", utils.linePath(
@@ -322,7 +321,7 @@ export class Edge {
 	private normal(canvas: GUI.Canvas, origin: Point, target: Point): void {
 		this.adjustBody(canvas, 1, EdgeType.NORMAL);
 		for (let elem of this.body) {
-			elem.attr("stroke-width", Settings.edgeArrowThickness);
+			elem.attr("stroke-width", this.palette.arrowThickness);
 		}
 
 		this.body[0].attr("path", utils.linePath(
@@ -385,8 +384,8 @@ export class Edge {
 		}
 
 		// Arrow head
-		let arrowLength = Settings.edgeArrowLength;
-		let alpha = Settings.edgeArrowAngle;
+		let arrowLength = this.palette.arrowLength;
+		let alpha = this.palette.arrowAngle;
 		let edgeLength = Math.sqrt(dx * dx + dy * dy);
 		let u = 1 - arrowLength / edgeLength;
 		let ref = {
@@ -399,12 +398,19 @@ export class Edge {
 		let p1 = utils.rotatePoint(ref, target, alpha);
 		let p2 = utils.rotatePoint(ref, target, -alpha);
 
-		if (!this.head.length) {
-			this.head.push(utils.line(canvas, 0, 0, 0, 0));
-			this.head.push(utils.line(canvas, 0, 0, 0, 0));
+		let isHeadEmpty = (this.head.length == 0);
 
+		if (isHeadEmpty) {
+			this.head.push(utils.line(canvas, 0, 0, 0, 0));
+			this.head.push(utils.line(canvas, 0, 0, 0, 0));
+		}
+
+		if (this.forcedRender || isHeadEmpty) {
+			// Re-set the stroke-width if there's a forced render
+			// because it might have been caused by a change of
+			// palette.
 			for (let elem of this.head) {
-				elem.attr("stroke-width", Settings.edgeArrowThickness);
+				elem.attr("stroke-width", this.palette.arrowThickness);
 			}
 		}
 
@@ -453,10 +459,10 @@ export class Edge {
 
 		if (!this.textContainer) {
 			this.textContainer = canvas.text(x, y, this.preparedText());
-			this.textContainer.attr("font-family", Settings.edgeTextFontFamily);
-			this.textContainer.attr("font-size", Settings.edgeTextFontSize);
-			this.textContainer.attr("stroke", Settings.edgeTextFontColor);
-			this.textContainer.attr("fill", Settings.edgeTextFontColor);
+			this.textContainer.attr("font-family", this.palette.textFontFamily);
+			this.textContainer.attr("font-size", this.palette.textFontSize);
+			this.textContainer.attr("stroke", this.palette.textFontColor);
+			this.textContainer.attr("fill", this.palette.textFontColor);
 		} else {
 			this.textContainer.attr("x", x);
 			this.textContainer.attr("y", y);
@@ -473,8 +479,8 @@ export class Edge {
 
 		this.textContainer.rotate(angle);
 
-		y -= Settings.edgeTextFontSize * .6;
-		y -= Settings.edgeTextFontSize * (this.textList.length - 1) * .7;
+		y -= this.palette.textFontSize * .6;
+		y -= this.palette.textFontSize * (this.textList.length - 1) * .7;
 		this.textContainer.attr("y", y);
 	}
 
@@ -514,8 +520,8 @@ export class Edge {
 	private deleted: boolean = false;
 
 	// The color-related properties of this edge.
-	private defaultColor = Settings.edgeStrokeColor;
-	private color: string = this.defaultColor;
+	private defaultPalette: EdgePalette = Settings.edgeDefaultPalette;
+	private palette: EdgePalette = this.defaultPalette;
 
 	// The GUI components of this edge.
 	private body: GUI.Element[] = [];

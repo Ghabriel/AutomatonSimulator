@@ -222,18 +222,26 @@ export class AutomatonRenderer {
 		return null;
 	}
 
+	public getCanvas(): GUI.Canvas {
+		return this.canvas;
+	}
+
 	public getEdgeList(): Edge[] {
 		return this.edgeList;
+	}
+
+	public isEdgeSelected(edge: Edge): boolean {
+		return this.highlightedEdge == edge;
 	}
 
 	public selectEdge(edge: Edge): void {
 		if (!this.locked) {
 			this.dimState();
 			if (this.highlightedEdge) {
-				this.highlightedEdge.removeCustomColor();
+				this.highlightedEdge.removePalette();
 				this.highlightedEdge.render(this.canvas);
 			}
-			edge.setCustomColor(Settings.edgeHighlightColor);
+			edge.applyPalette(Settings.edgeHighlightPalette);
 			this.highlightedEdge = edge;
 			edge.render(this.canvas);
 
@@ -243,7 +251,7 @@ export class AutomatonRenderer {
 
 	private dimEdge(): void {
 		if (!this.locked && this.highlightedEdge) {
-			this.highlightedEdge.removeCustomColor();
+			this.highlightedEdge.removePalette();
 			this.highlightedEdge.render(this.canvas);
 			this.highlightedEdge = null;
 
