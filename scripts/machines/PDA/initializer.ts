@@ -280,10 +280,13 @@ export class initPDA {
 				className: "entry"
 			});
 
+			let stackCopy = utils.cloneArray(action.currentStack);
+			let currentStack = stackCopy.reverse().join("");
+
 			let table = new Table(2);
 			let fieldValues = [
 				Strings.PDA_FIELD_INPUT, action.currentInput,
-				Strings.PDA_FIELD_STACK, action.currentStack.join(""),
+				Strings.PDA_FIELD_STACK, currentStack,
 				Strings.PDA_FIELD_READ_INPUT, action.inputRead || epsilon,
 				Strings.PDA_FIELD_WRITE, action.stackWrite || epsilon,
 				Strings.PDA_FIELD_TARGET_STATE,	action.targetState.toString(),

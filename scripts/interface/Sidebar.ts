@@ -163,50 +163,15 @@ export class Sidebar extends Renderer {
 	}
 
 	private buildSettings(): void {
-		let settings = this.mainMenus.settings;
+		let settings: Menu = this.mainMenus.settings;
 		settings.clear();
 
 		let table = new Table(2);
-
-		let undoMaxAmountInput = <HTMLInputElement> utils.create("input", {
-			className: "property_value",
-			type: "text",
-			value: Settings.undoMaxAmount
-		});
-
-		let originalMaxCount;
-		undoMaxAmountInput.addEventListener("focus", function() {
-			originalMaxCount = this.value;
-		});
-
-		undoMaxAmountInput.addEventListener("blur", function() {
-			let value = parseInt(this.value);
-			if (!isNaN(value)) {
-				let increasedMagnitude = (originalMaxCount >= 0 && value > originalMaxCount);
-				let becameNegative = (originalMaxCount >= 0 && value < 0);
-
-				let ok = (!increasedMagnitude && !becameNegative);
-				ok = ok || (increasedMagnitude && confirm(Strings.MEMORY_CONSUMPTION_WARNING));
-				ok = ok || (becameNegative && confirm(Strings.INFINITE_UNDO_WARNING));
-
-				if (ok) {
-					Settings.undoMaxAmount = value;
-				}
-				this.value = Settings.undoMaxAmount.toString();
-			}
-		});
-
-		undoMaxAmountInput.addEventListener("keyup", function(e) {
-			if (e.keyCode == Keyboard.keys.ENTER) {
-				this.blur();
-			}
-		});
-
 		this.buildLanguageSelection(table);
-		table.add(utils.create("span", { innerHTML: Strings.UNDO_MAX_COUNT + ":" }));
-		table.add(undoMaxAmountInput);
+		this.buildUndoMaxCountInput(table);
 		settings.add(table.html());
 
+		// Hides the system settings by default
 		settings.toggle();
 	}
 
@@ -246,6 +211,41 @@ export class Sidebar extends Renderer {
 
 		table.add(utils.create("span", { innerHTML: Strings.SYSTEM_LANGUAGE + ":" }));
 		table.add(select);
+	}
+
+	private buildUndoMaxCountInput(table: Table): void {
+		let undoMaxAmountInput = <HTMLInputElement> utils.create("input", {
+			className: "property_value",
+			type: "text",
+			value: Settings.undoMaxAmount
+		});
+
+		undoMaxAmountInput.addEventListener("blur", function() {
+			let value = parseInt(this.value);
+			if (!isNaN(value)) {
+				let originalMaxCount = Settings.undoMaxAmount;
+				let increasedMagnitude = (originalMaxCount >= 0 && value > originalMaxCount);
+				let becameNegative = (originalMaxCount >= 0 && value < 0);
+
+				let ok = (!increasedMagnitude && !becameNegative);
+				ok = ok || (increasedMagnitude && confirm(Strings.MEMORY_CONSUMPTION_WARNING));
+				ok = ok || (becameNegative && confirm(Strings.INFINITE_UNDO_WARNING));
+
+				if (ok) {
+					Settings.undoMaxAmount = value;
+				}
+				this.value = Settings.undoMaxAmount.toString();
+			}
+		});
+
+		undoMaxAmountInput.addEventListener("keyup", function(e) {
+			if (e.keyCode == Keyboard.keys.ENTER) {
+				this.blur();
+			}
+		});
+
+		table.add(utils.create("span", { innerHTML: Strings.UNDO_MAX_COUNT + ":" }));
+		table.add(undoMaxAmountInput);
 	}
 
 	private buildFileManipulation(): void {

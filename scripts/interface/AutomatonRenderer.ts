@@ -1,5 +1,6 @@
 import {Edge} from "./Edge"
 import {EdgeUtils} from "./EdgeUtils"
+import {FormalDefinitionRenderer} from "./FormalDefinitionRenderer"
 import {GUI} from "./GUI"
 import {Keyboard} from "../Keyboard"
 import {Memento} from "../Memento"
@@ -24,6 +25,7 @@ export class AutomatonRenderer {
 		this.memento = memento;
 		this.node = node;
 		this.persistenceHandler = persistenceHandler;
+		this.formalDefinitionRenderer = new FormalDefinitionRenderer(this);
 		SignalEmitter.addSignalObserver(this);
 	}
 
@@ -89,16 +91,21 @@ export class AutomatonRenderer {
 	}
 
 	public load(content: string, pushResult: boolean = true): void {
+		// Blocks formal definition change events
+		this.loadingMode = true;
+
 		// Blocks changes to the memento until the load process is complete
 		this.frozenMemento = true;
 
 		let loadedData = this.persistenceHandler.load(content);
 		if (loadedData.error) {
 			alert(Strings.INVALID_FILE);
+			this.loadingMode = false;
 			return;
 		}
 
 		if (loadedData.aborted) {
+			this.loadingMode = false;
 			return;
 		}
 
@@ -133,6 +140,9 @@ export class AutomatonRenderer {
 			// Saves the resulting state
 			this.memento.push(this.save());
 		}
+
+		this.loadingMode = false;
+		this.formalDefinitionCallback();
 	}
 
 	public recognitionHighlight(stateNames: string[]): void {
@@ -212,102 +222,36 @@ export class AutomatonRenderer {
 		return null;
 	}
 
-	// TODO: find a better name for this method
-	// (since it also handles saving the current state)
-	private bindFormalDefinitionListener(): void {
-		let definitionContainer: HTMLDivElement;
-		let self = this;
-		let callback = function() {
-			// Saves the current state to the memento if it's not frozen
-			if (!self.frozenMemento) {
-				self.memento.push(self.save());
-			}
-
-			if (!definitionContainer) {
-				definitionContainer = <HTMLDivElement> utils.create("div");
-				SignalEmitter.emitSignal({
-					targetID: Settings.sidebarSignalID,
-					identifier: "updateFormalDefinition",
-					data: [definitionContainer]
-				});
-			}
-
-			definitionContainer.innerHTML = self.buildFormalDefinition();
-		};
-
-		Settings.controller().setEditingCallback(callback);
-
-		// Calls the callback to display the initial formal definition
-		// (normally the formal definition of an empty automaton)
-		callback();
+	public getEdgeList(): Edge[] {
+		return this.edgeList;
 	}
 
-	private buildFormalDefinition(): string {
-		let formalDefinition = Settings.controller().formalDefinition();
-		// TODO: render the formal definition properly
-		let tupleSequence = formalDefinition.tupleSequence;
-		let content = "M = (" + tupleSequence.join(", ") + ")";
-		content += Strings.DEFINITION_WHERE_SUFFIX + "<br>";
-		for (let parameter of formalDefinition.parameterSequence) {
-			let value = formalDefinition.parameterValues[parameter];
-			let type = typeof value;
-			if (type == "number" || type == "string") {
-				content += parameter + " = ";
-				content += value;
-			} else if (value instanceof Array) {
-				content += parameter + " = ";
-				content += "{" + value.join(", ") + "}";
-			} else if (type == "undefined") {
-				content += parameter + " = ";
-				content += "<span class='none'>";
-				content += Strings.NO_INITIAL_STATE;
-				content += "</span>";
-			} else if (value.hasOwnProperty("list")) {
-				let domain: string = value.domain;
-				let codomain: string = value.codomain;
-				let header: string[] = value.header;
-				let list: string[][] = value.list;
-				let arrow = Keyboard.symbols.rightArrow;
-
-				content += parameter + ": ";
-				content += domain + " " + arrow + " " + codomain;
-
-				if (list.length > 0) {
-					let table = new Table(list[0].length);
-
-					for (let i = 0; i < header.length; i++) {
-						table.add(utils.create("span", {
-							innerHTML: header[i]
-						}));
-					}
-
-					for (let i = 0; i < list.length; i++) {
-						for (let j = 0; j < list[i].length; j++) {
-							table.add(utils.create("span", {
-								innerHTML: list[i][j]
-							}));
-						}
-					}
-
-					content += "<table id='transition_table'>";
-					content += table.html().innerHTML;
-					content += "</table>";
-				} else {
-					content += "<br>";
-					content += "<span class='none'>";
-					content += Strings.NO_TRANSITIONS;
-					content += "</span>";
-				}
-			} else {
-				content += "unspecified type (AutomatonRenderer:235)";
+	public selectEdge(edge: Edge): void {
+		if (!this.locked) {
+			this.dimState();
+			if (this.highlightedEdge) {
+				this.highlightedEdge.removeCustomColor();
+				this.highlightedEdge.render(this.canvas);
 			}
-			content += "<br>";
+			edge.setCustomColor(Settings.edgeHighlightColor);
+			this.highlightedEdge = edge;
+			edge.render(this.canvas);
+
+			this.updateEditableEdge(edge);
 		}
-
-		return content;
 	}
 
-	private selectState(state: State) {
+	private dimEdge(): void {
+		if (!this.locked && this.highlightedEdge) {
+			this.highlightedEdge.removeCustomColor();
+			this.highlightedEdge.render(this.canvas);
+			this.highlightedEdge = null;
+
+			this.unsetSelectedEntityContent();
+		}
+	}
+
+	private selectState(state: State): void {
 		if (!this.locked) {
 			this.dimEdge();
 			if (this.highlightedState) {
@@ -332,29 +276,43 @@ export class AutomatonRenderer {
 		}
 	}
 
-	private selectEdge(edge: Edge) {
-		if (!this.locked) {
-			this.dimState();
-			if (this.highlightedEdge) {
-				this.highlightedEdge.removeCustomColor();
-				this.highlightedEdge.render(this.canvas);
+	// TODO: find a better name for this method
+	// (since it also handles saving the current state)
+	private bindFormalDefinitionListener(): void {
+		let definitionContainer: HTMLDivElement;
+		let self = this;
+		this.formalDefinitionCallback = function() {
+			if (self.loadingMode) {
+				return;
 			}
-			edge.setCustomColor(Settings.edgeHighlightColor);
-			this.highlightedEdge = edge;
-			edge.render(this.canvas);
 
-			this.updateEditableEdge(edge);
-		}
-	}
+			// Saves the current state to the memento if it's not frozen
+			if (!self.frozenMemento) {
+				self.memento.push(self.save());
+			}
 
-	private dimEdge(): void {
-		if (!this.locked && this.highlightedEdge) {
-			this.highlightedEdge.removeCustomColor();
-			this.highlightedEdge.render(this.canvas);
-			this.highlightedEdge = null;
+			if (!definitionContainer) {
+				definitionContainer = <HTMLDivElement> utils.create("div");
+				SignalEmitter.emitSignal({
+					targetID: Settings.sidebarSignalID,
+					identifier: "updateFormalDefinition",
+					data: [definitionContainer]
+				});
+			}
 
-			this.unsetSelectedEntityContent();
-		}
+			let formalDefinition = Settings.controller().formalDefinition();
+			let container = <HTMLSpanElement> utils.create("span");
+			self.formalDefinitionRenderer.render(container, formalDefinition);
+
+			definitionContainer.innerHTML = "";
+			definitionContainer.appendChild(container);
+		};
+
+		Settings.controller().setEditingCallback(this.formalDefinitionCallback);
+
+		// Calls the callback to display the initial formal definition
+		// (normally the formal definition of an empty automaton)
+		this.formalDefinitionCallback();
 	}
 
 	private updateEditableState(state: State|null): void {
@@ -1254,6 +1212,9 @@ export class AutomatonRenderer {
 	private locked: boolean = false;
 	private memento: Memento<string>;
 	private frozenMemento: boolean = false;
+	private loadingMode: boolean = false;
+	private formalDefinitionCallback: () => void;
 
 	private persistenceHandler: PersistenceHandler;
+	private formalDefinitionRenderer: FormalDefinitionRenderer;
 }

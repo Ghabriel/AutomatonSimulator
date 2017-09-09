@@ -1,4 +1,4 @@
-import {Controller, FormalDefinition} from "../../Controller"
+import {Controller, FormalDefinition, TransitionTable} from "../../Controller"
 import {AcceptingHeuristic, ActionInformation, PDA, TransitionInformation} from "./PDA"
 import {Keyboard} from "../../Keyboard"
 import {Prompt} from "../../Prompt"
@@ -235,11 +235,12 @@ export class PDAController implements Controller {
 			gamma + "*"
 		];
 
-		let transitions = {
+		let transitions: TransitionTable = {
 			domain: [fields[0], "(" + fields[1] + ")", fields[2]].join(" x "),
 			codomain: [fields[3], fields[4]].join(" x "),
 			header: fields,
-			list: <[string, string, string, string, string][]> []
+			list: <string[][]> [],
+			metadata: <[string, string][]> []
 		};
 
 		let callback = function(source: string, data: TransitionInformation,
@@ -248,7 +249,15 @@ export class PDAController implements Controller {
 			input = input || epsilon;
 			stackRead = stackRead || epsilon;
 			let stackWrite = data[1] || epsilon;
-			transitions.list.push([source, input, stackRead, data[0], stackWrite]);
+			transitions.list.push([
+				source,
+				input,
+				stackRead,
+				data[0],
+				stackWrite
+			]);
+
+			transitions.metadata.push([source, data[0]]);
 		};
 
 		this.machine.transitionIteration(callback);

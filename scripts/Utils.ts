@@ -46,6 +46,29 @@ export namespace utils {
 		}
 	}
 
+	export function cloneArray<T>(values: T[]): T[] {
+		let copy: T[] = [];
+		for (let value of values) {
+			copy.push(value);
+		}
+
+		return copy;
+	}
+
+	export function isSameArray<T>(first: T[], second: T[]): boolean {
+		if (first.length != second.length) {
+			return false;
+		}
+
+		for (let i = 0; i < first.length; i++) {
+			if (first[i] != second[i]) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	// Checks if a given event represents a right click
 	export function isRightClick(event: any): boolean {
 		if ("which" in event) { // Gecko (Firefox), WebKit (Chrome/Safari), Opera

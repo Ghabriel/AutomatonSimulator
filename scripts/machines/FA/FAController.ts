@@ -1,4 +1,4 @@
-import {Controller, FormalDefinition} from "../../Controller"
+import {Controller, FormalDefinition, TransitionTable} from "../../Controller"
 import {FA} from "./FA"
 import {Keyboard} from "../../Keyboard"
 import {Prompt} from "../../Prompt"
@@ -194,7 +194,7 @@ export class FAController implements Controller {
 		return this.stateMapping[state.getName()];
 	}
 
-	private transitionTable(): any {
+	private transitionTable(): TransitionTable {
 		let symbols = Keyboard.symbols;
 		let epsilon = symbols.epsilon;
 		let sigma = symbols.sigma;
@@ -205,16 +205,18 @@ export class FAController implements Controller {
 			"Q"
 		];
 
-		let transitions = {
+		let transitions: TransitionTable = {
 			domain: [fields[0], "(" + fields[1] + ")"].join(" x "),
 			codomain: fields[2],
 			header: fields,
-			list: <[string, string, string][]> []
+			list: <string[][]> [],
+			metadata: <[string, string][]> []
 		};
 
 		let callback = function(source: string, target: string, input: string) {
 			input = input || Keyboard.symbols.epsilon;
 			transitions.list.push([source, input, target]);
+			transitions.metadata.push([source, target]);
 		};
 
 		this.machine.transitionIteration(callback);

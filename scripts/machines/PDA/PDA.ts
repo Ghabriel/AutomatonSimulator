@@ -5,8 +5,9 @@ import {utils} from "../../Utils"
 type State = string;
 type Index = number;
 type Alphabet = {[i: string]: number};
-type InternalTransitionInformation = [Index, string][];
-export type TransitionInformation = [State, string];
+type GammaClosure = string;
+type InternalTransitionInformation = [Index, GammaClosure][];
+export type TransitionInformation = [State, GammaClosure];
 
 interface Action {
 	stepIndex: number;
@@ -418,15 +419,10 @@ export class PDA {
 				if (indexedByStack.hasOwnProperty(stackTop)) {
 					let groups = indexedByStack[stackTop];
 					for (let group of groups) {
-						let stackCopy: typeof self.stack = [];
-						for (let symbol of self.stack) {
-							stackCopy.push(symbol);
-						}
-
 						result.push({
 							stepIndex: self.stepIndex + 1,
 							currentInput: self.input,
-							currentStack: stackCopy,
+							currentStack: utils.cloneArray(self.stack),
 							inputRead: inputSymbol,
 							stackWrite: group[1],
 							targetState: group[0]

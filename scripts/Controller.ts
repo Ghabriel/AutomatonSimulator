@@ -12,6 +12,14 @@ export interface FormalDefinition {
 	parameterValues: {[p: string]: any};
 }
 
+export interface TransitionTable {
+	domain: string;
+	codomain: string;
+	header: string[];
+	list: string[][];
+	metadata: [string, string][];
+}
+
 /**
  * Generic interface that specifies the mandatory methods of a controller.
  */

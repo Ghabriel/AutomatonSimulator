@@ -1,4 +1,4 @@
-import {Controller, FormalDefinition} from "../../Controller"
+import {Controller, FormalDefinition, TransitionTable} from "../../Controller"
 import {Keyboard} from "../../Keyboard"
 import {LBA, TransitionInformation} from "./LBA"
 import {Prompt, ValuedHTMLElement} from "../../Prompt"
@@ -238,7 +238,7 @@ export class LBAController implements Controller {
 		return this.stateMapping[state.getName()];
 	}
 
-	private transitionTable(): any {
+	private transitionTable(): TransitionTable {
 		let symbols = Keyboard.symbols;
 		let gamma = symbols.gamma;
 		let leftArrow = symbols.leftArrow;
@@ -252,11 +252,12 @@ export class LBAController implements Controller {
 			"{" + leftArrow + "," + rightArrow + "}"
 		];
 
-		let transitions = {
+		let transitions: TransitionTable = {
 			domain: [fields[0], fields[1]].join(" x "),
 			codomain: [fields[2], fields[3], fields[4]].join(" x "),
 			header: fields,
-			list: <[string, string, string, string, string][]> []
+			list: <string[][]> [],
+			metadata: <[string, string][]> []
 		};
 
 		let arrows = [Keyboard.symbols.leftArrow, Keyboard.symbols.rightArrow];
@@ -270,6 +271,8 @@ export class LBAController implements Controller {
 				target.tapeSymbol,
 				arrows[target.direction]
 			]);
+
+			transitions.metadata.push([source, target.state]);
 		};
 		this.machine.transitionIteration(callback);
 		return transitions;
