@@ -95,14 +95,20 @@ export class Prompt {
 		let self = this;
 
 		let allInputsValid = function(): boolean {
+			let result: boolean = true;
 			for (let input of inputs) {
 				let index = input.id.replace(inputIdPrefix, "");
 				let validator = self.inputs[index].validator;
-				if (validator && !validator(input.value)) {
-					return false;
+				if (validator) {
+					if (validator(input.value)) {
+						inputs[index].classList.remove("invalid");
+					} else {
+						inputs[index].classList.add("invalid");
+						result = false;
+					}
 				}
 			}
-			return true;
+			return result;
 		};
 
 		let ok = <HTMLInputElement> utils.create("input", {
@@ -174,6 +180,10 @@ export class Prompt {
 					if (!isEnter && !isEsc) {
 						ok.disabled = !allInputsValid();
 					}
+				});
+			} else {
+				input.addEventListener("focus", function(e) {
+					ok.disabled = !allInputsValid();
 				});
 			}
 

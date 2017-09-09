@@ -156,6 +156,10 @@ div.row {
 	margin-right: 0;
 }
 
+#system_prompt .invalid {
+	border: 2px solid red;
+}
+
 .click_blocker {
 	background-color: #DDD;
 	height: 100%;
@@ -249,6 +253,7 @@ div.row {
 #transition_table td {
 	background-color: white;
 	border: 1px solid black;
+	cursor: pointer;
 	padding: 5px;
 }
 

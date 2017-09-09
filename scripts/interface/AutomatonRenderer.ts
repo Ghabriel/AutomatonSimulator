@@ -772,6 +772,7 @@ export class AutomatonRenderer {
 		let oppositeEdge: Edge|null = null;
 
 		let clearCurrentEdge = function() {
+			self.dimEdge();
 			self.currentEdge!.remove();
 			self.currentEdge = null;
 		};
