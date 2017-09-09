@@ -164,6 +164,16 @@ export class initFA {
 		let stopEnabled = false;
 		let self = this;
 
+		let parsedInput = <HTMLSpanElement> utils.create("span", {
+			className: "parsed_input"
+		});
+
+		let remainingInput = <HTMLSpanElement> utils.create("span", {
+			className: "remaining_input"
+		});
+
+		let appended = false;
+
 		let fastForwardStatus = function(enabled) {
 			fastForwardEnabled = enabled;
 			self.fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
@@ -193,6 +203,7 @@ export class initFA {
 				self.highlightCurrentStates();
 
 				self.progressContainer.style.display = "";
+				appended = false;
 				self.showAcceptanceStatus();
 
 				fastForwardStatus(false);
@@ -252,12 +263,20 @@ export class initFA {
 				}
 
 				if (finished) {
+					appended = false;
 					self.showAcceptanceStatus();
 					stepStatus(false);
 				} else {
 					let position = controller.stepPosition();
-					let displayedText = input.substr(position);
-					self.progressContainer.innerHTML = displayedText;
+					if (!appended) {
+						self.progressContainer.innerHTML = "";
+						self.progressContainer.appendChild(parsedInput);
+						self.progressContainer.appendChild(remainingInput);
+						appended = true;
+					}
+
+					parsedInput.innerHTML = input.substr(0, position);
+					remainingInput.innerHTML = input.substr(position);
 				}
 			}
 		});

@@ -121,6 +121,7 @@ export class PDAController implements Controller {
 	}
 
 	public fastForward(input: string): void {
+		this.input = input;
 		this.machine.reset();
 		this.machine.setInput(input);
 		while (!this.machine.halted()) {
@@ -129,6 +130,7 @@ export class PDAController implements Controller {
 	}
 
 	public step(input: string): void {
+		this.input = input;
 		if (!this.finished(input)) {
 			if (this.stepIndex == -1) {
 				// Don't parse anything if stepIndex == -1.
@@ -144,6 +146,7 @@ export class PDAController implements Controller {
 	}
 
 	public stop(): void {
+		this.input = null;
 		this.stepIndex = -1;
 	}
 
@@ -160,7 +163,12 @@ export class PDAController implements Controller {
 	}
 
 	public stepPosition(): number {
-		return this.stepIndex;
+		if (this.input === null) {
+			return this.stepIndex;
+		}
+
+		let currentInput = this.machine.getCurrentInput();
+		return this.input.length - currentInput.length;
 	}
 
 	public getStackContent(): string[] {
@@ -267,5 +275,6 @@ export class PDAController implements Controller {
 	private machine: PDA;
 	private stateMapping: {[name: string]: number} = {};
 	private stepIndex: number = -1;
+	private input: string|null = null;
 	private editingCallback: () => void = function() {};
 }

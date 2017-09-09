@@ -128,6 +128,13 @@ export class FormalDefinitionRenderer {
 		});
 
 		row.addEventListener("mouseleave", unselect);
+
+		row.addEventListener("click", function() {
+			if (highlightedEdge) {
+				automatonRenderer.selectEdge(highlightedEdge);
+				unselect();
+			}
+		});
 	}
 
 	private automatonRenderer: AutomatonRenderer;

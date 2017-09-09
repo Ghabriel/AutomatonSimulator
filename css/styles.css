@@ -180,6 +180,10 @@ div.row {
 	text-overflow: ellipsis;
 }
 
+#recognition_progress .parsed_input {
+	color: green;
+}
+
 #stack, #action_tree {
 	word-wrap: break-word;
 }

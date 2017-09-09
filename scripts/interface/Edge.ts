@@ -519,7 +519,7 @@ export class Edge {
 	// Was this edge previously removed?
 	private deleted: boolean = false;
 
-	// The color-related properties of this edge.
+	// The default and current palettes of this edge.
 	private defaultPalette: EdgePalette = Settings.edgeDefaultPalette;
 	private palette: EdgePalette = this.defaultPalette;
 

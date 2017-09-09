@@ -102,7 +102,7 @@ export namespace Settings {
 	};
 
 	export const edgeFormalDefinitionHoverPalette: EdgePalette = {
-		strokeColor: "purple",
+		strokeColor: "blue",
 		arrowThickness: 3,
 		arrowLength: edgeDefaultPalette.arrowLength,
 		arrowAngle: edgeDefaultPalette.arrowAngle,

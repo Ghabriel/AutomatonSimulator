@@ -358,17 +358,29 @@ export class State {
 		this.renderText();
 	}
 
+	// The position and radius of this state
 	private x: number;
 	private y: number;
 	private radius: number;
+
+	// Is this the initial state?
 	private initial: boolean = false;
+
+	// Is this the final state?
 	private final: boolean = false;
+
+	// Name of this state (which is written in its body)
 	private name: string = "";
+
+	// Used to calculate the coordinates of the
+	// 'initial state arrow'.
 	private initialMarkOffsets: {x: number, y: number}[] = [];
 
+	// The default and current palettes of this state.
 	private defaultPalette: StatePalette = Settings.stateDefaultPalette;
 	private palette: StatePalette = this.defaultPalette;
 
+	// The GUI components of this state.
 	private body: GUI.Element|null = null;
 	private ring: GUI.Element|null = null;
 	private arrowParts: GUI.Element[] = [];

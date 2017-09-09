@@ -262,6 +262,10 @@ export class PDA {
 		this.halt = false;
 	}
 
+	public getCurrentInput(): string {
+		return this.input;
+	}
+
 	public getActionTree(): ActionInformation[] {
 		let result: ActionInformation[] = [];
 		for (let action of this.actionTree) {

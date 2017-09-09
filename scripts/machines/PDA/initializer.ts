@@ -231,9 +231,7 @@ export class initPDA {
 	}
 
 	private showAcceptanceStatus(): void {
-		let controller = <PDAController> Settings.controller();
-		this.progressContainer.style.display = "";
-		if (controller.accepts()) {
+		if (Settings.controller().accepts()) {
 			this.progressContainer.style.color = Settings.acceptedTestCaseColor;
 			this.progressContainer.innerHTML = Strings.INPUT_ACCEPTED;
 		} else {
@@ -330,6 +328,16 @@ export class initPDA {
 		let emptyStackChecked = false;
 		let self = this;
 
+		let parsedInput = <HTMLSpanElement> utils.create("span", {
+			className: "parsed_input"
+		});
+
+		let remainingInput = <HTMLSpanElement> utils.create("span", {
+			className: "remaining_input"
+		});
+
+		let appended = false;
+
 		let fastForwardStatus = function(enabled) {
 			fastForwardEnabled = enabled;
 			self.fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
@@ -373,6 +381,9 @@ export class initPDA {
 				let controller = Settings.controller();
 				controller.fastForward(input);
 				self.highlightCurrentStates();
+
+				self.progressContainer.style.display = "";
+				appended = false;
 
 				self.showAcceptanceStatus();
 				self.showStackContent();
@@ -431,8 +442,7 @@ export class initPDA {
 						data: []
 					});
 
-					// self.stackContainer.style.display = "";
-					// self.actionTreeContainer.style.display = "";
+					self.progressContainer.style.display = "";
 					self.stackContainer.classList.remove("none");
 					self.actionTreeContainer.classList.remove("none");
 				}
@@ -449,8 +459,20 @@ export class initPDA {
 
 				if (finished) {
 					stepStatus(false);
+					appended = false;
 					self.showAcceptanceStatus();
 					self.clearActionTree();
+				} else {
+					let position = controller.stepPosition();
+					if (!appended) {
+						self.progressContainer.innerHTML = "";
+						self.progressContainer.appendChild(parsedInput);
+						self.progressContainer.appendChild(remainingInput);
+						appended = true;
+					}
+
+					parsedInput.innerHTML = input.substr(0, position);
+					remainingInput.innerHTML = input.substr(position);
 				}
 			}
 		});
