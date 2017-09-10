@@ -44,6 +44,7 @@ export class initLBA {
 	}
 
 	public onExit(): void {
+		this.stopRecognition.click();
 		System.lockShortcutGroup(this.shortcutGroup);
 		console.log("[LBA] Unbound events");
 	}

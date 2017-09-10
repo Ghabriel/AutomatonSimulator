@@ -27,10 +27,12 @@ export class FormalDefinitionRenderer {
 				container.innerHTML += parameter + " = ";
 				container.innerHTML += "{" + value.join(", ") + "}";
 			} else if (type == "undefined") {
-				container.innerHTML += parameter + " = ";
-				container.innerHTML += "<span class='none'>";
-				container.innerHTML += Strings.NO_INITIAL_STATE;
-				container.innerHTML += "</span>";
+				let content: string = "";
+				content += parameter + " = ";
+				content += "<span class='none'>";
+				content += Strings.NO_INITIAL_STATE;
+				content += "</span>";
+				container.innerHTML += content;
 			} else if (value.hasOwnProperty("list")) {
 				this.renderTransitionTable(container, parameter, value);
 			} else {
@@ -56,10 +58,12 @@ export class FormalDefinitionRenderer {
 		container.innerHTML += domain + " " + arrow + " " + codomain;
 
 		if (list.length == 0) {
-			container.innerHTML += "<br>";
-			container.innerHTML += "<span class='none'>";
-			container.innerHTML += Strings.NO_TRANSITIONS;
-			container.innerHTML += "</span>";
+			let content: string = "";
+			content += "<br>";
+			content += "<span class='none'>";
+			content += Strings.NO_TRANSITIONS;
+			content += "</span>";
+			container.innerHTML += content;
 			return;
 		}
 

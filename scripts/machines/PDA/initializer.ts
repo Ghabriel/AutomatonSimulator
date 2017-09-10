@@ -31,6 +31,7 @@ export class initPDA {
 	}
 
 	public onExit(): void {
+		this.stopRecognition.click();
 		System.lockShortcutGroup(this.shortcutGroup);
 		console.log("[PDA] Unbound events");
 	}

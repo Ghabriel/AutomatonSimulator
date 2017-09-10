@@ -41,6 +41,7 @@ export class initFA {
 	}
 
 	public onExit(): void {
+		this.stopRecognition.click();
 		System.lockShortcutGroup(this.shortcutGroup);
 		console.log("[FA] Unbound events");
 	}
@@ -157,6 +158,14 @@ export class initFA {
 		}
 	}
 
+	private unlockAutomaton(): void {
+		SignalEmitter.emitSignal({
+			targetID: Settings.automatonRendererSignalID,
+			identifier: "unlock",
+			data: []
+		});
+	}
+
 	private bindRecognitionEvents(): void {
 		const disabledClass = Settings.disabledButtonClass;
 		let fastForwardEnabled = true;
@@ -192,11 +201,11 @@ export class initFA {
 
 		this.fastRecognition.addEventListener("click", function() {
 			if (fastForwardEnabled) {
-				SignalEmitter.emitSignal({
-					targetID: Settings.automatonRendererSignalID,
-					identifier: "lock",
-					data: []
-				});
+				// SignalEmitter.emitSignal({
+				// 	targetID: Settings.automatonRendererSignalID,
+				// 	identifier: "lock",
+				// 	data: []
+				// });
 				let input = self.testCase();
 				let controller = Settings.controller();
 				controller.fastForward(input);
@@ -222,11 +231,7 @@ export class initFA {
 					data: []
 				});
 
-				SignalEmitter.emitSignal({
-					targetID: Settings.automatonRendererSignalID,
-					identifier: "unlock",
-					data: []
-				});
+				self.unlockAutomaton();
 
 				self.progressContainer.style.color = "black";
 				self.progressContainer.style.display = "none";
@@ -266,6 +271,7 @@ export class initFA {
 					appended = false;
 					self.showAcceptanceStatus();
 					stepStatus(false);
+					self.unlockAutomaton();
 				} else {
 					let position = controller.stepPosition();
 					if (!appended) {
