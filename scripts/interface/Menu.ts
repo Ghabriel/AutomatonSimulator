@@ -87,7 +87,7 @@ export class Menu extends Renderer {
 	}
 
 	private updateArrow(): void {
-		let arrow = this.body!.querySelector(".menu_arrow");
+		let arrow = this.body!.querySelector(".menu_arrow")!;
 		if ($(this.content()!).css("display") == "none") {
 			arrow.innerHTML = "&#x25BA;";
 		} else {

@@ -11,11 +11,11 @@ export interface Point {
  * Utility functions in general that have no better place.
  */
 export namespace utils {
-	export function select(selector: string): Element {
+	export function select(selector: string): Element|null {
 		return document.querySelector(selector);
 	}
 
-	export function id(selector: string): Element {
+	export function id(selector: string): Element|null {
 		return select("#" + selector);
 	}
 

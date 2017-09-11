@@ -68,14 +68,13 @@ export class Prompt {
 		});
 		container.innerHTML = this.message + "<br>";
 
+		let mainbar = <HTMLElement> utils.id(Settings.mainbarID)!;
 		if (this.explicitPosition) {
 			container.classList.add("floating");
-			let mainbar = <HTMLElement> utils.id(Settings.mainbarID);
 			container.style.left = (mainbar.offsetLeft + this.explicitPosition.x) + "px";
 			container.style.top = (mainbar.offsetTop + this.explicitPosition.y) + "px";
 		}
 
-		let mainbar = utils.id(Settings.mainbarID);
 		const inputIdPrefix = "system_prompt_input_";
 
 		let dismiss = function() {
@@ -227,7 +226,7 @@ export class Prompt {
 		});
 		container.innerHTML = message + "<br>";
 
-		let mainbar = utils.id(Settings.mainbarID);
+		let mainbar = utils.id(Settings.mainbarID)!;
 
 		// This flag avoids buggy behavior when the user triggers
 		// ok/cancel multiple times in the same prompt (e.g by quickly

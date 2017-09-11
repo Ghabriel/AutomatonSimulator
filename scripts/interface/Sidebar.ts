@@ -23,7 +23,7 @@ export class Sidebar extends Renderer {
 		// Re-creates the sidebar when the system language is changed
 		System.addLanguageChangeObserver({
 			onLanguageChange: function() {
-				utils.id(Settings.sidebarID).innerHTML = "";
+				utils.id(Settings.sidebarID)!.innerHTML = "";
 				self.build();
 				self.render();
 			}
@@ -221,7 +221,13 @@ export class Sidebar extends Renderer {
 		});
 
 		undoMaxAmountInput.addEventListener("blur", function() {
-			let value = parseInt(this.value);
+			let value: number;
+			if (this.value.length > 3) {
+				value = 999;
+			} else {
+				value = parseInt(this.value);
+			}
+
 			if (!isNaN(value)) {
 				let originalMaxCount = Settings.undoMaxAmount;
 				let increasedMagnitude = (originalMaxCount >= 0 && value > originalMaxCount);
