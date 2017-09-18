@@ -43,7 +43,7 @@ export namespace Settings {
 
 	export const tapeDisplayedChars = 7; // should be odd
 
-	export const multRecognitionAreaRows = 4;
+	export const multRecognitionAreaRows = 8;
 	export const multRecognitionAreaCols = 15;
 
 	export const stateRadius = 32;
@@ -187,11 +187,6 @@ export namespace Settings {
 
 		utils.foreach(machineList, function(key, value) {
 			machines[key] = value;
-			// if (firstUpdate) {
-			// 	machines[key] = value;
-			// } else {
-			// 	machines[key].name = value.name;
-			// }
 		});
 
 		Initializer.exec(initializerMap);
