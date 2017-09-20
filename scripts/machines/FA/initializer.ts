@@ -59,7 +59,7 @@ export class initFA {
 
 	private addRows(rows: HTMLElement[][], menu: Menu): void {
 		for (let row of rows) {
-			let div = <HTMLDivElement> utils.create("div", {
+			let div = utils.create("div", {
 				className: "row"
 			});
 			for (let node of row) {
@@ -74,7 +74,7 @@ export class initFA {
 	}
 
 	private buildTestCaseInput(container: HTMLElement[][]): void {
-		this.testCaseInput = <HTMLInputElement> utils.create("input", {
+		this.testCaseInput = utils.create("input", {
 			type: "text",
 			placeholder: Strings.TEST_CASE
 		});
@@ -94,19 +94,19 @@ export class initFA {
 	private buildRecognitionControls(container: HTMLElement[][]): void {
 		const disabledClass = Settings.disabledButtonClass;
 
-		this.fastRecognition = <HTMLImageElement> utils.create("img", {
+		this.fastRecognition = utils.create("img", {
 			className: "image_button",
 			src: "images/fastforward.svg",
 			title: Strings.FAST_RECOGNITION
 		});
 
-		this.stopRecognition = <HTMLImageElement> utils.create("img", {
+		this.stopRecognition = utils.create("img", {
 			className: "image_button " + disabledClass,
 			src: "images/stop.svg",
 			title: Strings.STOP_RECOGNITION
 		});
 
-		this.stepRecognition = <HTMLImageElement> utils.create("img", {
+		this.stepRecognition = utils.create("img", {
 			className: "image_button",
 			src: "images/play.svg",
 			title: Strings.STEP_RECOGNITION
@@ -117,7 +117,7 @@ export class initFA {
 	}
 
 	private buildRecognitionProgress(container: HTMLElement[][]): void {
-		this.progressContainer = <HTMLDivElement> utils.create("div", {
+		this.progressContainer = utils.create("div", {
 			id: "recognition_progress"
 		});
 
@@ -127,20 +127,20 @@ export class initFA {
 	}
 
 	private buildMultipleRecognition(container: HTMLElement[][]): void {
-		this.multipleCaseArea = <HTMLTextAreaElement> utils.create("textarea");
+		this.multipleCaseArea = utils.create("textarea");
 		this.multipleCaseArea.rows = Settings.multRecognitionAreaRows;
 		this.multipleCaseArea.cols = Settings.multRecognitionAreaCols;
 
-		this.multipleCaseResults = <HTMLDivElement> utils.create("div");
+		this.multipleCaseResults = utils.create("div");
 
-		let testCaseArea = <HTMLDivElement> utils.create("div", {
+		let testCaseArea = utils.create("div", {
 			id: "multiple_recognition"
 		});
 		testCaseArea.appendChild(this.multipleCaseArea);
 		testCaseArea.appendChild(this.multipleCaseResults);
 		container.push([testCaseArea]);
 
-		this.multipleCaseButton = <HTMLImageElement> utils.create("img", {
+		this.multipleCaseButton = utils.create("img", {
 			className: "image_button",
 			src: "images/play.svg",
 			title: Strings.START_MULTIPLE_RECOGNITION
@@ -173,11 +173,11 @@ export class initFA {
 		let stopEnabled = false;
 		let self = this;
 
-		let parsedInput = <HTMLSpanElement> utils.create("span", {
+		let parsedInput = utils.create("span", {
 			className: "parsed_input"
 		});
 
-		let remainingInput = <HTMLSpanElement> utils.create("span", {
+		let remainingInput = utils.create("span", {
 			className: "remaining_input"
 		});
 
@@ -296,7 +296,7 @@ export class initFA {
 			for (let input of testCases) {
 				controller.fastForward(input);
 
-				let result = <HTMLSpanElement> utils.create("span");
+				let result = utils.create("span");
 				if (controller.accepts()) {
 					result.style.color = Settings.acceptedTestCaseColor;
 					result.innerHTML = Strings.INPUT_ACCEPTED;

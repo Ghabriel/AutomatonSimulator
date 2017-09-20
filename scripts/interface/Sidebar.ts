@@ -1,4 +1,5 @@
 /// <reference path="../defs/filesaver.d.ts" />
+/// <reference path="../defs/jQuery.d.ts" />
 
 import * as automata from "../lists/MachineList"
 import {Keyboard} from "../Keyboard"
@@ -49,7 +50,7 @@ export class Sidebar extends Renderer {
 		this.buildMachineSelection();
 		this.buildActionMenu();
 
-		this.contentWrapper = <HTMLDivElement> utils.create("div", {
+		this.contentWrapper = utils.create("div", {
 			id: "sidebar_content"
 		});
 
@@ -72,22 +73,22 @@ export class Sidebar extends Renderer {
 
 	// Sets the content of the "selected entity area".
 	public setSelectedEntityContent(content: HTMLElement): void {
-		let node = this.mainMenus.selectedEntity.content();
-		$(node.querySelector(".none")).hide();
+		let node = this.mainMenus.selectedEntity.content()!;
+		$(node.querySelector(".none")!).hide();
 		this.clearSelectedEntityArea();
 		node.appendChild(content);
 	}
 
 	// Clears the "selected entity area" and shows the "none container".
 	public unsetSelectedEntityContent(): void {
-		let node = this.mainMenus.selectedEntity.content();
+		let node = this.mainMenus.selectedEntity.content()!;
 		this.clearSelectedEntityArea();
-		$(node.querySelector(".none")).show();
+		$(node.querySelector(".none")!).show();
 	}
 
 	// Sets/clears the "formal definition area".
 	public updateFormalDefinition(content?: HTMLElement): void {
-		let node = this.mainMenus.formalDefinition.content();
+		let node = this.mainMenus.formalDefinition.content()!;
 		node.innerHTML = "";
 		if (content) {
 			node.appendChild(content);
@@ -136,7 +137,7 @@ export class Sidebar extends Renderer {
 
 	// Clears the "selected entity area" except for the "none container".
 	private clearSelectedEntityArea() {
-		let node = this.mainMenus.selectedEntity.content();
+		let node = this.mainMenus.selectedEntity.content()!;
 		while (node.children.length > 1) {
 			node.removeChild(node.children[node.children.length - 1]);
 		}
@@ -176,7 +177,7 @@ export class Sidebar extends Renderer {
 	}
 
 	private buildLanguageSelection(table: Table): void {
-		let select = <HTMLSelectElement> utils.create("select");
+		let select = utils.create("select");
 		let languages = Settings.languages;
 		let languageTable = {};
 		let i = 0;
@@ -187,7 +188,7 @@ export class Sidebar extends Renderer {
 				return;
 			}
 
-			let option = <HTMLOptionElement> utils.create("option");
+			let option = utils.create("option");
 			option.value = i.toString();
 			option.innerHTML = obj.strings.LANGUAGE_NAME;
 			select.appendChild(option);
@@ -214,7 +215,7 @@ export class Sidebar extends Renderer {
 	}
 
 	private buildUndoMaxCountInput(table: Table): void {
-		let undoMaxAmountInput = <HTMLInputElement> utils.create("input", {
+		let undoMaxAmountInput = utils.create("input", {
 			className: "property_value",
 			type: "text",
 			value: Settings.undoMaxAmount
@@ -257,7 +258,7 @@ export class Sidebar extends Renderer {
 	private buildFileManipulation(): void {
 		let fileManipulation = this.mainMenus.fileManipulation;
 		fileManipulation.clear();
-		let save = <HTMLInputElement> utils.create("input", {
+		let save = utils.create("input", {
 			className: "file_manip_btn",
 			type: "button",
 			value: Strings.SAVE,
@@ -278,7 +279,7 @@ export class Sidebar extends Renderer {
 		fileManipulation.add(save);
 
 
-		let fileSelector = <HTMLInputElement> utils.create("input", {
+		let fileSelector = utils.create("input", {
 			id: "file_selector",
 			type: "file"
 		});
@@ -301,7 +302,7 @@ export class Sidebar extends Renderer {
 		// TODO: do we need to append fileSelector to the DOM?
 		// fileManipulation.add(fileSelector);
 
-		let open = <HTMLInputElement> utils.create("input", {
+		let open = utils.create("input", {
 			className: "file_manip_btn",
 			type: "button",
 			value: Strings.OPEN,
@@ -317,7 +318,7 @@ export class Sidebar extends Renderer {
 	}
 
 	private buildSelectedEntityArea(): void {
-		let none = <HTMLSpanElement> utils.create("span", {
+		let none = utils.create("span", {
 			className: "none",
 			innerHTML: Strings.NO_SELECTED_ENTITY
 		});
@@ -327,8 +328,10 @@ export class Sidebar extends Renderer {
 	private buildMachineSelection(): void {
 		let table = new Table(Settings.machineSelectionColumns);
 		let self = this;
-		utils.foreach(Settings.machines, function(type, props) {
-			let button = <HTMLInputElement> utils.create("input");
+		utils.foreach(Settings.machines, function(typeString, props) {
+			let type = parseInt(typeString);
+
+			let button = utils.create("input");
 			button.classList.add("machine_selection_btn");
 			button.type = "button";
 			button.value = props.name;
@@ -367,7 +370,7 @@ export class Sidebar extends Renderer {
 
 	private buildActionMenu(): void {
 		let table = new Table(Settings.machineActionColumns);
-		let createState = <HTMLInputElement> utils.create("input", {
+		let createState = utils.create("input", {
 			title: Strings.CREATE_STATE_INSTRUCTIONS,
 			type: "button",
 			value: Strings.CREATE_STATE,
@@ -381,7 +384,7 @@ export class Sidebar extends Renderer {
 		});
 		table.add(createState);
 
-		let createEdge = <HTMLInputElement> utils.create("input", {
+		let createEdge = utils.create("input", {
 			title: Strings.CREATE_EDGE_INSTRUCTIONS,
 			type: "button",
 			value: Strings.CREATE_EDGE,
@@ -395,7 +398,7 @@ export class Sidebar extends Renderer {
 		});
 		table.add(createEdge);
 
-		let undo = <HTMLInputElement> utils.create("input", {
+		let undo = utils.create("input", {
 			title: utils.printShortcut(Settings.shortcuts.undo),
 			type: "button",
 			value: Strings.UNDO,
@@ -405,7 +408,7 @@ export class Sidebar extends Renderer {
 		});
 		table.add(undo);
 
-		let redo = <HTMLInputElement> utils.create("input", {
+		let redo = utils.create("input", {
 			title: utils.printShortcut(Settings.shortcuts.redo),
 			type: "button",
 			value: Strings.REDO,
@@ -415,7 +418,7 @@ export class Sidebar extends Renderer {
 		});
 		table.add(redo);
 
-		let clearMachine = <HTMLInputElement> utils.create("input", {
+		let clearMachine = utils.create("input", {
 			title: utils.printShortcut(Settings.shortcuts.clearMachine),
 			type: "button",
 			value: Strings.CLEAR_MACHINE,
@@ -432,7 +435,7 @@ export class Sidebar extends Renderer {
 	}
 
 	private contentWrapper: HTMLDivElement;
-	private mainMenus;
+	private mainMenus: {[name: string]: Menu};
 	private otherMenus: Menu[] = [];
 	private machineButtonMapping: {[type: number]: HTMLInputElement} = {};
 }

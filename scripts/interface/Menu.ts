@@ -53,7 +53,7 @@ export class Menu extends Renderer {
 		let arrow = utils.create("div");
 		arrow.classList.add("menu_arrow");
 
-		let title = <HTMLDivElement> utils.create("div");
+		let title = utils.create("div");
 		title.title = Strings.MENU_TOGGLE_INSTRUCTIONS;
 		title.classList.add("title");
 		title.appendChild(arrow);

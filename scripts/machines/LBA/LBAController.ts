@@ -31,7 +31,7 @@ export class LBAController implements Controller {
 		// move direction
 		prompt.addInput({
 			initializer: function() {
-				let node = <HTMLSelectElement> utils.create("select");
+				let node = utils.create("select");
 				node.appendChild(utils.create("option", {
 					innerHTML: Keyboard.symbols.leftArrow,
 					value: "<"

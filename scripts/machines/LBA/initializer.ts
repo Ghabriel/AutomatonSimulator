@@ -63,7 +63,7 @@ export class initLBA {
 
 	private addRows(rows: HTMLElement[][], menu: Menu): void {
 		for (let row of rows) {
-			let div = <HTMLDivElement> utils.create("div", {
+			let div = utils.create("div", {
 				className: "row"
 			});
 			for (let node of row) {
@@ -78,7 +78,7 @@ export class initLBA {
 	}
 
 	private buildTestCaseInput(container: HTMLElement[][]): void {
-		let input = <HTMLInputElement> utils.create("input", {
+		let input = utils.create("input", {
 			type: "text",
 			placeholder: Strings.TEST_CASE
 		});
@@ -98,19 +98,19 @@ export class initLBA {
 	private buildRecognitionControls(container: HTMLElement[][]): void {
 		const disabledClass = Settings.disabledButtonClass;
 
-		this.fastRecognition = <HTMLImageElement> utils.create("img", {
+		this.fastRecognition = utils.create("img", {
 			className: "image_button",
 			src: "images/fastforward.svg",
 			title: Strings.FAST_RECOGNITION
 		});
 
-		this.stopRecognition = <HTMLImageElement> utils.create("img", {
+		this.stopRecognition = utils.create("img", {
 			className: "image_button " + disabledClass,
 			src: "images/stop.svg",
 			title: Strings.STOP_RECOGNITION
 		});
 
-		this.stepRecognition = <HTMLImageElement> utils.create("img", {
+		this.stepRecognition = utils.create("img", {
 			className: "image_button",
 			src: "images/play.svg",
 			title: Strings.STEP_RECOGNITION
@@ -121,7 +121,7 @@ export class initLBA {
 	}
 
 	private buildTape(container: HTMLElement[][]): void {
-		this.tapeContainer = <HTMLDivElement> utils.create("div", {
+		this.tapeContainer = utils.create("div", {
 			id: "tape"
 		});
 
@@ -130,7 +130,7 @@ export class initLBA {
 		let displayedChars = Settings.tapeDisplayedChars;
 
 		for (let i = 0; i < displayedChars; i++) {
-			let cell = <HTMLDivElement> utils.create("div", {
+			let cell = utils.create("div", {
 				className: "tape_cell"
 			});
 
@@ -143,7 +143,7 @@ export class initLBA {
 	}
 
 	private buildRecognitionProgress(container: HTMLElement[][]): void {
-		this.progressContainer = <HTMLDivElement> utils.create("div", {
+		this.progressContainer = utils.create("div", {
 			id: "recognition_progress"
 		});
 
@@ -153,20 +153,20 @@ export class initLBA {
 	}
 
 	private buildMultipleRecognition(container: HTMLElement[][]): void {
-		this.multipleCaseArea = <HTMLTextAreaElement> utils.create("textarea");
+		this.multipleCaseArea = utils.create("textarea");
 		this.multipleCaseArea.rows = Settings.multRecognitionAreaRows;
 		this.multipleCaseArea.cols = Settings.multRecognitionAreaCols;
 
-		this.multipleCaseResults = <HTMLDivElement> utils.create("div");
+		this.multipleCaseResults = utils.create("div");
 
-		let testCaseArea = <HTMLDivElement> utils.create("div", {
+		let testCaseArea = utils.create("div", {
 			id: "multiple_recognition"
 		});
 		testCaseArea.appendChild(this.multipleCaseArea);
 		testCaseArea.appendChild(this.multipleCaseResults);
 		container.push([testCaseArea]);
 
-		this.multipleCaseButton = <HTMLImageElement> utils.create("img", {
+		this.multipleCaseButton = utils.create("img", {
 			className: "image_button",
 			src: "images/play.svg",
 			title: Strings.START_MULTIPLE_RECOGNITION
@@ -348,7 +348,7 @@ export class initLBA {
 			for (let input of testCases) {
 				controller.fastForward(input);
 
-				let result = <HTMLSpanElement> utils.create("span");
+				let result = utils.create("span");
 				if (controller.accepts()) {
 					result.style.color = Settings.acceptedTestCaseColor;
 					result.innerHTML = Strings.INPUT_ACCEPTED;

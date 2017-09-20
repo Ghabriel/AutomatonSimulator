@@ -63,7 +63,7 @@ export class Prompt {
 			className: "click_blocker"
 		});
 
-		let container = <HTMLDivElement> utils.create("div", {
+		let container = utils.create("div", {
 			id: "system_prompt"
 		});
 		container.innerHTML = this.message + "<br>";
@@ -110,7 +110,7 @@ export class Prompt {
 			return result;
 		};
 
-		let ok = <HTMLInputElement> utils.create("input", {
+		let ok = utils.create("input", {
 			type: "button",
 			value: Strings.PROMPT_CONFIRM,
 			click: function() {
@@ -135,7 +135,7 @@ export class Prompt {
 			}
 		});
 
-		let cancel = <HTMLInputElement> utils.create("input", {
+		let cancel = utils.create("input", {
 			type: "button",
 			value: Strings.PROMPT_CANCEL,
 			click: function() {
@@ -152,7 +152,7 @@ export class Prompt {
 			if (this.inputs[i].initializer) {
 				input = this.inputs[i].initializer!();
 			} else {
-				input = <HTMLInputElement> utils.create("input", {
+				input = utils.create("input", {
 					type: "text",
 					placeholder: this.inputs[i].placeholder || "",
 					value: this.inputs[i].defaultValue || ""
@@ -247,7 +247,7 @@ export class Prompt {
 
 		let inputs: HTMLInputElement[] = [];
 
-		let ok = <HTMLInputElement> utils.create("input", {
+		let ok = utils.create("input", {
 			type: "button",
 			value: Strings.PROMPT_CONFIRM,
 			click: function() {
@@ -266,7 +266,7 @@ export class Prompt {
 			}
 		});
 
-		let cancel = <HTMLInputElement> utils.create("input", {
+		let cancel = utils.create("input", {
 			type: "button",
 			value: Strings.PROMPT_CANCEL,
 			click: function() {
@@ -284,7 +284,7 @@ export class Prompt {
 		});
 
 		for (let i = 0; i < numFields; i++) {
-			let input = <HTMLInputElement> utils.create("input", {
+			let input = utils.create("input", {
 				type: "text"
 			});
 

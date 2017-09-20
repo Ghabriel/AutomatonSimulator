@@ -1,11 +1,18 @@
-/// <reference path="defs/raphael.d.ts" />
-
 import {GUI} from "./interface/GUI"
 
 export interface Point {
 	x: number;
 	y: number;
 }
+
+type Map<T>
+	= {[key: string]: T}
+	| {[key: number]: T};
+type ArbitraryMap = Map<any>;
+
+type MapIteratorCallback<V>
+	= ((key: string, value: V) => boolean)
+	| ((key: string, value: V) => void);
 
 /**
  * Utility functions in general that have no better place.
@@ -20,7 +27,9 @@ export namespace utils {
 	}
 
 	// Creates a tag with a given name and optionally given properties.
-	export function create(tag: string, props?: Object): Element {
+	export function create<T extends keyof HTMLElementTagNameMap, V>(tag: T,
+		props?: ArbitraryMap): HTMLElementTagNameMap[T] {
+
 		let result = document.createElement(tag);
 		if (props) {
 			this.foreach(props, function(key, value) {
@@ -36,7 +45,7 @@ export namespace utils {
 	}
 
 	// Iterates over an object, applying a callback to each property.
-	export function foreach<T>(obj: {[key: string]: T}, callback: (string, T) => boolean|void): void {
+	export function foreach<T>(obj: Map<T>, callback: MapIteratorCallback<T>): void {
 		for (var i in obj) {
 			if (obj.hasOwnProperty(i)) {
 				if (callback(i, obj[i]) === false) {

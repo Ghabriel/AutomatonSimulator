@@ -96,7 +96,7 @@ export class initPDA {
 
 	private addRows(rows: HTMLElement[][], menu: Menu): void {
 		for (let row of rows) {
-			let div = <HTMLDivElement> utils.create("div", {
+			let div = utils.create("div", {
 				className: "row"
 			});
 			for (let node of row) {
@@ -111,7 +111,7 @@ export class initPDA {
 	}
 
 	private buildTestCaseInput(container: HTMLElement[][]): void {
-		let input = <HTMLInputElement> utils.create("input", {
+		let input = utils.create("input", {
 			type: "text",
 			placeholder: Strings.TEST_CASE
 		});
@@ -131,19 +131,19 @@ export class initPDA {
 	private buildRecognitionControls(container: HTMLElement[][]): void {
 		const disabledClass = Settings.disabledButtonClass;
 
-		this.fastRecognition = <HTMLImageElement> utils.create("img", {
+		this.fastRecognition = utils.create("img", {
 			className: "image_button",
 			src: "images/fastforward.svg",
 			title: Strings.FAST_RECOGNITION
 		});
 
-		this.stopRecognition = <HTMLImageElement> utils.create("img", {
+		this.stopRecognition = utils.create("img", {
 			className: "image_button " + disabledClass,
 			src: "images/stop.svg",
 			title: Strings.STOP_RECOGNITION
 		});
 
-		this.stepRecognition = <HTMLImageElement> utils.create("img", {
+		this.stepRecognition = utils.create("img", {
 			className: "image_button",
 			src: "images/play.svg",
 			title: Strings.STEP_RECOGNITION
@@ -154,20 +154,20 @@ export class initPDA {
 	}
 
 	private buildRecognitionOptions(container: HTMLElement[][]): void {
-		this.finalStateCheckbox = <HTMLInputElement> utils.create("input", {
+		this.finalStateCheckbox = utils.create("input", {
 			checked: true,
 			type: "checkbox"
 		});
 
-		let finalStateLabel = <HTMLSpanElement> utils.create("span", {
+		let finalStateLabel = utils.create("span", {
 			innerHTML: Strings.ACCEPT_BY_FINAL_STATE
 		});
 
-		this.emptyStackCheckbox = <HTMLInputElement> utils.create("input", {
+		this.emptyStackCheckbox = utils.create("input", {
 			type: "checkbox"
 		});
 
-		let emptyStackLabel = <HTMLSpanElement> utils.create("span", {
+		let emptyStackLabel = utils.create("span", {
 			innerHTML: Strings.ACCEPT_BY_EMPTY_STACK
 		});
 
@@ -176,7 +176,7 @@ export class initPDA {
 	}
 
 	private buildStack(container: HTMLElement[][]): void {
-		this.stackContainer = <HTMLDivElement> utils.create("div", {
+		this.stackContainer = utils.create("div", {
 			className: "none",
 			id: "stack"
 		});
@@ -188,7 +188,7 @@ export class initPDA {
 	}
 
 	private buildActionTree(container: HTMLElement[][]): void {
-		this.actionTreeContainer = <HTMLDivElement> utils.create("div", {
+		this.actionTreeContainer = utils.create("div", {
 			className: "none",
 			id: "action_tree"
 		});
@@ -200,7 +200,7 @@ export class initPDA {
 	}
 
 	private buildRecognitionProgress(container: HTMLElement[][]): void {
-		this.progressContainer = <HTMLDivElement> utils.create("div", {
+		this.progressContainer = utils.create("div", {
 			id: "recognition_progress"
 		});
 
@@ -210,20 +210,20 @@ export class initPDA {
 	}
 
 	private buildMultipleRecognition(container: HTMLElement[][]): void {
-		this.multipleCaseArea = <HTMLTextAreaElement> utils.create("textarea");
+		this.multipleCaseArea = utils.create("textarea");
 		this.multipleCaseArea.rows = Settings.multRecognitionAreaRows;
 		this.multipleCaseArea.cols = Settings.multRecognitionAreaCols;
 
-		this.multipleCaseResults = <HTMLDivElement> utils.create("div");
+		this.multipleCaseResults = utils.create("div");
 
-		let testCaseArea = <HTMLDivElement> utils.create("div", {
+		let testCaseArea = utils.create("div", {
 			id: "multiple_recognition"
 		});
 		testCaseArea.appendChild(this.multipleCaseArea);
 		testCaseArea.appendChild(this.multipleCaseResults);
 		container.push([testCaseArea]);
 
-		this.multipleCaseButton = <HTMLImageElement> utils.create("img", {
+		this.multipleCaseButton = utils.create("img", {
 			className: "image_button",
 			src: "images/play.svg",
 			title: Strings.START_MULTIPLE_RECOGNITION
@@ -275,7 +275,7 @@ export class initPDA {
 		}
 
 		for (let action of actionTree) {
-			let container = <HTMLDivElement> utils.create("div", {
+			let container = utils.create("div", {
 				className: "entry"
 			});
 
@@ -329,11 +329,11 @@ export class initPDA {
 		let emptyStackChecked = false;
 		let self = this;
 
-		let parsedInput = <HTMLSpanElement> utils.create("span", {
+		let parsedInput = utils.create("span", {
 			className: "parsed_input"
 		});
 
-		let remainingInput = <HTMLSpanElement> utils.create("span", {
+		let remainingInput = utils.create("span", {
 			className: "remaining_input"
 		});
 
@@ -487,7 +487,7 @@ export class initPDA {
 			for (let input of testCases) {
 				controller.fastForward(input);
 
-				let result = <HTMLSpanElement> utils.create("span");
+				let result = utils.create("span");
 				if (controller.accepts()) {
 					result.style.color = Settings.acceptedTestCaseColor;
 					result.innerHTML = Strings.INPUT_ACCEPTED;

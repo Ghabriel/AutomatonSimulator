@@ -24,7 +24,7 @@ export class Table extends Renderer {
 		while (index < this.children.length) {
 			let tr = utils.create("tr");
 			for (let j = 0; j < this.numColumns; j++) {
-				let td = <HTMLTableCellElement> utils.create("td");
+				let td = utils.create("td");
 				// the following condition won't be true if the table
 				// is incomplete (e.g 9 cells in a table with 5 columns)
 				if (index < this.children.length) {

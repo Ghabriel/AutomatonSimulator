@@ -300,7 +300,7 @@ export class AutomatonRenderer {
 			}
 
 			if (!definitionContainer) {
-				definitionContainer = <HTMLDivElement> utils.create("div");
+				definitionContainer = utils.create("div");
 				SignalEmitter.emitSignal({
 					targetID: Settings.sidebarSignalID,
 					identifier: "updateFormalDefinition",
@@ -309,7 +309,7 @@ export class AutomatonRenderer {
 			}
 
 			let formalDefinition = Settings.controller().formalDefinition();
-			let container = <HTMLSpanElement> utils.create("span");
+			let container = utils.create("span");
 			self.formalDefinitionRenderer.render(container, formalDefinition);
 
 			definitionContainer.innerHTML = "";
@@ -348,7 +348,7 @@ export class AutomatonRenderer {
 	}
 
 	private showEditableState(state: State): HTMLDivElement {
-		let container = <HTMLDivElement> utils.create("div");
+		let container = utils.create("div");
 		let table = new Table(3);
 		let canvas = this.canvas;
 		let self = this;
@@ -506,7 +506,7 @@ export class AutomatonRenderer {
 	}
 
 	private showEditableEdge(edge: Edge): HTMLDivElement {
-		let container = <HTMLDivElement> utils.create("div");
+		let container = utils.create("div");
 		let table = new Table(3);
 		let canvas = this.canvas;
 		let self = this;
@@ -626,7 +626,7 @@ export class AutomatonRenderer {
 										 id: "entity_target" }));
 		table.add(changeTargetButton);
 
-		let textSelector = <HTMLSelectElement> utils.create("select", {
+		let textSelector = utils.create("select", {
 			id: "entity_transition_list"
 		});
 		let textList = edge.getTextList();

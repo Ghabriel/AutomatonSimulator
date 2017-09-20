@@ -8,7 +8,7 @@ export interface Initializable {
 
 export class Initializer {
 	static exec(initList: {[m: number]: Initializable}): void {
-		utils.foreach(initList, function(index: number, obj: Initializable) {
+		utils.foreach(initList, function(index, obj) {
 			obj.init();
 		});
 	}

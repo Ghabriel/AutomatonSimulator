@@ -19,7 +19,7 @@ export class FormalDefinitionRenderer {
 		for (let parameter of formalDefinition.parameterSequence) {
 			let value = formalDefinition.parameterValues[parameter];
 			let type = typeof value;
-			let container = <HTMLSpanElement> utils.create("span");
+			let container = utils.create("span");
 
 			if (type == "number" || type == "string") {
 				container.innerHTML += parameter + " = " + value;
@@ -78,9 +78,9 @@ export class FormalDefinitionRenderer {
 		let htmlTable = tableWrapper.html();
 
 		for (let i = 0; i < list.length; i++) {
-			let row = <HTMLTableRowElement> utils.create("tr");
+			let row = utils.create("tr");
 			for (let j = 0; j < list[i].length; j++) {
-				let cell = <HTMLTableCellElement> utils.create("td");
+				let cell = utils.create("td");
 				cell.innerHTML = list[i][j];
 				row.appendChild(cell);
 			}
