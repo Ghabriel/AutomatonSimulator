@@ -134,15 +134,15 @@ export class AutomatonRenderer {
 			this.bindEdgeEvents(edge);
 		}
 
+		this.loadingMode = false;
+		this.formalDefinitionCallback();
+
 		this.frozenMemento = false;
 
 		if (pushResult) {
 			// Saves the resulting state
 			this.memento.push(this.save());
 		}
-
-		this.loadingMode = false;
-		this.formalDefinitionCallback();
 	}
 
 	public recognitionHighlight(stateNames: string[]): void {
