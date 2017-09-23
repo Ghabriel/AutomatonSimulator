@@ -111,10 +111,15 @@ export class State {
 			throw Error("Cannot call drag() on a non-rendered state");
 		}
 
+		interface MovingEntity {
+			ox: number;
+			oy: number;
+		}
+
 		let self = this;
 
 		// TODO: find a new home for all these functions
-		let begin = function(x, y, event) {
+		let begin = function(this: MovingEntity, x: any, y: any, event: any) {
 			let position = self.getPosition();
 			this.ox = position.x;
 			this.oy = position.y;
@@ -133,7 +138,9 @@ export class State {
 		} else {
 			callbackFrequency = 4;
 		}
-		let move = function(dx, dy, x, y, event) {
+		let move = function(this: MovingEntity, dx: number, dy: number,
+			x: any, y: any, event: any) {
+
 			self.setVisualPosition(this.ox + dx, this.oy + dy);
 			if (moveController == 0) {
 				moveCallback.call(this, event);
@@ -143,7 +150,7 @@ export class State {
 			return {};
 		};
 
-		let end = function(event) {
+		let end = function(this: MovingEntity, event: any) {
 			let position = self.getPosition();
 			let dx = position.x - this.ox;
 			let dy = position.y - this.oy;

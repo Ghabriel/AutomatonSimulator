@@ -3,7 +3,7 @@
  * elements inside a given parent container.
  */
 export abstract class Renderer {
-	bind(node: Element): void {
+	bind(node: HTMLElement): void {
 		this.node = node;
 		this.onBind();
 	}
@@ -17,5 +17,5 @@ export abstract class Renderer {
 	protected onBind(): void {}
 	protected abstract onRender(): void;
 
-	protected node: Element;
+	protected node: HTMLElement;
 }

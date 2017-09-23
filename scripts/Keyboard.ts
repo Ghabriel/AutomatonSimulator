@@ -60,4 +60,6 @@ export namespace Keyboard {
 		leftArrow: "←",
 		rightArrow: "→"
 	};
+
+	export type Key = keyof typeof keys;
 }

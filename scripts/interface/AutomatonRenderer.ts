@@ -13,12 +13,17 @@ import {System} from "../System"
 import {Table} from "./Table"
 import {Point, utils} from "../Utils"
 
+interface MouseEvent {
+	pageX: number;
+	pageY: number;
+}
+
 /**
  * Manages the UI representation of the automaton being manipulated, including
  * all related interactions.
  */
 export class AutomatonRenderer {
-	constructor(canvas: GUI.Canvas, node: Element,
+	constructor(canvas: GUI.Canvas, node: HTMLElement,
 				memento: Memento<string>,
 				persistenceHandler: PersistenceHandler) {
 		this.canvas = canvas;
@@ -213,9 +218,12 @@ export class AutomatonRenderer {
 
 	public receiveSignal(signal: Signal): SignalResponse|null {
 		if (signal.targetID == Settings.automatonRendererSignalID) {
+			let methodName = <keyof this> signal.identifier;
+			let method = <Function> <any> this[methodName];
+
 			return {
 				reacted: true,
-				response: this[signal.identifier].apply(this, signal.data)
+				response: method.apply(this, signal.data)
 			};
 		}
 
@@ -667,31 +675,32 @@ export class AutomatonRenderer {
 		}
 
 		let self = this;
-		$(this.node).dblclick(function(e) {
+		let node = this.node;
+		$(node).dblclick(function(e) {
 			// Avoids a bug where double clicking a Prompt
 			// would trigger a state creation
 			if (e.target.tagName.toLowerCase() == "svg") {
-				let x = e.pageX - this.offsetLeft;
-				let y = e.pageY - this.offsetTop;
+				let x = e.pageX - node.offsetLeft;
+				let y = e.pageY - node.offsetTop;
 				self.newStateAt(x, y);
 			}
 		});
 
-		$(this.node).contextmenu(function(e) {
+		$(node).contextmenu(function(e) {
 			e.preventDefault();
 			return false;
 		});
 
-		$(this.node).mousemove(function(e) {
+		$(node).mousemove(function(e) {
 			if (self.edgeMode) {
-				self.adjustEdge(this, e);
+				self.adjustEdge(node, e);
 			}
 		});
 	}
 
 	private bindEdgeEvents(edge: Edge) {
 		let self = this;
-		edge.addClickHandler(function() {
+		edge.addClickHandler(function(this: Edge) {
 			self.selectEdge(this);
 		});
 	}
@@ -838,7 +847,7 @@ export class AutomatonRenderer {
 		});
 	}
 
-	private adjustEdge(elem: HTMLElement, e): void {
+	private adjustEdge(elem: HTMLElement, e: MouseEvent): void {
 		let target = {
 			x: e.pageX - elem.offsetLeft,
 			y: e.pageY - elem.offsetTop
@@ -1209,7 +1218,7 @@ export class AutomatonRenderer {
 	}
 
 	private canvas: GUI.Canvas;
-	private node: Element;
+	private node: HTMLElement;
 	private stateList: State[] = [];
 	private edgeList: Edge[] = [];
 	private highlightedState: State|null = null;

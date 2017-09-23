@@ -5,6 +5,7 @@ export interface Point {
 	y: number;
 }
 
+type StringMap<T> = {[key: string]: T};
 type Map<T>
 	= {[key: string]: T}
 	| {[key: number]: T};
@@ -32,12 +33,12 @@ export namespace utils {
 
 		let result = document.createElement(tag);
 		if (props) {
-			this.foreach(props, function(key, value) {
+			foreach(props, function(key, value) {
 				// TODO: handle other events
 				if (key == "click") {
 					result.addEventListener("click", value);
 				} else {
-					result[key] = value;
+					result[<keyof typeof result> key] = value;
 				}
 			});
 		}
@@ -46,9 +47,9 @@ export namespace utils {
 
 	// Iterates over an object, applying a callback to each property.
 	export function foreach<T>(obj: Map<T>, callback: MapIteratorCallback<T>): void {
-		for (var i in obj) {
+		for (let i in obj) {
 			if (obj.hasOwnProperty(i)) {
-				if (callback(i, obj[i]) === false) {
+				if (callback(i, (<StringMap<T>> obj)[i]) === false) {
 					break;
 				}
 			}
@@ -96,7 +97,7 @@ export namespace utils {
 
 	// Draws a line from (x1,y1) to (x2,y2)
 	export function line(canvas: GUI.Canvas, x1: number, y1: number, x2: number, y2: number) {
-		var line = canvas.path(this.linePath(x1, y1, x2, y2));
+		var line = canvas.path(linePath(x1, y1, x2, y2));
 		// TODO: make the stroke color flexible
 		line.attr("stroke", "black");
 		return line;

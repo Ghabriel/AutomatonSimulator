@@ -96,7 +96,7 @@ export class Prompt {
 		let allInputsValid = function(): boolean {
 			let result: boolean = true;
 			for (let input of inputs) {
-				let index = input.id.replace(inputIdPrefix, "");
+				let index = parseInt(input.id.replace(inputIdPrefix, ""));
 				let validator = self.inputs[index].validator;
 				if (validator) {
 					if (validator(input.value)) {
@@ -117,7 +117,7 @@ export class Prompt {
 				let allValid = true;
 				let contents: string[] = [];
 				for (let input of inputs) {
-					let index = input.id.replace(inputIdPrefix, "");
+					let index = parseInt(input.id.replace(inputIdPrefix, ""));
 					let validator = self.inputs[index].validator;
 					if (validator && !validator(input.value)) {
 						allValid = false;

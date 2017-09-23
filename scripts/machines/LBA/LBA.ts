@@ -6,6 +6,8 @@ type State = string;
 type Index = number;
 type Alphabet = {[i: string]: number};
 
+type SymbolLocation = "inputAlphabet" | "tapeAlphabet";
+
 enum Direction {
 	LEFT, RIGHT
 }
@@ -366,7 +368,8 @@ export class LBA {
 		return (direction == Direction.LEFT) ? -1 : 1;
 	}
 
-	private addSymbol(location: string, symbol: string): void {
+	private addSymbol(location: SymbolLocation, symbol: string): void {
+
 		if (!this[location].hasOwnProperty(symbol)) {
 			this[location][symbol] = 0;
 		}
@@ -381,7 +384,7 @@ export class LBA {
 		this.addSymbol("tapeAlphabet", symbol);
 	}
 
-	public removeSymbol(location: string, symbol: string): void {
+	public removeSymbol(location: SymbolLocation, symbol: string): void {
 		this[location][symbol]--;
 		if (this[location][symbol] == 0) {
 			delete this[location][symbol];

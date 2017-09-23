@@ -7,10 +7,15 @@ interface KeyboardObserver {
 	group?: string;
 }
 
-interface KeyboardKeyPress {
+interface SpecialKeyMapping {
 	altKey: boolean;
 	ctrlKey: boolean;
 	shiftKey: boolean;
+}
+
+type SpecialKey = keyof SpecialKeyMapping;
+
+interface KeyboardKeyPress extends SpecialKeyMapping {
 	keyCode: number;
 	preventDefault: () => void;
 }
@@ -25,7 +30,7 @@ interface MachineChangeObserver {
 
 const modifiers = ["alt", "ctrl", "shift"];
 
-function propertyName(type) {
+function propertyName(type: string) {
 	return type + "Key";
 }
 
@@ -37,7 +42,7 @@ function propertyName(type) {
 export class System {
 	// Changes the system language and then notifies all
 	// the language change observers.
-	static changeLanguage(language): void {
+	static changeLanguage(language: Settings.Language): void {
 		Settings.changeLanguage(language);
 		for (let listener of this.languageChangeObservers) {
 			listener.onLanguageChange();
@@ -68,19 +73,19 @@ export class System {
 	// Triggers a key event as if the user himself
 	// had pressed the corresponding keys.
 	static emitKeyEvent(keys: string[]): void {
-		let event = {
+		let event: Partial<KeyboardKeyPress> = {
 			preventDefault: function() {}
 		};
 
 		for (let modifier of modifiers) {
-			event[propertyName(modifier)] = false;
+			event[<SpecialKey> propertyName(modifier)] = false;
 		}
 
 		for (let key of keys) {
 			if (modifiers.indexOf(key) >= 0) {
-				event[propertyName(key)] = true;
+				event[<SpecialKey> propertyName(key)] = true;
 			} else {
-				event["keyCode"] = Keyboard.keys[key.toUpperCase()];
+				event.keyCode = Keyboard.keys[<Keyboard.Key> key.toUpperCase()];
 			}
 		}
 
@@ -146,10 +151,10 @@ export class System {
 		for (let key of keys) {
 			if (modifiers.indexOf(key) >= 0) {
 				expectedModifiers.push(key);
-				if (!event[propertyName(key)]) {
+				if (!event[<SpecialKey> propertyName(key)]) {
 					return false;
 				}
-			} else if (event.keyCode != Keyboard.keys[key]) {
+			} else if (event.keyCode != Keyboard.keys[<Keyboard.Key> key]) {
 				return false;
 			}
 		}
@@ -157,7 +162,7 @@ export class System {
 		// Ignores the key combination if there are extra modifiers being pressed
 		for (let modifier of modifiers) {
 			if (expectedModifiers.indexOf(modifier) == -1) {
-				if (event[propertyName(modifier)]) {
+				if (event[<SpecialKey> propertyName(modifier)]) {
 					return false;
 				}
 			}

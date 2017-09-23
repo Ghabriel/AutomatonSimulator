@@ -28,7 +28,7 @@ export class UI {
 
 	bindComponents(): void {
 		for (let pair of this.components) {
-			pair[1].bind(utils.id(pair[0])!);
+			pair[1].bind(<HTMLElement> utils.id(pair[0])!);
 		}
 	}
 

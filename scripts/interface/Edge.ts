@@ -531,7 +531,7 @@ export class Edge {
 	// The click events of this edge.
 	private clickHandlers: (() => void)[] = [];
 
-	private clickCallback: (Event) => void;
+	private clickCallback: (event: Event) => void;
 
 	private currentEdgeType: EdgeType;
 }

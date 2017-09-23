@@ -24,7 +24,8 @@ export namespace Browser {
 
 		let browserName = "";
 		let version = "Unknown";
-		for (let name in data) {
+		let name: keyof typeof data;
+		for (name in data) {
 			if (data.hasOwnProperty(name) && data[name]) {
 				browserName = name;
 				let regex = new RegExp(name + "( |/)([0-9]+)");

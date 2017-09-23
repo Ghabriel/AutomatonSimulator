@@ -9,6 +9,8 @@ type GammaClosure = string;
 type InternalTransitionInformation = [Index, GammaClosure][];
 export type TransitionInformation = [State, GammaClosure];
 
+type SymbolLocation = "inputAlphabet" | "stackAlphabet";
+
 interface Action {
 	stepIndex: number;
 	currentInput: string;
@@ -218,7 +220,7 @@ export class PDA {
 		utils.foreach(this.transitions, function(index, stateTransitions) {
 			utils.foreach(stateTransitions, function(input, indexedByStack) {
 				utils.foreach(indexedByStack, function(stackRead, info) {
-					let sourceState = self.stateList[index]!;
+					let sourceState = self.stateList[parseInt(index)]!;
 					for (let group of info) {
 						let targetState = self.stateList[group[0]]!;
 						callback(sourceState, [targetState, group[1]], input, stackRead);
@@ -415,7 +417,7 @@ export class PDA {
 		let result: Action[] = [];
 		let self = this;
 
-		let handleInputSymbol = function(inputSymbol) {
+		let handleInputSymbol = function(inputSymbol: string) {
 			if (availableTransitions.hasOwnProperty(inputSymbol)) {
 				let indexedByStack = availableTransitions[inputSymbol];
 				// TODO: handle empty stack
@@ -463,7 +465,7 @@ export class PDA {
 		this.currentState = action.targetState;
 	}
 
-	private addSymbol(location: string, symbol: string): void {
+	private addSymbol(location: SymbolLocation, symbol: string): void {
 		if (symbol.length > 0) {
 			if (!this[location].hasOwnProperty(symbol)) {
 				this[location][symbol] = 0;
@@ -480,7 +482,7 @@ export class PDA {
 		this.addSymbol("stackAlphabet", symbol);
 	}
 
-	public removeSymbol(location: string, symbol: string): void {
+	public removeSymbol(location: SymbolLocation, symbol: string): void {
 		if (symbol.length > 0) {
 			this[location][symbol]--;
 			if (this[location][symbol] == 0) {

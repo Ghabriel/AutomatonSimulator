@@ -183,17 +183,17 @@ export class initFA {
 
 		let appended = false;
 
-		let fastForwardStatus = function(enabled) {
+		let fastForwardStatus = function(enabled: boolean) {
 			fastForwardEnabled = enabled;
 			self.fastRecognition.classList[enabled ? "remove" : "add"](disabledClass);
 		};
 
-		let stepStatus = function(enabled) {
+		let stepStatus = function(enabled: boolean) {
 			stepEnabled = enabled;
 			self.stepRecognition.classList[enabled ? "remove" : "add"](disabledClass);
 		};
 
-		let stopStatus = function(enabled) {
+		let stopStatus = function(enabled: boolean) {
 			stopEnabled = enabled;
 			self.stopRecognition.classList[enabled ? "remove" : "add"](disabledClass);
 		};
@@ -339,7 +339,8 @@ export class initFA {
 		// is not used here and the test case input vanishes when the system
 		// language is changed.
 		this.testCaseInput.addEventListener("keydown", function(e) {
-			if (e.keyCode == Keyboard.keys[Settings.shortcuts.dimTestCase[0]]) {
+			let key = <Keyboard.Key> Settings.shortcuts.dimTestCase[0];
+			if (e.keyCode == Keyboard.keys[key]) {
 				self.testCaseInput.blur();
 			}
 		});

@@ -113,7 +113,7 @@ export class JSONHandler implements PersistenceHandler {
 	}
 
 	private loadStates(dataObj: any, result: AutomatonSummary,
-						callback: (State) => void): StateNameMapping {
+						callback: (state: State) => void): StateNameMapping {
 		let nameToIndex: StateNameMapping = {};
 		let controller = Settings.controller();
 

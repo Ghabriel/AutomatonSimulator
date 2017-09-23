@@ -145,6 +145,9 @@ export namespace Settings {
 	// TODO: maybe using a cookie to get the default language is a good idea
 	export var language = lang.english;
 
+	export type Language = typeof language;
+	type LanguageLabel = keyof typeof language.strings;
+
 	// The current machine being operated on. Defaults to the first machine
 	// of the Machine enum (unless changed, that means FA)
 	export var currentMachine = 0;
@@ -156,7 +159,15 @@ export namespace Settings {
 
 	// Helper method to get the current controller
 	export function controller(): Controller {
-		return this.machines[this.currentMachine].controller;
+		return machines[currentMachine].controller;
+	}
+
+	function getController(name: string): Controller {
+		return new (<any> controllers)[name + "Controller"]();
+	}
+
+	function getInitializable(name: string): Initializable {
+		return new (<any> init)["init" + name]();
 	}
 
 	let firstUpdate = true;
@@ -164,8 +175,10 @@ export namespace Settings {
 		if (firstUpdate) {
 			for (let index in Machine) {
 				if (Machine.hasOwnProperty(index) && !isNaN(parseInt(index))) {
-					controllerMap[index] = new controllers[Machine[index] + "Controller"]();
-					initializerMap[index] = new init["init" + Machine[index]]();
+					// controllerMap[index] = new controllers[Machine[index] + "Controller"]();
+					// initializerMap[index] = new init["init" + Machine[index]]();
+					controllerMap[index] = getController(Machine[index]);
+					initializerMap[index] = getInitializable(Machine[index]);
 				}
 			}
 		}
@@ -176,7 +189,7 @@ export namespace Settings {
 				// Stores the traits of this machine. Note that the
 				// "sidebar" property is filled by the init* classes.
 				machineList[index] = {
-					name: language.strings[Machine[index]],
+					name: language.strings[<LanguageLabel> Machine[index]],
 					abbreviatedName: Machine[index],
 					sidebar: [],
 					controller: controllerMap[index],
@@ -186,7 +199,7 @@ export namespace Settings {
 		}
 
 		utils.foreach(machineList, function(key, value) {
-			machines[key] = value;
+			machines[parseInt(key)] = value;
 		});
 
 		Initializer.exec(initializerMap);
@@ -198,7 +211,7 @@ export namespace Settings {
 		firstUpdate = false;
 	}
 
-	export function changeLanguage(newLanguage): void {
+	export function changeLanguage(newLanguage: Language): void {
 		language = newLanguage;
 		Strings = language.strings;
 		update();

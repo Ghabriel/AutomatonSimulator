@@ -62,9 +62,12 @@ export class Sidebar extends Renderer {
 
 	public receiveSignal(signal: Signal): SignalResponse|null {
 		if (signal.targetID == Settings.sidebarSignalID) {
+			let methodName = <keyof this> signal.identifier;
+			let method = <Function> <any> this[methodName];
+
 			return {
 				reacted: true,
-				response: this[signal.identifier].apply(this, signal.data)
+				response: method.apply(this, signal.data)
 			};
 		}
 
@@ -179,7 +182,7 @@ export class Sidebar extends Renderer {
 	private buildLanguageSelection(table: Table): void {
 		let select = utils.create("select");
 		let languages = Settings.languages;
-		let languageTable = {};
+		let languageTable: {[index: number]: string} = {};
 		let i = 0;
 		utils.foreach(languages, function(moduleName, obj) {
 			// There might be an extra field called "__esModule",
@@ -202,7 +205,7 @@ export class Sidebar extends Renderer {
 		select.addEventListener("change", function(e) {
 			let node = <HTMLSelectElement> this;
 			let option = <HTMLOptionElement> node.options[node.selectedIndex];
-			let index = option.value;
+			let index = parseInt(option.value);
 			let name = option.innerHTML;
 			let confirmation = confirm(Strings.CHANGE_LANGUAGE.replace("%", name));
 			if (confirmation) {
@@ -306,7 +309,7 @@ export class Sidebar extends Renderer {
 			className: "file_manip_btn",
 			type: "button",
 			value: Strings.OPEN,
-			click: function() {
+			click: function(this: HTMLInputElement) {
 				fileSelector.click();
 				this.blur();
 			}
