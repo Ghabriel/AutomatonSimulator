@@ -1,3 +1,4 @@
+import {Initializable} from "../../Initializer"
 import {Keyboard} from "../../Keyboard"
 import {Menu} from "../../interface/Menu"
 import {Settings, Strings} from "../../Settings"
@@ -5,9 +6,9 @@ import {SignalEmitter} from "../../SignalEmitter"
 import {System} from "../../System"
 import {utils} from "../../Utils"
 
-export class initFA {
+export class initFA implements Initializable {
 	public init(): void {
-		console.log("[FA] Initializing...");
+		// console.log("[FA] Initializing...");
 		let menuList: Menu[] = [];
 
 		let recognitionMenu = new Menu(Strings.RECOGNITION);
@@ -31,19 +32,19 @@ export class initFA {
 		this.bindRecognitionEvents();
 
 		Settings.machines[Settings.Machine.FA].sidebar = menuList;
-		console.log("[FA] Initialized successfully");
+		// console.log("[FA] Initialized successfully");
 	}
 
 	public onEnter(): void {
 		this.bindShortcuts();
 		System.unlockShortcutGroup(this.shortcutGroup);
-		console.log("[FA] Bound events");
+		// console.log("[FA] Bound events");
 	}
 
 	public onExit(): void {
 		this.stopRecognition.click();
 		System.lockShortcutGroup(this.shortcutGroup);
-		console.log("[FA] Unbound events");
+		// console.log("[FA] Unbound events");
 	}
 
 	readonly shortcutGroup = "FA";

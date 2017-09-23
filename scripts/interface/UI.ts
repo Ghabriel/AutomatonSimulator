@@ -19,14 +19,13 @@ export class UI {
 		this.bindComponents();
 	}
 
-	render(): void {
+	public render(): void {
 		for (let pair of this.components) {
 			pair[1].render();
 		}
-		console.log("Interface ready.");
 	}
 
-	bindComponents(): void {
+	public bindComponents(): void {
 		for (let pair of this.components) {
 			pair[1].bind(<HTMLElement> utils.id(pair[0])!);
 		}

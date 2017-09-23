@@ -1,16 +1,17 @@
+import {Initializable} from "../../Initializer"
 import {Keyboard} from "../../Keyboard"
+import {Menu} from "../../interface/Menu"
 import {AcceptingHeuristic} from "./PDA"
 import {PDAController} from "./PDAController"
-import {Menu} from "../../interface/Menu"
 import {Settings, Strings} from "../../Settings"
 import {SignalEmitter} from "../../SignalEmitter"
 import {System} from "../../System"
 import {Table} from "../../interface/Table"
 import {utils} from "../../Utils"
 
-export class initPDA {
+export class initPDA implements Initializable {
 	public init(): void {
-		console.log("[PDA] Initializing...");
+		// console.log("[PDA] Initializing...");
 		let menuList: Menu[] = [
 			this.buildRecognitionMenu(),
 			this.buildStackContentMenu(),
@@ -21,19 +22,19 @@ export class initPDA {
 		this.bindRecognitionEvents();
 
 		Settings.machines[Settings.Machine.PDA].sidebar = menuList;
-		console.log("[PDA] Initialized successfully");
+		// console.log("[PDA] Initialized successfully");
 	}
 
 	public onEnter(): void {
 		this.bindShortcuts();
 		System.unlockShortcutGroup(this.shortcutGroup);
-		console.log("[PDA] Bound events");
+		// console.log("[PDA] Bound events");
 	}
 
 	public onExit(): void {
 		this.stopRecognition.click();
 		System.lockShortcutGroup(this.shortcutGroup);
-		console.log("[PDA] Unbound events");
+		// console.log("[PDA] Unbound events");
 	}
 
 	readonly shortcutGroup = "PDA";

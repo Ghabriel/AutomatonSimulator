@@ -3,15 +3,15 @@
  * amortized O(1) complexity for all operations.
  */
 export class Queue<T> {
-	push(value: T): void {
+	public push(value: T): void {
 		this.data.push(value);
 	}
 
-	front(): T {
+	public front(): T {
 		return this.data[this.pointer];
 	}
 
-	pop(): T {
+	public pop(): T {
 		let result = this.front();
 		this.pointer++;
 		if (this.pointer >= this.size() / 2) {
@@ -21,16 +21,16 @@ export class Queue<T> {
 		return result;
 	}
 
-	clear(): void {
+	public clear(): void {
 		this.data = [];
 		this.pointer = 0;
 	}
 
-	empty(): boolean {
+	public empty(): boolean {
 		return this.size() == 0;
 	}
 
-	size(): number {
+	public size(): number {
 		return this.data.length - this.pointer;
 	}
 

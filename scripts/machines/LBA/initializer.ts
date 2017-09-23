@@ -1,3 +1,4 @@
+import {Initializable} from "../../Initializer"
 import {Keyboard} from "../../Keyboard"
 import {LBAController} from "./LBAController"
 import {Menu} from "../../interface/Menu"
@@ -7,9 +8,9 @@ import {System} from "../../System"
 import {Table} from "../../interface/Table"
 import {utils} from "../../Utils"
 
-export class initLBA {
+export class initLBA implements Initializable {
 	public init(): void {
-		console.log("[LBA] Initializing...");
+		// console.log("[LBA] Initializing...");
 		let menuList: Menu[] = [];
 
 		let recognitionMenu = new Menu(Strings.RECOGNITION);
@@ -34,19 +35,19 @@ export class initLBA {
 		this.bindRecognitionEvents();
 
 		Settings.machines[Settings.Machine.LBA].sidebar = menuList;
-		console.log("[LBA] Initialized successfully");
+		// console.log("[LBA] Initialized successfully");
 	}
 
 	public onEnter(): void {
 		this.bindShortcuts();
 		System.unlockShortcutGroup(this.shortcutGroup);
-		console.log("[LBA] Bound events");
+		// console.log("[LBA] Bound events");
 	}
 
 	public onExit(): void {
 		this.stopRecognition.click();
 		System.lockShortcutGroup(this.shortcutGroup);
-		console.log("[LBA] Unbound events");
+		// console.log("[LBA] Unbound events");
 	}
 
 	readonly shortcutGroup = "LBA";

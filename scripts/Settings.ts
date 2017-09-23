@@ -33,7 +33,7 @@ export namespace Settings {
 
 	export const canvasShortcutID = "canvas";
 
-	export var undoMaxAmount = 2;
+	export let undoMaxAmount = 3;
 
 	export const menuSlideInterval = 300;
 	export const promptSlideHideInterval = 100;
@@ -143,19 +143,19 @@ export namespace Settings {
 	export const Machine = automata.Machine;
 
 	// TODO: maybe using a cookie to get the default language is a good idea
-	export var language = lang.english;
+	export let language = lang.english;
 
 	export type Language = typeof language;
 	type LanguageLabel = keyof typeof language.strings;
 
 	// The current machine being operated on. Defaults to the first machine
 	// of the Machine enum (unless changed, that means FA)
-	export var currentMachine = 0;
+	export let currentMachine = 0;
 
-	export var machines: {[m: number]: MachineTraits} = {};
+	export let machines: {[m: number]: MachineTraits} = {};
 
-	export var controllerMap: {[m: number]: Controller} = {};
-	export var initializerMap: {[m: number]: Initializable} = {};
+	export let controllerMap: {[m: number]: Controller} = {};
+	export let initializerMap: {[m: number]: Initializable} = {};
 
 	// Helper method to get the current controller
 	export function controller(): Controller {
@@ -224,7 +224,7 @@ export namespace Settings {
 	}
 }
 
-export var Strings = Settings.language.strings;
+export let Strings = Settings.language.strings;
 
 // Settings.update();
 // Initializer.exec();
