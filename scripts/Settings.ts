@@ -2,6 +2,7 @@ import * as automata from "./lists/MachineList"
 import * as controllers from "./lists/ControllerList"
 import * as lang from "./lists/LanguageList"
 import * as init from "./lists/InitializerList"
+import * as operations from "./lists/OperationList"
 
 // import {Regex} from "./misc/Regex"
 import {Controller} from "./Controller"
@@ -9,12 +10,22 @@ import {Initializable, Initializer} from "./Initializer"
 import {StatePalette, EdgePalette} from "./Palette"
 import {utils} from "./Utils"
 
+type Operation = (...args: any[]) => any;
+type OperationMap = {[name: string]: Operation};
+type MachineName = keyof typeof operations;
+
+interface OperationDefinition {
+	name: string;
+	command: Operation;
+}
+
 interface MachineTraits {
 	name: string;
 	abbreviatedName: string;
 	sidebar: any[];
 	controller: Controller;
 	initializer: Initializable;
+	operations: OperationMap;
 }
 
 /**
@@ -154,20 +165,37 @@ export namespace Settings {
 
 	export let machines: {[m: number]: MachineTraits} = {};
 
-	export let controllerMap: {[m: number]: Controller} = {};
-	export let initializerMap: {[m: number]: Initializable} = {};
-
 	// Helper method to get the current controller
 	export function controller(): Controller {
 		return machines[currentMachine].controller;
 	}
 
-	function getController(name: string): Controller {
+	// Helper method to get the supported operations
+	// of the current controller
+	export function supportedOperations(): OperationMap {
+		return machines[currentMachine].operations;
+	}
+
+	let controllerMap: {[m: number]: Controller} = {};
+	let initializerMap: {[m: number]: Initializable} = {};
+	let operationMap: {[m: number]: OperationMap} = {};
+
+	function getController(name: MachineName): Controller {
 		return new (<any> controllers)[name + "Controller"]();
 	}
 
-	function getInitializable(name: string): Initializable {
+	function getInitializable(name: MachineName): Initializable {
 		return new (<any> init)["init" + name]();
+	}
+
+	type Map<T> = {[key: string]: T};
+	function buildOperationMap(map: Map<OperationDefinition>): OperationMap {
+		let result: OperationMap = {};
+		utils.foreach(map, function(filename, definition) {
+			result[definition.name] = definition.command;
+		});
+
+		return result;
 	}
 
 	let firstUpdate = true;
@@ -177,8 +205,10 @@ export namespace Settings {
 				if (Machine.hasOwnProperty(index) && !isNaN(parseInt(index))) {
 					// controllerMap[index] = new controllers[Machine[index] + "Controller"]();
 					// initializerMap[index] = new init["init" + Machine[index]]();
-					controllerMap[index] = getController(Machine[index]);
-					initializerMap[index] = getInitializable(Machine[index]);
+					let machineName = <MachineName> Machine[index];
+					controllerMap[index] = getController(machineName);
+					initializerMap[index] = getInitializable(machineName);
+					operationMap[index] = buildOperationMap(operations[machineName]);
 				}
 			}
 		}
@@ -193,7 +223,8 @@ export namespace Settings {
 					abbreviatedName: Machine[index],
 					sidebar: [],
 					controller: controllerMap[index],
-					initializer: initializerMap[index]
+					initializer: initializerMap[index],
+					operations: operationMap[index]
 				};
 			}
 		}

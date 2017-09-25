@@ -246,7 +246,7 @@ div.row {
 	font-style: italic;
 }
 
-#machine_actions input[type="button"] {
+#machine_actions input[type="button"], #operation_list input[type="button"] {
 	width: 100%;
 }
 

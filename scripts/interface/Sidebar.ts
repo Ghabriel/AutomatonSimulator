@@ -12,6 +12,16 @@ import {System} from "../System"
 import {Table} from "./Table"
 import {utils} from "../Utils"
 
+interface SidebarMenus {
+	settings: Menu;
+	fileManipulation: Menu;
+	machineSelection: Menu;
+	formalDefinition: Menu;
+	selectedEntity: Menu;
+	actionMenu: Menu;
+	operationMenu: Menu;
+}
+
 /**
  * Encapsulates the sidebar and all its behaviors.
  */
@@ -30,6 +40,14 @@ export class Sidebar extends Renderer {
 			}
 		});
 
+		System.addMachineChangeObserver({
+			onMachineChange: function() {
+				self.mainMenus.operationMenu.clearContent();
+				self.buildOperationMenu();
+				self.mainMenus.operationMenu.render();
+			}
+		})
+
 		SignalEmitter.addSignalObserver(this);
 	}
 
@@ -42,6 +60,7 @@ export class Sidebar extends Renderer {
 			formalDefinition: new Menu(Strings.FORMAL_DEFINITION),
 			selectedEntity: new Menu(Strings.SELECTED_ENTITY),
 			actionMenu: new Menu(Strings.ACTION_LIST),
+			operationMenu: new Menu(Strings.OPERATIONS),
 		};
 
 		this.buildSettings();
@@ -49,6 +68,11 @@ export class Sidebar extends Renderer {
 		this.buildSelectedEntityArea();
 		this.buildMachineSelection();
 		this.buildActionMenu();
+		this.buildOperationMenu();
+
+		// Hides some menus by default
+		this.mainMenus.settings.toggle();
+		this.mainMenus.operationMenu.toggle();
 
 		this.contentWrapper = utils.create("div", {
 			id: "sidebar_content"
@@ -116,26 +140,32 @@ export class Sidebar extends Renderer {
 	}
 
 	protected onBind(): void {
-		let self = this;
+		let contentWrapper = this.contentWrapper;
 
-		if (this.contentWrapper.parentElement === null) {
-			this.node.appendChild(this.contentWrapper);
+		if (contentWrapper.parentElement === null) {
+			this.node.appendChild(contentWrapper);
 		}
 
-		utils.foreach(this.mainMenus, function(name, menu) {
-			menu.bind(self.contentWrapper);
+		this.foreachMenu(function(name, menu) {
+			menu.bind(contentWrapper);
 		});
 
 		for (let menu of this.otherMenus) {
-			menu.bind(this.contentWrapper);
+			menu.bind(contentWrapper);
 		}
 	}
 
 	protected onRender(): void {
-		utils.foreach(this.mainMenus, function(name, menu) {
+		this.foreachMenu(function(name, menu) {
 			menu.render();
 		});
 		this.renderDynamicMenus();
+	}
+
+	private foreachMenu(callback: (name: string, menu: Menu) => void) {
+		utils.foreach(this.mainMenus, function(name, menu: Menu) {
+			callback(name, menu);
+		});
 	}
 
 	// Clears the "selected entity area" except for the "none container".
@@ -174,9 +204,6 @@ export class Sidebar extends Renderer {
 		this.buildLanguageSelection(table);
 		this.buildUndoMaxCountInput(table);
 		settings.add(table.html());
-
-		// Hides the system settings by default
-		settings.toggle();
 	}
 
 	private buildLanguageSelection(table: Table): void {
@@ -431,14 +458,49 @@ export class Sidebar extends Renderer {
 		});
 		table.add(clearMachine, 2);
 
-		let actionMenu = this.mainMenus.actionMenu;
 		let tableElement = table.html();
 		tableElement.id = "machine_actions";
-		actionMenu.add(tableElement);
+
+		this.mainMenus.actionMenu.add(tableElement);
+	}
+
+	private buildOperationMenu(): void {
+		let table = new Table(1);
+		let controller = Settings.controller();
+		let operations = Settings.supportedOperations();
+
+		let hasOperations: boolean = false;
+		utils.foreach(operations, function(name, operation) {
+			hasOperations = true;
+
+			let button = utils.create("input", {
+				type: "button",
+				value: Strings[<keyof typeof Strings> name.toUpperCase()],
+				click: function() {
+					controller.applyOperation(operation);
+				}
+			});
+
+			table.add(button);
+		});
+
+		if (!hasOperations) {
+			let none = utils.create("span", {
+				className: "none",
+				innerHTML: Strings.NO_OPERATIONS
+			});
+
+			this.mainMenus.operationMenu.add(none);
+			return;
+		}
+
+		let tableElement = table.html();
+		tableElement.id = "operation_list";
+		this.mainMenus.operationMenu.add(tableElement);
 	}
 
 	private contentWrapper: HTMLDivElement;
-	private mainMenus: {[name: string]: Menu};
+	private mainMenus: SidebarMenus;
 	private otherMenus: Menu[] = [];
 	private machineButtonMapping: {[type: number]: HTMLInputElement} = {};
 }

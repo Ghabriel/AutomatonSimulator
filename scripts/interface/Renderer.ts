@@ -3,12 +3,12 @@
  * elements inside a given parent container.
  */
 export abstract class Renderer {
-	bind(node: HTMLElement): void {
+	public bind(node: HTMLElement): void {
 		this.node = node;
 		this.onBind();
 	}
 
-	render(): void {
+	public render(): void {
 		if (this.node) {
 			this.onRender();
 		}

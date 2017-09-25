@@ -1,4 +1,4 @@
-import {Controller, FormalDefinition, TransitionTable} from "../../Controller"
+import {Controller, FormalDefinition, Operation, TransitionTable} from "../../Controller"
 import {AcceptingHeuristic, ActionInformation, PDA, TransitionInformation} from "./PDA"
 import {Keyboard} from "../../Keyboard"
 import {Prompt} from "../../Prompt"
@@ -224,6 +224,8 @@ export class PDAController implements Controller {
 	public setEditingCallback(callback: () => void): void {
 		this.editingCallback = callback;
 	}
+
+	public applyOperation(operation: Operation): void {}
 
 	private index(state: State): number {
 		return this.stateMapping[state.getName()];

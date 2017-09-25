@@ -5,6 +5,10 @@ export interface Point {
 	y: number;
 }
 
+type NonIndexedMap<C,T> = {
+	[P in keyof C]: T
+};
+
 type StringMap<T> = {[key: string]: T};
 type Map<T>
 	= {[key: string]: T}
@@ -46,7 +50,11 @@ export namespace utils {
 	}
 
 	// Iterates over an object, applying a callback to each property.
-	export function foreach<T>(obj: Map<T>, callback: MapIteratorCallback<T>): void {
+	export function foreach<T>(obj: Map<T>, callback: MapIteratorCallback<T>): void;
+	export function foreach<T,V>(obj: NonIndexedMap<T,V>,
+		callback: MapIteratorCallback<any>): void;
+
+	export function foreach<T>(obj: any, callback: any): void {
 		for (let i in obj) {
 			if (obj.hasOwnProperty(i)) {
 				if (callback(i, (<StringMap<T>> obj)[i]) === false) {

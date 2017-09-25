@@ -20,6 +20,8 @@ export interface TransitionTable {
 	metadata: [string, string][];
 }
 
+export type Operation = (...args: any[]) => any;
+
 /**
  * Generic interface that specifies the mandatory methods of a controller.
  */
@@ -58,4 +60,7 @@ export interface Controller {
 	currentStates(): string[];
 	accepts(): boolean;
 	formalDefinition(): FormalDefinition;
+
+	// Support to machine operations
+	applyOperation(operation: Operation): void;
 }

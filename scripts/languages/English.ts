@@ -36,6 +36,8 @@ export namespace english {
 		NO_TRANSITIONS: "none",
 		SELECT_MACHINE: "Machine Selection",
 		ACTION_LIST: "Actions",
+		OPERATIONS: "Operations",
+		NO_OPERATIONS: "No supported operations",
 		CREATE_STATE: "Create state",
 		CREATE_EDGE: "Create transition",
 		CLEAR_MACHINE: "Clear machine",
@@ -89,5 +91,6 @@ export namespace english {
 		PDA_FIELD_WRITE: "Write",
 		PDA_FIELD_TARGET_STATE: "Target state",
 		ERROR_INVALID_STATE_NAME: "Invalid state name",
+		DETERMINIZATION: "Determinization",
 	};
 }

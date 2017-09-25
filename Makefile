@@ -18,6 +18,7 @@ LANGLIST        :=$(LISTS)/LanguageList.ts
 CONTROLLERLIST  :=$(LISTS)/ControllerList.ts
 INITLIST        :=$(LISTS)/InitializerList.ts
 MACHINELIST     :=$(LISTS)/MachineList.ts
+OPERATIONLIST   :=$(LISTS)/OperationList.ts
 JSBASE          :=base.js
 MAINFILE        :=main.js
 JSTESTS         :=tests.js
@@ -36,6 +37,8 @@ PRIORITY        :=$(shell cat $(PRIORITYFILE))
 PRIORITY        :=$(filter-out $(filter-out $(MACHINE_NAMES),$(PRIORITY)),$(PRIORITY))
 MACHINE_NAMES   :=$(PRIORITY) $(filter-out $(PRIORITY),$(MACHINE_NAMES))
 
+LISTS           :=$(CONTROLLERLIST) $(INITLIST) $(MACHINELIST) $(OPERATIONLIST)
+
 .PHONY: all dirs libs languages machines raw simple tests clean
 
 all: dirs libs languages machines $(JS)/$(MAINFILE)
@@ -46,7 +49,7 @@ $(JS)/$(MAINFILE): $(TSFILES)
 		touch $(JS)/$(JSBASE); \
 		truncate -s 0 $(JS)/$(JSBASE); \
 	else\
-		tsc --strict --removeComments --noImplicitReturns --module amd --outFile $(JS)/$(JSBASE) $(MAINTS); \
+		tsc --strict --sourceMap --removeComments --noImplicitReturns --module amd --outFile $(JS)/$(JSBASE) $(MAINTS); \
 	fi
 
 	@if [ "$(COMPRESS)" = "1" ]; then \
@@ -65,7 +68,7 @@ libs: | $(LIBNAMES)
 
 languages: $(LANGLIST)
 
-machines: $(CONTROLLERLIST) $(INITLIST) $(MACHINELIST)
+machines: $(LISTS)
 
 raw: COMPRESS :=0
 raw: all
@@ -81,16 +84,27 @@ $(LANGLIST): $(TS)/$(LANGFOLDER)/*.ts
 		echo "export * from \"../$(LANGFOLDER)/$$file\"" >> $(LANGLIST); \
 	done
 
-$(CONTROLLERLIST) $(INITLIST) $(MACHINELIST): $(TS)/$(MACHINES) $(PRIORITYFILE)
+$(LISTS): $(TS)/$(MACHINES) $(PRIORITYFILE)
 	@echo "[aux files] Building auxiliary enums"
 	@truncate -s 0 $(CONTROLLERLIST)
 	@truncate -s 0 $(INITLIST)
 	@truncate -s 0 $(MACHINELIST)
+	@truncate -s 0 $(OPERATIONLIST)
 
 	@printf "export enum Machine {\n\t" >> $(MACHINELIST);
 	@for name in $(MACHINE_NAMES); do \
-		echo "export * from \"../$(MACHINES)/$$name/$${name}Controller\"" >> $(CONTROLLERLIST); \
-		echo "export * from \"../$(MACHINES)/$$name/initializer\"" >> $(INITLIST); \
+		prefix="../$(MACHINES)/$$name"; \
+		operations=`find $(TS)/$(MACHINES)/$$name/operations/ -mindepth 1 2> /dev/null`; \
+		mappings=""; \
+		for op in $$operations; do \
+			op=$${op##*/}; \
+			op=$${op%.*}; \
+			echo "import * as $${name}_$${op} from \"$${prefix}/operations/$${op}\"" >> $(OPERATIONLIST); \
+			mappings="$${mappings}\t$${op}: $${name}_$${op},\n"; \
+		done; \
+		printf "\nexport let $${name} = {\n$${mappings}}\n\n" >> $(OPERATIONLIST); \
+		echo "export * from \"$${prefix}/$${name}Controller\"" >> $(CONTROLLERLIST); \
+		echo "export * from \"$${prefix}/initializer\"" >> $(INITLIST); \
 		printf "$$name, " >> $(MACHINELIST); \
 	done
 	@printf "\n}\n" >> $(MACHINELIST)

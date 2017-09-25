@@ -1,4 +1,4 @@
-import {Controller, FormalDefinition, TransitionTable} from "../../Controller"
+import {Controller, FormalDefinition, Operation, TransitionTable} from "../../Controller"
 import {Keyboard} from "../../Keyboard"
 import {LBA, TransitionInformation} from "./LBA"
 import {Prompt, ValuedHTMLElement} from "../../Prompt"
@@ -233,6 +233,8 @@ export class LBAController implements Controller {
 	public setEditingCallback(callback: () => void): void {
 		this.editingCallback = callback;
 	}
+
+	public applyOperation(operation: Operation): void {}
 
 	private index(state: State): number {
 		return this.stateMapping[state.getName()];

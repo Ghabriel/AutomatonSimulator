@@ -1,4 +1,4 @@
-import {Controller, FormalDefinition, TransitionTable} from "../../Controller"
+import {Controller, FormalDefinition, Operation, TransitionTable} from "../../Controller"
 import {FA} from "./FA"
 import {Keyboard} from "../../Keyboard"
 import {Prompt} from "../../Prompt"
@@ -188,6 +188,11 @@ export class FAController implements Controller {
 
 	public setEditingCallback(callback: () => void): void {
 		this.editingCallback = callback;
+	}
+
+	public applyOperation(operation: Operation): void {
+		console.log("[APPLY]", operation);
+		// operation(this.machine);
 	}
 
 	private index(state: State): number {

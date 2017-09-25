@@ -26,6 +26,13 @@ export class Menu extends Renderer {
 		this.children = [];
 	}
 
+	public clearContent(): void {
+		this.clear();
+		if (this.body) {
+			$(this.body).remove();
+		}
+	}
+
 	public toggle(): void {
 		this.toggled = !this.toggled;
 		if (this.body) {

@@ -36,6 +36,8 @@ export namespace portuguese {
 		NO_TRANSITIONS: "nenhuma transição",
 		SELECT_MACHINE: "Seleção de Máquina",
 		ACTION_LIST: "Ações",
+		OPERATIONS: "Operações",
+		NO_OPERATIONS: "Nenhuma operação suportada",
 		CREATE_STATE: "Criar estado",
 		CREATE_EDGE: "Criar transição",
 		CLEAR_MACHINE: "Limpar máquina",
@@ -89,5 +91,6 @@ export namespace portuguese {
 		PDA_FIELD_WRITE: "Escrever",
 		PDA_FIELD_TARGET_STATE: "Estado-destino",
 		ERROR_INVALID_STATE_NAME: "Nome de estado inválido",
+		DETERMINIZATION: "Determinização",
 	};
 }
