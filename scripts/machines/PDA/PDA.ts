@@ -409,42 +409,45 @@ export class PDA {
 	}
 
 	private getPossibleActions(): Action[] {
+		let result: Action[] = [];
+
+		if (this.input.length > 0) {
+			this.handleInputSymbol(this.input[0], result);
+		}
+
+		this.handleInputSymbol(EPSILON_KEY, result);
+
+		return result;
+	}
+
+	private handleInputSymbol(inputSymbol: string, buffer: Action[]): void {
 		if (this.currentState === null) {
-			return [];
+			return;
 		}
 
 		let availableTransitions = this.transitions[this.currentState];
-		let result: Action[] = [];
-		let self = this;
-
-		let handleInputSymbol = function(inputSymbol: string) {
-			if (availableTransitions.hasOwnProperty(inputSymbol)) {
-				let indexedByStack = availableTransitions[inputSymbol];
-				// TODO: handle empty stack
-				let stackTop = self.stack[self.stack.length - 1];
-				if (indexedByStack.hasOwnProperty(stackTop)) {
-					let groups = indexedByStack[stackTop];
-					for (let group of groups) {
-						result.push({
-							stepIndex: self.stepIndex + 1,
-							currentInput: self.input,
-							currentStack: utils.cloneArray(self.stack),
-							inputRead: inputSymbol,
-							stackWrite: group[1],
-							targetState: group[0]
-						});
-					}
-				}
-			}
-		};
-
-		if (this.input.length > 0) {
-			handleInputSymbol(this.input[0]);
+		if (!availableTransitions.hasOwnProperty(inputSymbol)) {
+			return;
 		}
 
-		handleInputSymbol(EPSILON_KEY);
+		let indexedByStack = availableTransitions[inputSymbol];
+		// TODO: handle empty stack
+		let stackTop = this.stack[this.stack.length - 1];
+		if (!indexedByStack.hasOwnProperty(stackTop)) {
+			return;
+		}
 
-		return result;
+		let groups = indexedByStack[stackTop];
+		for (let group of groups) {
+			buffer.push({
+				stepIndex: this.stepIndex + 1,
+				currentInput: this.input,
+				currentStack: utils.cloneArray(this.stack),
+				inputRead: inputSymbol,
+				stackWrite: group[1],
+				targetState: group[0]
+			});
+		}
 	}
 
 	private processAction(action: Action): void {
