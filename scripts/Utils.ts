@@ -51,8 +51,8 @@ export namespace utils {
 
 	// Iterates over an object, applying a callback to each property.
 	export function foreach<T>(obj: Map<T>, callback: MapIteratorCallback<T>): void;
-	export function foreach<T,V>(obj: NonIndexedMap<T,V>,
-		callback: MapIteratorCallback<any>): void;
+	// export function foreach<T,V>(obj: NonIndexedMap<T,V>,
+	// 	callback: MapIteratorCallback<V>): void;
 
 	export function foreach<T>(obj: any, callback: any): void {
 		for (let i in obj) {

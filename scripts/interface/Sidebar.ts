@@ -12,7 +12,7 @@ import {System} from "../System"
 import {Table} from "./Table"
 import {utils} from "../Utils"
 
-interface SidebarMenus {
+type SidebarMenus = {
 	settings: Menu;
 	fileManipulation: Menu;
 	machineSelection: Menu;
@@ -163,7 +163,7 @@ export class Sidebar extends Renderer {
 	}
 
 	private foreachMenu(callback: (name: string, menu: Menu) => void) {
-		utils.foreach(this.mainMenus, function(name, menu: Menu) {
+		utils.foreach(this.mainMenus, function(name, menu) {
 			callback(name, menu);
 		});
 	}
