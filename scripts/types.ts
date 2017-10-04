@@ -1,7 +1,14 @@
 
 type Map<T> = {[key: string]: T};
 
-type Callback<T> = () => T;
+type Generator<T> = () => T;
+type Callback<T> = (value: T) => void;
+
+type IndexedEdgeGroup<TEdge/* extends Edge<T>*/> = {
+	[origin: string]: {
+		[target: string]: TEdge
+	}
+};
 
 interface State {
 	x: number;

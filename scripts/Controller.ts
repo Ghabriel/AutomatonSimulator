@@ -1,5 +1,6 @@
+/// <reference path="types.ts" />
+
 import {Prompt} from "./Prompt"
-import {State} from "./interface/State"
 
 export interface FormalDefinition {
 	// Order of the parameters displayed in M = (...)

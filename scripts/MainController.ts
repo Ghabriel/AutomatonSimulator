@@ -84,8 +84,13 @@ export class MainController {
 			return;
 		}
 
-		this.stateList = this.stateList.concat(loadedData.stateList);
-		this.edgeList = this.edgeList.concat(loadedData.edgeList);
+		// TODO
+		// this.stateList = this.stateList.concat(loadedData.stateList);
+		// this.edgeList = this.edgeList.concat(loadedData.edgeList);
+
+		this.stateList = loadedData.stateList;
+		this.edgeList = loadedData.edgeList;
+
 		// Only changes the initial state if the current automaton
 		// doesn't have one
 		if (this.initialState === null) {
@@ -111,7 +116,7 @@ export class MainController {
 		}
 	}
 
-	public getFormalDefinitionCallback(): Callback<boolean> {
+	public getFormalDefinitionCallback(): Generator<boolean> {
 		let self = this;
 		return function() {
 			if (self.loadingMode) {
@@ -163,11 +168,7 @@ export class MainController {
 
 	// Internal automaton structures
 	private stateList: Map<State> = {};
-	private edgeList: {
-		[origin: string]: {
-			[target: string]: Edge<State>
-		}
-	} = {};
+	private edgeList: IndexedEdgeGroup<Edge<State>> = {};
 
 	private initialState: State|null = null;
 

@@ -1,53 +1,38 @@
-import {Edge} from "../interface/Edge"
+/// <reference path="../types.ts" />
+
 import {EdgeUtils} from "../interface/EdgeUtils"
 import {AutomatonSummary, PersistenceHandler} from "./PersistenceHandler"
 import {Settings, Strings} from "../Settings"
 import {SignalEmitter} from "../SignalEmitter"
-import {State} from "../interface/State"
-import {UnorderedSet} from "../datastructures/UnorderedSet"
 import {utils} from "../Utils"
 
-type StateNameMapping = {[n: string]: number};
-type ConnectionMapping = {[n: string]: {[m: string]: Edge}};
+type SavedStructure = [
+	string, // automaton type
+	[string, number, number, number][], // state list
+	[string, string, string[][]][], // edge list
+	string // initial state name
+];
+
+const ABORT_LOOP = false;
+const CONTINUE_LOOP = true;
 
 /**
  * The default persistence handler used by the application. Stores
  * and loads the program state in a compact, low-redundance JSON format.
  */
 export class JSONHandler implements PersistenceHandler {
-	public save(stateList: State[], edgeList: Edge[],
-						 initialState: State|null): string {
-		let result: any = [
+	public save(stateList: Map<State>, edgeList: IndexedEdgeGroup<Edge<State>>,
+		initialState: State|null): string {
+
+		let result: SavedStructure = [
 			Settings.Machine[Settings.currentMachine], // automaton type
 			[], // state list
 			[], // edge list
-			-1  // initial state index
+			""  // initial state name
 		];
 
-		let i = 0;
-		for (let state of stateList) {
-			let position = state.getPosition();
-			result[1].push([
-				state.getName(),
-				state.isFinal() ? 1 : 0,
-				position.x,
-				position.y
-			]);
-
-			if (state == initialState) {
-				result[3] = i;
-			}
-
-			i++;
-		}
-
-		for (let edge of edgeList) {
-			result[2].push([
-				edge.getOrigin()!.getName(),
-				edge.getTarget()!.getName(),
-				edge.getDataList()
-			]);
-		}
+		this.saveStates(result, stateList, initialState);
+		this.saveEdges(result, edgeList);
 
 		return JSON.stringify(result);
 	}
@@ -57,54 +42,37 @@ export class JSONHandler implements PersistenceHandler {
 			aborted: false,
 			error: false,
 			initialState: null,
-			stateList: [],
-			edgeList: []
+			stateList: {},
+			edgeList: {}
 		};
 
-		let obj: any = [];
+		let obj;
 		try {
 			obj = JSON.parse(content);
 		} catch (e) {
 			loadedData.error = true;
 			return loadedData;
 		}
-
-		let machineType = Settings.Machine[Settings.currentMachine];
-		let structureValidation = obj[1] instanceof Array
-							   && obj[2] instanceof Array
-							   && typeof obj[3] == "number"
-							   && obj.length == 4;
-
-		if (!structureValidation) {
+	
+		if (!this.matchesCorrectStructure(obj)) {
 			loadedData.error = true;
 			return loadedData;
 		}
 
+		let machineType = Settings.Machine[Settings.currentMachine];
+
 		if (obj[0] != machineType) {
-			if (!confirm(Strings.DIFFERENT_MACHINE_FILE)) {
-				loadedData.aborted = true;
-				return loadedData;
+			let resultingData = this.handleDifferentMachineType(obj, loadedData);
+			if (resultingData) {
+				return resultingData;
 			}
-
-			utils.foreach(Settings.machines, function(index, traits) {
-				if (traits.abbreviatedName == obj[0]) {
-					SignalEmitter.emitSignal({
-						targetID: Settings.sidebarSignalID,
-						identifier: "changeMachineType",
-						data: [index]
-					});
-					return false; // aborts the foreach
-				}
-
-				return true; // continues the foreach
-			});
 		}
 
-		let connections: ConnectionMapping = {};
-		let nameToIndex = this.loadStates(obj, loadedData, function(state: State) {
-			connections[state.getName()] = {};
+		this.loadStates(obj, loadedData, function(state) {
+			obj[state.name] = {};
 		});
-		if (!this.loadEdges(obj, loadedData, nameToIndex, connections)) {
+
+		if (!this.loadEdges(obj, loadedData)) {
 			loadedData.error = true;
 			return loadedData;
 		}
@@ -112,60 +80,121 @@ export class JSONHandler implements PersistenceHandler {
 		return loadedData;
 	}
 
-	private loadStates(dataObj: any, result: AutomatonSummary,
-						callback: (state: State) => void): StateNameMapping {
-		let nameToIndex: StateNameMapping = {};
+	private saveStates(result: SavedStructure, stateList: Map<State>,
+		initialState: State|null): void {
+
+		utils.foreach(stateList, function(name, state) {
+			result[1].push([
+				state.name,
+				state.final ? 1 : 0,
+				state.x,
+				state.y
+			]);
+
+			if (state == initialState) {
+				result[3] = state.name;
+			}
+		});
+	}
+
+	private saveEdges(result: SavedStructure,
+		edgeList: IndexedEdgeGroup<Edge<State>>): void {
+
+		EdgeUtils.edgeIteration(edgeList, function(edge) {
+			result[2].push([
+				edge.origin.name,
+				edge.target.name,
+				edge.dataList
+			]);
+		});
+	}
+
+	private matchesCorrectStructure(obj: any): obj is SavedStructure {
+		return obj[0] instanceof String
+			&& obj[1] instanceof Array
+			&& obj[2] instanceof Array
+			&& obj[3] instanceof String;
+	}
+
+	private handleDifferentMachineType(obj: SavedStructure,
+		loadedData: AutomatonSummary): AutomatonSummary|null {
+
+		if (!confirm(Strings.DIFFERENT_MACHINE_FILE)) {
+			loadedData.aborted = true;
+			return loadedData;
+		}
+
+		utils.foreach(Settings.machines, function(index, traits) {
+			if (traits.abbreviatedName == obj[0]) {
+				SignalEmitter.emitSignal({
+					targetID: Settings.sidebarSignalID,
+					identifier: "changeMachineType",
+					data: [index]
+				});
+				return ABORT_LOOP;
+			}
+
+			return CONTINUE_LOOP;
+		});
+
+		return null;
+	}
+
+	private loadStates(dataObj: SavedStructure, result: AutomatonSummary,
+						callback: (state: State) => void): void {
 		let controller = Settings.controller();
 
-		let i = 0;
 		for (let data of dataObj[1]) {
-			let isInitial = (dataObj[3] == i);
-			let state = new State();
-			state.setName(data[0]);
-			state.setInitial(isInitial);
-			state.setFinal(!!data[1]);
-			state.setPosition(data[2], data[3]);
+			let isInitial = (dataObj[3] == data[0]);
+
+			let state: State = {
+				x: data[2],
+				y: data[3],
+				initial: isInitial,
+				final: !!data[1],
+				name: data[0],
+				type: "state"
+			};
 
 			if (isInitial) {
 				result.initialState = state;
 			}
 
-			nameToIndex[data[0]] = i;
 			callback(state);
-			result.stateList.push(state);
+			result.stateList[state.name] = state;
 			controller.createState(state);
-			i++;
 		}
-
-		return nameToIndex;
 	}
 
-	private loadEdges(data: any, result: AutomatonSummary,
-					   nameToIndex: StateNameMapping,
-					   connections: ConnectionMapping): boolean {
-		let states = result.stateList;
+	private loadEdges(data: SavedStructure, result: AutomatonSummary): boolean {
+		let {stateList, edgeList} = result;
+
 		for (let edgeData of data[2]) {
 			if (edgeData.length != 3) {
 				return false;
 			}
-			let edge = new Edge();
-			let originName = edgeData[0];
-			let targetName = edgeData[1];
-			let origin = states[nameToIndex[originName]];
-			let target = states[nameToIndex[targetName]];
-			edge.setOrigin(origin);
-			edge.setTarget(target);
-			if (connections[targetName].hasOwnProperty(originName)) {
-				let opposite = connections[targetName][originName];
+
+			let [origin, target, dataList] = edgeData;
+
+			let edge: Edge<State> = {
+				origin: stateList[origin],
+				target: stateList[target],
+				textList: [],
+				dataList: [],
+				type: "edge"
+			};
+
+			if (edgeList[target].hasOwnProperty(origin)) {
+				let opposite = edgeList[target][origin];
 				opposite.setCurveFlag(true);
 				edge.setCurveFlag(true);
 			}
-			for (let data of edgeData[2]) {
+
+			for (let data of dataList) {
 				EdgeUtils.addEdgeData(edge, data);
 			}
 
-			connections[originName][targetName] = edge;
-			result.edgeList.push(edge);
+			edgeList[origin][target] = edge;
 		}
 
 		return true;

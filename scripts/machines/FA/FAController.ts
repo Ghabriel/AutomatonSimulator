@@ -1,8 +1,9 @@
+/// <reference path="../../types.ts" />
+
 import {Controller, FormalDefinition, Operation, TransitionTable} from "../../Controller"
 import {FA} from "./FA"
 import {Keyboard} from "../../Keyboard"
 import {Prompt} from "../../Prompt"
-import {State} from "../../interface/State"
 import {Strings} from "../../Settings"
 import {utils} from "../../Utils"
 
@@ -37,7 +38,7 @@ export class FAController implements Controller {
 	}
 
 	public createState(state: State): void {
-		let name = state.getName();
+		let name = state.name;
 		let index = this.machine.addState(name);
 		this.stateMapping[name] = index;
 
@@ -87,7 +88,7 @@ export class FAController implements Controller {
 
 	public renameState(state: State, newName: string): void {
 		let index = this.index(state);
-		delete this.stateMapping[state.getName()];
+		delete this.stateMapping[state.name];
 		this.stateMapping[newName] = index;
 		this.machine.renameState(index, newName);
 		this.editingCallback();
@@ -196,7 +197,7 @@ export class FAController implements Controller {
 	}
 
 	private index(state: State): number {
-		return this.stateMapping[state.getName()];
+		return this.stateMapping[state.name];
 	}
 
 	private transitionTable(): TransitionTable {

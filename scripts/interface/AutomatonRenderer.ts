@@ -85,34 +85,28 @@ export class AutomatonRenderer {
 		this.edgeList = {};
 	}
 
-	private edgeIteration(callback: (edge: UIEdge) => void): void {
-		utils.foreach(this.edgeList, function(origin, map) {
-			utils.foreach(map, function(target, edge) {
-				callback(edge);
-			});
-		});
-	}
-
-	public setStateList(stateList: State[]): void {
+	public setStateList(stateList: Map<State>): void {
 		this.clearStates();
 
-		for (let state of stateList) {
+		utils.foreach(stateList, function(name, state) {
 			let uiState = new UIState(state);
 			this.stateList[uiState.name] = uiState;
 
 			uiState.render(this.canvas);
 			this.bindStateEvents(uiState);
-		}
+		});
 	}
 
-	public setEdgeList<T extends State>(edgeList: Edge<T>[]): void {
+	public setEdgeList<T extends State, TEdge extends Edge<T>>
+		(edgeList: IndexedEdgeGroup<TEdge>): void {
+
 		this.clearEdges();
 
-		for (let edge of edgeList) {
+		EdgeUtils.edgeIteration(edgeList, function(edge) {
 			let uiEdge = this.createEdge(edge);
 			uiEdge.render(this.canvas);
 			this.bindEdgeEvents(uiEdge);
-		}
+		});
 	}
 
 	private createEdge<T extends State>(edge: Edge<T>): UIEdge {
@@ -1169,11 +1163,7 @@ export class AutomatonRenderer {
 	// private edgeList: UIEdge[] = [];
 
 	private stateList: Map<UIState> = {};
-	private edgeList: {
-		[origin: string]: {
-			[target: string]: UIEdge
-		}
-	} = {};
+	private edgeList: IndexedEdgeGroup<UIEdge> = {};
 
 	private highlightedState: UIState|null = null;
 	private highlightedEdge: UIEdge|null = null;
