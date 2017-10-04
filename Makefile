@@ -5,6 +5,7 @@ CSS             :=css
 JS              :=js
 LIB             :=lib
 TS              :=scripts
+OUT             :=out
 LANGFOLDER      :=languages
 MACHINES        :=machines
 LISTS           :=$(TS)/lists
@@ -19,10 +20,11 @@ CONTROLLERLIST  :=$(LISTS)/ControllerList.ts
 INITLIST        :=$(LISTS)/InitializerList.ts
 MACHINELIST     :=$(LISTS)/MachineList.ts
 OPERATIONLIST   :=$(LISTS)/OperationList.ts
-JSBASE          :=base.js
-MAINFILE        :=main.js
-JSTESTS         :=tests.js
+MAINJS          :=$(JS)/main.js
 MAINTS          :=$(TS)/main.ts
+BASEFILE        :=$(OUT)/base.js
+MAINFILE        :=$(OUT)/main.js
+TESTFILE        :=$(OUT)/tests.js
 
 COMPRESS        :=1
 
@@ -41,26 +43,29 @@ LISTS           :=$(CONTROLLERLIST) $(INITLIST) $(MACHINELIST) $(OPERATIONLIST)
 
 .PHONY: all dirs libs languages machines raw simple tests clean
 
-all: dirs libs languages machines $(JS)/$(MAINFILE)
+all: dirs libs languages machines $(MAINFILE)
 
-$(JS)/$(MAINFILE): $(TSFILES)
+$(MAINFILE): $(TSFILES)
 	@echo "[.ts ⟶ .js] Translating .ts files"
 	@if [ "$(TSFILES)" = "" ]; then \
-		touch $(JS)/$(JSBASE); \
-		truncate -s 0 $(JS)/$(JSBASE); \
+		touch $(BASEFILE); \
+		truncate -s 0 $(BASEFILE); \
 	else\
-		tsc --strict --sourceMap --removeComments --noImplicitReturns --module amd --outFile $(JS)/$(JSBASE) $(MAINTS); \
+		tsc; \
 	fi
+
+	@echo "[ merging ] Merging .js files"
+	@browserify $(MAINJS) -o $(BASEFILE)
 
 	@if [ "$(COMPRESS)" = "1" ]; then \
 		echo "[minifying] Compressing .js file"; \
-		uglifyjs $(JS)/$(JSBASE) --compress --mangle > $(JS)/$(MAINFILE) 2> /dev/null; \
+		uglifyjs $(BASEFILE) --compress --mangle > $(MAINFILE) 2> /dev/null; \
 	else\
-		mv $(JS)/$(JSBASE) $(JS)/$(MAINFILE); \
+		mv $(BASEFILE) $(MAINFILE); \
 	fi
 
 tests: all
-	@cp $(JS)/$(MAINFILE) $(JS)/$(JSTESTS)
+	@cp $(MAINFILE) $(TESTFILE)
 
 dirs: | $(CSS) $(JS) $(LIB) $(TS) $(INDEX)
 
@@ -72,10 +77,6 @@ machines: $(LISTS)
 
 raw: COMPRESS :=0
 raw: all
-
-simple:
-	@tsc --module amd --outFile $(JS)/$(JSBASE) $(MAINTS)
-	@cp $(JS)/$(JSBASE) $(JS)/$(MAINFILE)
 
 $(LANGLIST): $(TS)/$(LANGFOLDER)/*.ts
 	@echo "[languages] Building language list"
@@ -126,5 +127,6 @@ $(LIBNAMES):
 	@wget -O $@ -q $(URL)
 
 clean:
-	@rm -f $(JS)/*
+	@rm -rf $(JS)/*
+	@rm -f $(OUT)/*
 	@rm -f $(LISTS)/*
