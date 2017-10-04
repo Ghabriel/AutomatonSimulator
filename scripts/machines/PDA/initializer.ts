@@ -134,19 +134,19 @@ export class initPDA implements Initializable {
 
 		this.fastRecognition = utils.create("img", {
 			className: "image_button",
-			src: "images/fastforward.svg",
+			src: Settings.getResourcePath("fastforward.svg"),
 			title: Strings.FAST_RECOGNITION
 		});
 
 		this.stopRecognition = utils.create("img", {
 			className: "image_button " + disabledClass,
-			src: "images/stop.svg",
+			src: Settings.getResourcePath("stop.svg"),
 			title: Strings.STOP_RECOGNITION
 		});
 
 		this.stepRecognition = utils.create("img", {
 			className: "image_button",
-			src: "images/play.svg",
+			src: Settings.getResourcePath("play.svg"),
 			title: Strings.STEP_RECOGNITION
 		});
 
@@ -226,7 +226,7 @@ export class initPDA implements Initializable {
 
 		this.multipleCaseButton = utils.create("img", {
 			className: "image_button",
-			src: "images/play.svg",
+			src: Settings.getResourcePath("play.svg"),
 			title: Strings.START_MULTIPLE_RECOGNITION
 		});
 		container.push([this.multipleCaseButton]);

@@ -37,6 +37,9 @@ export namespace Settings {
 	export const sidebarID = "sidebar";
 	export const mainbarID = "mainbar";
 
+	// May be changed if this application is running locally
+	export let imageFolder = "images/";
+
 	export const sidebarSignalID = "sidebar";
 	export const automatonRendererSignalID = "automatonRenderer";
 
@@ -252,6 +255,12 @@ export namespace Settings {
 		machines[currentMachine].initializer.onExit();
 		currentMachine = machineIndex;
 		machines[currentMachine].initializer.onEnter();
+	}
+
+	// This can be customized to allow other kinds of resources.
+	// Currently, every resource is an image.
+	export function getResourcePath(name: string): string {
+		return imageFolder + name;
 	}
 }
 

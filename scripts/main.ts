@@ -6,65 +6,6 @@ import {UI} from "./interface/UI"
 import {utils} from "./Utils"
 
 /**
- * Given two paths, returns two substrings of them
- * starting at the point where they diverge.
- * Example:
- * 	divergence("a/b/css/styles.css", "a/b/scripts/main.js")
- * Returns:
- * 	["css/styles.css", "scripts/main.js"]
- */
-function divergence(first: string, second: string): string[] {
-	let i = 0;
-	while (first[i] == second[i]) {
-		i++;
-	}
-
-	return [
-		first.substr(i),
-		second.substr(i)
-	];
-}
-
-/**
- * Given a file path, returns its directory name.
- * Note that this function expects a simple path of the form:
- * 	[folder name][directory separator][file name].[extension]
- * The actual directory separator is irrelevant as long as it
- * doesn't match the regular expression /[A-Za-z0-9]/ and has
- * a length equal to 1.
- *
- * Example:
- * 	dirname("css/styles.css")
- * Returns:
- * 	"css"
- * @param  {string} path The path of a file
- * @return {string} The name of the directory that contains the file.
- */
-function dirname(path: string): string {
-	function reverse(input: string): string {
-		return input.split("").reverse().join("");
-	}
-
-	// Evaluate everything backwards to let the greedy
-	// + operator match the entire filename.
-	let matcher = /[A-Za-z]+\.[A-Za-z0-9]+(.*)/;
-	let matches = reverse(path).match(matcher);
-	if (matches === null) {
-		return "";
-	}
-	return reverse(matches[1].substr(1));
-}
-
-// Allows the Settings to trigger the machine initializers.
-// This can't be in the Settings file itself because then
-// the initializers wouldn't have access to System (since it
-// wouldn't be initialized yet). Also note that importing
-// System in Settings wouldn't work either since the circular
-// dependency would cause the update method to still be called
-// before System is defined.
-Settings.update();
-
-/**
  * The entry point of the application. Starts when the page
  * is completely loaded.
  */
@@ -80,20 +21,37 @@ $(document).ready(function() {
 		// the saved one.
 		mainbar.innerHTML = "";
 
+		// Remove the sidebar as well
 		let sidebar = <HTMLDivElement> utils.id(Settings.sidebarID);
 		sidebar.innerHTML = "";
 
 		// Determine the new base resource path to fix
-		// future dynamic images
+		// future dynamic images. If .css and .js files are not
+		// in the same directory, we assume that the overall
+		// directory structure is preserved.
 		let linkTag = document.getElementsByTagName("link")[0];
 		let scriptTag = document.getElementsByTagName("script")[0];
 
-		let [linkPath, scriptPath] = divergence(linkTag.href, scriptTag.src);
-		let libFolder = dirname(linkPath);
-		let scriptFolder = dirname(scriptPath);
-		console.log("[LIB]", libFolder);
-		console.log("[SRC]", scriptFolder);
+		let [linkFullPath, scriptFullPath] = [linkTag.href, scriptTag.src];
+		let [linkPath, scriptPath] = utils.divergence(linkFullPath, scriptFullPath);
+		let cssFolder = utils.dirname(linkPath);
+		let scriptFolder = utils.dirname(scriptPath);
+
+		if (cssFolder === scriptFolder) {
+			// The browser's save mechanism puts all resources
+			// in the same folder.
+			Settings.imageFolder = scriptFullPath.replace(scriptPath, "");
+		}
 	}
+
+	// Allows the Settings to trigger the machine initializers.
+	// This can't be in the Settings file itself because then
+	// the initializers wouldn't have access to System (since it
+	// wouldn't be initialized yet). Also note that importing
+	// System in Settings wouldn't work either since the circular
+	// dependency would cause the update method to still be called
+	// before System is defined.
+	Settings.update();
 
 	let ui = new UI();
 	ui.render();

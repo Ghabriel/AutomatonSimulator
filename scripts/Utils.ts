@@ -174,4 +174,54 @@ export namespace utils {
 	export function nonEmptyStringValidator(input: string): boolean {
 		return input.length > 0;
 	}
+
+	/**
+	 * Given two paths, returns two substrings of them
+	 * starting at the point where they diverge.
+	 * Example:
+	 * 	divergence("a/b/css/styles.css", "a/b/scripts/main.js")
+	 * Returns:
+	 * 	["css/styles.css", "scripts/main.js"]
+	 */
+	export function divergence(first: string, second: string): string[] {
+		let i = 0;
+		while (first[i] == second[i]) {
+			i++;
+		}
+
+		return [
+			first.substr(i),
+			second.substr(i)
+		];
+	}
+
+	/**
+	 * Given a file path, returns its directory name.
+	 * Note that this function expects a simple path of the form:
+	 * 	[folder name][directory separator][file name].[extension]
+	 * The actual directory separator is irrelevant as long as it
+	 * doesn't match the regular expression /[A-Za-z0-9]/ and has
+	 * a length equal to 1.
+	 *
+	 * Example:
+	 * 	dirname("css/styles.css")
+	 * Returns:
+	 * 	"css"
+	 * @param  {string} path The path of a file
+	 * @return {string} The name of the directory that contains the file.
+	 */
+	export function dirname(path: string): string {
+		function reverse(input: string): string {
+			return input.split("").reverse().join("");
+		}
+
+		// Evaluate everything backwards to let the greedy
+		// + operator match the entire filename.
+		let matcher = /[A-Za-z]+\.[A-Za-z0-9]+(.*)/;
+		let matches = reverse(path).match(matcher);
+		if (matches === null) {
+			return "";
+		}
+		return reverse(matches[1].substr(1));
+	}
 }
