@@ -1,4 +1,5 @@
 /// <reference path="../defs/raphael.d.ts" />
+/// <reference path="../types.ts" />
 
 import {Browser} from "../Browser"
 import {GUI} from "./GUI"
@@ -10,8 +11,28 @@ import {utils} from "../Utils"
 /**
  * Represents the visual representation of a state.
  */
-export class State {
-	constructor() {
+export class UIState implements State {
+	// The position and radius of this state
+	public x: number;
+	public y: number;
+
+	// Is this the initial state?
+	public initial: boolean = false;
+
+	// Is this the final state?
+	public final: boolean = false;
+
+	// Name of this state (which is written in its body)
+	public name: string = "";
+
+	constructor(base?: State) {
+		if (base) {
+			this.x = base.x;
+			this.y = base.y;
+			this.final = base.final;
+			this.name = base.name;
+		}
+
 		this.radius = Settings.stateRadius;
 	}
 
@@ -29,14 +50,6 @@ export class State {
 
 	public getRadius(): number {
 		return this.radius;
-	}
-
-	public setInitial(flag: boolean): void {
-		this.initial = flag;
-	}
-
-	public isInitial(): boolean {
-		return this.initial;
 	}
 
 	public setFinal(flag: boolean): void {
@@ -365,19 +378,7 @@ export class State {
 		this.renderText();
 	}
 
-	// The position and radius of this state
-	private x: number;
-	private y: number;
 	private radius: number;
-
-	// Is this the initial state?
-	private initial: boolean = false;
-
-	// Is this the final state?
-	private final: boolean = false;
-
-	// Name of this state (which is written in its body)
-	private name: string = "";
 
 	// Used to calculate the coordinates of the
 	// 'initial state arrow'.

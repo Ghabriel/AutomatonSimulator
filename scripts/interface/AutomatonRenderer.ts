@@ -1,14 +1,14 @@
-import {Edge} from "./Edge"
+import {UIEdge} from "./Edge"
 import {EdgeUtils} from "./EdgeUtils"
 import {FormalDefinitionRenderer} from "./FormalDefinitionRenderer"
 import {GUI} from "./GUI"
 import {Keyboard} from "../Keyboard"
-import {Memento} from "../Memento"
-import {PersistenceHandler} from "../persistence/PersistenceHandler"
+import {MainController} from "../MainController"
 import {Prompt, ValuedHTMLElement} from "../Prompt"
 import {Settings, Strings} from "../Settings"
-import {Signal, SignalEmitter, SignalResponse} from "../SignalEmitter"
-import {State} from "./State"
+import {SignalEmitter} from "../SignalEmitter"
+import {UIState} from "./State"
+import {stateInfoPrinter} from "./StateInfoPrinter"
 import {System} from "../System"
 import {Table} from "./Table"
 import {Point, utils} from "../Utils"
@@ -23,154 +23,150 @@ interface MouseEvent {
  * all related interactions.
  */
 export class AutomatonRenderer {
-	constructor(canvas: GUI.Canvas, node: HTMLElement,
-				memento: Memento<string>,
-				persistenceHandler: PersistenceHandler) {
+	constructor(canvas: GUI.Canvas, node: HTMLElement) {
 		this.canvas = canvas;
-		this.memento = memento;
 		this.node = node;
-		this.persistenceHandler = persistenceHandler;
 		this.formalDefinitionRenderer = new FormalDefinitionRenderer(this);
-		SignalEmitter.addSignalObserver(this);
+	}
+
+	public setController(controller: MainController): void {
+		this.controller = controller;
 	}
 
 	public render(): void {
 		this.bindEvents();
 		this.bindShortcuts();
 		this.bindFormalDefinitionListener();
-		let self = this;
-		System.addLanguageChangeObserver({
-			onLanguageChange: function() {
-				self.bindFormalDefinitionListener();
+	}
 
-				if (self.locked) {
-					self.recognitionDim();
-					self.unlock();
-				}
+	public onLanguageChange(): void {
+		this.bindFormalDefinitionListener();
 
-				if (self.highlightedState) {
-					// Restores the "selected entity area" for states
-					self.updateEditableState(self.highlightedState);
-				}
+		if (this.locked) {
+			this.recognitionDim();
+			this.unlock();
+		}
 
-				if (self.highlightedEdge) {
-					// Restores the "selected entity area" for edges
-					self.updateEditableEdge(self.highlightedEdge);
-				}
-			}
-		});
+		if (this.highlightedState) {
+			// Restores the "selected entity area" for states
+			this.updateEditableState(this.highlightedState);
+		}
 
-		System.addMachineChangeObserver({
-			onMachineChange: function() {
-				self.bindFormalDefinitionListener();
-			}
-		});
+		if (this.highlightedEdge) {
+			// Restores the "selected entity area" for edges
+			this.updateEditableEdge(this.highlightedEdge);
+		}
+	}
+
+	public onMachineChange(): void {
+		this.bindFormalDefinitionListener();
 	}
 
 	public clear(): void {
-		for (let state of this.stateList) {
-			state.remove();
-		}
-		this.stateList = [];
-
-		for (let edge of this.edgeList) {
-			edge.remove();
-		}
-		this.edgeList = [];
-
+		this.clearStates();
+		this.clearEdges();
 		this.initialState = null;
 		this.clearSelection();
-
-		Settings.controller().clear();
 	}
 
-	public empty(): boolean {
-		// Doesn't need to check for edgeList.length since edges
-		// can't exist without states.
-		return this.stateList.length == 0;
+	private clearStates(): void {
+		utils.foreach(this.stateList, function(name, state) {
+			state.remove();
+		});
+
+		this.stateList = {};
 	}
 
-	public save(): string {
-		return this.persistenceHandler.save(this.stateList,
-					this.edgeList, this.initialState);
+	private clearEdges(): void {
+		this.edgeIteration(function(edge) {
+			edge.remove();
+		});
+
+		this.edgeList = {};
 	}
 
-	public load(content: string, pushResult: boolean = true): void {
-		// Blocks formal definition change events
-		this.loadingMode = true;
+	private edgeIteration(callback: (edge: UIEdge) => void): void {
+		utils.foreach(this.edgeList, function(origin, map) {
+			utils.foreach(map, function(target, edge) {
+				callback(edge);
+			});
+		});
+	}
 
-		// Blocks changes to the memento until the load process is complete
-		this.frozenMemento = true;
+	public setStateList(stateList: State[]): void {
+		this.clearStates();
 
-		let loadedData = this.persistenceHandler.load(content);
-		if (loadedData.error) {
-			alert(Strings.INVALID_FILE);
-			this.loadingMode = false;
-			return;
+		for (let state of stateList) {
+			let uiState = new UIState(state);
+			this.stateList[uiState.name] = uiState;
+
+			uiState.render(this.canvas);
+			this.bindStateEvents(uiState);
+		}
+	}
+
+	public setEdgeList<T extends State>(edgeList: Edge<T>[]): void {
+		this.clearEdges();
+
+		for (let edge of edgeList) {
+			let uiEdge = this.createEdge(edge);
+			uiEdge.render(this.canvas);
+			this.bindEdgeEvents(uiEdge);
+		}
+	}
+
+	private createEdge<T extends State>(edge: Edge<T>): UIEdge {
+		let origin = edge.origin;
+		if (!this.edgeList.hasOwnProperty(origin.name)) {
+			this.edgeList[origin.name] = {};
 		}
 
-		if (loadedData.aborted) {
-			this.loadingMode = false;
-			return;
-		}
+		let target = edge.target;
+		let uiEdge = new UIEdge();
+		uiEdge.origin = this.stateList[origin.name];
+		uiEdge.target = this.stateList[target.name];
+		uiEdge.textList = edge.textList;
+		uiEdge.dataList = edge.dataList;
 
-		this.stateList = this.stateList.concat(loadedData.stateList);
-		this.edgeList = this.edgeList.concat(loadedData.edgeList);
-		// Only changes the initial state if the current automaton
-		// doesn't have one
-		if (this.initialState === null) {
-			this.initialState = loadedData.initialState;
-		}
+		this.edgeList[origin.name][target.name] = uiEdge;
+		return uiEdge;
+	}
 
-		// Traverses through the state/edge lists to render them.
-		// We shouldn't render them during creation because, if
-		// the automaton is big enough and there's an error in the
-		// source file, the user would see states and edges appearing
-		// and then vanishing, then an error message. Rendering everything
-		// after processing makes it so that nothing appears (except the
-		// error message) if there's an error.
-		for (let state of this.stateList) {
-			state.render(this.canvas);
-			this.bindStateEvents(state);
-		}
-
-		for (let edge of this.edgeList) {
+	public refresh<T extends State>(entity: State|Edge<T>): void {
+		if (entity.type == "state") {
+			this.stateList[entity.name].render(this.canvas);
+		} else {
+			let edge = this.edgeList[entity.origin.name][entity.target.name];
 			edge.render(this.canvas);
-			this.bindEdgeEvents(edge);
 		}
+	}
 
-		this.loadingMode = false;
+	public triggerFormalDefinitionChange(): void {
 		this.formalDefinitionCallback();
-
-		this.frozenMemento = false;
-
-		if (pushResult) {
-			// Saves the resulting state
-			this.memento.push(this.save());
-		}
 	}
 
 	public recognitionHighlight(stateNames: string[]): void {
-		let nameMapping: {[n: string]: State} = {};
-		for (let state of this.stateList) {
-			nameMapping[state.getName()] = state;
+		utils.foreach(this.stateList, function(name, state) {
 			state.removePalette();
-		}
+		});
 
 		for (let name of stateNames) {
-			nameMapping[name].applyPalette(Settings.stateRecognitionPalette);
+			this.stateList[name].applyPalette(Settings.stateRecognitionPalette);
 		}
 
-		for (let state of this.stateList) {
-			state.render(this.canvas);
-		}
+		let canvas = this.canvas;
+		utils.foreach(this.stateList, function(name, state) {
+			state.render(canvas);
+		});
 	}
 
 	public recognitionDim(): void {
-		for (let state of this.stateList) {
+		let canvas = this.canvas;
+		utils.foreach(this.stateList, function(name, state) {
 			state.removePalette();
-			state.render(this.canvas);
-		}
+			state.render(canvas);
+		});
+
 		this.highlightedState = null;
 	}
 
@@ -194,55 +190,47 @@ export class AutomatonRenderer {
 		if (!this.locked) {
 			let self = this;
 			Prompt.simple(Strings.EDGE_MANUAL_CREATION, 2, function(data) {
-				let edge = new Edge();
-				for (let state of self.stateList) {
-					let name = state.getName();
-					if (name == data[0]) {
-						edge.setOrigin(state);
-					}
-
-					if (name == data[1]) {
-						edge.setTarget(state);
-					}
-				}
-
-				if (edge.getOrigin() && edge.getTarget()) {
-					self.currentEdge = edge;
-					self.finishEdge(edge.getTarget()!);
-				} else {
+				if (!self.stateExists(data[0]) || !self.stateExists(data[1])) {
 					alert(Strings.ERROR_INVALID_STATE_NAME);
+					return;
 				}
+
+				let edge = new UIEdge();
+				edge.origin = self.stateList[data[0]];
+				edge.target = self.stateList[data[1]];
+				self.currentEdge = edge;
+				self.finishEdge(edge.target);
 			});
 		}
 	}
 
-	public receiveSignal(signal: Signal): SignalResponse|null {
-		if (signal.targetID == Settings.automatonRendererSignalID) {
-			let methodName = <keyof this> signal.identifier;
-			let method = <Function> <any> this[methodName];
+	// public receiveSignal(signal: Signal): SignalResponse|null {
+	// 	if (signal.targetID == Settings.automatonRendererSignalID) {
+	// 		let methodName = <keyof this> signal.identifier;
+	// 		let method = <Function> <any> this[methodName];
 
-			return {
-				reacted: true,
-				response: method.apply(this, signal.data)
-			};
-		}
+	// 		return {
+	// 			reacted: true,
+	// 			response: method.apply(this, signal.data)
+	// 		};
+	// 	}
 
-		return null;
-	}
+	// 	return null;
+	// }
 
 	public getCanvas(): GUI.Canvas {
 		return this.canvas;
 	}
 
-	public getEdgeList(): Edge[] {
-		return this.edgeList;
-	}
+	// public getEdgeList(): Edge[] {
+	// 	return this.edgeList;
+	// }
 
-	public isEdgeSelected(edge: Edge): boolean {
+	public isEdgeSelected(edge: UIEdge): boolean {
 		return this.highlightedEdge == edge;
 	}
 
-	public selectEdge(edge: Edge): void {
+	public selectEdge(edge: UIEdge): void {
 		if (!this.locked) {
 			this.dimState();
 			if (this.highlightedEdge) {
@@ -267,7 +255,7 @@ export class AutomatonRenderer {
 		}
 	}
 
-	private selectState(state: State): void {
+	private selectState(state: UIState): void {
 		if (!this.locked) {
 			this.dimEdge();
 			if (this.highlightedState) {
@@ -295,16 +283,13 @@ export class AutomatonRenderer {
 	// TODO: find a better name for this method
 	// (since it also handles saving the current state)
 	private bindFormalDefinitionListener(): void {
+		let controllerCallback = this.controller.getFormalDefinitionCallback();
 		let definitionContainer: HTMLDivElement;
+
 		let self = this;
 		this.formalDefinitionCallback = function() {
-			if (self.loadingMode) {
+			if (!controllerCallback()) {
 				return;
-			}
-
-			// Saves the current state to the memento if it's not frozen
-			if (!self.frozenMemento) {
-				self.memento.push(self.save());
 			}
 
 			if (!definitionContainer) {
@@ -331,7 +316,7 @@ export class AutomatonRenderer {
 		this.formalDefinitionCallback();
 	}
 
-	private updateEditableState(state: State|null): void {
+	private updateEditableState(state: UIState|null): void {
 		if (state) {
 			SignalEmitter.emitSignal({
 				targetID: Settings.sidebarSignalID,
@@ -343,7 +328,7 @@ export class AutomatonRenderer {
 		}
 	}
 
-	private updateEditableEdge(edge: Edge|null): void {
+	private updateEditableEdge(edge: UIEdge|null): void {
 		if (edge) {
 			SignalEmitter.emitSignal({
 				targetID: Settings.sidebarSignalID,
@@ -355,104 +340,63 @@ export class AutomatonRenderer {
 		}
 	}
 
-	private showEditableState(state: State): HTMLDivElement {
-		let container = utils.create("div");
-		let table = new Table(3);
+	private showEditableState(state: UIState): HTMLDivElement {
 		let canvas = this.canvas;
+		let controller = this.controller;
 		let self = this;
+
+		let data = stateInfoPrinter(state);
 
 		let renameStatePrompt = function() {
 			let prompt = new Prompt(Strings.STATE_RENAME_ACTION);
 
 			prompt.addInput({
 				validator: function(content) {
-					return content.length <= 6;
+					return content.length <= Settings.stateNameMaxLength;
 				}
 			});
 
 			prompt.onSuccess(function(data) {
 				let newName = data[0];
-				for (let state of self.stateList) {
-					if (state.getName() == newName) {
-						alert(Strings.DUPLICATE_STATE_NAME);
-						renameStatePrompt();
-						return;
-					}
+				if (!controller.renameState(state, newName)) {
+					alert(Strings.DUPLICATE_STATE_NAME);
+					renameStatePrompt();
+					return;
 				}
 
-				Settings.controller().renameState(state, newName);
-				state.setName(newName);
-				state.render(canvas);
 				$("#entity_name").html(newName);
 			});
 
 			prompt.show();
 		};
 
-		let renameButton = utils.create("input", {
-			type: "button",
-			value: Strings.RENAME_STATE,
-			click: renameStatePrompt
+		data.renameButton.addEventListener("click", renameStatePrompt);
+
+		data.toggleInitialButton.addEventListener("click", function() {
+			controller.toggleInitialFlag(state);
+			let isInitial = (self.initialState == state);
+			$("#entity_initial").html(isInitial ? Strings.YES : Strings.NO);
+
 		});
 
-		let toggleInitialButton = utils.create("input", {
-			type: "button",
-			value: Strings.TOGGLE_PROPERTY,
-			click: function() {
-				self.setInitialState(state);
-				state.render(canvas);
-				$("#entity_initial").html(state.isInitial() ? Strings.YES
-															: Strings.NO);
-			}
+		data.toggleFinalButton.addEventListener("click", function() {
+			// self.changeFinalFlag(state, !state.isFinal());
+			// state.render(canvas);
+			controller.toggleFinalFlag(state);
+			$("#entity_final").html(state.final ? Strings.YES : Strings.NO);
+
 		});
 
-		let toggleFinalButton = utils.create("input", {
-			type: "button",
-			value: Strings.TOGGLE_PROPERTY,
-			click: function() {
-				self.changeFinalFlag(state, !state.isFinal());
-				state.render(canvas);
-				$("#entity_final").html(state.isFinal() ? Strings.YES
-														  : Strings.NO);
-			}
+		data.deleteButton.addEventListener("click", function() {
+			controller.deleteState(state);
+			self.clearSelection();
+			self.unsetSelectedEntityContent();
 		});
 
-		let deleteButton = utils.create("input", {
-			type: "button",
-			value: Strings.DELETE_STATE,
-			click: function() {
-				self.deleteState(state);
-				self.clearSelection();
-				self.unsetSelectedEntityContent();
-			}
-		});
-
-		table.add(utils.create("span", { innerHTML: Strings.STATE_NAME + ":" }));
-		table.add(utils.create("span", { innerHTML: state.getName(),
-										 className: "property_value",
-										 id: "entity_name" }));
-		table.add(renameButton);
-
-		table.add(utils.create("span", { innerHTML: Strings.STATE_IS_INITIAL + ":" }));
-		table.add(utils.create("span", { innerHTML: state.isInitial() ? Strings.YES
-																	  : Strings.NO,
-										 className: "property_value",
-										 id: "entity_initial" }));
-		table.add(toggleInitialButton);
-
-		table.add(utils.create("span", { innerHTML: Strings.STATE_IS_FINAL + ":" }));
-		table.add(utils.create("span", { innerHTML: state.isFinal() ? Strings.YES
-																	: Strings.NO,
-										 className: "property_value",
-										 id: "entity_final" }));
-		table.add(toggleFinalButton);
-
-		table.add(deleteButton, 3);
-
-		container.appendChild(table.html());
-		return container;
+		return data.container;
 	}
 
+	// ------------------------------------------------
 	// After an edge is edited, this method makes sure that curved flags
 	// are correctly turned on/off and same origin/target edges are properly
 	// merged. Receives as input the edge that has just been edited.
@@ -1218,21 +1162,28 @@ export class AutomatonRenderer {
 	}
 
 	private canvas: GUI.Canvas;
+	private controller: MainController;
 	private node: HTMLElement;
-	private stateList: State[] = [];
-	private edgeList: Edge[] = [];
-	private highlightedState: State|null = null;
-	private highlightedEdge: Edge|null = null;
-	private initialState: State|null = null;
-	private edgeMode: boolean = false;
-	private currentEdge: Edge|null = null;
 
+	// private stateList: UIState[] = [];
+	// private edgeList: UIEdge[] = [];
+
+	private stateList: Map<UIState> = {};
+	private edgeList: {
+		[origin: string]: {
+			[target: string]: UIEdge
+		}
+	} = {};
+
+	private highlightedState: UIState|null = null;
+	private highlightedEdge: UIEdge|null = null;
+
+	private initialState: UIState|null = null;
+	private edgeMode: boolean = false;
+	private currentEdge: UIEdge|null = null;
 	private locked: boolean = false;
-	private memento: Memento<string>;
-	private frozenMemento: boolean = false;
-	private loadingMode: boolean = false;
+
 	private formalDefinitionCallback: () => void;
 
-	private persistenceHandler: PersistenceHandler;
 	private formalDefinitionRenderer: FormalDefinitionRenderer;
 }

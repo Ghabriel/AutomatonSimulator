@@ -63,6 +63,7 @@ export namespace Settings {
 	export const stateRadius = 32;
 	export const stateRingRadius = 27;
 	export const stateDragTolerance = 50;
+	export const stateNameMaxLength = 6;
 
 	export const stateLabelFontFamily = "arial";
 	export const stateLabelFontSize = 20;

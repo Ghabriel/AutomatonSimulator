@@ -3,6 +3,7 @@
 import {AutomatonRenderer} from "./AutomatonRenderer"
 import {GUI} from "./GUI"
 import {JSONHandler} from "../persistence/JSONHandler"
+import {MainController} from "../MainController"
 import {Memento} from "../Memento"
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
@@ -13,6 +14,7 @@ import {Settings} from "../Settings"
 export class Mainbar extends Renderer {
 	constructor() {
 		super();
+
 		let self = this;
 		$(window).resize(function() {
 			self.resizeCanvas();
@@ -44,14 +46,15 @@ export class Mainbar extends Renderer {
 
 		let persistenceHandler = new JSONHandler();
 
-		this.automatonRenderer = new AutomatonRenderer(canvas, node,
-									memento, persistenceHandler);
+		this.automatonRenderer = new AutomatonRenderer(canvas, node);
+		this.controller = new MainController(this.automatonRenderer, memento, persistenceHandler);
 	}
 
 	protected onRender(): void {
 		this.automatonRenderer!.render();
 	}
 
-	private canvas: GUI.Canvas|null = null;
 	private automatonRenderer: AutomatonRenderer|null = null;
+	private canvas: GUI.Canvas|null = null;
+	private controller: MainController|null = null;
 }
