@@ -7,6 +7,19 @@ import {Prompt} from "../../Prompt"
 import {Strings} from "../../Settings"
 import {utils} from "../../Utils"
 
+function debug(message: string, args: IArguments) {
+	let arr: any[] = [];
+	for (let i = 0; i < args.length; i++) {
+		arr.push(args[i]);
+	}
+
+	if (arr.length > 0) {
+		console.log("\t" + message, arr);
+	} else {
+		console.log("\t" + message);
+	}
+}
+
 export class FAController implements Controller {
 	constructor() {
 		this.machine = new FA();
@@ -33,11 +46,13 @@ export class FAController implements Controller {
 	}
 
 	public edgeDataToText(data: string[]): string {
+		debug("FAController::edgeDataToText", arguments);
 		let epsilon = Keyboard.symbols.epsilon;
 		return data[0] || epsilon;
 	}
 
 	public createState(state: State): void {
+		debug("FAController::createState", arguments);
 		let name = state.name;
 		let index = this.machine.addState(name);
 		this.stateMapping[name] = index;
@@ -54,6 +69,7 @@ export class FAController implements Controller {
 	}
 
 	public createTransition(origin: State, target: State, data: string[]): void {
+		debug("FAController::createTransition", arguments);
 		let indexOrigin = this.index(origin);
 		let indexTarget = this.index(target);
 		this.machine.addTransition(indexOrigin, indexTarget, data[0]);
@@ -61,6 +77,7 @@ export class FAController implements Controller {
 	}
 
 	public changeInitialFlag(state: State): void {
+		debug("FAController::changeInitialFlag", arguments);
 		if (state.initial) {
 			this.machine.setInitialState(this.index(state));
 		} else {
@@ -71,6 +88,7 @@ export class FAController implements Controller {
 	}
 
 	public changeFinalFlag(state: State): void {
+		debug("FAController::changeFinalFlag", arguments);
 		let index = this.index(state);
 		if (state.final) {
 			this.machine.addAcceptingState(index);
@@ -82,6 +100,7 @@ export class FAController implements Controller {
 	}
 
 	public renameState(state: State, newName: string): void {
+		debug("FAController::renameState", arguments);
 		let index = this.index(state);
 		delete this.stateMapping[state.name];
 		this.stateMapping[newName] = index;
@@ -90,11 +109,13 @@ export class FAController implements Controller {
 	}
 
 	public deleteState(state: State): void {
+		debug("FAController::deleteState", arguments);
 		this.machine.removeState(this.index(state));
 		this.editingCallback();
 	}
 
 	public deleteTransition(origin: State, target: State, data: string[]): void {
+		debug("FAController::deleteTransition", arguments);
 		let indexOrigin = this.index(origin);
 		let indexTarget = this.index(target);
 		let edgeText = this.edgeDataToText(data);
@@ -107,11 +128,13 @@ export class FAController implements Controller {
 	}
 
 	public clear(): void {
+		debug("FAController::clear", arguments);
 		this.machine.clear();
 		this.editingCallback();
 	}
 
 	public fastForward(input: string): void {
+		debug("FAController::fastForward", arguments);
 		this.machine.reset();
 		for (let i = 0; i < input.length; i++) {
 			this.machine.read(input[i]);
@@ -119,6 +142,7 @@ export class FAController implements Controller {
 	}
 
 	public step(input: string): void {
+		debug("FAController::step", arguments);
 		if (!this.finished(input)) {
 			if (this.stepIndex == -1) {
 				// Don't parse anything if stepIndex == -1.
@@ -134,35 +158,43 @@ export class FAController implements Controller {
 	}
 
 	public stop(): void {
+		debug("FAController::stop", arguments);
 		this.stepIndex = -1;
 	}
 
 	public reset(): void {
+		debug("FAController::reset", arguments);
 		this.machine.reset();
 	}
 
 	public finished(input: string): boolean {
+		debug("FAController::finished", arguments);
 		let started = (this.stepIndex >= 0);
 		return started && (this.machine.error() || this.stepIndex >= input.length);
 	}
 
 	public isStopped(): boolean {
+		debug("FAController::isStopped", arguments);
 		return this.stepIndex == -1;
 	}
 
 	public stepPosition(): number {
+		debug("FAController::stepPosition", arguments);
 		return this.stepIndex;
 	}
 
 	public currentStates(): string[] {
+		debug("FAController::currentStates", arguments);
 		return this.machine.getCurrentStates();
 	}
 
 	public accepts(): boolean {
+		debug("FAController::accepts", arguments);
 		return this.machine.accepts();
 	}
 
 	public formalDefinition(): FormalDefinition {
+		debug("FAController::formalDefinition", arguments);
 		let machine = this.machine;
 		let delta = Keyboard.symbols.delta;
 		let sigma = Keyboard.symbols.sigma;
@@ -183,6 +215,7 @@ export class FAController implements Controller {
 	}
 
 	public setEditingCallback(callback: () => void): void {
+		debug("FAController::setEditingCallback", arguments);
 		this.editingCallback = callback;
 	}
 

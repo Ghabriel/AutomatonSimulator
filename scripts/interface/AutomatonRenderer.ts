@@ -206,7 +206,7 @@ export class AutomatonRenderer {
 			return null;
 		}
 
-		if (!edgeList.hasOwnProperty(targetName)) {
+		if (!edgeList[originName].hasOwnProperty(targetName)) {
 			return null;
 		}
 
@@ -278,18 +278,8 @@ export class AutomatonRenderer {
 	}
 
 	public selectEdge<T extends State>(externalEdge: Edge<T>): void {
-		if (this.locked) {
-			return;
-		}
-
-		this.dimSelection();
-
 		let edge = this.internal(externalEdge);
-		edge.applyPalette(Settings.edgeHighlightPalette);
-		this.highlightedEdge = edge;
-		edge.render(this.canvas);
-
-		this.updateEditableEdge(edge);
+		this.internalSelectEdge(edge);
 	}
 
 	private dimSelection(): void {
@@ -408,7 +398,7 @@ export class AutomatonRenderer {
 		this.formalDefinitionCallback();
 	}
 
-	private updateEditableState(state: State|null): void {
+	private updateEditableState(state: UIState|null): void {
 		if (state) {
 			SignalEmitter.emitSignal({
 				targetID: Settings.sidebarSignalID,
@@ -420,7 +410,7 @@ export class AutomatonRenderer {
 		}
 	}
 
-	private updateEditableEdge<T extends State>(edge: Edge<T>|null): void {
+	private updateEditableEdge(edge: UIEdge|null): void {
 		if (edge) {
 			SignalEmitter.emitSignal({
 				targetID: Settings.sidebarSignalID,
@@ -432,7 +422,7 @@ export class AutomatonRenderer {
 		}
 	}
 
-	private showEditableState(state: State): HTMLDivElement {
+	private showEditableState(state: UIState): HTMLDivElement {
 		let canvas = this.canvas;
 		let controller = this.controller;
 		let self = this;
@@ -466,7 +456,7 @@ export class AutomatonRenderer {
 
 		data.toggleInitialButton.addEventListener("click", function() {
 			controller.toggleInitialFlag(state);
-			let isInitial = (self.initialState == self.internal(state));
+			let isInitial = (self.initialState == state);
 			$("#entity_initial").html(isInitial ? Strings.YES : Strings.NO);
 
 		});
@@ -536,12 +526,11 @@ export class AutomatonRenderer {
 		return this.stateList.hasOwnProperty(name);
 	}
 
-	private showEditableEdge<T extends State>(externalEdge: Edge<T>): HTMLDivElement {
+	private showEditableEdge(edge: UIEdge): HTMLDivElement {
 		let canvas = this.canvas;
 		let controller = this.controller;
 		let self = this;
 
-		let edge = this.internal(externalEdge);
 		let data = edgeInfoPrinter(edge);
 
 		data.changeOriginButton.addEventListener("click", function() {
@@ -725,6 +714,18 @@ export class AutomatonRenderer {
 		this.currentEdge.render(this.canvas);
 	}
 
+	public createState(state: State): void {
+		let uiState = new UIState(state);
+		this.stateList[uiState.name] = uiState;
+
+		if (uiState.initial) {
+			this.initialState = uiState;
+		}
+
+		uiState.render(this.canvas);
+		this.bindStateEvents(uiState);
+	}
+
 	public createEdge<T extends State>(externalEdge: Edge<T>): void {
 		let edge = this.internalCreateEdge(externalEdge);
 		edge.render(this.canvas);
@@ -759,15 +760,22 @@ export class AutomatonRenderer {
 		}
 
 		// Renders the edge here to show it already attached to the target state.
-		this.selectEdge(currentEdge);
+		this.internalSelectEdge(currentEdge);
 		currentEdge.render(this.canvas);
 
 		this.edgeTextPrompt(currentEdge, (data, text) => {
 			currentEdge.dataList.push(data);
 			currentEdge.textList.push(text);
+
+			this.dimSelection();
+			currentEdge.remove();
 			this.controller.createEdge(currentEdge);
 
-			this.updateEditableEdge(currentEdge);
+			currentEdge = this.getEdge(origin, target)!;
+			if (oppositeEdge){
+				currentEdge.setCurveFlag(true);
+			}
+			this.internalSelectEdge(currentEdge);
 			this.currentEdge = null;
 		}, () => {
 			this.deleteCurrentEdge();
@@ -874,8 +882,13 @@ export class AutomatonRenderer {
 				}
 
 				state.name = name;
-				this.onStateCreation(state);
-				this.updateEditableState(state);
+
+				this.dimSelection();
+				state.remove();
+				this.controller.createState(state);
+
+				state = this.stateList[state.name];
+				this.selectState(state);
 			});
 
 			prompt.onAbort(() => {
@@ -890,16 +903,18 @@ export class AutomatonRenderer {
 		stateNamePrompt();
 	}
 
-	private onStateCreation(state: UIState): void {
-		if (this.controller.empty()) {
-			// The first state should be initial
-			state.initial = true;
-			this.initialState = state;
+	private internalSelectEdge(edge: UIEdge): void {
+		if (this.locked) {
+			return;
 		}
 
-		state.render(this.canvas);
-		this.stateList[state.name] = state;
-		this.controller.createState(state);
+		this.dimSelection();
+
+		edge.applyPalette(Settings.edgeHighlightPalette);
+		this.highlightedEdge = edge;
+		edge.render(this.canvas);
+
+		this.updateEditableEdge(edge);		
 	}
 
 	private internalDeleteEdge<T extends State>(edge: Edge<T>): void {

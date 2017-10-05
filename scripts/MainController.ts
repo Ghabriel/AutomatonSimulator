@@ -7,6 +7,20 @@ import {PersistenceHandler} from "./persistence/PersistenceHandler"
 import {Settings, Strings} from "./Settings"
 import {Signal, SignalEmitter, SignalResponse} from "./SignalEmitter"
 import {System} from "./System"
+import {utils} from "./Utils"
+
+function debug(message: string, args: IArguments) {
+	let arr: any[] = [];
+	for (let i = 0; i < args.length; i++) {
+		arr.push(args[i]);
+	}
+
+	if (arr.length > 0) {
+		console.log(message, arr);
+	} else {
+		console.log(message);
+	}
+}
 
 export class MainController {
 	constructor(renderer: AutomatonRenderer, memento: Memento<string>,
@@ -33,6 +47,7 @@ export class MainController {
 	}
 
 	public receiveSignal(signal: Signal): SignalResponse|null {
+		debug("MainController::receiveSignal", arguments);
 		if (signal.targetID == Settings.mainControllerSignalID) {
 			let methodName = <keyof this> signal.identifier;
 			let method = <Function> <any> this[methodName];
@@ -47,6 +62,7 @@ export class MainController {
 	}
 
 	public clear(): void {
+		debug("MainController::clear", arguments);
 		this.stateList = {};
 		this.edgeList = {};
 		this.initialState = null;
@@ -56,22 +72,47 @@ export class MainController {
 	}
 
 	public empty(): boolean {
+		debug("MainController::empty", arguments);
 		// Doesn't need to check for edgeList.length since edges
 		// can't exist without states.
 		return Object.keys(this.stateList).length == 0;
 	}
 
 	public save(): string {
+		debug("MainController::save", arguments);
 		return this.persistenceHandler.save(this.stateList,
 					this.edgeList, this.initialState);
 	}
 
 	public load(content: string): void {
+		debug("MainController::load", arguments);
 		this.internalLoad(content);
 		this.memento.push(this.save());
 	}
 
+	public recognitionHighlight(states: string[]): void {
+		debug("MainController::recognitionHighlight", arguments);
+		this.renderer.recognitionHighlight(states);
+	}
+
+	public recognitionDim(): void {
+		debug("MainController::recognitionDim", arguments);
+		this.renderer.recognitionDim();
+	}
+
+	public lock(): void {
+		debug("MainController::lock", arguments);
+		this.renderer.lock();
+	}
+
+	public unlock(): void {
+		debug("MainController::unlock", arguments);
+		this.renderer.unlock();
+	}
+
+
 	public getFormalDefinitionCallback(): Generator<boolean> {
+		debug("MainController::getFormalDefinitionCallback", arguments);
 		let self = this;
 		return function() {
 			if (self.loadingMode) {
@@ -88,14 +129,17 @@ export class MainController {
 	}
 
 	public stateManualCreation(): void {
+		debug("MainController::stateManualCreation", arguments);
 		this.renderer.stateManualCreation();
 	}
 
 	public edgeManualCreation(): void {
+		debug("MainController::edgeManualCreation", arguments);
 		this.renderer.edgeManualCreation();
 	}
 
 	public renameState(state: State, newName: string): boolean {
+		debug("MainController::renameState", arguments);
 		if (this.stateExists(newName)) {
 			return false;
 		}
@@ -107,6 +151,7 @@ export class MainController {
 	}
 
 	public toggleInitialFlag(state: State): void {
+		debug("MainController::toggleInitialFlag", arguments);
 		if (state == this.initialState) {
 			state.initial = false;
 			this.initialState = null;
@@ -125,12 +170,14 @@ export class MainController {
 	}
 
 	public toggleFinalFlag(state: State): void {
+		debug("MainController::toggleFinalFlag", arguments);
 		state.final = !state.final;
 		this.renderer.toggleFinalFlag(state);
 		Settings.controller().changeFinalFlag(state);
 	}
 
 	public deleteState(state: State): void {
+		debug("MainController::deleteState", arguments);
 		if (!this.stateExists(state.name)) {
 			return;
 		}
@@ -156,6 +203,7 @@ export class MainController {
 	public changeTransitionData<T extends State, TEdge extends Edge<T>>
 		(edge: TEdge, transitionIndex: number, newData: string[],
 		newText: string): void {
+		debug("MainController::changeTransitionData", arguments);
 
 		let {origin, target, dataList, textList} = edge;
 
@@ -171,6 +219,7 @@ export class MainController {
 
 	public deleteTransition<T extends State, TEdge extends Edge<T>>
 		(edge: TEdge, transitionIndex: number): void {
+		debug("MainController::deleteTransition", arguments);
 
 		let {origin, target, dataList, textList} = edge;
 
@@ -188,6 +237,7 @@ export class MainController {
 	}
 
 	public deleteEdge<T extends State, TEdge extends Edge<T>>(edge: TEdge): void {
+		debug("MainController::deleteEdge", arguments);
 		this.internalDeleteEdge(edge);
 
 		this.renderer.deleteEdge(edge);
@@ -201,10 +251,11 @@ export class MainController {
 	}
 
 	public createEdge<T extends State, TEdge extends Edge<T>>(edge: TEdge): void {
+		debug("MainController::createEdge", arguments);
 		let {origin, target} = edge;
 
 		if (!this.edgeList.hasOwnProperty(origin.name)) {
-			this.edgeList[origin.name];
+			this.edgeList[origin.name] = {};
 		}
 
 		this.edgeList[origin.name][target.name] = edge;
@@ -216,22 +267,35 @@ export class MainController {
 	}
 
 	public internalCreateTransition(origin: State, target: State, data: string[]): void {
+		debug("MainController::internalCreateTransition", arguments);
 		let controller = Settings.controller();
 		Settings.controller().createTransition(origin, target, data);
 	}
 
-	public createState(state: State): void {
+	public createState(externalState: State): void {
+		debug("MainController::createState", arguments);
+		let state = this.cleanup(externalState);
+
+		if (this.empty()) {
+			// The first state should be initial
+			state.initial = true;
+			this.initialState = state;
+		}
+
 		this.stateList[state.name] = state;
+		this.renderer.createState(state);
 		Settings.controller().createState(state);
 	}
 
 	public onStateDrag(): void {
+		debug("MainController::onStateDrag", arguments);
 		// Saves the post-drag state to the memento
 		// to allow the user to undo it
 		this.memento.push(this.save());
 	}
 
 	public internalDeleteEdge<T extends State, TEdge extends Edge<T>>(edge: TEdge): void {
+		debug("MainController::internalDeleteEdge", arguments);
 		if (!this.edgeList.hasOwnProperty(edge.origin.name)) {
 			return;
 		}
@@ -240,6 +304,7 @@ export class MainController {
 	}
 
 	public undo(): void {
+		debug("MainController::undo", arguments);
 		let data = this.memento.undo();
 		if (data) {
 			this.clearAndLoad(data);
@@ -247,6 +312,7 @@ export class MainController {
 	}
 
 	public redo(): void {
+		debug("MainController::redo", arguments);
 		let data = this.memento.redo();
 		if (data) {
 			this.clearAndLoad(data);
@@ -309,6 +375,30 @@ export class MainController {
 		this.loadingMode = false;
 		this.renderer.triggerFormalDefinitionChange();
 		this.frozenMemento = false;
+	}
+
+	// Removes all unnecessary properties
+	private cleanup(state: State): State;
+	private cleanup<T extends State>(state: Edge<T>): Edge<T>;
+	private cleanup<T extends State>(entity: State|Edge<T>): any {
+		if (entity.type == "state") {
+			return {
+				x: entity.x,
+				y: entity.y,
+				initial: entity.initial,
+				final: entity.final,
+				name: entity.name,
+				type: entity.type
+			};
+		} else {
+			return {
+				origin: this.cleanup(entity.origin),
+				target: this.cleanup(entity.target),
+				textList: utils.cloneArray(entity.textList),
+				dataList: utils.cloneArray(entity.dataList),
+				type: entity.type
+			};
+		}
 	}
 
 	private memento: Memento<string>;

@@ -86,7 +86,7 @@ export class initFA implements Initializable {
 	private highlightCurrentStates(): void {
 		let states = Settings.controller().currentStates();
 		SignalEmitter.emitSignal({
-			targetID: Settings.automatonRendererSignalID,
+			targetID: Settings.mainControllerSignalID,
 			identifier: "recognitionHighlight",
 			data: [states]
 		});
@@ -161,7 +161,7 @@ export class initFA implements Initializable {
 
 	private unlockAutomaton(): void {
 		SignalEmitter.emitSignal({
-			targetID: Settings.automatonRendererSignalID,
+			targetID: Settings.mainControllerSignalID,
 			identifier: "unlock",
 			data: []
 		});
@@ -227,7 +227,7 @@ export class initFA implements Initializable {
 			if (stopEnabled) {
 				Settings.controller().stop();
 				SignalEmitter.emitSignal({
-					targetID: Settings.automatonRendererSignalID,
+					targetID: Settings.mainControllerSignalID,
 					identifier: "recognitionDim",
 					data: []
 				});
@@ -254,7 +254,7 @@ export class initFA implements Initializable {
 				let controller = Settings.controller();
 				if (controller.isStopped()) {
 					SignalEmitter.emitSignal({
-						targetID: Settings.automatonRendererSignalID,
+						targetID: Settings.mainControllerSignalID,
 						identifier: "lock",
 						data: []
 					});

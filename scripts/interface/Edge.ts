@@ -30,7 +30,7 @@ export class PartialUIEdge implements PartialEdge<UIState> {
 	// precisely define this transition
 	public dataList: string[][] = [];
 
-	public type: "edge";
+	public type: "edge" = "edge";
 
 	public constructor() {
 		let self = this;
