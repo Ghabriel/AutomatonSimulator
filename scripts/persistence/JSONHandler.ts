@@ -10,7 +10,7 @@ type SavedStructure = [
 	string, // automaton type
 	[string, number, number, number][], // state list
 	[string, string, string[][]][], // edge list
-	string // initial state name
+	number // initial state index
 ];
 
 const ABORT_LOOP = false;
@@ -28,7 +28,7 @@ export class JSONHandler implements PersistenceHandler {
 			Settings.Machine[Settings.currentMachine], // automaton type
 			[], // state list
 			[], // edge list
-			""  // initial state name
+			-1  // initial state index
 		];
 
 		this.saveStates(result, stateList, initialState);
@@ -69,7 +69,7 @@ export class JSONHandler implements PersistenceHandler {
 		}
 
 		this.loadStates(obj, loadedData, function(state) {
-			obj[state.name] = {};
+			loadedData.edgeList[state.name] = {};
 		});
 
 		if (!this.loadEdges(obj, loadedData)) {
@@ -84,16 +84,16 @@ export class JSONHandler implements PersistenceHandler {
 		initialState: State|null): void {
 
 		utils.foreach(stateList, function(name, state) {
+			if (state == initialState) {
+				result[3] = result[1].length;
+			}
+
 			result[1].push([
 				state.name,
 				state.final ? 1 : 0,
 				state.x,
 				state.y
 			]);
-
-			if (state == initialState) {
-				result[3] = state.name;
-			}
 		});
 	}
 
@@ -110,10 +110,10 @@ export class JSONHandler implements PersistenceHandler {
 	}
 
 	private matchesCorrectStructure(obj: any): obj is SavedStructure {
-		return obj[0] instanceof String
+		return (typeof obj[0] == "string")
 			&& obj[1] instanceof Array
 			&& obj[2] instanceof Array
-			&& obj[3] instanceof String;
+			&& (typeof obj[3] == "number");
 	}
 
 	private handleDifferentMachineType(obj: SavedStructure,
@@ -144,8 +144,9 @@ export class JSONHandler implements PersistenceHandler {
 						callback: (state: State) => void): void {
 		let controller = Settings.controller();
 
-		for (let data of dataObj[1]) {
-			let isInitial = (dataObj[3] == data[0]);
+		for (let i = 0; i < dataObj[1].length; i++) {
+			let data = dataObj[1][i];
+			let isInitial = (dataObj[3] == i);
 
 			let state: State = {
 				x: data[2],

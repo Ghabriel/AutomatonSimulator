@@ -268,6 +268,12 @@ export class AutomatonRenderer {
 		state.render(this.canvas);
 	}
 
+	public renameState(externalState: State, newName: string): void {
+		let state = this.internal(externalState);
+		state.name = newName;
+		state.render(this.canvas);
+	}
+
 	// public getEdgeList(): IndexedEdgeGroup<UIEdge> {
 	// 	return this.edgeList;
 	// }
