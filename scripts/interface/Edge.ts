@@ -16,7 +16,7 @@ enum EdgeType {
  * Represents the visual representation of an edge,
  * which may contain multiple transitions.
  */
-export class UIEdge implements PartialEdge<UIState> {
+export class PartialUIEdge implements PartialEdge<UIState> {
 	// The state that this edge comes from
 	public origin?: UIState;
 
@@ -29,6 +29,8 @@ export class UIEdge implements PartialEdge<UIState> {
 	// A list of data lists used by the controllers to
 	// precisely define this transition
 	public dataList: string[][] = [];
+
+	public type: "edge";
 
 	public constructor() {
 		let self = this;
@@ -46,14 +48,6 @@ export class UIEdge implements PartialEdge<UIState> {
 
 	public setVirtualTarget(target: Point): void {
 		this.virtualTarget = target;
-	}
-
-	public addText(text: string): void {
-		this.textList.push(text);
-	}
-
-	public addData(data: string[]): void {
-		this.dataList.push(data);
 	}
 
 	public setCurveFlag(flag: boolean): void {
@@ -512,4 +506,9 @@ export class UIEdge implements PartialEdge<UIState> {
 	private clickCallback: (event: Event) => void;
 
 	private currentEdgeType: EdgeType;
+}
+
+export class UIEdge extends PartialUIEdge implements Edge<UIState> {
+	public origin: UIState;
+	public target: UIState;
 }

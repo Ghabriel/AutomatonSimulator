@@ -25,6 +25,8 @@ export class UIState implements State {
 	// Name of this state (which is written in its body)
 	public name: string = "";
 
+	public type: "state";
+
 	constructor(base?: State) {
 		if (base) {
 			this.x = base.x;

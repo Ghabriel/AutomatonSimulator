@@ -158,6 +158,44 @@ export class MainController {
 		this.renderer.deleteState(state);
 	}
 
+	public changeTransitionData<T extends State, TEdge extends Edge<T>>
+		(edge: TEdge, transitionIndex: number, newData: string[],
+		newText: string): void {
+
+		let {origin, target, dataList, textList} = edge;
+
+		let controller = Settings.controller();
+		controller.deleteEdge(origin, target, dataList[transitionIndex]);
+
+		dataList[transitionIndex] = newData;
+		textList[transitionIndex] = newText;
+		controller.createEdge(origin, target, newData);
+
+		this.renderer.refresh(edge);
+	}
+
+	public deleteTransition<T extends State, TEdge extends Edge<T>>
+		(edge: TEdge, transitionIndex: number): void {
+
+		let {origin, target, dataList, textList} = edge;
+
+		let controller = Settings.controller();
+		controller.deleteEdge(origin, target, dataList[transitionIndex]);
+
+		dataList.splice(transitionIndex, 1);
+		textList.splice(transitionIndex, 1);
+
+		if (dataList.length == 0) {
+			this.deleteEdge(edge);
+		} else {
+			this.renderer.refresh(edge);
+		}
+	}
+
+	public deleteEdge<T extends State, TEdge extends Edge<T>>(edge: TEdge): void {
+
+	}
+
 	private stateExists(name: string): boolean {
 		return this.stateList.hasOwnProperty(name);
 	}
