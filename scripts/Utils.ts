@@ -1,10 +1,5 @@
 import {GUI} from "./interface/GUI"
 
-export interface Point {
-	x: number;
-	y: number;
-}
-
 type NonIndexedMap<C,T> = {
 	[P in keyof C]: T
 };

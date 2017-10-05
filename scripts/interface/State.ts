@@ -38,12 +38,7 @@ export class UIState implements State {
 		this.radius = Settings.stateRadius;
 	}
 
-	public setPosition(x: number, y: number): void {
-		this.x = x;
-		this.y = y;
-	}
-
-	public getPosition(): {x: number, y: number} {
+	public getPosition(): Point {
 		return {
 			x: this.x,
 			y: this.y
@@ -52,22 +47,6 @@ export class UIState implements State {
 
 	public getRadius(): number {
 		return this.radius;
-	}
-
-	public setFinal(flag: boolean): void {
-		this.final = flag;
-	}
-
-	public isFinal(): boolean {
-		return this.final;
-	}
-
-	public setName(name: string): void {
-		this.name = name;
-	}
-
-	public getName(): string {
-		return this.name;
 	}
 
 	public applyPalette(palette: StatePalette): void {
@@ -358,7 +337,8 @@ export class UIState implements State {
 
 	// TODO: find a better name for this method
 	private setVisualPosition(x: number, y: number): void {
-		this.setPosition(x, y);
+		this.x = x;
+		this.y = y;
 
 		this.body!.attr({
 			cx: x,

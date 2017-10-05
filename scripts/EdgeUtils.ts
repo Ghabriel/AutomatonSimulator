@@ -1,7 +1,7 @@
-/// <reference path="../types.ts" />
+/// <reference path="./types.ts" />
 
-import {Settings} from "../Settings"
-import {utils} from "../Utils"
+import {Settings} from "./Settings"
+import {utils} from "./Utils"
 
 export namespace EdgeUtils {
 	export function addEdgeData<T extends State>(edge: Edge<T>,

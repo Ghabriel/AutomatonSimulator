@@ -4,7 +4,7 @@ import {GUI} from "./GUI"
 import {Settings} from "../Settings"
 import {UIState} from "./State"
 import {EdgePalette} from "../Palette"
-import {Point, utils} from "../Utils"
+import {utils} from "../Utils"
 
 enum EdgeType {
 	NORMAL,

@@ -4,6 +4,11 @@ type Map<T> = {[key: string]: T};
 type Generator<T> = () => T;
 type Callback<T> = (value: T) => void;
 
+interface Point {
+	x: number;
+	y: number;
+}
+
 type IndexedEdgeGroup<TEdge/* extends Edge<T>*/> = {
 	[origin: string]: {
 		[target: string]: TEdge

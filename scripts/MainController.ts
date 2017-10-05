@@ -1,6 +1,7 @@
 /// <reference path="types.ts" />
 
 import {AutomatonRenderer} from "./interface/AutomatonRenderer"
+import {EdgeUtils} from "./EdgeUtils"
 import {Memento} from "./Memento"
 import {PersistenceHandler} from "./persistence/PersistenceHandler"
 import {Settings, Strings} from "./Settings"
@@ -154,8 +155,26 @@ export class MainController {
 	}
 
 	public deleteState(state: State): void {
-		// ??
+		if (!this.stateExists(state.name)) {
+			return;
+		}
+
+		if (this.stateList[state.name] != state) {
+			return;
+		}
+
+		EdgeUtils.edgeIteration(this.edgeList, (edge) => {
+			let {origin, target} = edge;
+
+			if (origin == state || target == state) {
+				this.internalDeleteEdge(edge);
+			}
+		});
+
+		delete this.stateList[state.name];
+
 		this.renderer.deleteState(state);
+		Settings.controller().deleteState(state);
 	}
 
 	public changeTransitionData<T extends State, TEdge extends Edge<T>>
@@ -193,7 +212,52 @@ export class MainController {
 	}
 
 	public deleteEdge<T extends State, TEdge extends Edge<T>>(edge: TEdge): void {
+		this.internalDeleteEdge(edge);
 
+		this.renderer.deleteEdge(edge);
+
+		let {origin, target, dataList} = edge;
+		let controller = Settings.controller();
+
+		for (let data of dataList) {
+			controller.deleteEdge(origin, target, data);
+		}
+		// Settings.controller().deleteEdge()
+	}
+
+	public createEdge<T extends State, TEdge extends Edge<T>>(edge: TEdge): void {
+		let {origin, target} = edge;
+
+		if (!this.edgeList.hasOwnProperty(origin.name)) {
+			this.edgeList[origin.name];
+		}
+
+		this.edgeList[origin.name][target.name] = edge;
+		this.renderer.createEdge(edge);
+	}
+
+	public createTransition(origin: State, target: State, data: string[]): void {
+		let controller = Settings.controller();
+		controller.createEdge(origin, target, data);
+	}
+
+	public createState(state: State): void {
+		this.stateList[state.name] = state;
+		Settings.controller().createState(state);
+	}
+
+	public onStateDrag(): void {
+		// Saves the post-drag state to the memento
+		// to allow the user to undo it
+		this.memento.push(this.save());
+	}
+
+	public internalDeleteEdge<T extends State, TEdge extends Edge<T>>(edge: TEdge): void {
+		if (!this.edgeList.hasOwnProperty(edge.origin.name)) {
+			return;
+		}
+
+		delete this.edgeList[edge.origin.name][edge.target.name];
 	}
 
 	private stateExists(name: string): boolean {

@@ -1,6 +1,6 @@
-import {UIEdge} from "./Edge"
+import {PartialUIEdge, UIEdge} from "./Edge"
 import {edgeInfoPrinter} from "./EdgeInfoPrinter"
-import {EdgeUtils} from "./EdgeUtils"
+import {EdgeUtils} from "../EdgeUtils"
 import {FormalDefinitionRenderer} from "./FormalDefinitionRenderer"
 import {GUI} from "./GUI"
 import {Keyboard} from "../Keyboard"
@@ -110,7 +110,7 @@ export class AutomatonRenderer {
 		});
 	}
 
-	private createEdge<T extends State>(edge: Edge<T>): UIEdge {
+	public createEdge<T extends State>(edge: Edge<T>): UIEdge {
 		let origin = edge.origin;
 		if (!this.edgeList.hasOwnProperty(origin.name)) {
 			this.edgeList[origin.name] = {};
@@ -198,20 +198,6 @@ export class AutomatonRenderer {
 			});
 		}
 	}
-
-	// public receiveSignal(signal: Signal): SignalResponse|null {
-	// 	if (signal.targetID == Settings.automatonRendererSignalID) {
-	// 		let methodName = <keyof this> signal.identifier;
-	// 		let method = <Function> <any> this[methodName];
-
-	// 		return {
-	// 			reacted: true,
-	// 			response: method.apply(this, signal.data)
-	// 		};
-	// 	}
-
-	// 	return null;
-	// }
 
 	public getCanvas(): GUI.Canvas {
 		return this.canvas;
@@ -435,7 +421,7 @@ export class AutomatonRenderer {
 		}
 	}
 
-	private getEdge(origin: UIState, target: UIState): UIEdge|null {
+	private getEdge(origin: State, target: State): UIEdge|null {
 		let edgeList = this.edgeList;
 
 		if (!edgeList.hasOwnProperty(origin.name)) {
@@ -550,7 +536,6 @@ export class AutomatonRenderer {
 		});
 	}
 
-	// ------------------------------------------------
 	private bindEvents(): void {
 		utils.foreach(this.stateList, (name, state) => {
 			state.render(this.canvas);
@@ -575,7 +560,9 @@ export class AutomatonRenderer {
 		// provide better usability. Unfortunately, many SVG frameworks don't
 		// allow such separation.
 		state.drag(() => {
-			this.updateEdges();
+			EdgeUtils.edgeIteration(this.edgeList, (edge) => {
+				edge.render(this.canvas);
+			});
 		}, (distanceSquared, event) => {
 			if (!this.locked && distanceSquared <= Settings.stateDragTolerance) {
 				if (this.edgeMode) {
@@ -590,9 +577,7 @@ export class AutomatonRenderer {
 				return false;
 			}
 
-			// Saves the post-drag state to the memento
-			// to allow the user to undo it
-			this.memento.push(this.save());
+			this.controller.onStateDrag();
 			return true;
 		});
 	}
@@ -621,79 +606,82 @@ export class AutomatonRenderer {
 		});
 	}
 
-	private beginEdge(state: State): void {
+	private beginEdge(state: UIState): void {
 		this.edgeMode = true;
-		this.currentEdge = new Edge();
-		this.currentEdge.setOrigin(state);
+		this.currentEdge = new PartialUIEdge();
+		this.currentEdge.origin = state;
 	}
 
-	private finishEdge(state: State): void {
-		this.edgeMode = false;
+	private adjustEdge(elem: HTMLElement, e: MouseEvent): void {
 		if (!this.currentEdge) {
 			// shouldn't happen, just for type safety
 			throw Error();
 		}
 
-		let origin = this.currentEdge.getOrigin()!;
+		let target = {
+			x: e.pageX - elem.offsetLeft,
+			y: e.pageY - elem.offsetTop
+		};
 
-		let edgeText = function(edge: Edge,
+		this.currentEdge.setVirtualTarget(target);
+		this.currentEdge.render(this.canvas);
+	}
+
+	private finishEdge(target: UIState): void {
+		if (!this.currentEdge) {
+			// shouldn't happen, just for type safety
+			throw Error();
+		}
+
+		this.edgeMode = false;
+		let origin = this.currentEdge.origin!;
+		let controller = this.controller;
+
+		let edgeText = function(edge: UIEdge,
 								callback: (d: string[], t: string) => void,
 								fallback: () => void) {
-			let controller = Settings.controller();
-			let prompt = controller.edgePrompt(function(data, content) {
+			let machineController = Settings.controller();
+			let prompt = machineController.edgePrompt(function(data, content) {
 				callback(data, content);
-				controller.createEdge(origin, state, data);
+				controller.createTransition(origin, target, data);
 			}, fallback);
 
-			let edgeOrigin = edge.getOrigin()!;
-			let edgeTarget = edge.getTarget()!;
-			let originPosition = edgeOrigin.getPosition();
-			let targetPosition = edgeTarget.getPosition();
+			let edgeOrigin = edge.origin;
+			let edgeTarget = edge.target;
 			if (edgeOrigin == edgeTarget) {
 				// Loop edge
-				let x = originPosition.x + edgeOrigin.getRadius();
-				let y = originPosition.y - edgeOrigin.getRadius();
+				let x = edgeOrigin.x + edgeOrigin.getRadius();
+				let y = edgeOrigin.y - edgeOrigin.getRadius();
 				prompt.setPosition(x, y);
 			} else {
-				let averageX = (originPosition.x + targetPosition.x) / 2;
-				let averageY = (originPosition.y + targetPosition.y) / 2;
+				let averageX = (edgeOrigin.x + edgeTarget.x) / 2;
+				let averageY = (edgeOrigin.y + edgeTarget.y) / 2;
 				prompt.setPosition(averageX, averageY);
 			}
 
 			prompt.show();
 		};
 
-		let self = this;
-
-		let oppositeEdge: Edge|null = null;
-
-		let clearCurrentEdge = function() {
-			self.dimEdge();
-			self.currentEdge!.remove();
-			self.currentEdge = null;
+		let clearCurrentEdge = () => {
+			this.dimEdge();
+			this.currentEdge!.remove();
+			this.currentEdge = null;
 		};
 
-
-		// Checks if there's already an edge linking the origin and target
-		// states in either direction (to make the new edge a curved one if
-		// there's an edge in the opposite direction)
-		for (let edge of this.edgeList) {
-			if (edge.getOrigin() == origin && edge.getTarget() == state) {
-				edgeText(edge, function(data, text) {
-					// Add the text to it instead and delete 'this.currentEdge'.
-					edge.addText(text);
-					edge.addData(data);
-					edge.render(self.canvas);
-					self.selectEdge(edge);
-					clearCurrentEdge();
-				}, clearCurrentEdge);
-				return;
-			} else if (edge.getOrigin() == state && edge.getTarget() == origin) {
-				oppositeEdge = edge;
-			}
+		let sameDirectionEdge = this.getEdge(origin, target);
+		if (sameDirectionEdge) {
+			edgeText(sameDirectionEdge, (data, text) => {
+				// Add the text to it instead and delete 'this.currentEdge'.
+				sameDirectionEdge!.dataList.push(data);
+				sameDirectionEdge!.textList.push(text);
+				sameDirectionEdge!.render(this.canvas);
+				this.selectEdge(sameDirectionEdge!);
+				clearCurrentEdge();
+			}, clearCurrentEdge);
+			return;
 		}
 
-		// There's no such edge yet, so continue the configure the new one.
+		let oppositeEdge = this.getEdge(target, origin);
 		if (oppositeEdge) {
 			this.currentEdge.setCurveFlag(true);
 
@@ -702,51 +690,35 @@ export class AutomatonRenderer {
 			oppositeEdge.render(this.canvas);
 		}
 
-		this.currentEdge.setTarget(state);
+		this.currentEdge.target = target;
 		// Renders the edge here to show it already attached to the target state.
 		this.currentEdge.render(this.canvas);
-		this.selectEdge(this.currentEdge);
 
-		edgeText(self.currentEdge!, function(data, text) {
-			if (!self.currentEdge) {
-				// shouldn't happen, just for type safety
-				throw Error();
-			}
+		// The current edge is now completed, it's safe to consider it an UIEdge
+		let currentEdge = <UIEdge> this.currentEdge;
+		this.selectEdge(currentEdge);
 
-			self.currentEdge.addText(text);
-			self.currentEdge.addData(data);
-			self.bindEdgeEvents(self.currentEdge);
+		edgeText(currentEdge, (data, text) => {
+			currentEdge.dataList.push(data);
+			currentEdge.textList.push(text);
+			this.bindEdgeEvents(currentEdge);
 			// Renders it again, this time to show the finished edge
-			self.currentEdge.render(self.canvas);
-			self.updateEditableEdge(self.currentEdge);
-			self.edgeList.push(self.currentEdge);
-			self.currentEdge = null;
-		}, function() {
-			self.updateEditableEdge(null);
+			currentEdge.render(this.canvas);
+			this.updateEditableEdge(currentEdge);
+
+			this.controller.createEdge(currentEdge);
+			this.currentEdge = null;
+		}, () => {
+			this.updateEditableEdge(null);
 			clearCurrentEdge();
 
 			// We might have set the opposite edge curve flag, so
 			// we need to unset it here.
 			if (oppositeEdge) {
 				oppositeEdge.setCurveFlag(false);
-				oppositeEdge.render(self.canvas);
+				oppositeEdge.render(this.canvas);
 			}
 		});
-	}
-
-	private adjustEdge(elem: HTMLElement, e: MouseEvent): void {
-		let target = {
-			x: e.pageX - elem.offsetLeft,
-			y: e.pageY - elem.offsetTop
-		};
-		this.currentEdge!.setVirtualTarget(target);
-		this.currentEdge!.render(this.canvas);
-	}
-
-	private updateEdges(): void {
-		for (let edge of this.edgeList) {
-			edge.render(this.canvas);
-		}
 	}
 
 	private clearSelection(): void {
@@ -761,142 +733,110 @@ export class AutomatonRenderer {
 	}
 
 	private newStateAt(x: number, y: number): void {
-		if (!this.locked) {
-			let state = new State();
-			state.setPosition(x, y);
-			this.selectState(state);
-			this.bindStateEvents(state);
-
-			let self = this;
-			let stateNamePrompt = function() {
-				let prompt = new Prompt(Strings.STATE_MANUAL_CREATION);
-
-				prompt.addInput({
-					validator: utils.nonEmptyStringValidator
-				});
-
-				let radius = state.getRadius();
-				prompt.setPosition(x + radius, y - radius);
-
-				prompt.onSuccess(function(data) {
-					let name = data[0];
-					for (let state of self.stateList) {
-						if (state.getName() == name) {
-							alert(Strings.DUPLICATE_STATE_NAME);
-							return stateNamePrompt();
-						}
-					}
-
-					state.setName(name);
-					self.onStateCreation(state);
-					self.updateEditableState(state);
-				});
-
-				prompt.onAbort(function() {
-					self.highlightedState = null;
-					state.remove();
-					self.updateEditableState(null);
-				});
-
-				prompt.show();
-			};
-
-			stateNamePrompt();
+		if (this.locked) {
+			return;
 		}
+
+		let state = new UIState();
+		state.x = x;
+		state.y = y;
+		this.selectState(state);
+		this.bindStateEvents(state);
+
+		let stateNamePrompt = () => {
+			let prompt = new Prompt(Strings.STATE_MANUAL_CREATION);
+
+			prompt.addInput({
+				validator: utils.nonEmptyStringValidator
+			});
+
+			let radius = state.getRadius();
+			prompt.setPosition(x + radius, y - radius);
+
+			prompt.onSuccess((data) => {
+				let name = data[0];
+				if (this.stateExists(name)) {
+					alert(Strings.DUPLICATE_STATE_NAME);
+					return stateNamePrompt();
+				}
+
+				state.name = name;
+				this.onStateCreation(state);
+				this.updateEditableState(state);
+			});
+
+			prompt.onAbort(() => {
+				this.highlightedState = null;
+				state.remove();
+				this.updateEditableState(null);
+			});
+
+			prompt.show();
+		};
+
+		stateNamePrompt();
 	}
 
-	private onStateCreation(state: State): void {
-		if (this.stateList.length == 0) {
+	private onStateCreation(state: UIState): void {
+		if (this.controller.empty()) {
 			// The first state should be initial
-			state.setInitial(true);
+			state.initial = true;
 			this.initialState = state;
 		}
 
 		state.render(this.canvas);
-		this.stateList.push(state);
-		Settings.controller().createState(state);
+		this.stateList[state.name] = state;
+		this.controller.createState(state);
 	}
 
-	private setInitialState(state: State): void {
-		let controller = Settings.controller();
-		if (state == this.initialState) {
-			state.setInitial(false);
-			this.initialState = null;
-			controller.changeInitialFlag(state);
-		} else {
-			if (this.initialState) {
-				this.initialState.setInitial(false);
-				controller.changeInitialFlag(this.initialState);
-				this.initialState.render(this.canvas);
-			}
-
-			state.setInitial(true);
-			this.initialState = state;
-			controller.changeInitialFlag(state);
+	public deleteState(state: State): void {
+		if (!this.stateExists(state.name)) {
+			return;
 		}
-	}
 
-	private changeFinalFlag(state: State, value: boolean): void {
-		state.setFinal(value);
-		Settings.controller().changeFinalFlag(state);
-	}
+		if (this.stateList[state.name] != state) {
+			return;
+		}
 
-	private deleteState(state: State): void {
-		for (let i = 0; i < this.edgeList.length; i++) {
-			let edge = this.edgeList[i];
-			let origin = edge.getOrigin();
-			let target = edge.getTarget();
+		EdgeUtils.edgeIteration(this.edgeList, (edge) => {
+			let {origin, target} = edge;
+
 			if (origin == state || target == state) {
 				edge.remove();
-				this.edgeList.splice(i, 1);
-				i--;
+				this.internalDeleteEdge(edge);
 			}
-		}
+		});
 
-		state.remove();
-
-		let states = this.stateList;
-		for (let i = 0; i < states.length; i++) {
-			if (states[i] == state) {
-				states.splice(i, 1);
-				break;
-			}
-		}
-
-		Settings.controller().deleteState(state);
+		this.stateList[state.name].remove();
+		delete this.stateList[state.name];
 	}
 
-	private deleteEdge(edge: Edge): void {
-		let origin = edge.getOrigin()!;
-		let target = edge.getTarget()!;
-		let dataLists = edge.getDataList();
+	// ------------------------------------------------
+	public deleteEdge<T extends State>(edge: Edge<T>): void {
+		let {origin, target, dataList} = edge;
 		let controller = Settings.controller();
 
-		// Searches for an existing edge that points
-		// to the opposite direction
-		for (let candidate of this.edgeList) {
-			if (candidate.getOrigin() == target && candidate.getTarget() == origin) {
-				// If found, un-curve it.
-				candidate.setCurveFlag(false);
-				candidate.render(this.canvas);
-				break;
-			}
+		let sameDirectionEdge = this.getEdge(origin, target);
+		if (!sameDirectionEdge) {
+			return;
 		}
 
-		// Removes the relevant transitions from the underlying structure
-		for (let data of dataLists) {
-			controller.deleteEdge(origin, target, data);
+		let oppositeEdge = this.getEdge(target, origin);
+		if (oppositeEdge) {
+			oppositeEdge.setCurveFlag(false);
+			oppositeEdge.render(this.canvas);
 		}
 
-		// Erases the edge from the screen and removes it
-		// from the edge array
-		for (let i = 0; i < this.edgeList.length; i++) {
-			if (this.edgeList[i] == edge) {
-				edge.remove();
-				this.edgeList.splice(i, 1);
-				break;
-			}
+		sameDirectionEdge.remove();
+		this.internalDeleteEdge(sameDirectionEdge);
+	}
+
+	private internalDeleteEdge<T extends State>(edge: Edge<T>): void {
+		if (!this.edgeList.hasOwnProperty(edge.origin.name)) {
+			return;
 		}
+
+		delete this.edgeList[edge.origin.name][edge.target.name];
 	}
 
 	// Toggles the initial flag of the highlighted state
@@ -917,6 +857,30 @@ export class AutomatonRenderer {
 			highlightedState.render(this.canvas);
 			this.updateEditableState(highlightedState);
 		}
+	}
+
+	private setInitialState(state: UIState): void {
+		let controller = Settings.controller();
+		if (state == this.initialState) {
+			state.initial = false;
+			this.initialState = null;
+			controller.changeInitialFlag(state);
+		} else {
+			if (this.initialState) {
+				this.initialState.setInitial(false);
+				controller.changeInitialFlag(this.initialState);
+				this.initialState.render(this.canvas);
+			}
+
+			state.setInitial(true);
+			this.initialState = state;
+			controller.changeInitialFlag(state);
+		}
+	}
+
+	private changeFinalFlag(state: State, value: boolean): void {
+		state.setFinal(value);
+		Settings.controller().changeFinalFlag(state);
 	}
 
 	private undo(): void {
@@ -940,143 +904,130 @@ export class AutomatonRenderer {
 	}
 
 	private bindShortcuts(): void {
-		let self = this;
 		let group = Settings.canvasShortcutID;
-		System.bindShortcut(Settings.shortcuts.toggleInitial, function() {
-			self.toggleInitial();
+		System.bindShortcut(Settings.shortcuts.toggleInitial, () => {
+			this.toggleInitial();
 		}, group);
 
-		System.bindShortcut(Settings.shortcuts.toggleFinal, function() {
-			self.toggleFinal();
+		System.bindShortcut(Settings.shortcuts.toggleFinal, () => {
+			this.toggleFinal();
 		}, group);
 
-		System.bindShortcut(Settings.shortcuts.dimSelection, function() {
-			if (self.edgeMode) {
-				self.edgeMode = false;
-				self.currentEdge!.remove();
-				self.currentEdge = null;
+		System.bindShortcut(Settings.shortcuts.dimSelection, () => {
+			if (this.edgeMode) {
+				this.edgeMode = false;
+				this.currentEdge!.remove();
+				this.currentEdge = null;
 			}
-			self.dimState();
-			self.dimEdge();
+			this.dimState();
+			this.dimEdge();
 		}, group);
 
-		System.bindShortcut(Settings.shortcuts.deleteEntity, function() {
-			let highlightedState = self.highlightedState;
-			let highlightedEdge = self.highlightedEdge;
+		System.bindShortcut(Settings.shortcuts.deleteEntity, () => {
+			let highlightedState = this.highlightedState;
+			let highlightedEdge = this.highlightedEdge;
 			if (highlightedState) {
-				self.deleteState(highlightedState);
+				this.controller.deleteState(highlightedState);
 			} else if (highlightedEdge) {
-				self.deleteEdge(highlightedEdge);
+				this.deleteEdge(highlightedEdge);
 			}
-			self.clearSelection();
+			this.clearSelection();
 		}, group);
 
-		System.bindShortcut(Settings.shortcuts.clearMachine, function() {
+		System.bindShortcut(Settings.shortcuts.clearMachine, () => {
 			let confirmation = confirm(Strings.CLEAR_CONFIRMATION);
 			if (confirmation) {
-				self.clear();
+				this.clear();
 			}
 		}, group);
 
 		// TODO: try to reduce the redundancy
-		System.bindShortcut(Settings.shortcuts.left, function() {
-			self.moveStateSelection(function(attempt, highlighted) {
-				return attempt.getPosition().x < highlighted.getPosition().x;
-			}, function(attempt, currBest, highlighted) {
+		System.bindShortcut(Settings.shortcuts.left, () => {
+			this.moveStateSelection((attempt, highlighted) => {
+				return attempt.x < highlighted.x;
+			}, (attempt, currBest, highlighted) => {
 				if (!currBest) {
 					return true;
 				}
 
-				let reference = highlighted.getPosition();
-				let position = attempt.getPosition();
-				let dy = Math.abs(position.y - reference.y);
-				let targetPosition = currBest.getPosition();
-				let targetDy = Math.abs(targetPosition.y - reference.y);
+				let dy = Math.abs(attempt.y - highlighted.y);
+				let targetDy = Math.abs(currBest.y - highlighted.y);
 
 				let threshold = self.selectionThreshold();
 				if (dy < threshold) {
-					return targetDy >= threshold || position.x > targetPosition.x;
+					return targetDy >= threshold || attempt.x > currBest.x;
 				}
 
 				return dy < targetDy;
 			});
 		}, group);
 
-		System.bindShortcut(Settings.shortcuts.right, function() {
-			self.moveStateSelection(function(attempt, highlighted) {
-				return attempt.getPosition().x > highlighted.getPosition().x;
-			}, function(attempt, currBest, highlighted) {
+		System.bindShortcut(Settings.shortcuts.right, () => {
+			this.moveStateSelection((attempt, highlighted) => {
+				return attempt.x > highlighted.x;
+			}, (attempt, currBest, highlighted) => {
 				if (!currBest) {
 					return true;
 				}
 
-				let reference = highlighted.getPosition();
-				let position = attempt.getPosition();
-				let dy = Math.abs(position.y - reference.y);
-				let targetPosition = currBest.getPosition();
-				let targetDy = Math.abs(targetPosition.y - reference.y);
+				let dy = Math.abs(attempt.y - highlighted.y);
+				let targetDy = Math.abs(currBest.y - highlighted.y);
 
-				let threshold = self.selectionThreshold();
+				let threshold = this.selectionThreshold();
 				if (dy < threshold) {
-					return targetDy >= threshold || position.x < targetPosition.x;
+					return targetDy >= threshold || attempt.x < currBest.x;
 				}
 
 				return dy < targetDy;
 			});
 		}, group);
 
-		System.bindShortcut(Settings.shortcuts.up, function() {
-			self.moveStateSelection(function(attempt, highlighted) {
-				return attempt.getPosition().y < highlighted.getPosition().y;
-			}, function(attempt, currBest, highlighted) {
+		System.bindShortcut(Settings.shortcuts.up, () => {
+			this.moveStateSelection((attempt, highlighted) => {
+				return attempt.y < highlighted.y;
+			}, (attempt, currBest, highlighted) => {
 				if (!currBest) {
 					return true;
 				}
 
-				let reference = highlighted.getPosition();
-				let position = attempt.getPosition();
-				let dx = Math.abs(position.x - reference.x);
-				let targetPosition = currBest.getPosition();
-				let targetDx = Math.abs(targetPosition.x - reference.x);
+				let dx = Math.abs(attempt.x - highlighted.x);
+				let targetDx = Math.abs(currBest.x - highlighted.x);
 
-				let threshold = self.selectionThreshold();
+				let threshold = this.selectionThreshold();
 				if (dx < threshold) {
-					return targetDx >= threshold || position.y > targetPosition.y;
+					return targetDx >= threshold || attempt.y > currBest.y;
 				}
 
 				return dx < targetDx;
 			});
 		}, group);
 
-		System.bindShortcut(Settings.shortcuts.down, function() {
-			self.moveStateSelection(function(attempt, highlighted) {
-				return attempt.getPosition().y > highlighted.getPosition().y;
-			}, function(attempt, currBest, highlighted) {
+		System.bindShortcut(Settings.shortcuts.down, () => {
+			this.moveStateSelection((attempt, highlighted) => {
+				return attempt.y > highlighted.y;
+			}, (attempt, currBest, highlighted) => {
 				if (!currBest) {
 					return true;
 				}
 
-				let reference = highlighted.getPosition();
-				let position = attempt.getPosition();
-				let dx = Math.abs(position.x - reference.x);
-				let targetPosition = currBest.getPosition();
-				let targetDx = Math.abs(targetPosition.x - reference.x);
+				let dx = Math.abs(attempt.x - highlighted.x);
+				let targetDx = Math.abs(currBest.x - highlighted.x);
 
-				let threshold = self.selectionThreshold();
-				if (dx < self.selectionThreshold()) {
-					return targetDx >= threshold || position.y < targetPosition.y;
+				let threshold = this.selectionThreshold();
+				if (dx < this.selectionThreshold()) {
+					return targetDx >= threshold || attempt.y < currBest.y;
 				}
 
 				return dx < targetDx;
 			});
 		}, group);
 
-		System.bindShortcut(Settings.shortcuts.undo, function() {
-			self.undo();
+		System.bindShortcut(Settings.shortcuts.undo, () => {
+			this.undo();
 		}, group);
 
-		System.bindShortcut(Settings.shortcuts.redo, function() {
-			self.redo();
+		System.bindShortcut(Settings.shortcuts.redo, () => {
+			this.redo();
 		}, group);
 	}
 
@@ -1118,8 +1069,9 @@ export class AutomatonRenderer {
 	private highlightedEdge: UIEdge|null = null;
 
 	private initialState: UIState|null = null;
+	private currentEdge: PartialUIEdge|null = null;
+
 	private edgeMode: boolean = false;
-	private currentEdge: UIEdge|null = null;
 	private locked: boolean = false;
 
 	private formalDefinitionCallback: () => void;
