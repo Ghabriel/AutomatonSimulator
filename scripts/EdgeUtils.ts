@@ -16,7 +16,7 @@ export namespace EdgeUtils {
 		let controller = Settings.controller();
 		edge.textList.push(controller.edgeDataToText(data));
 		edge.dataList.push(data);
-		controller.createEdge(origin, target, data);
+		controller.createTransition(origin, target, data);
 	}
 
 	export function edgeIteration<T extends State, TEdge extends Edge<T>>

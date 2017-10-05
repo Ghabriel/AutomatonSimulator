@@ -41,7 +41,7 @@ export namespace Settings {
 	export let imageFolder = "images/";
 
 	export const sidebarSignalID = "sidebar";
-	export const automatonRendererSignalID = "automatonRenderer";
+	export const mainControllerSignalID = "mainController";
 
 	export const disabledButtonClass = "disabled";
 

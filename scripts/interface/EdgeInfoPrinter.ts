@@ -3,7 +3,7 @@ import {UIEdge} from "./Edge"
 import {Table} from "./Table"
 import {utils} from "../Utils"
 
-export const edgeInfoPrinter = (edge: UIEdge) => {
+export const edgeInfoPrinter = <T extends State>(edge: Edge<T>) => {
 	let container = utils.create("div");
 
 	let changeOriginButton = utils.create("input", {

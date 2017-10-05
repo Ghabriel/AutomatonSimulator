@@ -124,7 +124,7 @@ export class Sidebar extends Renderer {
 
 	public changeMachineType(type: number): void {
 		SignalEmitter.emitSignal({
-			targetID: Settings.automatonRendererSignalID,
+			targetID: Settings.mainControllerSignalID,
 			identifier: "clear",
 			data: []
 		});
@@ -294,7 +294,7 @@ export class Sidebar extends Renderer {
 			value: Strings.SAVE,
 			click: function() {
 				let content = SignalEmitter.emitSignal({
-					targetID: Settings.automatonRendererSignalID,
+					targetID: Settings.mainControllerSignalID,
 					identifier: "save",
 					data: []
 				});
@@ -314,14 +314,13 @@ export class Sidebar extends Renderer {
 			type: "file"
 		});
 		fileSelector.addEventListener("change", function(e) {
-			// TODO: change these <any> casts
 			let file = (<any> e.target).files[0];
 			(<HTMLInputElement> this).value = "";
 			if (file) {
 				let reader = new FileReader();
 				reader.onload = function(e) {
 					SignalEmitter.emitSignal({
-						targetID: Settings.automatonRendererSignalID,
+						targetID: Settings.mainControllerSignalID,
 						identifier: "load",
 						data: [(<any> e.target).result]
 					});
@@ -368,7 +367,7 @@ export class Sidebar extends Renderer {
 			button.disabled = (type == Settings.currentMachine);
 			button.addEventListener("click", function() {
 				let empty = SignalEmitter.emitSignal({
-					targetID: Settings.automatonRendererSignalID,
+					targetID: Settings.mainControllerSignalID,
 					identifier: "empty",
 					data: []
 				});
@@ -406,7 +405,7 @@ export class Sidebar extends Renderer {
 			value: Strings.CREATE_STATE,
 			click: function() {
 				SignalEmitter.emitSignal({
-					targetID: Settings.automatonRendererSignalID,
+					targetID: Settings.mainControllerSignalID,
 					identifier: "stateManualCreation",
 					data: []
 				});
@@ -420,7 +419,7 @@ export class Sidebar extends Renderer {
 			value: Strings.CREATE_EDGE,
 			click: function() {
 				SignalEmitter.emitSignal({
-					targetID: Settings.automatonRendererSignalID,
+					targetID: Settings.mainControllerSignalID,
 					identifier: "edgeManualCreation",
 					data: []
 				});

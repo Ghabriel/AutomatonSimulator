@@ -1,6 +1,6 @@
 /// <reference path="../types.ts" />
 
-import {EdgeUtils} from "../interface/EdgeUtils"
+import {EdgeUtils} from "../EdgeUtils"
 import {AutomatonSummary, PersistenceHandler} from "./PersistenceHandler"
 import {Settings, Strings} from "../Settings"
 import {SignalEmitter} from "../SignalEmitter"
@@ -46,7 +46,7 @@ export class JSONHandler implements PersistenceHandler {
 			edgeList: {}
 		};
 
-		let obj;
+		let obj: any;
 		try {
 			obj = JSON.parse(content);
 		} catch (e) {
@@ -183,12 +183,6 @@ export class JSONHandler implements PersistenceHandler {
 				dataList: [],
 				type: "edge"
 			};
-
-			if (edgeList[target].hasOwnProperty(origin)) {
-				let opposite = edgeList[target][origin];
-				opposite.setCurveFlag(true);
-				edge.setCurveFlag(true);
-			}
 
 			for (let data of dataList) {
 				EdgeUtils.addEdgeData(edge, data);

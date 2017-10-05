@@ -3,6 +3,7 @@ type Map<T> = {[key: string]: T};
 
 type Generator<T> = () => T;
 type Callback<T> = (value: T) => void;
+type SimpleCallback = Generator<void>;
 
 interface Point {
 	x: number;

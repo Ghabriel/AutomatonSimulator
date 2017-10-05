@@ -3,7 +3,7 @@ import {UIState} from "./State"
 import {Table} from "./Table"
 import {utils} from "../Utils"
 
-export const stateInfoPrinter = (state: UIState) => {
+export const stateInfoPrinter = (state: State) => {
 	let container = utils.create("div");
 
 	let renameButton = utils.create("input", {

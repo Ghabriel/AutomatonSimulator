@@ -31,6 +31,7 @@ export class UIState implements State {
 		if (base) {
 			this.x = base.x;
 			this.y = base.y;
+			this.initial = base.initial;
 			this.final = base.final;
 			this.name = base.name;
 		}
