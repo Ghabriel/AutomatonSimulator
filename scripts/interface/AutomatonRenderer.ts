@@ -1,16 +1,16 @@
 /// <reference path="../types.ts" />
 
-import {PartialUIEdge, UIEdge} from "./Edge"
 import {edgeInfoPrinter} from "./EdgeInfoPrinter"
 import {EdgeUtils} from "../EdgeUtils"
 import {FormalDefinitionRenderer} from "./FormalDefinitionRenderer"
 import {GUI} from "./GUI"
+import {PartialUIEdge, UIEdge} from "./UIEdge"
+import {UIState} from "./UIState"
 import {Keyboard} from "../Keyboard"
 import {MainController} from "../MainController"
 import {Prompt, ValuedHTMLElement} from "../Prompt"
 import {Settings, Strings} from "../Settings"
 import {SignalEmitter} from "../SignalEmitter"
-import {UIState} from "./State"
 import {stateInfoPrinter} from "./StateInfoPrinter"
 import {System} from "../System"
 import {Table} from "./Table"

@@ -1,5 +1,5 @@
+import {UIState} from "./UIState"
 import {Strings} from "../Settings"
-import {UIState} from "./State"
 import {Table} from "./Table"
 import {utils} from "../Utils"
 

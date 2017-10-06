@@ -1,7 +1,7 @@
 import {AutomatonRenderer} from "./AutomatonRenderer"
 import {FormalDefinition, TransitionTable} from "../Controller"
-import {UIEdge} from "./Edge"
 import {EdgeUtils} from "../EdgeUtils"
+import {UIEdge} from "./UIEdge"
 import {Keyboard} from "../Keyboard"
 import {Settings, Strings} from "../Settings"
 import {Table} from "./Table"

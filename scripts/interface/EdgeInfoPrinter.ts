@@ -1,5 +1,5 @@
+import {UIEdge} from "./UIEdge"
 import {Settings, Strings} from "../Settings"
-import {UIEdge} from "./Edge"
 import {Table} from "./Table"
 import {utils} from "../Utils"
 

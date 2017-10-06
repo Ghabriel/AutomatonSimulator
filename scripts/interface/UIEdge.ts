@@ -1,8 +1,8 @@
 /// <reference path="../types.ts" />
 
 import {GUI} from "./GUI"
+import {UIState} from "./UIState"
 import {Settings} from "../Settings"
-import {UIState} from "./State"
 import {EdgePalette} from "../Palette"
 import {utils} from "../Utils"
 

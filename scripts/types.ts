@@ -27,7 +27,7 @@ interface State {
 	type: "state";
 }
 
-interface PartialEdge<TState extends State/* = State*/> {
+interface PartialEdge<TState extends State> {
 	origin?: TState;
 	target?: TState;
 
@@ -42,7 +42,7 @@ interface PartialEdge<TState extends State/* = State*/> {
 	type: "edge";
 }
 
-interface Edge<TState extends State/* = State*/> extends PartialEdge<TState> {
+interface Edge<TState extends State> extends PartialEdge<TState> {
 	origin: TState;
 	target: TState;
 }
