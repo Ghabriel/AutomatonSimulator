@@ -374,8 +374,7 @@ export class AutomatonRenderer {
 		let controllerCallback = this.controller.getFormalDefinitionCallback();
 		let definitionContainer: HTMLDivElement;
 
-		let self = this;
-		this.formalDefinitionCallback = function() {
+		this.formalDefinitionCallback = () => {
 			if (!controllerCallback()) {
 				return;
 			}
@@ -391,7 +390,7 @@ export class AutomatonRenderer {
 
 			let formalDefinition = Settings.controller().formalDefinition();
 			let container = utils.create("span");
-			self.formalDefinitionRenderer.render(container, formalDefinition);
+			this.formalDefinitionRenderer.render(container, formalDefinition);
 
 			definitionContainer.innerHTML = "";
 			definitionContainer.appendChild(container);

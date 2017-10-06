@@ -69,10 +69,24 @@ export class MainController {
 
 	public load(content: string): void {
 		this.internalLoad(content);
-		this.memento.push(this.save());
+		this.pushState();
 	}
 
-	// --------------------- Forwarders ---------------------
+	public undo(): void {
+		let data = this.memento.undo();
+		if (data) {
+			this.clearAndLoad(data);
+		}
+	}
+
+	public redo(): void {
+		let data = this.memento.redo();
+		if (data) {
+			this.clearAndLoad(data);
+		}
+	}
+
+	// ------------------- Forwarders ---------------------
 	public recognitionHighlight(states: string[]): void {
 		this.renderer.recognitionHighlight(states);
 	}
@@ -89,23 +103,6 @@ export class MainController {
 		this.renderer.unlock();
 	}
 
-
-	public getFormalDefinitionCallback(): Generator<boolean> {
-		let self = this;
-		return function() {
-			if (self.loadingMode) {
-				return false;
-			}
-
-			// Saves the current state to the memento if it's not frozen
-			if (!self.frozenMemento) {
-				self.memento.push(self.save());
-			}
-
-			return true;
-		};
-	}
-
 	public stateManualCreation(): void {
 		this.renderer.stateManualCreation();
 	}
@@ -114,6 +111,42 @@ export class MainController {
 		this.renderer.edgeManualCreation();
 	}
 
+	// ------------------- Creation ---------------------
+	public createState(externalState: State): void {
+		let state = this.cleanup(externalState);
+
+		if (this.empty()) {
+			// The first state should be initial
+			state.initial = true;
+			this.initialState = state;
+		}
+
+		this.stateList[state.name] = state;
+		this.renderer.createState(state);
+		Settings.controller().createState(state);
+	}
+
+	public createEdge<T extends State, TEdge extends Edge<T>>(edge: TEdge): void {
+		let {origin, target} = edge;
+
+		if (!this.edgeList.hasOwnProperty(origin.name)) {
+			this.edgeList[origin.name] = {};
+		}
+
+		this.edgeList[origin.name][target.name] = edge;
+		this.renderer.createEdge(edge);
+
+		for (let dataList of edge.dataList) {
+			this.internalCreateTransition(origin, target, dataList);
+		}
+	}
+
+	public internalCreateTransition(origin: State, target: State, data: string[]): void {
+		let controller = Settings.controller();
+		Settings.controller().createTransition(origin, target, data);
+	}
+
+	// ------------------- Edition: states ---------------------
 	public renameState(externalState: State, newName: string): boolean {
 		if (this.stateExists(newName)) {
 			return false;
@@ -154,6 +187,24 @@ export class MainController {
 		Settings.controller().changeFinalFlag(state);
 	}
 
+	// ------------------- Edition: edges/transitions ---------------------
+	public changeTransitionData<T extends State, TEdge extends Edge<T>>
+		(edge: TEdge, transitionIndex: number, newData: string[],
+		newText: string): void {
+
+		let {origin, target, dataList, textList} = edge;
+
+		let controller = Settings.controller();
+		controller.deleteTransition(origin, target, dataList[transitionIndex]);
+
+		dataList[transitionIndex] = newData;
+		textList[transitionIndex] = newText;
+		controller.createTransition(origin, target, newData);
+
+		this.renderer.refresh(edge);
+	}
+
+	// ------------------- Deletion ---------------------
 	public deleteState(state: State): void {
 		if (!this.stateExists(state.name)) {
 			return;
@@ -175,22 +226,6 @@ export class MainController {
 
 		this.renderer.deleteState(state);
 		Settings.controller().deleteState(state);
-	}
-
-	public changeTransitionData<T extends State, TEdge extends Edge<T>>
-		(edge: TEdge, transitionIndex: number, newData: string[],
-		newText: string): void {
-
-		let {origin, target, dataList, textList} = edge;
-
-		let controller = Settings.controller();
-		controller.deleteTransition(origin, target, dataList[transitionIndex]);
-
-		dataList[transitionIndex] = newData;
-		textList[transitionIndex] = newText;
-		controller.createTransition(origin, target, newData);
-
-		this.renderer.refresh(edge);
 	}
 
 	public deleteTransition<T extends State, TEdge extends Edge<T>>
@@ -224,46 +259,6 @@ export class MainController {
 		}
 	}
 
-	public createEdge<T extends State, TEdge extends Edge<T>>(edge: TEdge): void {
-		let {origin, target} = edge;
-
-		if (!this.edgeList.hasOwnProperty(origin.name)) {
-			this.edgeList[origin.name] = {};
-		}
-
-		this.edgeList[origin.name][target.name] = edge;
-		this.renderer.createEdge(edge);
-
-		for (let dataList of edge.dataList) {
-			this.internalCreateTransition(origin, target, dataList);
-		}
-	}
-
-	public internalCreateTransition(origin: State, target: State, data: string[]): void {
-		let controller = Settings.controller();
-		Settings.controller().createTransition(origin, target, data);
-	}
-
-	public createState(externalState: State): void {
-		let state = this.cleanup(externalState);
-
-		if (this.empty()) {
-			// The first state should be initial
-			state.initial = true;
-			this.initialState = state;
-		}
-
-		this.stateList[state.name] = state;
-		this.renderer.createState(state);
-		Settings.controller().createState(state);
-	}
-
-	public onStateDrag(): void {
-		// Saves the post-drag state to the memento
-		// to allow the user to undo it
-		this.memento.push(this.save());
-	}
-
 	public internalDeleteEdge<T extends State, TEdge extends Edge<T>>(edge: TEdge): void {
 		if (!this.edgeList.hasOwnProperty(edge.origin.name)) {
 			return;
@@ -272,18 +267,39 @@ export class MainController {
 		delete this.edgeList[edge.origin.name][edge.target.name];
 	}
 
-	public undo(): void {
-		let data = this.memento.undo();
-		if (data) {
-			this.clearAndLoad(data);
-		}
+	// ------------------- Event listeners ---------------------
+	/**
+	 * Returns a function that is called when the formal definition
+	 * of the current machine changes (i.e. when it's edited). If it
+	 * returns false, the renderer ignores this event.
+	 * @return {Generator<boolean>} the listener function
+	 */
+	public getFormalDefinitionCallback(): Generator<boolean> {
+		return () => {
+			if (this.loadingMode) {
+				return false;
+			}
+
+			if (!this.frozenMemento) {
+				this.pushState();
+			}
+
+			return true;
+		};
 	}
 
-	public redo(): void {
-		let data = this.memento.redo();
-		if (data) {
-			this.clearAndLoad(data);
-		}
+	/**
+	 * Called after a state stops being dragged.
+	 */
+	public onStateDrag(): void {
+		// Saves the post-drag state to the memento
+		// to allow the user to undo it
+		this.pushState();
+	}
+
+
+	private pushState(): void {
+		this.memento.push(this.save());
 	}
 
 	private clearAndLoad(data: string): void {
