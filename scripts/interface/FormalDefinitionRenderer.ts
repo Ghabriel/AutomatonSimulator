@@ -19,44 +19,43 @@ export class FormalDefinitionRenderer {
 
 		for (let parameter of formalDefinition.parameterSequence) {
 			let value = formalDefinition.parameterValues[parameter];
-			let type = typeof value;
 			let container = utils.create("span");
 
-			if (type == "number" || type == "string") {
-				container.innerHTML += parameter + " = " + value;
-			} else if (value instanceof Array) {
-				container.innerHTML += parameter + " = ";
-				container.innerHTML += "{" + value.join(", ") + "}";
-			} else if (type == "undefined") {
-				let content: string = "";
-				content += parameter + " = ";
-				content += "<span class='none'>";
-				content += Strings.NO_INITIAL_STATE;
-				content += "</span>";
-				container.innerHTML += content;
-			} else if (value.hasOwnProperty("list")) {
-				this.renderTransitionTable(container, parameter, value);
-			} else {
-				container.innerHTML += "unspecified type";
-			}
+			this.renderParameter(container, parameter, value);
 
 			parent.appendChild(container);
 			parent.appendChild(utils.create("br"));
 		}
 	}
 
+	private renderParameter(container: HTMLElement, parameter: string, value: any): void {
+		let type = typeof value;
+
+		if (type == "number" || type == "string") {
+			container.innerHTML += parameter + " = " + value;
+		} else if (value instanceof Array) {
+			container.innerHTML += parameter + " = ";
+			container.innerHTML += "{" + value.join(", ") + "}";
+		} else if (type == "undefined") {
+			let content: string = "";
+			content += parameter + " = ";
+			content += "<span class='none'>";
+			content += Strings.NO_INITIAL_STATE;
+			content += "</span>";
+			container.innerHTML += content;
+		} else if (value.hasOwnProperty("list")) {
+			this.renderTransitionTable(container, parameter, value);
+		} else {
+			container.innerHTML += "unspecified type";
+		}
+	}
+
 	private renderTransitionTable(container: HTMLElement,
-		parameter: string, table: TransitionTable): void {
+		parameter: string, transitionTable: TransitionTable): void {
 
-		let domain = table.domain;
-		let codomain = table.codomain;
-		let header = table.header;
-		let list = table.list;
-		let metadata = table.metadata;
-		let arrow = Keyboard.symbols.rightArrow;
+		this.renderFunctionSignature(container, parameter, transitionTable);
 
-		container.innerHTML += parameter + ": ";
-		container.innerHTML += domain + " " + arrow + " " + codomain;
+		let {header, list, metadata} = transitionTable;
 
 		if (list.length == 0) {
 			let content: string = "";
@@ -68,30 +67,48 @@ export class FormalDefinitionRenderer {
 			return;
 		}
 
-		let tableWrapper = new Table(list[0].length);
+		let table = new Table(list[0].length);
+		this.addSimpleRow(table, header);
 
-		for (let i = 0; i < header.length; i++) {
-			tableWrapper.add(utils.create("span", {
-				innerHTML: header[i]
+		let htmlTable = table.html();
+		this.renderTransitionTableBody(htmlTable, list, metadata);
+		htmlTable.id = "transition_table";
+
+		container.appendChild(htmlTable);
+	}
+
+	private renderFunctionSignature(container: HTMLElement,
+		parameter: string, table: TransitionTable): void {
+
+		let {domain, codomain, header, list, metadata} = table;
+		let arrow = Keyboard.symbols.rightArrow;
+
+		container.innerHTML += parameter + ": ";
+		container.innerHTML += domain + " " + arrow + " " + codomain;
+	}
+
+	private addSimpleRow(table: Table, cellContents: string[]): void {
+		for (let content of cellContents) {
+			table.add(utils.create("span", {
+				innerHTML: content
 			}));
 		}
+	}
 
-		let htmlTable = tableWrapper.html();
+	private renderTransitionTableBody(table: HTMLTableElement,
+		contentMatrix: string[][], metadata: [string, string][]): void {
 
-		for (let i = 0; i < list.length; i++) {
+		for (let i = 0; i < contentMatrix.length; i++) {
 			let row = utils.create("tr");
-			for (let j = 0; j < list[i].length; j++) {
+			for (let j = 0; j < contentMatrix[i].length; j++) {
 				let cell = utils.create("td");
-				cell.innerHTML = list[i][j];
+				cell.innerHTML = contentMatrix[i][j];
 				row.appendChild(cell);
 			}
 
 			this.bindRowEvents(row, metadata[i]);
-			htmlTable.appendChild(row);
+			table.appendChild(row);
 		}
-
-		htmlTable.id = "transition_table";
-		container.appendChild(htmlTable);
 	}
 
 	private bindRowEvents(row: HTMLTableRowElement, metadata: [string, string]): void {

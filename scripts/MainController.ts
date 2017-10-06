@@ -9,6 +9,11 @@ import {Signal, SignalEmitter, SignalResponse} from "./SignalEmitter"
 import {System} from "./System"
 import {utils} from "./Utils"
 
+/**
+ * Controls the main area of the application. Interacts with a renderer
+ * (which is an AutomatonRenderer), handles persistence, enables undo/redo
+ * of actions and interacts with a Controller.
+ */
 export class MainController {
 	constructor(renderer: AutomatonRenderer, memento: Memento<string>,
 				persistenceHandler: PersistenceHandler) {
