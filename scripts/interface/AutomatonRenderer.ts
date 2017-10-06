@@ -229,7 +229,7 @@ export class AutomatonRenderer {
 	}
 
 	// ------------------- UI highlighting ---------------------
-	public selectState(externalState: UIState): void {
+	public selectState(externalState: State): void {
 		let state = this.internal(externalState);
 		this.internalSelectState(state);
 	}
@@ -678,7 +678,7 @@ export class AutomatonRenderer {
 				} else if (state == this.highlightedState) {
 					this.dimState();
 				} else {
-					this.selectState(state);
+					this.internalSelectState(state);
 				}
 				return false;
 			}
@@ -862,7 +862,7 @@ export class AutomatonRenderer {
 		let state = new UIState();
 		state.x = x;
 		state.y = y;
-		this.selectState(state);
+		this.internalSelectState(state);
 		this.bindStateEvents(state);
 
 		let stateNamePrompt = () => {
@@ -889,7 +889,7 @@ export class AutomatonRenderer {
 				this.controller.createState(state);
 
 				state = this.stateList[state.name];
-				this.selectState(state);
+				this.internalSelectState(state);
 			});
 
 			prompt.onAbort(() => {
@@ -1110,7 +1110,7 @@ export class AutomatonRenderer {
 		});
 
 		if (target) {
-			this.selectState(target);
+			this.internalSelectState(target);
 		}
 	}
 
