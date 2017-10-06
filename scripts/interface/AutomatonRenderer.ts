@@ -65,13 +65,6 @@ export class AutomatonRenderer {
 		this.bindFormalDefinitionListener();
 	}
 
-	public clear(): void {
-		this.clearStates();
-		this.clearEdges();
-		this.initialState = null;
-		this.clearSelection();
-	}
-
 	public setStateList(stateList: Map<State>): void {
 		this.clearStates();
 
@@ -100,6 +93,61 @@ export class AutomatonRenderer {
 		this.fixAllEdgesCurvature();
 	}
 
+	public refresh<T extends State>(entity: State|Edge<T>): void {
+		return this.internal(entity).render(this.canvas);
+	}
+
+	// ------------------- Sidebar button callbacks ---------------------
+	public stateManualCreation(): void {
+		let stateRadius = Settings.stateRadius;
+		let initialMarkLength = Settings.stateInitialMarkLength;
+		this.newStateAt(stateRadius + initialMarkLength, stateRadius);
+	}
+
+	public edgeManualCreation(): void {
+		if (this.locked) {
+			return;
+		}
+
+		Prompt.simple(Strings.EDGE_MANUAL_CREATION, 2, (data) => {
+			if (!this.stateExists(data[0]) || !this.stateExists(data[1])) {
+				alert(Strings.ERROR_INVALID_STATE_NAME);
+				return;
+			}
+
+			let edge = new PartialUIEdge();
+			edge.origin = this.stateList[data[0]];
+			this.currentEdge = edge;
+			this.finishEdge(this.stateList[data[1]]);
+		});
+	}
+
+	public clear(): void {
+		this.clearStates();
+		this.clearEdges();
+		this.initialState = null;
+		this.clearSelection();
+	}
+
+	// ------------------- Creation ---------------------
+	public createState(state: State): void {
+		let uiState = new UIState(state);
+		this.stateList[uiState.name] = uiState;
+
+		if (uiState.initial) {
+			this.initialState = uiState;
+		}
+
+		uiState.render(this.canvas);
+		this.bindStateEvents(uiState);
+	}
+
+	public createEdge<T extends State>(edge: Edge<T>): void {
+		let uiEdge = this.internalCreateEdge(edge);
+		uiEdge.render(this.canvas);
+		this.bindEdgeEvents(uiEdge);
+	}
+
 	public internalCreateEdge<T extends State>(edge: Edge<T>): UIEdge {
 		let origin = edge.origin;
 		if (!this.edgeList.hasOwnProperty(origin.name)) {
@@ -117,12 +165,78 @@ export class AutomatonRenderer {
 		return uiEdge;
 	}
 
-	public refresh<T extends State>(entity: State|Edge<T>): void {
-		return this.internal(entity).render(this.canvas);
+	// ------------------- Edition: states ---------------------
+	public renameState(externalState: State, newName: string): void {
+		let state = this.internal(externalState);
+		state.name = newName;
+		state.render(this.canvas);
 	}
 
-	public triggerFormalDefinitionChange(): void {
-		this.formalDefinitionCallback();
+	public toggleInitialFlag(externalState: State): void {
+		let state = this.internal(externalState);
+
+		if (state == this.initialState) {
+			state.initial = false;
+			this.initialState = null;
+		} else {
+			if (this.initialState) {
+				this.initialState.initial = false;
+				this.initialState.render(this.canvas);
+			}
+
+			state.initial = true;
+			this.initialState = state;
+		}
+
+		state.render(this.canvas);
+	}
+
+	public toggleFinalFlag(externalState: State): void {
+		let state = this.internal(externalState);
+		state.final = !state.final;
+		state.render(this.canvas);
+	}
+
+	// ------------------- Deletion ---------------------
+	public deleteState(externalState: State): void {
+		if (!this.stateExists(externalState.name)) {
+			return;
+		}
+
+		let state = this.internal(externalState);
+
+		this.removeEdgesOfState(state);
+		state.remove();
+		delete this.stateList[state.name];
+	}
+
+	public deleteEdge<T extends State>(edge: Edge<T>): void {
+		let {origin, target, dataList} = edge;
+
+		let sameDirectionEdge = this.getEdge(origin, target);
+		if (!sameDirectionEdge) {
+			return;
+		}
+
+		let oppositeEdge = this.getEdge(target, origin);
+		if (oppositeEdge) {
+			oppositeEdge.setCurveFlag(false);
+			oppositeEdge.render(this.canvas);
+		}
+
+		sameDirectionEdge.remove();
+		this.internalDeleteEdge(sameDirectionEdge);
+	}
+
+	// ------------------- UI highlighting ---------------------
+	public selectState(externalState: UIState): void {
+		let state = this.internal(externalState);
+		this.internalSelectState(state);
+	}
+
+	public selectEdge<T extends State>(externalEdge: Edge<T>): void {
+		let edge = this.internal(externalEdge);
+		this.internalSelectEdge(edge);
 	}
 
 	public recognitionHighlight(stateNames: string[]): void {
@@ -148,6 +262,12 @@ export class AutomatonRenderer {
 		this.dimSelection();
 	}
 
+	// ------------------- Event triggers ---------------------
+	public triggerFormalDefinitionChange(): void {
+		this.formalDefinitionCallback();
+	}
+
+	// ------------------- Interaction lockers/unlockers ---------------------
 	public lock(): void {
 		System.lockShortcutGroup(Settings.canvasShortcutID);
 		this.locked = true;
@@ -158,30 +278,7 @@ export class AutomatonRenderer {
 		this.locked = false;
 	}
 
-	public stateManualCreation(): void {
-		let stateRadius = Settings.stateRadius;
-		let initialMarkLength = Settings.stateInitialMarkLength;
-		this.newStateAt(stateRadius + initialMarkLength, stateRadius);
-	}
-
-	public edgeManualCreation(): void {
-		if (this.locked) {
-			return;
-		}
-
-		Prompt.simple(Strings.EDGE_MANUAL_CREATION, 2, (data) => {
-			if (!this.stateExists(data[0]) || !this.stateExists(data[1])) {
-				alert(Strings.ERROR_INVALID_STATE_NAME);
-				return;
-			}
-
-			let edge = new PartialUIEdge();
-			edge.origin = this.stateList[data[0]];
-			this.currentEdge = edge;
-			this.finishEdge(this.stateList[data[1]]);
-		});
-	}
-
+	// ------------------- Getters ---------------------
 	public getCanvas(): GUI.Canvas {
 		return this.canvas;
 	}
@@ -213,81 +310,12 @@ export class AutomatonRenderer {
 		return edgeList[originName][targetName];
 	}
 
-	public deleteState(externalState: State): void {
-		if (!this.stateExists(externalState.name)) {
-			return;
-		}
-
-		let state = this.internal(externalState);
-
-		this.removeEdgesOfState(state);
-		state.remove();
-		delete this.stateList[state.name];
-	}
-
-	public deleteEdge<T extends State>(edge: Edge<T>): void {
-		let {origin, target, dataList} = edge;
-
-		let sameDirectionEdge = this.getEdge(origin, target);
-		if (!sameDirectionEdge) {
-			return;
-		}
-
-		let oppositeEdge = this.getEdge(target, origin);
-		if (oppositeEdge) {
-			oppositeEdge.setCurveFlag(false);
-			oppositeEdge.render(this.canvas);
-		}
-
-		sameDirectionEdge.remove();
-		this.internalDeleteEdge(sameDirectionEdge);
-	}
-
-	public toggleInitialFlag(externalState: State): void {
-		let state = this.internal(externalState);
-
-		if (state == this.initialState) {
-			state.initial = false;
-			this.initialState = null;
-		} else {
-			if (this.initialState) {
-				this.initialState.initial = false;
-				this.initialState.render(this.canvas);
-			}
-
-			state.initial = true;
-			this.initialState = state;
-		}
-
-		state.render(this.canvas);
-	}
-
-	public toggleFinalFlag(externalState: State): void {
-		let state = this.internal(externalState);
-		state.final = !state.final;
-		state.render(this.canvas);
-	}
-
-	public renameState(externalState: State, newName: string): void {
-		let state = this.internal(externalState);
-		state.name = newName;
-		state.render(this.canvas);
-	}
-
-	// public getEdgeList(): IndexedEdgeGroup<UIEdge> {
-	// 	return this.edgeList;
-	// }
-
-	// -----------------------------------------------
 	public isEdgeSelected(edge: UIEdge): boolean {
 		return this.highlightedEdge == edge;
 	}
 
-	public selectEdge<T extends State>(externalEdge: Edge<T>): void {
-		let edge = this.internal(externalEdge);
-		this.internalSelectEdge(edge);
-	}
 
+	// ------------------- Private methods ---------------------
 	private dimSelection(): void {
 		this.dimState();
 		this.dimEdge();
@@ -301,20 +329,6 @@ export class AutomatonRenderer {
 
 			this.unsetSelectedEntityContent();
 		}
-	}
-
-	private selectState(state: UIState): void {
-		if (this.locked) {
-			return;
-		}
-
-		this.dimSelection();
-
-		state.applyPalette(Settings.stateHighlightPalette);
-		this.highlightedState = state;
-		state.render(this.canvas);
-
-		this.updateEditableState(state);
 	}
 
 	private dimState(): void {
@@ -719,24 +733,6 @@ export class AutomatonRenderer {
 		this.currentEdge.render(this.canvas);
 	}
 
-	public createState(state: State): void {
-		let uiState = new UIState(state);
-		this.stateList[uiState.name] = uiState;
-
-		if (uiState.initial) {
-			this.initialState = uiState;
-		}
-
-		uiState.render(this.canvas);
-		this.bindStateEvents(uiState);
-	}
-
-	public createEdge<T extends State>(externalEdge: Edge<T>): void {
-		let edge = this.internalCreateEdge(externalEdge);
-		edge.render(this.canvas);
-		this.bindEdgeEvents(edge);
-	}
-
 	private finishEdge(target: UIState): void {
 		if (!this.currentEdge) {
 			// shouldn't happen, just for type safety
@@ -906,6 +902,20 @@ export class AutomatonRenderer {
 		};
 
 		stateNamePrompt();
+	}
+
+	private internalSelectState(state: UIState): void {
+		if (this.locked) {
+			return;
+		}
+
+		this.dimSelection();
+
+		state.applyPalette(Settings.stateHighlightPalette);
+		this.highlightedState = state;
+		state.render(this.canvas);
+
+		this.updateEditableState(state);
 	}
 
 	private internalSelectEdge(edge: UIEdge): void {
