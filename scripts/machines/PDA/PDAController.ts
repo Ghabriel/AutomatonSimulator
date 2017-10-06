@@ -15,7 +15,6 @@ export class PDAController implements Controller {
 	public edgePrompt(callback: (data: string[], text: string) => void,
 					  fallback?: () => void): Prompt {
 
-		let self = this;
 		let prompt = new Prompt(Strings.PDA_ENTER_EDGE_CONTENT);
 
 		// read (input)
@@ -35,8 +34,8 @@ export class PDAController implements Controller {
 			placeholder: Strings.PDA_ENTER_EDGE_PLACEHOLDER_3
 		});
 
-		prompt.onSuccess(function(data) {
-			callback(data, self.edgeDataToText(data));
+		prompt.onSuccess((data) => {
+			callback(data, this.edgeDataToText(data));
 		});
 
 		prompt.onAbort(fallback);
@@ -240,15 +239,15 @@ export class PDAController implements Controller {
 
 		let fields = [
 			"Q",
-			sigma + " ∪ {" + epsilon + "}",
+			"(" + sigma + " ∪ {" + epsilon + "})",
 			gamma,
 			"Q",
 			gamma + "*"
 		];
 
 		let transitions: TransitionTable = {
-			domain: [fields[0], "(" + fields[1] + ")", fields[2]].join(" x "),
-			codomain: [fields[3], fields[4]].join(" x "),
+			domain: utils.cartesianProduct(fields[0], fields[1], fields[2]),
+			codomain: utils.cartesianProduct(fields[3], fields[4]),
 			header: fields,
 			list: <string[][]> [],
 			metadata: <[string, string][]> []

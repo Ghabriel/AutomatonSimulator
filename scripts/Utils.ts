@@ -211,4 +211,11 @@ export namespace utils {
 		}
 		return reverse(matches[1].substr(1));
 	}
+
+	// Returns a string representation of the cartesian product of a
+	// group of fields. This function's main purpose is to increase
+	// readability at the call site.
+	export function cartesianProduct(...fields: string[]): string {
+		return fields.join(" x ");
+	}
 }

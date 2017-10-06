@@ -15,7 +15,6 @@ export class FAController implements Controller {
 	public edgePrompt(callback: (data: string[], text: string) => void,
 					  fallback?: () => void): Prompt {
 
-		let self = this;
 		let prompt = new Prompt(Strings.FA_ENTER_EDGE_CONTENT);
 
 		prompt.addInput({
@@ -23,8 +22,8 @@ export class FAController implements Controller {
 			validator: utils.optionalSymbolValidator
 		});
 
-		prompt.onSuccess(function(data) {
-			callback(data, self.edgeDataToText(data));
+		prompt.onSuccess((data) => {
+			callback(data, this.edgeDataToText(data));
 		});
 
 		prompt.onAbort(fallback);
@@ -202,12 +201,12 @@ export class FAController implements Controller {
 
 		let fields = [
 			"Q",
-			sigma + " ∪ {" + epsilon + "}",
+			"(" + sigma + " ∪ {" + epsilon + "})",
 			"Q"
 		];
 
 		let transitions: TransitionTable = {
-			domain: [fields[0], "(" + fields[1] + ")"].join(" x "),
+			domain: utils.cartesianProduct(fields[0], fields[1]),
 			codomain: fields[2],
 			header: fields,
 			list: <string[][]> [],

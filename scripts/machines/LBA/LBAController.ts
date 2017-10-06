@@ -3,7 +3,7 @@
 import {Controller, FormalDefinition, Operation, TransitionTable} from "../../Controller"
 import {Keyboard} from "../../Keyboard"
 import {LBA, TransitionInformation} from "./LBA"
-import {Prompt, ValuedHTMLElement} from "../../Prompt"
+import {Prompt} from "../../Prompt"
 import {Strings} from "../../Settings"
 import {utils} from "../../Utils"
 
@@ -14,7 +14,7 @@ export class LBAController implements Controller {
 
 	public edgePrompt(callback: (data: string[], text: string) => void,
 					  fallback?: () => void): Prompt {
-		let self = this;
+
 		let prompt = new Prompt(Strings.LBA_ENTER_EDGE_CONTENT);
 
 		// read
@@ -33,6 +33,7 @@ export class LBAController implements Controller {
 		prompt.addInput({
 			initializer: function() {
 				let node = utils.create("select");
+
 				node.appendChild(utils.create("option", {
 					innerHTML: Keyboard.symbols.leftArrow,
 					value: "<"
@@ -43,12 +44,12 @@ export class LBAController implements Controller {
 					value: ">"
 				}));
 
-				return <ValuedHTMLElement> node;
+				return node;
 			}
 		});
 
-		prompt.onSuccess(function(data) {
-			callback(data, self.edgeDataToText(data));
+		prompt.onSuccess((data) => {
+			callback(data, this.edgeDataToText(data));
 		});
 
 		prompt.onAbort(fallback);
@@ -256,8 +257,8 @@ export class LBAController implements Controller {
 		];
 
 		let transitions: TransitionTable = {
-			domain: [fields[0], fields[1]].join(" x "),
-			codomain: [fields[2], fields[3], fields[4]].join(" x "),
+			domain: utils.cartesianProduct(fields[0], fields[1]),
+			codomain: utils.cartesianProduct(fields[2], fields[3], fields[4]),
 			header: fields,
 			list: <string[][]> [],
 			metadata: <[string, string][]> []
