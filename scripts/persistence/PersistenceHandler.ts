@@ -1,12 +1,11 @@
-import {Edge} from "../interface/Edge"
-import {State} from "../interface/State"
+/// <reference path="../types.ts" />
 
 export interface AutomatonSummary {
 	aborted: boolean,
 	error: boolean,
 	initialState: State|null,
-	stateList: State[],
-	edgeList: Edge[]
+	stateList: Map<State>,
+	edgeList: IndexedEdgeGroup<Edge<State>>
 }
 
 /**
@@ -14,6 +13,7 @@ export interface AutomatonSummary {
  * Any class that implements this interface can be used in AutomatonRenderer.
  */
 export interface PersistenceHandler {
-	save(stateList: State[], edgeList: Edge[], initialState: State|null): string;
+	save(stateList: Map<State>, edgeList: IndexedEdgeGroup<Edge<State>>,
+		initialState: State|null): string;
 	load(content: string): AutomatonSummary;
 }

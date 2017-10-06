@@ -1,6 +1,7 @@
 import {AutomatonRenderer} from "./AutomatonRenderer"
 import {FormalDefinition, TransitionTable} from "../Controller"
-import {Edge} from "./Edge"
+import {EdgeUtils} from "../EdgeUtils"
+import {UIEdge} from "./UIEdge"
 import {Keyboard} from "../Keyboard"
 import {Settings, Strings} from "../Settings"
 import {Table} from "./Table"
@@ -95,7 +96,7 @@ export class FormalDefinitionRenderer {
 
 	private bindRowEvents(row: HTMLTableRowElement, metadata: [string, string]): void {
 		let automatonRenderer = this.automatonRenderer;
-		let highlightedEdge: Edge|null = null;
+		let highlightedEdge: UIEdge|null = null;
 		let highlightPalette = Settings.edgeHighlightPalette;
 		let hoverPalette = Settings.edgeFormalDefinitionHoverPalette;
 
@@ -115,19 +116,14 @@ export class FormalDefinitionRenderer {
 		};
 
 		row.addEventListener("mouseenter", function() {
-			let edgeList = automatonRenderer.getEdgeList();
-			for (let edge of edgeList) {
-				let originName = edge.getOrigin()!.getName();
-				let targetName = edge.getTarget()!.getName();
-				let sameOrigin = (originName == metadata[0]);
-				let sameTarget = (targetName == metadata[1]);
-				if (sameOrigin && sameTarget) {
-					unselect();
-					edge.applyPalette(hoverPalette);
-					edge.render(automatonRenderer.getCanvas());
-					highlightedEdge = edge;
-					break;
-				}
+			let [origin, target] = metadata;
+			let edge = automatonRenderer.getEdge(origin, target);
+
+			if (edge) {
+				unselect();
+				edge.applyPalette(hoverPalette);
+				edge.render(automatonRenderer.getCanvas());
+				highlightedEdge = edge;
 			}
 		});
 

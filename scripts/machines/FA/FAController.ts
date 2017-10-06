@@ -1,8 +1,9 @@
+/// <reference path="../../types.ts" />
+
 import {Controller, FormalDefinition, Operation, TransitionTable} from "../../Controller"
 import {FA} from "./FA"
 import {Keyboard} from "../../Keyboard"
 import {Prompt} from "../../Prompt"
-import {State} from "../../interface/State"
 import {Strings} from "../../Settings"
 import {utils} from "../../Utils"
 
@@ -37,35 +38,30 @@ export class FAController implements Controller {
 	}
 
 	public createState(state: State): void {
-		let name = state.getName();
+		let name = state.name;
 		let index = this.machine.addState(name);
 		this.stateMapping[name] = index;
 
-		if (state.isInitial()) {
+		if (state.initial) {
 			this.machine.setInitialState(index);
 		}
 
-		if (state.isFinal()) {
+		if (state.final) {
 			this.machine.addAcceptingState(index);
 		}
 
 		this.editingCallback();
 	}
 
-	public createEdge(origin: State, target: State, data: string[]): void {
+	public createTransition(origin: State, target: State, data: string[]): void {
 		let indexOrigin = this.index(origin);
 		let indexTarget = this.index(target);
-		let edgeText = this.edgeDataToText(data);
-		// Ensures that epsilon transitions are handled properly
-		if (!data[0]) {
-			edgeText = "";
-		}
-		this.machine.addTransition(indexOrigin, indexTarget, edgeText);
+		this.machine.addTransition(indexOrigin, indexTarget, data[0]);
 		this.editingCallback();
 	}
 
 	public changeInitialFlag(state: State): void {
-		if (state.isInitial()) {
+		if (state.initial) {
 			this.machine.setInitialState(this.index(state));
 		} else {
 			this.machine.unsetInitialState();
@@ -76,7 +72,7 @@ export class FAController implements Controller {
 
 	public changeFinalFlag(state: State): void {
 		let index = this.index(state);
-		if (state.isFinal()) {
+		if (state.final) {
 			this.machine.addAcceptingState(index);
 		} else {
 			this.machine.removeAcceptingState(index);
@@ -87,7 +83,7 @@ export class FAController implements Controller {
 
 	public renameState(state: State, newName: string): void {
 		let index = this.index(state);
-		delete this.stateMapping[state.getName()];
+		delete this.stateMapping[state.name];
 		this.stateMapping[newName] = index;
 		this.machine.renameState(index, newName);
 		this.editingCallback();
@@ -98,7 +94,7 @@ export class FAController implements Controller {
 		this.editingCallback();
 	}
 
-	public deleteEdge(origin: State, target: State, data: string[]): void {
+	public deleteTransition(origin: State, target: State, data: string[]): void {
 		let indexOrigin = this.index(origin);
 		let indexTarget = this.index(target);
 		let edgeText = this.edgeDataToText(data);
@@ -196,7 +192,7 @@ export class FAController implements Controller {
 	}
 
 	private index(state: State): number {
-		return this.stateMapping[state.getName()];
+		return this.stateMapping[state.name];
 	}
 
 	private transitionTable(): TransitionTable {

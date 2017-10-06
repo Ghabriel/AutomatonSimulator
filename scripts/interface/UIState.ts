@@ -1,4 +1,5 @@
 /// <reference path="../defs/raphael.d.ts" />
+/// <reference path="../types.ts" />
 
 import {Browser} from "../Browser"
 import {GUI} from "./GUI"
@@ -10,17 +11,35 @@ import {utils} from "../Utils"
 /**
  * Represents the visual representation of a state.
  */
-export class State {
-	constructor() {
+export class UIState implements State {
+	// The position and radius of this state
+	public x: number;
+	public y: number;
+
+	// Is this the initial state?
+	public initial: boolean = false;
+
+	// Is this the final state?
+	public final: boolean = false;
+
+	// Name of this state (which is written in its body)
+	public name: string = "";
+
+	public type: "state" = "state";
+
+	constructor(base?: State) {
+		if (base) {
+			this.x = base.x;
+			this.y = base.y;
+			this.initial = base.initial;
+			this.final = base.final;
+			this.name = base.name;
+		}
+
 		this.radius = Settings.stateRadius;
 	}
 
-	public setPosition(x: number, y: number): void {
-		this.x = x;
-		this.y = y;
-	}
-
-	public getPosition(): {x: number, y: number} {
+	public getPosition(): Point {
 		return {
 			x: this.x,
 			y: this.y
@@ -29,30 +48,6 @@ export class State {
 
 	public getRadius(): number {
 		return this.radius;
-	}
-
-	public setInitial(flag: boolean): void {
-		this.initial = flag;
-	}
-
-	public isInitial(): boolean {
-		return this.initial;
-	}
-
-	public setFinal(flag: boolean): void {
-		this.final = flag;
-	}
-
-	public isFinal(): boolean {
-		return this.final;
-	}
-
-	public setName(name: string): void {
-		this.name = name;
-	}
-
-	public getName(): string {
-		return this.name;
 	}
 
 	public applyPalette(palette: StatePalette): void {
@@ -343,7 +338,8 @@ export class State {
 
 	// TODO: find a better name for this method
 	private setVisualPosition(x: number, y: number): void {
-		this.setPosition(x, y);
+		this.x = x;
+		this.y = y;
 
 		this.body!.attr({
 			cx: x,
@@ -365,19 +361,7 @@ export class State {
 		this.renderText();
 	}
 
-	// The position and radius of this state
-	private x: number;
-	private y: number;
 	private radius: number;
-
-	// Is this the initial state?
-	private initial: boolean = false;
-
-	// Is this the final state?
-	private final: boolean = false;
-
-	// Name of this state (which is written in its body)
-	private name: string = "";
 
 	// Used to calculate the coordinates of the
 	// 'initial state arrow'.

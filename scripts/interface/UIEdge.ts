@@ -1,8 +1,10 @@
+/// <reference path="../types.ts" />
+
 import {GUI} from "./GUI"
+import {UIState} from "./UIState"
 import {Settings} from "../Settings"
-import {State} from "./State"
 import {EdgePalette} from "../Palette"
-import {Point, utils} from "../Utils"
+import {utils} from "../Utils"
 
 enum EdgeType {
 	NORMAL,
@@ -14,7 +16,22 @@ enum EdgeType {
  * Represents the visual representation of an edge,
  * which may contain multiple transitions.
  */
-export class Edge {
+export class PartialUIEdge implements PartialEdge<UIState> {
+	// The state that this edge comes from
+	public origin?: UIState;
+
+	// The state that this edge points to
+	public target?: UIState;
+
+	// A list of texts written in this edge
+	public textList: string[] = [];
+
+	// A list of data lists used by the controllers to
+	// precisely define this transition
+	public dataList: string[][] = [];
+
+	public type: "edge" = "edge";
+
 	public constructor() {
 		let self = this;
 		this.clickCallback = function(e) {
@@ -29,40 +46,8 @@ export class Edge {
 		};
 	}
 
-	public setOrigin(origin: State): void {
-		this.origin = origin;
-	}
-
-	public getOrigin(): State|null {
-		return this.origin;
-	}
-
-	public setTarget(target: State): void {
-		this.target = target;
-	}
-
-	public getTarget(): State|null {
-		return this.target;
-	}
-
 	public setVirtualTarget(target: Point): void {
 		this.virtualTarget = target;
-	}
-
-	public addText(text: string): void {
-		this.textList.push(text);
-	}
-
-	public getTextList(): string[] {
-		return this.textList;
-	}
-
-	public addData(data: string[]): void {
-		this.dataList.push(data);
-	}
-
-	public getDataList(): string[][] {
-		return this.dataList;
 	}
 
 	public setCurveFlag(flag: boolean): void {
@@ -484,12 +469,6 @@ export class Edge {
 		this.textContainer.attr("y", y);
 	}
 
-	// The state that this edge comes from
-	private origin: State|null = null;
-
-	// The state that this edge points to
-	private target: State|null = null;
-
 	// The position where the origin state was when we last rendered
 	// this edge. Used to optimize rendering when both the origin and
 	// the target didn't move since the previous rendering.
@@ -502,13 +481,6 @@ export class Edge {
 	// If this edge is not yet completed, it might point to
 	// a position in space rather than a state
 	private virtualTarget: Point|null = null;
-
-	// A list of texts written in this edge
-	private textList: string[] = [];
-
-	// A list of data lists used by the controllers to
-	// precisely define this transition
-	private dataList: string[][] = [];
 
 	// Is this a curved edge?
 	private curved: boolean = false;
@@ -534,4 +506,9 @@ export class Edge {
 	private clickCallback: (event: Event) => void;
 
 	private currentEdgeType: EdgeType;
+}
+
+export class UIEdge extends PartialUIEdge implements Edge<UIState> {
+	public origin: UIState;
+	public target: UIState;
 }

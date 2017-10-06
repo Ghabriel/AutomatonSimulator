@@ -41,7 +41,7 @@ export namespace Settings {
 	export let imageFolder = "images/";
 
 	export const sidebarSignalID = "sidebar";
-	export const automatonRendererSignalID = "automatonRenderer";
+	export const mainControllerSignalID = "mainController";
 
 	export const disabledButtonClass = "disabled";
 
@@ -63,6 +63,7 @@ export namespace Settings {
 	export const stateRadius = 32;
 	export const stateRingRadius = 27;
 	export const stateDragTolerance = 50;
+	export const stateNameMaxLength = 6;
 
 	export const stateLabelFontFamily = "arial";
 	export const stateLabelFontSize = 20;

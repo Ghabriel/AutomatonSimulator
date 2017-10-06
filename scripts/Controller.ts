@@ -1,5 +1,6 @@
+/// <reference path="types.ts" />
+
 import {Prompt} from "./Prompt"
-import {State} from "./interface/State"
 
 export interface FormalDefinition {
 	// Order of the parameters displayed in M = (...)
@@ -34,12 +35,12 @@ export interface Controller {
 
 	// Edition-related methods
 	createState(state: State): void;
-	createEdge(origin: State, target: State, data: string[]): void;
+	createTransition(origin: State, target: State, data: string[]): void;
 	changeInitialFlag(state: State): void;
 	changeFinalFlag(state: State): void;
 	renameState(state: State, newName: string): void;
 	deleteState(state: State): void;
-	deleteEdge(origin: State, target: State, data: string[]): void;
+	deleteTransition(origin: State, target: State, data: string[]): void;
 	clear(): void;
 
 	// Recognition-related methods

@@ -90,7 +90,7 @@ export class initLBA implements Initializable {
 	private highlightCurrentStates(): void {
 		let states = Settings.controller().currentStates();
 		SignalEmitter.emitSignal({
-			targetID: Settings.automatonRendererSignalID,
+			targetID: Settings.mainControllerSignalID,
 			identifier: "recognitionHighlight",
 			data: [states]
 		});
@@ -252,11 +252,11 @@ export class initLBA implements Initializable {
 
 		this.fastRecognition.addEventListener("click", function() {
 			if (fastForwardEnabled) {
-				SignalEmitter.emitSignal({
-					targetID: Settings.automatonRendererSignalID,
-					identifier: "lock",
-					data: []
-				});
+				// SignalEmitter.emitSignal({
+				// 	targetID: Settings.mainControllerSignalID,
+				// 	identifier: "lock",
+				// 	data: []
+				// });
 				let input = self.testCase();
 				let controller = Settings.controller();
 				controller.fastForward(input);
@@ -279,13 +279,13 @@ export class initLBA implements Initializable {
 			if (stopEnabled) {
 				Settings.controller().stop();
 				SignalEmitter.emitSignal({
-					targetID: Settings.automatonRendererSignalID,
+					targetID: Settings.mainControllerSignalID,
 					identifier: "recognitionDim",
 					data: []
 				});
 
 				SignalEmitter.emitSignal({
-					targetID: Settings.automatonRendererSignalID,
+					targetID: Settings.mainControllerSignalID,
 					identifier: "unlock",
 					data: []
 				});
@@ -315,7 +315,7 @@ export class initLBA implements Initializable {
 					controller.reset();
 
 					SignalEmitter.emitSignal({
-						targetID: Settings.automatonRendererSignalID,
+						targetID: Settings.mainControllerSignalID,
 						identifier: "lock",
 						data: []
 					});

@@ -1,8 +1,9 @@
+/// <reference path="../../types.ts" />
+
 import {Controller, FormalDefinition, Operation, TransitionTable} from "../../Controller"
 import {Keyboard} from "../../Keyboard"
 import {LBA, TransitionInformation} from "./LBA"
 import {Prompt, ValuedHTMLElement} from "../../Prompt"
-import {State} from "../../interface/State"
 import {Strings} from "../../Settings"
 import {utils} from "../../Utils"
 
@@ -67,22 +68,22 @@ export class LBAController implements Controller {
 	}
 
 	public createState(state: State): void {
-		let name = state.getName();
+		let name = state.name;
 		let index = this.machine.addState(name);
 		this.stateMapping[name] = index;
 
-		if (state.isInitial()) {
+		if (state.initial) {
 			this.machine.setInitialState(index);
 		}
 
-		if (state.isFinal()) {
+		if (state.final) {
 			this.machine.addAcceptingState(index);
 		}
 
 		this.editingCallback();
 	}
 
-	public createEdge(origin: State, target: State, data: string[]): void {
+	public createTransition(origin: State, target: State, data: string[]): void {
 		let indexOrigin = this.index(origin);
 		let indexTarget = this.index(target);
 		this.machine.addTransition(indexOrigin, indexTarget, data);
@@ -90,7 +91,7 @@ export class LBAController implements Controller {
 	}
 
 	public changeInitialFlag(state: State): void {
-		if (state.isInitial()) {
+		if (state.initial) {
 			this.machine.setInitialState(this.index(state));
 		} else {
 			this.machine.unsetInitialState();
@@ -101,7 +102,7 @@ export class LBAController implements Controller {
 
 	public changeFinalFlag(state: State): void {
 		let index = this.index(state);
-		if (state.isFinal()) {
+		if (state.final) {
 			this.machine.addAcceptingState(index);
 		} else {
 			this.machine.removeAcceptingState(index);
@@ -112,7 +113,7 @@ export class LBAController implements Controller {
 
 	public renameState(state: State, newName: string): void {
 		let index = this.index(state);
-		delete this.stateMapping[state.getName()];
+		delete this.stateMapping[state.name];
 		this.stateMapping[newName] = index;
 		this.machine.renameState(index, newName);
 		this.editingCallback();
@@ -123,7 +124,7 @@ export class LBAController implements Controller {
 		this.editingCallback();
 	}
 
-	public deleteEdge(origin: State, target: State, data: string[]): void {
+	public deleteTransition(origin: State, target: State, data: string[]): void {
 		let indexOrigin = this.index(origin);
 		let indexTarget = this.index(target);
 		this.machine.removeTransition(indexOrigin, indexTarget, data);
@@ -237,7 +238,7 @@ export class LBAController implements Controller {
 	public applyOperation(operation: Operation): void {}
 
 	private index(state: State): number {
-		return this.stateMapping[state.getName()];
+		return this.stateMapping[state.name];
 	}
 
 	private transitionTable(): TransitionTable {
