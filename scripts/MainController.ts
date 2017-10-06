@@ -153,9 +153,16 @@ export class MainController {
 		}
 
 		let state = this.internal(externalState);
+
+		delete this.stateList[state.name];
+		this.stateList[newName] = state;
+
 		state.name = newName;
 
-		this.renderer.renameState(state, newName);
+		// Must use the external state here, since the internal one
+		// has already been updated (which would cause the renderer
+		// to not find it)
+		this.renderer.renameState(externalState, newName);
 		Settings.controller().renameState(state, newName);
 		return true;
 	}

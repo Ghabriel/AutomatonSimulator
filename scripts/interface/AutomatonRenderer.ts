@@ -168,6 +168,10 @@ export class AutomatonRenderer {
 	// ------------------- Edition: states ---------------------
 	public renameState(externalState: State, newName: string): void {
 		let state = this.internal(externalState);
+
+		delete this.stateList[state.name];
+		this.stateList[newName] = state;
+
 		state.name = newName;
 		state.render(this.canvas);
 	}
