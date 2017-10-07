@@ -18,7 +18,7 @@ export interface TransitionTable {
 	codomain: string;
 	header: string[];
 	list: string[][];
-	metadata: [string, string][];
+	metadata: [string, string, string[]][];
 }
 
 export type Operation = (...args: any[]) => any;

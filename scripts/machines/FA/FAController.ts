@@ -201,22 +201,22 @@ export class FAController implements Controller {
 
 		let fields = [
 			"Q",
-			"(" + sigma + " ∪ {" + epsilon + "})",
+			sigma + " ∪ {" + epsilon + "}",
 			"Q"
 		];
 
 		let transitions: TransitionTable = {
-			domain: utils.cartesianProduct(fields[0], fields[1]),
+			domain: utils.cartesianProduct(fields[0], "(" + fields[1] + ")"),
 			codomain: fields[2],
 			header: fields,
-			list: <string[][]> [],
-			metadata: <[string, string][]> []
+			list: [],
+			metadata: []
 		};
 
 		let callback = function(source: string, target: string, input: string) {
 			input = input || Keyboard.symbols.epsilon;
 			transitions.list.push([source, input, target]);
-			transitions.metadata.push([source, target]);
+			transitions.metadata.push([source, target, [input]]);
 		};
 
 		this.machine.transitionIteration(callback);

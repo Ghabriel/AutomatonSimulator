@@ -243,10 +243,7 @@ export class LBAController implements Controller {
 	}
 
 	private transitionTable(): TransitionTable {
-		let symbols = Keyboard.symbols;
-		let gamma = symbols.gamma;
-		let leftArrow = symbols.leftArrow;
-		let rightArrow = symbols.rightArrow;
+		let {gamma, leftArrow, rightArrow} = Keyboard.symbols;
 
 		let fields = [
 			"Q",
@@ -260,11 +257,12 @@ export class LBAController implements Controller {
 			domain: utils.cartesianProduct(fields[0], fields[1]),
 			codomain: utils.cartesianProduct(fields[2], fields[3], fields[4]),
 			header: fields,
-			list: <string[][]> [],
-			metadata: <[string, string][]> []
+			list: [],
+			metadata: []
 		};
 
-		let arrows = [Keyboard.symbols.leftArrow, Keyboard.symbols.rightArrow];
+		let arrows = [leftArrow, rightArrow];
+		let dataArrows = ["<", ">"];
 
 		let callback = function(source: string, target: TransitionInformation,
 								input: string) {
@@ -276,7 +274,11 @@ export class LBAController implements Controller {
 				arrows[target.direction]
 			]);
 
-			transitions.metadata.push([source, target.state]);
+			transitions.metadata.push([
+				source,
+				target.state,
+				[input, target.tapeSymbol, dataArrows[target.direction]]
+			]);
 		};
 		this.machine.transitionIteration(callback);
 		return transitions;

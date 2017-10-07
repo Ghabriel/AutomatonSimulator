@@ -3,7 +3,9 @@ import {Settings, Strings} from "../Settings"
 import {Table} from "./Table"
 import {utils} from "../Utils"
 
-export const edgeInfoPrinter = <T extends State>(edge: Edge<T>) => {
+export const edgeInfoPrinter = <T extends State>(edge: Edge<T>,
+	selectedIndex: number) => {
+
 	let container = utils.create("div");
 
 	let changeOriginButton = utils.create("input", {
@@ -42,6 +44,7 @@ export const edgeInfoPrinter = <T extends State>(edge: Edge<T>) => {
 		textSelector.appendChild(option);
 		i++;
 	}
+	textSelector.selectedIndex = selectedIndex;
 
 	let table = new Table(3);
 	table.add(utils.create("span", { innerHTML: Strings.ORIGIN + ":" }));

@@ -223,7 +223,8 @@ export class PDA {
 					let sourceState = self.stateList[parseInt(index)]!;
 					for (let group of info) {
 						let targetState = self.stateList[group[0]]!;
-						callback(sourceState, [targetState, group[1]], input, stackRead);
+						let stackWrite = group[1].split("").reverse().join("");
+						callback(sourceState, [targetState, stackWrite], input, stackRead);
 					}
 				});
 			});

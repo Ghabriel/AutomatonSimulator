@@ -243,6 +243,21 @@ export class AutomatonRenderer {
 		this.internalSelectEdge(edge);
 	}
 
+	public selectTransition<T extends State>(externalEdge: Edge<T>,
+		data: string[]): void {
+
+		let edge = this.internal(externalEdge);
+
+		for (let i = 0; i < edge.dataList.length; i++) {
+			if (utils.isSameArray(data, edge.dataList[i])) {
+				this.internalSelectEdge(edge, i);
+				return;
+			}
+		}
+
+		this.internalSelectEdge(edge);
+	}
+
 	public recognitionHighlight(stateNames: string[]): void {
 		utils.foreach(this.stateList, (name, state) => {
 			state.removePalette();
@@ -283,10 +298,6 @@ export class AutomatonRenderer {
 	}
 
 	// ------------------- Getters ---------------------
-	public getCanvas(): GUI.Canvas {
-		return this.canvas;
-	}
-
 	public getEdge(origin: State, target: State): UIEdge|null;
 	public getEdge(origin: string, target: string): UIEdge|null;
 	public getEdge(origin: any, target: any): UIEdge|null {
@@ -433,12 +444,12 @@ export class AutomatonRenderer {
 		}
 	}
 
-	private updateEditableEdge(edge: UIEdge|null): void {
+	private updateEditableEdge(edge: UIEdge|null, selectedIndex: number = 0): void {
 		if (edge) {
 			SignalEmitter.emitSignal({
 				targetID: Settings.sidebarSignalID,
 				identifier: "setSelectedEntityContent",
-				data: [this.showEditableEdge(edge)]
+				data: [this.showEditableEdge(edge, selectedIndex)]
 			});
 		} else {
 			this.unsetSelectedEntityContent();
@@ -549,12 +560,12 @@ export class AutomatonRenderer {
 		return this.stateList.hasOwnProperty(name);
 	}
 
-	private showEditableEdge(edge: UIEdge): HTMLDivElement {
+	private showEditableEdge(edge: UIEdge, selectedIndex: number = 0): HTMLDivElement {
 		let canvas = this.canvas;
 		let controller = this.controller;
 		let self = this;
 
-		let data = edgeInfoPrinter(edge);
+		let data = edgeInfoPrinter(edge, selectedIndex);
 
 		data.changeOriginButton.addEventListener("click", function() {
 			// TODO: not communicating anyone else? This should be investigated.
@@ -922,7 +933,7 @@ export class AutomatonRenderer {
 		this.updateEditableState(state);
 	}
 
-	private internalSelectEdge(edge: UIEdge): void {
+	private internalSelectEdge(edge: UIEdge, selectedIndex: number = 0): void {
 		if (this.locked) {
 			return;
 		}
@@ -933,7 +944,7 @@ export class AutomatonRenderer {
 		this.highlightedEdge = edge;
 		edge.render(this.canvas);
 
-		this.updateEditableEdge(edge);		
+		this.updateEditableEdge(edge, selectedIndex);
 	}
 
 	private internalDeleteEdge<T extends State>(edge: Edge<T>): void {

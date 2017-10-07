@@ -239,35 +239,38 @@ export class PDAController implements Controller {
 
 		let fields = [
 			"Q",
-			"(" + sigma + " ∪ {" + epsilon + "})",
+			sigma + " ∪ {" + epsilon + "}",
 			gamma,
 			"Q",
 			gamma + "*"
 		];
 
 		let transitions: TransitionTable = {
-			domain: utils.cartesianProduct(fields[0], fields[1], fields[2]),
+			domain: utils.cartesianProduct(fields[0], "(" + fields[1] + ")", fields[2]),
 			codomain: utils.cartesianProduct(fields[3], fields[4]),
 			header: fields,
-			list: <string[][]> [],
-			metadata: <[string, string][]> []
+			list: [],
+			metadata: []
 		};
 
 		let callback = function(source: string, data: TransitionInformation,
 								input: string, stackRead: string) {
 			let epsilon = Keyboard.symbols.epsilon;
-			input = input || epsilon;
-			stackRead = stackRead || epsilon;
-			let stackWrite = data[1] || epsilon;
+			let [target, stackWrite] = data;
+
 			transitions.list.push([
 				source,
-				input,
-				stackRead,
-				data[0],
-				stackWrite
+				input || epsilon,
+				stackRead || epsilon,
+				target,
+				stackWrite || epsilon
 			]);
 
-			transitions.metadata.push([source, data[0]]);
+			transitions.metadata.push([
+				source,
+				target,
+				[input, stackRead, stackWrite]
+			]);
 		};
 
 		this.machine.transitionIteration(callback);

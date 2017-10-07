@@ -7,6 +7,9 @@ import {Settings, Strings} from "../Settings"
 import {Table} from "./Table"
 import {utils} from "../Utils"
 
+type TransitionMetadata = [string, string, string[]];
+type Metadata = TransitionMetadata[];
+
 export class FormalDefinitionRenderer {
 	constructor(automatonRenderer: AutomatonRenderer) {
 		this.automatonRenderer = automatonRenderer;
@@ -96,7 +99,7 @@ export class FormalDefinitionRenderer {
 	}
 
 	private renderTransitionTableBody(table: HTMLTableElement,
-		contentMatrix: string[][], metadata: [string, string][]): void {
+		contentMatrix: string[][], metadata: Metadata): void {
 
 		for (let i = 0; i < contentMatrix.length; i++) {
 			let row = utils.create("tr");
@@ -111,7 +114,9 @@ export class FormalDefinitionRenderer {
 		}
 	}
 
-	private bindRowEvents(row: HTMLTableRowElement, metadata: [string, string]): void {
+	private bindRowEvents(row: HTMLTableRowElement,
+		metadata: TransitionMetadata): void {
+
 		let automatonRenderer = this.automatonRenderer;
 		let highlightedEdge: UIEdge|null = null;
 		let highlightPalette = Settings.edgeHighlightPalette;
@@ -128,7 +133,7 @@ export class FormalDefinitionRenderer {
 				highlightedEdge.removePalette();
 			}
 
-			highlightedEdge.render(automatonRenderer.getCanvas());
+			automatonRenderer.refresh(highlightedEdge);
 			highlightedEdge = null;
 		};
 
@@ -139,7 +144,8 @@ export class FormalDefinitionRenderer {
 			if (edge) {
 				unselect();
 				edge.applyPalette(hoverPalette);
-				edge.render(automatonRenderer.getCanvas());
+				automatonRenderer.refresh(edge);
+
 				highlightedEdge = edge;
 			}
 		});
@@ -148,7 +154,8 @@ export class FormalDefinitionRenderer {
 
 		row.addEventListener("click", function() {
 			if (highlightedEdge) {
-				automatonRenderer.selectEdge(highlightedEdge);
+				// automatonRenderer.selectEdge(highlightedEdge);
+				automatonRenderer.selectTransition(highlightedEdge, metadata[2]);
 				unselect();
 			}
 		});
