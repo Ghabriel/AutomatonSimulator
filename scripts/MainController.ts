@@ -131,16 +131,13 @@ export class MainController {
 		Settings.controller().createState(state);
 	}
 
-	public createEdge<T extends State, TEdge extends Edge<T>>(edge: TEdge): void {
-		let {origin, target} = edge;
+	public createEdge<T extends State>(externalEdge: Edge<T>): void {
+		let edge = this.cleanup(externalEdge);
 
-		if (!this.edgeList.hasOwnProperty(origin.name)) {
-			this.edgeList[origin.name] = {};
-		}
-
-		this.edgeList[origin.name][target.name] = edge;
+		this.internalCreateEdge(edge);
 		this.renderer.createEdge(edge);
 
+		let {origin, target} = edge;
 		for (let dataList of edge.dataList) {
 			this.internalCreateTransition(origin, target, dataList);
 		}
@@ -167,8 +164,8 @@ export class MainController {
 		// Must use the external state here, since the internal one
 		// has already been updated (which would cause the renderer
 		// to not find it)
+		Settings.controller().renameState(externalState, newName);
 		this.renderer.renameState(externalState, newName);
-		Settings.controller().renameState(state, newName);
 		return true;
 	}
 
@@ -200,20 +197,57 @@ export class MainController {
 	}
 
 	// ------------------- Edition: edges/transitions ---------------------
-	public changeTransitionData<T extends State, TEdge extends Edge<T>>
-		(edge: TEdge, transitionIndex: number, newData: string[],
-		newText: string): void {
+	public changeTransitionOrigin<T extends State>(externalEdge: Edge<T>,
+		newOrigin: State): void {
 
+		let edge = this.internal(externalEdge);
+		this.remoteDeleteEdge(edge);
+
+		this.internalDeleteEdge(edge);
+		edge.origin = this.internal(newOrigin);
+		this.internalCreateEdge(edge);
+
+		// Must use the external edge here, since the internal one
+		// has already been updated (which would cause the renderer
+		// to not find it)
+		this.renderer.changeTransitionOrigin(externalEdge, newOrigin);
+
+		this.rebuildEdge(edge);
+	}
+
+	public changeTransitionTarget<T extends State>(externalEdge: Edge<T>,
+		newTarget: State): void {
+
+		let edge = this.internal(externalEdge);
+		this.remoteDeleteEdge(edge);
+
+		this.internalDeleteEdge(edge);
+		edge.target = this.internal(newTarget);
+		this.internalCreateEdge(edge);
+
+		// Must use the external edge here, since the internal one
+		// has already been updated (which would cause the renderer
+		// to not find it)
+		this.renderer.changeTransitionTarget(externalEdge, newTarget);
+
+		this.rebuildEdge(edge);
+	}
+
+	public changeTransitionData<T extends State>(externalEdge: Edge<T>,
+		transitionIndex: number, newData: string[], newText: string): void {
+
+		let edge = this.internal(externalEdge);
 		let {origin, target, dataList, textList} = edge;
 
 		let controller = Settings.controller();
 		controller.deleteTransition(origin, target, dataList[transitionIndex]);
 
-		dataList[transitionIndex] = newData;
+		dataList[transitionIndex] = utils.cloneArray(newData);
 		textList[transitionIndex] = newText;
 		controller.createTransition(origin, target, newData);
 
-		this.renderer.refresh(edge);
+		this.renderer.changeTransitionData(edge, transitionIndex,
+			newData, newText);
 	}
 
 	// ------------------- Deletion ---------------------
@@ -240,9 +274,10 @@ export class MainController {
 		Settings.controller().deleteState(state);
 	}
 
-	public deleteTransition<T extends State, TEdge extends Edge<T>>
-		(edge: TEdge, transitionIndex: number): void {
+	public deleteTransition<T extends State>(externalEdge: Edge<T>,
+		transitionIndex: number): void {
 
+		let edge = this.internal(externalEdge);
 		let {origin, target, dataList, textList} = edge;
 
 		let controller = Settings.controller();
@@ -254,13 +289,14 @@ export class MainController {
 		if (dataList.length == 0) {
 			this.deleteEdge(edge);
 		} else {
-			this.renderer.refresh(edge);
+			this.renderer.deleteTransition(edge, transitionIndex);
 		}
 	}
 
-	public deleteEdge<T extends State, TEdge extends Edge<T>>(edge: TEdge): void {
-		this.internalDeleteEdge(edge);
+	public deleteEdge<T extends State>(externalEdge: Edge<T>): void {
+		let edge = this.internal(externalEdge);
 
+		this.internalDeleteEdge(edge);
 		this.renderer.deleteEdge(edge);
 
 		let {origin, target, dataList} = edge;
@@ -271,7 +307,7 @@ export class MainController {
 		}
 	}
 
-	public internalDeleteEdge<T extends State, TEdge extends Edge<T>>(edge: TEdge): void {
+	public internalDeleteEdge<T extends State>(edge: Edge<T>): void {
 		if (!this.edgeList.hasOwnProperty(edge.origin.name)) {
 			return;
 		}
@@ -309,6 +345,31 @@ export class MainController {
 		this.pushState();
 	}
 
+
+
+	private internalCreateEdge<T extends State>(edge: Edge<T>): void {
+		let {origin, target} = edge;
+
+		if (!this.edgeList.hasOwnProperty(origin.name)) {
+			this.edgeList[origin.name] = {};
+		}
+
+		this.edgeList[origin.name][target.name] = edge;
+	}
+
+	private remoteDeleteEdge<T extends State>(edge: Edge<T>): void {
+		let controller = Settings.controller();
+
+		for (let data of edge.dataList) {
+			controller.deleteTransition(edge.origin, edge.target, data);
+		}
+	}
+
+	private rebuildEdge<T extends State>(edge: Edge<T>): void {
+		for (let data of edge.dataList) {
+			this.internalCreateTransition(edge.origin, edge.target, data);
+		}
+	}
 
 	private pushState(): void {
 		this.memento.push(this.save());
@@ -378,8 +439,8 @@ export class MainController {
 	}
 
 	private internal(state: State): State;
-	private internal<T extends State>(edge: Edge<T>): Edge<T>;
-	private internal<T extends State>(entity: State|Edge<T>): State|Edge<T>;
+	private internal<T extends State>(edge: Edge<T>): Edge<State>;
+	private internal<T extends State>(entity: State|Edge<T>): State|Edge<State>;
 	private internal(entity: any): any {
 		if (entity.type == "state") {
 			return this.stateList[entity.name];
@@ -405,8 +466,11 @@ export class MainController {
 			return {
 				origin: this.cleanup(entity.origin),
 				target: this.cleanup(entity.target),
-				textList: utils.cloneArray(entity.textList),
-				dataList: utils.cloneArray(entity.dataList),
+				textList: entity.textList,
+				dataList: entity.dataList,
+				// TODO
+				// textList: utils.cloneArray(entity.textList),
+				// dataList: utils.cloneArray(entity.dataList),
 				type: entity.type
 			};
 		}

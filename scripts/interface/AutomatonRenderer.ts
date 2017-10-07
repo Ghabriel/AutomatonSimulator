@@ -70,7 +70,7 @@ export class AutomatonRenderer {
 
 		utils.foreach(stateList, (name, state) => {
 			let uiState = new UIState(state);
-			this.stateList[uiState.name] = uiState;
+			this.internalCreateState(uiState);
 
 			if (uiState.initial) {
 				this.initialState = uiState;
@@ -132,7 +132,7 @@ export class AutomatonRenderer {
 	// ------------------- Creation ---------------------
 	public createState(state: State): void {
 		let uiState = new UIState(state);
-		this.stateList[uiState.name] = uiState;
+		this.internalCreateState(uiState);
 
 		if (uiState.initial) {
 			this.initialState = uiState;
@@ -143,26 +143,11 @@ export class AutomatonRenderer {
 	}
 
 	public createEdge<T extends State>(edge: Edge<T>): void {
-		let uiEdge = this.internalCreateEdge(edge);
+		let uiEdge = this.wrapEdge(edge);
+		this.internalCreateEdge(uiEdge);
+
 		uiEdge.render(this.canvas);
 		this.bindEdgeEvents(uiEdge);
-	}
-
-	public internalCreateEdge<T extends State>(edge: Edge<T>): UIEdge {
-		let origin = edge.origin;
-		if (!this.edgeList.hasOwnProperty(origin.name)) {
-			this.edgeList[origin.name] = {};
-		}
-
-		let target = edge.target;
-		let uiEdge = new UIEdge();
-		uiEdge.origin = this.stateList[origin.name];
-		uiEdge.target = this.stateList[target.name];
-		uiEdge.textList = edge.textList;
-		uiEdge.dataList = edge.dataList;
-
-		this.edgeList[origin.name][target.name] = uiEdge;
-		return uiEdge;
 	}
 
 	// ------------------- Edition: states ---------------------
@@ -170,9 +155,9 @@ export class AutomatonRenderer {
 		let state = this.internal(externalState);
 
 		delete this.stateList[state.name];
-		this.stateList[newName] = state;
-
 		state.name = newName;
+		this.internalCreateState(state);
+
 		state.render(this.canvas);
 	}
 
@@ -201,6 +186,47 @@ export class AutomatonRenderer {
 		state.render(this.canvas);
 	}
 
+	// ------------------- Edition: edges/transitions ---------------------
+	public changeTransitionOrigin<T extends State>(externalEdge: Edge<T>,
+		newOrigin: State): void {
+
+		let edge = this.internal(externalEdge);
+
+		this.internalDeleteEdge(edge);
+		edge.origin = this.internal(newOrigin);
+		this.fixEdgeConsistency(edge);
+
+		if (!edge.removed()) {
+			this.internalCreateEdge(edge);
+			edge.render(this.canvas);
+		}
+	}
+
+	public changeTransitionTarget<T extends State>(externalEdge: Edge<T>,
+		newTarget: State): void {
+
+		let edge = this.internal(externalEdge);
+
+		this.internalDeleteEdge(edge);
+		edge.target = this.internal(newTarget);
+		this.fixEdgeConsistency(edge);
+
+		if (!edge.removed()) {
+			this.internalCreateEdge(edge);
+			edge.render(this.canvas);
+		}
+	}
+
+	public changeTransitionData<T extends State>(externalEdge: Edge<T>,
+		transitionIndex: number, newData: string[], newText: string): void {
+
+		let edge = this.internal(externalEdge);
+		edge.dataList[transitionIndex] = utils.cloneArray(newData);
+		edge.textList[transitionIndex] = newText;
+
+		edge.render(this.canvas);
+	}
+
 	// ------------------- Deletion ---------------------
 	public deleteState(externalState: State): void {
 		if (!this.stateExists(externalState.name)) {
@@ -214,8 +240,28 @@ export class AutomatonRenderer {
 		delete this.stateList[state.name];
 	}
 
+	public deleteTransition<T extends State>(externalEdge: Edge<T>,
+		transitionIndex: number): void {
+
+		let {origin, target} = externalEdge;
+
+		let edge = this.getEdge(origin, target);
+		if (!edge) {
+			return;
+		}
+
+		edge.dataList.splice(transitionIndex, 1);
+		edge.textList.splice(transitionIndex, 1);
+
+		if (edge.dataList.length == 0) {
+			this.deleteEdge(edge);
+		} else {
+			edge.render(this.canvas);
+		}
+	}
+
 	public deleteEdge<T extends State>(edge: Edge<T>): void {
-		let {origin, target, dataList} = edge;
+		let {origin, target} = edge;
 
 		let sameDirectionEdge = this.getEdge(origin, target);
 		if (!sameDirectionEdge) {
@@ -229,6 +275,10 @@ export class AutomatonRenderer {
 		}
 
 		sameDirectionEdge.remove();
+		if (this.isEdgeSelected(sameDirectionEdge)) {
+			this.clearSelection();
+		}
+
 		this.internalDeleteEdge(sameDirectionEdge);
 	}
 
@@ -330,7 +380,176 @@ export class AutomatonRenderer {
 	}
 
 
-	// ------------------- Private methods ---------------------
+	// #########################################################
+	// ##############----- Private methods -----################
+	// #########################################################
+
+	// ------------------- Creation ---------------------
+	private internalCreateState(state: UIState): void {
+		this.stateList[state.name] = state;
+	}
+
+	private internalCreateEdge(edge: UIEdge): void {
+		let {origin, target} = edge;
+
+		if (!this.edgeList.hasOwnProperty(origin.name)) {
+			this.edgeList[origin.name] = {};
+		}
+
+		this.edgeList[origin.name][target.name] = edge;
+	}
+
+	// ------------------- Edge creation process ---------------------
+	private beginEdge(origin: UIState): void {
+		this.edgeMode = true;
+		this.currentEdge = new PartialUIEdge();
+		this.currentEdge.origin = origin;
+	}
+
+	private adjustEdge(e: MouseEvent): void {
+		if (!this.currentEdge) {
+			// shouldn't happen, just for type safety
+			throw Error();
+		}
+
+		this.currentEdge.setVirtualTarget({
+			x: e.pageX - this.node.offsetLeft,
+			y: e.pageY - this.node.offsetTop
+		});
+
+		this.currentEdge.render(this.canvas);
+	}
+
+	private finishEdge(target: UIState): void {
+		if (!this.currentEdge) {
+			// shouldn't happen, just for type safety
+			throw Error();
+		}
+
+		this.edgeMode = false;
+		this.currentEdge.target = target;
+
+		// The current edge is now completed,
+		// it's safe to consider it an UIEdge.
+		let currentEdge = <UIEdge> this.currentEdge;
+		let origin = currentEdge.origin;
+
+		if (this.mergeWithParallel(currentEdge)) {
+			return;
+		}
+
+		let oppositeEdge = this.getEdge(target, origin);
+		if (oppositeEdge) {
+			currentEdge.setCurveFlag(true);
+
+			// Makes the opposite edge a curved one as well.
+			oppositeEdge.setCurveFlag(true);
+			oppositeEdge.render(this.canvas);
+		}
+
+		// Renders the edge here to show it already attached to the target state.
+		this.internalSelectEdge(currentEdge);
+		currentEdge.render(this.canvas);
+
+		this.edgeTextPrompt(currentEdge, (data, text) => {
+			currentEdge.dataList.push(data);
+			currentEdge.textList.push(text);
+
+			this.dimSelection();
+			currentEdge.remove();
+			this.controller.createEdge(currentEdge);
+
+			currentEdge = this.getEdge(origin, target)!;
+			if (oppositeEdge){
+				currentEdge.setCurveFlag(true);
+			}
+			this.internalSelectEdge(currentEdge);
+			this.currentEdge = null;
+		}, () => {
+			this.deleteCurrentEdge();
+
+			// We might have set the opposite edge curve flag, so
+			// we need to unset it here.
+			if (oppositeEdge) {
+				oppositeEdge.setCurveFlag(false);
+				oppositeEdge.render(this.canvas);
+			}
+		});
+	}
+
+	// ------------------- Deletion ---------------------
+	private clearStates(): void {
+		utils.foreach(this.stateList, function(name, state) {
+			state.remove();
+		});
+
+		this.stateList = {};
+	}
+
+	private clearEdges(): void {
+		EdgeUtils.edgeIteration(this.edgeList, (edge) => {
+			edge.remove();
+		});
+
+		this.edgeList = {};
+	}
+
+	private removeEdgesOfState(state: UIState): void {
+		EdgeUtils.edgeIteration(this.edgeList, (edge) => {
+			let {origin, target} = edge;
+
+			if (origin == state || target == state) {
+				edge.remove();
+				this.internalDeleteEdge(edge);
+			}
+		});
+	}
+
+	private internalDeleteEdge<T extends State>(edge: Edge<T>): void {
+		if (!this.edgeList.hasOwnProperty(edge.origin.name)) {
+			return;
+		}
+
+		delete this.edgeList[edge.origin.name][edge.target.name];
+	}
+
+	// Deletes an edge being created (i.e non-internal)
+	private deleteCurrentEdge(): void {
+		this.dimEdge();
+		this.currentEdge!.remove();
+		this.currentEdge = null;
+	}
+
+	// ------------------- UI highlighting ---------------------
+	private internalSelectState(state: UIState): void {
+		if (this.locked) {
+			return;
+		}
+
+		this.dimSelection();
+
+		state.applyPalette(Settings.stateHighlightPalette);
+		this.highlightedState = state;
+		state.render(this.canvas);
+
+		this.updateEditableState(state);
+	}
+
+	private internalSelectEdge(edge: UIEdge, selectedIndex: number = 0): void {
+		if (this.locked) {
+			return;
+		}
+
+		this.dimSelection();
+
+		edge.applyPalette(Settings.edgeHighlightPalette);
+		this.highlightedEdge = edge;
+		edge.render(this.canvas);
+
+		this.updateEditableEdge(edge, selectedIndex);
+	}
+
+	// ------------------- UI dim ---------------------
 	private dimSelection(): void {
 		this.dimState();
 		this.dimEdge();
@@ -356,82 +575,20 @@ export class AutomatonRenderer {
 		}
 	}
 
-	private clearStates(): void {
-		utils.foreach(this.stateList, function(name, state) {
-			state.remove();
-		});
-
-		this.stateList = {};
+	// Similar to dimSelection(), but used when
+	// the highlighted item is deleted
+	private clearSelection(): void {
+		this.highlightedState = null;
+		this.highlightedEdge = null;
+		this.unsetSelectedEntityContent();
+		if (this.edgeMode) {
+			this.edgeMode = false;
+			this.currentEdge!.remove();
+			this.currentEdge = null;
+		}
 	}
 
-	private clearEdges(): void {
-		EdgeUtils.edgeIteration(this.edgeList, (edge) => {
-			edge.remove();
-		});
-
-		this.edgeList = {};
-	}
-
-	// Curves all edges that should be curved. Note that this
-	// method does not un-curve edges that shouldn't be curved.
-	private fixAllEdgesCurvature(): void {
-		EdgeUtils.edgeIteration(this.edgeList, (edge) => {
-			if (edge.isCurved()) {
-				return;
-			}
-
-			let oppositeEdge = this.getEdge(edge.target, edge.origin);
-			if (oppositeEdge) {
-				edge.setCurveFlag(true);
-				oppositeEdge.setCurveFlag(true);
-			}
-		});
-	}
-
-	private removeEdgesOfState(state: UIState): void {
-		EdgeUtils.edgeIteration(this.edgeList, (edge) => {
-			let {origin, target} = edge;
-
-			if (origin == state || target == state) {
-				edge.remove();
-				this.internalDeleteEdge(edge);
-			}
-		});
-	}
-
-	private bindFormalDefinitionListener(): void {
-		let controllerCallback = this.controller.getFormalDefinitionCallback();
-		let definitionContainer: HTMLDivElement;
-
-		this.formalDefinitionCallback = () => {
-			if (!controllerCallback()) {
-				return;
-			}
-
-			if (!definitionContainer) {
-				definitionContainer = utils.create("div");
-				SignalEmitter.emitSignal({
-					targetID: Settings.sidebarSignalID,
-					identifier: "updateFormalDefinition",
-					data: [definitionContainer]
-				});
-			}
-
-			let formalDefinition = Settings.controller().formalDefinition();
-			let container = utils.create("span");
-			this.formalDefinitionRenderer.render(container, formalDefinition);
-
-			definitionContainer.innerHTML = "";
-			definitionContainer.appendChild(container);
-		};
-
-		Settings.controller().setEditingCallback(this.formalDefinitionCallback);
-
-		// Calls the callback to display the initial formal definition
-		// (normally the formal definition of an empty automaton)
-		this.formalDefinitionCallback();
-	}
-
+	// ------------------- Selected entity area ---------------------
 	private updateEditableState(state: UIState|null): void {
 		if (state) {
 			SignalEmitter.emitSignal({
@@ -512,54 +669,6 @@ export class AutomatonRenderer {
 		return data.container;
 	}
 
-	// After an edge is edited, this method makes sure that curved flags
-	// are correctly turned on/off and same origin/target edges are properly
-	// merged. Receives as input the edge that has just been edited.
-	// TODO: avoid code duplication (see finishEdge())
-	private fixEdgeConsistency(newEdge: UIEdge): void {
-		let {origin, target} = newEdge;
-
-		let canvas = this.canvas;
-
-		let oppositeEdge = this.getEdge(target, origin);
-		if (oppositeEdge) {
-			// Both edges should become curved.
-			oppositeEdge.setCurveFlag(true);
-			oppositeEdge.render(canvas);
-
-			newEdge.setCurveFlag(true);
-			newEdge.render(canvas);
-		} else {
-			newEdge.setCurveFlag(false);
-			newEdge.render(canvas);
-			// TODO: 'un-curve' edges that no longer have an opposite
-		}
-
-		let sameDirectionEdge = this.getEdge(origin, target);
-		if (sameDirectionEdge) {
-			if (sameDirectionEdge != newEdge) {
-				// Add the edge's text to it instead and delete the new edge.
-				let {dataList, textList} = newEdge;
-				let length = dataList.length;
-				for (let i = 0; i < length; i++) {
-					sameDirectionEdge.dataList.push(dataList[i]);
-					sameDirectionEdge.textList.push(textList[i]);
-				}
-				sameDirectionEdge.render(canvas);
-			}
-
-			if (this.highlightedEdge == newEdge) {
-				this.selectEdge(sameDirectionEdge);
-			}
-			newEdge.remove();
-			// this.edgeList.splice(edgeIndex, 1);
-		}
-	}
-
-	private stateExists(name: string): boolean {
-		return this.stateList.hasOwnProperty(name);
-	}
-
 	private showEditableEdge(edge: UIEdge, selectedIndex: number = 0): HTMLDivElement {
 		let canvas = this.canvas;
 		let controller = this.controller;
@@ -571,22 +680,24 @@ export class AutomatonRenderer {
 			// TODO: not communicating anyone else? This should be investigated.
 			// TODO: why not use Prompt instead of prompt?
 			let newOrigin = prompt(Strings.EDGE_ENTER_NEW_ORIGIN);
-			if (newOrigin !== null) {
-				if (!self.stateExists(newOrigin)) {
-					alert(Strings.ERROR_INVALID_STATE_NAME);
-					return;
-				}
-
-				edge.origin = self.stateList[newOrigin];
-				self.fixEdgeConsistency(edge);
-
-				// TODO: why is this necessary?
-				// if (!edge.removed()) {
-				// 	edge.render(canvas);
-				// }
-
-				$("#entity_origin").html(newOrigin);
+			if (newOrigin === null) {
+				return;
 			}
+
+			if (!self.stateExists(newOrigin)) {
+				alert(Strings.ERROR_INVALID_STATE_NAME);
+				return;
+			}
+
+			let newOriginState = self.stateList[newOrigin];
+			controller.changeTransitionOrigin(edge, newOriginState);
+
+			// TODO: why is this necessary?
+			// if (!edge.removed()) {
+			// 	edge.render(canvas);
+			// }
+
+			$("#entity_origin").html(newOrigin);
 		});
 
 		data.changeTargetButton.addEventListener("click", function() {
@@ -597,8 +708,8 @@ export class AutomatonRenderer {
 					return;
 				}
 
-				edge.target = self.stateList[newTarget];
-				self.fixEdgeConsistency(edge);
+				let newTargetState = self.stateList[newTarget];
+				controller.changeTransitionTarget(edge, newTargetState);
 
 				// TODO: why is this necessary?
 				// if (!edge.removed()) {
@@ -632,18 +743,13 @@ export class AutomatonRenderer {
 
 			controller.deleteTransition(edge, selectedIndex);
 
-			if (edge.dataList.length == 0) {
-				self.clearSelection();
-				self.unsetSelectedEntityContent();
-			} else {
+			if (!edge.removed()) {
 				self.updateEditableEdge(edge);
 			}
 		});
 
 		data.deleteAllButton.addEventListener("click", function() {
 			controller.deleteEdge(edge);
-			self.clearSelection();
-			self.unsetSelectedEntityContent();
 		});
 
 		return data.container;
@@ -657,6 +763,7 @@ export class AutomatonRenderer {
 		});
 	}
 
+	// ------------------- Event binding ---------------------
 	private bindEvents(): void {
 		utils.foreach(this.stateList, (name, state) => {
 			state.render(this.canvas);
@@ -722,87 +829,113 @@ export class AutomatonRenderer {
 
 		$(node).mousemove((e) => {
 			if (this.edgeMode) {
-				this.adjustEdge(node, e);
+				this.adjustEdge(e);
 			}
 		});
 	}
 
-	private beginEdge(state: UIState): void {
-		this.edgeMode = true;
-		this.currentEdge = new PartialUIEdge();
-		this.currentEdge.origin = state;
+	// ------------------- Edge consistency ---------------------
+	// Curves all edges that should be curved. Note that this
+	// method does not un-curve edges that shouldn't be curved.
+	private fixAllEdgesCurvature(): void {
+		EdgeUtils.edgeIteration(this.edgeList, (edge) => {
+			if (edge.isCurved()) {
+				return;
+			}
+
+			let oppositeEdge = this.getEdge(edge.target, edge.origin);
+			if (oppositeEdge) {
+				edge.setCurveFlag(true);
+				oppositeEdge.setCurveFlag(true);
+			}
+		});
 	}
 
-	private adjustEdge(elem: HTMLElement, e: MouseEvent): void {
-		if (!this.currentEdge) {
-			// shouldn't happen, just for type safety
-			throw Error();
-		}
+	// After an edge is edited, this method makes sure that curved flags
+	// are correctly turned on/off and same origin/target edges are properly
+	// merged. Receives as input the edge that has just been edited.
+	// TODO: avoid code duplication (see finishEdge())
+	private fixEdgeConsistency(newEdge: UIEdge): void {
+		let {origin, target} = newEdge;
 
-		let target = {
-			x: e.pageX - elem.offsetLeft,
-			y: e.pageY - elem.offsetTop
-		};
-
-		this.currentEdge.setVirtualTarget(target);
-		this.currentEdge.render(this.canvas);
-	}
-
-	private finishEdge(target: UIState): void {
-		if (!this.currentEdge) {
-			// shouldn't happen, just for type safety
-			throw Error();
-		}
-
-		this.edgeMode = false;
-		this.currentEdge.target = target;
-
-		// The current edge is now completed,
-		// it's safe to consider it an UIEdge.
-		let currentEdge = <UIEdge> this.currentEdge;
-		let origin = currentEdge.origin;
-
-		if (this.mergeWithParallel(currentEdge)) {
-			return;
-		}
+		let canvas = this.canvas;
 
 		let oppositeEdge = this.getEdge(target, origin);
 		if (oppositeEdge) {
-			currentEdge.setCurveFlag(true);
-
-			// Makes the opposite edge a curved one as well.
+			// Both edges should become curved.
 			oppositeEdge.setCurveFlag(true);
-			oppositeEdge.render(this.canvas);
+			oppositeEdge.render(canvas);
+
+			newEdge.setCurveFlag(true);
+			newEdge.render(canvas);
+		} else {
+			newEdge.setCurveFlag(false);
+			newEdge.render(canvas);
+			// TODO: 'un-curve' edges that no longer have an opposite
 		}
 
-		// Renders the edge here to show it already attached to the target state.
-		this.internalSelectEdge(currentEdge);
-		currentEdge.render(this.canvas);
+		let sameDirectionEdge = this.getEdge(origin, target);
+		if (!sameDirectionEdge) {
+			return;
+		}
 
-		this.edgeTextPrompt(currentEdge, (data, text) => {
-			currentEdge.dataList.push(data);
-			currentEdge.textList.push(text);
-
-			this.dimSelection();
-			currentEdge.remove();
-			this.controller.createEdge(currentEdge);
-
-			currentEdge = this.getEdge(origin, target)!;
-			if (oppositeEdge){
-				currentEdge.setCurveFlag(true);
+		// console.log("[NEW EDGE]", newEdge);
+		// console.log("[PARALLEL]", sameDirectionEdge);
+		if (sameDirectionEdge != newEdge) {
+			// Add the edge's text to it instead and delete the new edge.
+			let {dataList, textList} = newEdge;
+			let length = dataList.length;
+			for (let i = 0; i < length; i++) {
+				sameDirectionEdge.dataList.push(dataList[i]);
+				sameDirectionEdge.textList.push(textList[i]);
 			}
-			this.internalSelectEdge(currentEdge);
-			this.currentEdge = null;
-		}, () => {
-			this.deleteCurrentEdge();
+			sameDirectionEdge.render(canvas);
 
-			// We might have set the opposite edge curve flag, so
-			// we need to unset it here.
-			if (oppositeEdge) {
-				oppositeEdge.setCurveFlag(false);
-				oppositeEdge.render(this.canvas);
+			newEdge.remove();
+
+			if (this.isEdgeSelected(newEdge)) {
+				this.clearSelection();
+				this.selectEdge(sameDirectionEdge);
 			}
-		});
+		}
+	}
+
+
+	private bindFormalDefinitionListener(): void {
+		let controllerCallback = this.controller.getFormalDefinitionCallback();
+		let definitionContainer: HTMLDivElement;
+
+		this.formalDefinitionCallback = () => {
+			if (!controllerCallback()) {
+				return;
+			}
+
+			if (!definitionContainer) {
+				definitionContainer = utils.create("div");
+				SignalEmitter.emitSignal({
+					targetID: Settings.sidebarSignalID,
+					identifier: "updateFormalDefinition",
+					data: [definitionContainer]
+				});
+			}
+
+			let formalDefinition = Settings.controller().formalDefinition();
+			let container = utils.create("span");
+			this.formalDefinitionRenderer.render(container, formalDefinition);
+
+			definitionContainer.innerHTML = "";
+			definitionContainer.appendChild(container);
+		};
+
+		Settings.controller().setEditingCallback(this.formalDefinitionCallback);
+
+		// Calls the callback to display the initial formal definition
+		// (normally the formal definition of an empty automaton)
+		this.formalDefinitionCallback();
+	}
+
+	private stateExists(name: string): boolean {
+		return this.stateList.hasOwnProperty(name);
 	}
 
 	private edgeTextPrompt(edge: UIEdge,
@@ -812,7 +945,7 @@ export class AutomatonRenderer {
 		let prompt = machineController.edgePrompt(callback, fallback);
 		this.adjustPromptPosition(prompt, edge);
 		prompt.show();
-	};
+	}
 
 	private adjustPromptPosition(prompt: Prompt, edge: UIEdge) {
 		let {origin, target} = edge;
@@ -830,12 +963,6 @@ export class AutomatonRenderer {
 		}
 
 		prompt.setPosition(x, y);
-	}
-
-	private deleteCurrentEdge(): void {
-		this.dimEdge();
-		this.currentEdge!.remove();
-		this.currentEdge = null;
 	}
 
 	private mergeWithParallel(edge: UIEdge): boolean {
@@ -856,17 +983,6 @@ export class AutomatonRenderer {
 		}
 
 		return false;
-	}
-
-	private clearSelection(): void {
-		this.highlightedState = null;
-		this.highlightedEdge = null;
-		this.unsetSelectedEntityContent();
-		if (this.edgeMode) {
-			this.edgeMode = false;
-			this.currentEdge!.remove();
-			this.currentEdge = null;
-		}
 	}
 
 	private newStateAt(x: number, y: number): void {
@@ -919,40 +1035,14 @@ export class AutomatonRenderer {
 		stateNamePrompt();
 	}
 
-	private internalSelectState(state: UIState): void {
-		if (this.locked) {
-			return;
-		}
+	private wrapEdge<T extends State>(edge: Edge<T>): UIEdge {
+		let uiEdge = new UIEdge();
+		uiEdge.origin = this.internal(edge.origin);
+		uiEdge.target = this.internal(edge.target);
+		uiEdge.textList = edge.textList;
+		uiEdge.dataList = edge.dataList;
 
-		this.dimSelection();
-
-		state.applyPalette(Settings.stateHighlightPalette);
-		this.highlightedState = state;
-		state.render(this.canvas);
-
-		this.updateEditableState(state);
-	}
-
-	private internalSelectEdge(edge: UIEdge, selectedIndex: number = 0): void {
-		if (this.locked) {
-			return;
-		}
-
-		this.dimSelection();
-
-		edge.applyPalette(Settings.edgeHighlightPalette);
-		this.highlightedEdge = edge;
-		edge.render(this.canvas);
-
-		this.updateEditableEdge(edge, selectedIndex);
-	}
-
-	private internalDeleteEdge<T extends State>(edge: Edge<T>): void {
-		if (!this.edgeList.hasOwnProperty(edge.origin.name)) {
-			return;
-		}
-
-		delete this.edgeList[edge.origin.name][edge.target.name];
+		return uiEdge;
 	}
 
 	private internal(state: State): UIState;

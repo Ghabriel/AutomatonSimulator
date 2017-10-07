@@ -51,14 +51,31 @@ export namespace utils {
 		}
 	}
 
-	export function cloneArray<T>(values: T[]): T[] {
+	export function cloneArray<T>(value: T[]): T[] {
 		let copy: T[] = [];
-		for (let value of values) {
-			copy.push(value);
+		for (let element of value) {
+			copy.push(clone(element));
 		}
 
 		return copy;
 	}
+
+	function clone<T>(value: T): T {
+		if (!(value instanceof Array)) {
+			return value;
+		}
+
+		return <any> cloneArray(value);
+	}
+
+	// export function cloneArray<T>(values: T[]): T[] {
+	// 	let copy: T[] = [];
+	// 	for (let value of values) {
+	// 		copy.push(value);
+	// 	}
+
+	// 	return copy;
+	// }
 
 	export function isSameArray<T>(first: T[], second: T[]): boolean {
 		if (first.length != second.length) {
