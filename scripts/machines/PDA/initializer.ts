@@ -280,7 +280,7 @@ export class initPDA implements Initializable {
 				className: "entry"
 			});
 
-			let stackCopy = utils.cloneArray(action.currentStack);
+			let stackCopy = utils.clone(action.currentStack);
 			let currentStack = stackCopy.reverse().join("");
 
 			let table = new Table(2);

@@ -242,7 +242,7 @@ export class MainController {
 		let controller = Settings.controller();
 		controller.deleteTransition(origin, target, dataList[transitionIndex]);
 
-		dataList[transitionIndex] = utils.cloneArray(newData);
+		dataList[transitionIndex] = utils.clone(newData);
 		textList[transitionIndex] = newText;
 		controller.createTransition(origin, target, newData);
 
@@ -469,8 +469,8 @@ export class MainController {
 				textList: entity.textList,
 				dataList: entity.dataList,
 				// TODO
-				// textList: utils.cloneArray(entity.textList),
-				// dataList: utils.cloneArray(entity.dataList),
+				// textList: utils.clone(entity.textList),
+				// dataList: utils.clone(entity.dataList),
 				type: entity.type
 			};
 		}

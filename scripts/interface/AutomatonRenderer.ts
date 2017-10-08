@@ -221,7 +221,7 @@ export class AutomatonRenderer {
 		transitionIndex: number, newData: string[], newText: string): void {
 
 		let edge = this.internal(externalEdge);
-		edge.dataList[transitionIndex] = utils.cloneArray(newData);
+		edge.dataList[transitionIndex] = utils.clone(newData);
 		edge.textList[transitionIndex] = newText;
 
 		edge.render(this.canvas);

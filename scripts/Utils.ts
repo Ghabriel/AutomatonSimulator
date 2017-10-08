@@ -51,21 +51,17 @@ export namespace utils {
 		}
 	}
 
-	export function cloneArray<T>(value: T[]): T[] {
-		let copy: T[] = [];
-		for (let element of value) {
-			copy.push(clone(element));
-		}
-
-		return copy;
-	}
-
-	function clone<T>(value: T): T {
-		if (!(value instanceof Array)) {
+	export function clone<T>(value: T): T {
+		if (typeof value != "object") {
 			return value;
 		}
 
-		return <any> cloneArray(value);
+		let copy: Partial<T> = {};
+		for (let key in value) {
+			copy[key] = clone(value[key]);
+		}
+
+		return <T> copy;
 	}
 
 	// export function cloneArray<T>(values: T[]): T[] {

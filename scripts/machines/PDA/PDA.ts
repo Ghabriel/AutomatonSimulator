@@ -443,7 +443,7 @@ export class PDA {
 			buffer.push({
 				stepIndex: this.stepIndex + 1,
 				currentInput: this.input,
-				currentStack: utils.cloneArray(this.stack),
+				currentStack: utils.clone(this.stack),
 				inputRead: inputSymbol,
 				stackWrite: group[1],
 				targetState: group[0]
