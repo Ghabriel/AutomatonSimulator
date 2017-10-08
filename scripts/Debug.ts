@@ -7,34 +7,46 @@ const colors: Map<string> = {
 	LBAController: "red",
 };
 
+const preserveReturnValues = true;
+
 let level = 0;
 
 export function debug<T>(instance: T): T {
-	let proxy: any = {};
+	let proxy: any = instance;
 
-	function call(key: keyof T, ...args: any[]) {
+	function call(method: keyof T, value: any, ...args: any[]) {
 		let className = (<any> instance.constructor).name;
-		let signature = "[" + className + "] " + key;
+		let signature = "[" + className + "] " + method;
 
 		log(level, "%c[" + className + "]", "color: " + colors[className],
-			key, ...args);
+			method, ...args);
 		level++;
 
-		let result = (<any> instance[key]).call(proxy, ...args);
+		let result = value.call(proxy, ...args);
 
 		level--;
 		if (typeof result != "undefined") {
-			log(level, "=>", result);
+			if (preserveReturnValues) {
+				try {
+					let copy = JSON.parse(JSON.stringify(result));
+					log(level, "=>", copy);
+				} catch (e) {
+					log(level, "=>*", result);
+				}
+			} else {
+				log(level, "=>*", result);
+			}
 		}
 
 		return result;
 	}
 
 	for (let key in instance) {
-		if (instance[key] instanceof Function) {
-			proxy[key] = (...args: any[]) => call(key, ...args);
+		let value = instance[key];
+		if (value instanceof Function) {
+			proxy[key] = (...args: any[]) => call(key, value, ...args);
 		} else {
-			proxy[key] = instance[key];
+			proxy[key] = value;
 		}
 	}
 

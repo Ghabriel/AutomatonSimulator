@@ -21,21 +21,19 @@ export class MainController {
 		this.renderer = renderer;
 		this.memento = memento;
 		this.persistenceHandler = persistenceHandler;
-	}
 
-	public init(): void {
-		this.renderer.setController(this);
+		renderer.setController(this);
 		SignalEmitter.addSignalObserver(this);
 
 		System.addLanguageChangeObserver({
 			onLanguageChange: () => {
-				this.renderer.onLanguageChange();
+				renderer.onLanguageChange();
 			}
 		});
 
 		System.addMachineChangeObserver({
 			onMachineChange: () => {
-				this.renderer.onMachineChange();
+				renderer.onMachineChange();
 			}
 		});
 	}
@@ -203,8 +201,8 @@ export class MainController {
 		newOrigin: State): void {
 
 		let edge = this.internal(externalEdge);
-		this.remoteDeleteEdge(edge);
 
+		this.remoteDeleteEdge(edge);
 		this.internalDeleteEdge(edge);
 		edge.origin = this.internal(newOrigin);
 		this.internalCreateEdge(edge);
@@ -221,8 +219,8 @@ export class MainController {
 		newTarget: State): void {
 
 		let edge = this.internal(externalEdge);
-		this.remoteDeleteEdge(edge);
 
+		this.remoteDeleteEdge(edge);
 		this.internalDeleteEdge(edge);
 		edge.target = this.internal(newTarget);
 		this.internalCreateEdge(edge);

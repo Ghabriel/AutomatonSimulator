@@ -50,7 +50,6 @@ export class Mainbar extends Renderer {
 
 		this.automatonRenderer = debug(new AutomatonRenderer(canvas, node));
 		this.controller = debug(new MainController(this.automatonRenderer, memento, persistenceHandler));
-		this.controller.init();
 	}
 
 	protected onRender(): void {
