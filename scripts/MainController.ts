@@ -363,6 +363,7 @@ export class MainController {
 
 		let parallelEdge = this.edgeList[origin.name][target.name];
 		parallelEdge.dataList.push(...edge.dataList);
+		parallelEdge.textList.push(...edge.textList);
 	}
 
 	private remoteDeleteEdge<T extends State>(edge: Edge<T>): void {
@@ -474,11 +475,8 @@ export class MainController {
 			return {
 				origin: this.cleanup(entity.origin),
 				target: this.cleanup(entity.target),
-				textList: entity.textList,
-				dataList: entity.dataList,
-				// TODO
-				// textList: utils.clone(entity.textList),
-				// dataList: utils.clone(entity.dataList),
+				textList: utils.clone(entity.textList),
+				dataList: utils.clone(entity.dataList),
 				type: entity.type
 			};
 		}

@@ -77,6 +77,11 @@ export class Prompt {
 
 		const inputIdPrefix = "system_prompt_input_";
 
+		// This flag avoids buggy behavior when the user triggers
+		// ok/cancel multiple times in the same prompt (e.g by quickly
+		// pressing enter/esc multiple times)
+		let completedInteraction = false;
+
 		let dismiss = function() {
 			// Removes the click blocker from the page
 			document.body.removeChild(blocker);
@@ -114,6 +119,10 @@ export class Prompt {
 			type: "button",
 			value: Strings.PROMPT_CONFIRM,
 			click: function() {
+				if (completedInteraction) {
+					return;
+				}
+
 				let allValid = true;
 				let contents: string[] = [];
 				for (let input of inputs) {
@@ -127,6 +136,7 @@ export class Prompt {
 				}
 
 				if (allValid) {
+					completedInteraction = true;
 					dismiss();
 					if (self.successCallback) {
 						self.successCallback(contents);
@@ -139,6 +149,11 @@ export class Prompt {
 			type: "button",
 			value: Strings.PROMPT_CANCEL,
 			click: function() {
+				if (completedInteraction) {
+					return;
+				}
+
+				completedInteraction = true;
 				dismiss();
 				if (self.abortCallback) {
 					self.abortCallback();

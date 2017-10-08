@@ -52,6 +52,10 @@ export namespace utils {
 	}
 
 	export function clone<T>(value: T): T {
+		if (value instanceof Array) {
+			return cloneArray(value);
+		}
+
 		if (typeof value != "object") {
 			return value;
 		}
@@ -64,14 +68,20 @@ export namespace utils {
 		return <T> copy;
 	}
 
-	// export function cloneArray<T>(values: T[]): T[] {
-	// 	let copy: T[] = [];
-	// 	for (let value of values) {
-	// 		copy.push(value);
-	// 	}
+	function cloneArray<T, A extends T[]>(values: A): A {
+		let copy: T[] = [];
+		for (let value of values) {
+			copy.push(clone(value));
+		}
 
-	// 	return copy;
-	// }
+		for (let key in values) {
+			if (isNaN(parseInt(key))) {
+				copy[key] = clone(values[key]);
+			}
+		}
+
+		return <A> copy;
+	}
 
 	export function isSameArray<T>(first: T[], second: T[]): boolean {
 		if (first.length != second.length) {

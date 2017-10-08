@@ -875,28 +875,24 @@ export class AutomatonRenderer {
 		}
 
 		let sameDirectionEdge = this.getEdge(origin, target);
-		if (!sameDirectionEdge) {
+		if (!sameDirectionEdge || sameDirectionEdge == newEdge) {
 			return;
 		}
 
-		// console.log("[NEW EDGE]", newEdge);
-		// console.log("[PARALLEL]", sameDirectionEdge);
-		if (sameDirectionEdge != newEdge) {
-			// Add the edge's text to it instead and delete the new edge.
-			let {dataList, textList} = newEdge;
-			let length = dataList.length;
-			for (let i = 0; i < length; i++) {
-				sameDirectionEdge.dataList.push(dataList[i]);
-				sameDirectionEdge.textList.push(textList[i]);
-			}
-			sameDirectionEdge.render(canvas);
+		// Add the edge's text to it instead and delete the new edge.
+		let {dataList, textList} = newEdge;
+		let length = dataList.length;
+		for (let i = 0; i < length; i++) {
+			sameDirectionEdge.dataList.push(dataList[i]);
+			sameDirectionEdge.textList.push(textList[i]);
+		}
+		sameDirectionEdge.render(canvas);
 
-			newEdge.remove();
+		newEdge.remove();
 
-			if (this.isEdgeSelected(newEdge)) {
-				this.clearSelection();
-				this.selectEdge(sameDirectionEdge);
-			}
+		if (this.isEdgeSelected(newEdge)) {
+			this.clearSelection();
+			this.selectEdge(sameDirectionEdge);
 		}
 	}
 
@@ -1039,8 +1035,8 @@ export class AutomatonRenderer {
 		let uiEdge = new UIEdge();
 		uiEdge.origin = this.internal(edge.origin);
 		uiEdge.target = this.internal(edge.target);
-		uiEdge.textList = edge.textList;
-		uiEdge.dataList = edge.dataList;
+		uiEdge.textList = utils.clone(edge.textList);
+		uiEdge.dataList = utils.clone(edge.dataList);
 
 		return uiEdge;
 	}
