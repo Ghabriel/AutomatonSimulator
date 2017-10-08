@@ -21,19 +21,21 @@ export class MainController {
 		this.renderer = renderer;
 		this.memento = memento;
 		this.persistenceHandler = persistenceHandler;
+	}
 
-		renderer.setController(this);
+	public init(): void {
+		this.renderer.setController(this);
 		SignalEmitter.addSignalObserver(this);
 
 		System.addLanguageChangeObserver({
-			onLanguageChange: function() {
-				renderer.onLanguageChange();
+			onLanguageChange: () => {
+				this.renderer.onLanguageChange();
 			}
 		});
 
 		System.addMachineChangeObserver({
-			onMachineChange: function() {
-				renderer.onMachineChange();
+			onMachineChange: () => {
+				this.renderer.onMachineChange();
 			}
 		});
 	}
@@ -139,11 +141,11 @@ export class MainController {
 
 		let {origin, target} = edge;
 		for (let dataList of edge.dataList) {
-			this.internalCreateTransition(origin, target, dataList);
+			this.remoteCreateTransition(origin, target, dataList);
 		}
 	}
 
-	public internalCreateTransition(origin: State, target: State, data: string[]): void {
+	public remoteCreateTransition(origin: State, target: State, data: string[]): void {
 		let controller = Settings.controller();
 		Settings.controller().createTransition(origin, target, data);
 	}
@@ -251,22 +253,14 @@ export class MainController {
 	}
 
 	// ------------------- Deletion ---------------------
-	public deleteState(state: State): void {
-		if (!this.stateExists(state.name)) {
+	public deleteState(externalState: State): void {
+		if (!this.stateExists(externalState.name)) {
 			return;
 		}
 
-		if (this.stateList[state.name] != state) {
-			return;
-		}
+		let state = this.internal(externalState);
 
-		EdgeUtils.edgeIteration(this.edgeList, (edge) => {
-			let {origin, target} = edge;
-
-			if (origin == state || target == state) {
-				this.internalDeleteEdge(edge);
-			}
-		});
+		this.removeEdgesOfState(state);
 
 		delete this.stateList[state.name];
 
@@ -347,6 +341,16 @@ export class MainController {
 
 
 
+	private removeEdgesOfState(state: State): void {
+		EdgeUtils.edgeIteration(this.edgeList, (edge) => {
+			let {origin, target} = edge;
+
+			if (origin == state || target == state) {
+				this.internalDeleteEdge(edge);
+			}
+		});
+	}
+
 	private internalCreateEdge<T extends State>(edge: Edge<T>): void {
 		let {origin, target} = edge;
 
@@ -354,7 +358,13 @@ export class MainController {
 			this.edgeList[origin.name] = {};
 		}
 
-		this.edgeList[origin.name][target.name] = edge;
+		if (!this.edgeList[origin.name].hasOwnProperty(target.name)) {
+			this.edgeList[origin.name][target.name] = edge;
+			return;
+		}
+
+		let parallelEdge = this.edgeList[origin.name][target.name];
+		parallelEdge.dataList.push(...edge.dataList);
 	}
 
 	private remoteDeleteEdge<T extends State>(edge: Edge<T>): void {
@@ -367,7 +377,7 @@ export class MainController {
 
 	private rebuildEdge<T extends State>(edge: Edge<T>): void {
 		for (let data of edge.dataList) {
-			this.internalCreateTransition(edge.origin, edge.target, data);
+			this.remoteCreateTransition(edge.origin, edge.target, data);
 		}
 	}
 

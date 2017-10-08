@@ -976,7 +976,7 @@ export class AutomatonRenderer {
 				sameDirectionEdge!.render(this.canvas);
 				this.deleteCurrentEdge();
 				this.selectEdge(sameDirectionEdge!);
-				this.controller.internalCreateTransition(origin, target, data);
+				this.controller.remoteCreateTransition(origin, target, data);
 			}, () => this.deleteCurrentEdge);
 
 			return true;

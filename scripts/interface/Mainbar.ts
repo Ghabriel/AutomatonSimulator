@@ -8,6 +8,8 @@ import {Memento} from "../Memento"
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
 
+import {debug} from "../Debug"
+
 /**
  * The main container of the UI. Contains an instance of AutomatonRenderer.
  */
@@ -46,8 +48,9 @@ export class Mainbar extends Renderer {
 
 		let persistenceHandler = new JSONHandler();
 
-		this.automatonRenderer = new AutomatonRenderer(canvas, node);
-		this.controller = new MainController(this.automatonRenderer, memento, persistenceHandler);
+		this.automatonRenderer = debug(new AutomatonRenderer(canvas, node));
+		this.controller = debug(new MainController(this.automatonRenderer, memento, persistenceHandler));
+		this.controller.init();
 	}
 
 	protected onRender(): void {
