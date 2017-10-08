@@ -19,7 +19,7 @@ type SidebarMenus = {
 	formalDefinition: Menu;
 	selectedEntity: Menu;
 	actionMenu: Menu;
-	operationMenu: Menu;
+	// operationMenu: Menu;
 }
 
 /**
@@ -30,21 +30,20 @@ export class Sidebar extends Renderer {
 		super();
 		this.build();
 
-		let self = this;
 		// Re-creates the sidebar when the system language is changed
 		System.addLanguageChangeObserver({
-			onLanguageChange: function() {
+			onLanguageChange: () => {
 				utils.id(Settings.sidebarID)!.innerHTML = "";
-				self.build();
-				self.render();
+				this.build();
+				this.render();
 			}
 		});
 
 		System.addMachineChangeObserver({
-			onMachineChange: function() {
-				self.mainMenus.operationMenu.clearContent();
-				self.buildOperationMenu();
-				self.mainMenus.operationMenu.render();
+			onMachineChange: () => {
+				// this.mainMenus.operationMenu.clearContent();
+				// this.buildOperationMenu();
+				// this.mainMenus.operationMenu.render();
 			}
 		})
 
@@ -60,7 +59,7 @@ export class Sidebar extends Renderer {
 			formalDefinition: new Menu(Strings.FORMAL_DEFINITION),
 			selectedEntity: new Menu(Strings.SELECTED_ENTITY),
 			actionMenu: new Menu(Strings.ACTION_LIST),
-			operationMenu: new Menu(Strings.OPERATIONS),
+			// operationMenu: new Menu(Strings.OPERATIONS),
 		};
 
 		this.buildSettings();
@@ -68,11 +67,11 @@ export class Sidebar extends Renderer {
 		this.buildSelectedEntityArea();
 		this.buildMachineSelection();
 		this.buildActionMenu();
-		this.buildOperationMenu();
+		// this.buildOperationMenu();
 
 		// Hides some menus by default
 		this.mainMenus.settings.toggle();
-		this.mainMenus.operationMenu.toggle();
+		// this.mainMenus.operationMenu.toggle();
 
 		this.contentWrapper = utils.create("div", {
 			id: "sidebar_content"
@@ -463,40 +462,40 @@ export class Sidebar extends Renderer {
 		this.mainMenus.actionMenu.add(tableElement);
 	}
 
-	private buildOperationMenu(): void {
-		let table = new Table(1);
-		let controller = Settings.controller();
-		let operations = Settings.supportedOperations();
+	// private buildOperationMenu(): void {
+	// 	let table = new Table(1);
+	// 	let controller = Settings.controller();
+	// 	let operations = Settings.supportedOperations();
 
-		let hasOperations: boolean = false;
-		utils.foreach(operations, function(name, operation) {
-			hasOperations = true;
+	// 	let hasOperations: boolean = false;
+	// 	utils.foreach(operations, function(name, operation) {
+	// 		hasOperations = true;
 
-			let button = utils.create("input", {
-				type: "button",
-				value: Strings[<keyof typeof Strings> name.toUpperCase()],
-				click: function() {
-					controller.applyOperation(operation);
-				}
-			});
+	// 		let button = utils.create("input", {
+	// 			type: "button",
+	// 			value: Strings[<keyof typeof Strings> name.toUpperCase()],
+	// 			click: function() {
+	// 				controller.applyOperation(operation);
+	// 			}
+	// 		});
 
-			table.add(button);
-		});
+	// 		table.add(button);
+	// 	});
 
-		if (!hasOperations) {
-			let none = utils.create("span", {
-				className: "none",
-				innerHTML: Strings.NO_OPERATIONS
-			});
+	// 	if (!hasOperations) {
+	// 		let none = utils.create("span", {
+	// 			className: "none",
+	// 			innerHTML: Strings.NO_OPERATIONS
+	// 		});
 
-			this.mainMenus.operationMenu.add(none);
-			return;
-		}
+	// 		this.mainMenus.operationMenu.add(none);
+	// 		return;
+	// 	}
 
-		let tableElement = table.html();
-		tableElement.id = "operation_list";
-		this.mainMenus.operationMenu.add(tableElement);
-	}
+	// 	let tableElement = table.html();
+	// 	tableElement.id = "operation_list";
+	// 	this.mainMenus.operationMenu.add(tableElement);
+	// }
 
 	private contentWrapper: HTMLDivElement;
 	private mainMenus: SidebarMenus;
