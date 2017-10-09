@@ -40,6 +40,19 @@ export namespace utils {
 		return result;
 	}
 
+	export function createSelect(options: string[]): HTMLSelectElement {
+		let result = create("select");
+
+		let i = 0;
+		for (let text of options) {
+			let option = utils.create("option", { value: i, innerHTML: text });
+			result.appendChild(option);
+			i++;
+		}
+
+		return result;
+	}
+
 	// Iterates over an object, applying a callback to each property.
 	export function foreach<T>(obj: Map<T>, callback: MapIteratorCallback<T>): void {
 		for (let i in obj) {
@@ -240,5 +253,9 @@ export namespace utils {
 	// readability at the call site.
 	export function cartesianProduct(...fields: string[]): string {
 		return fields.join(" x ");
+	}
+
+	export function assertNever(value: never): never {
+		throw Error("Invalid value: " + value);
 	}
 }

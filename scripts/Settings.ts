@@ -180,6 +180,15 @@ export namespace Settings {
 		return machines[currentMachine].operations;
 	}
 
+	let customSettings: [string, Element][] = [];
+	export function addCustomSetting(name: string, element: Element): void {
+		customSettings.push([name, element]);
+	}
+
+	export function getCustomSettings(): [string, Element][] {
+		return customSettings;
+	}
+
 	let controllerMap: {[m: number]: Controller} = {};
 	let initializerMap: {[m: number]: Initializable} = {};
 	let operationMap: {[m: number]: OperationMap} = {};
@@ -192,7 +201,6 @@ export namespace Settings {
 		return new (<any> init)["init" + name]();
 	}
 
-	type Map<T> = {[key: string]: T};
 	function buildOperationMap(map: Map<OperationDefinition>): OperationMap {
 		let result: OperationMap = {};
 		utils.foreach(map, function(filename, definition) {
@@ -247,6 +255,7 @@ export namespace Settings {
 	}
 
 	export function changeLanguage(newLanguage: Language): void {
+		customSettings = [];
 		language = newLanguage;
 		Strings = language.strings;
 		update();

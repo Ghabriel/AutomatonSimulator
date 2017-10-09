@@ -1,13 +1,18 @@
 import {Initializable} from "../../Initializer"
 import {Keyboard} from "../../Keyboard"
 import {Menu} from "../../interface/Menu"
-import {AcceptingHeuristic} from "./PDA"
+import {AcceptingHeuristic, ActionInformation} from "./PDA"
 import {PDAController} from "./PDAController"
 import {Settings, Strings} from "../../Settings"
 import {SignalEmitter} from "../../SignalEmitter"
 import {System} from "../../System"
 import {Table} from "../../interface/Table"
 import {utils} from "../../Utils"
+
+enum ActionNotation {
+	Table,
+	Tuple
+}
 
 export class initPDA implements Initializable {
 	public init(): void {
@@ -22,6 +27,22 @@ export class initPDA implements Initializable {
 		this.bindRecognitionEvents();
 
 		Settings.machines[Settings.Machine.PDA].sidebar = menuList;
+
+
+		let select = utils.createSelect([
+			Strings.PDA_TABLE_NOTATION,
+			Strings.PDA_TUPLE_NOTATION
+		]);
+
+		let self = this;
+		select.addEventListener("change", function() {
+			if (ActionNotation.hasOwnProperty(this.selectedIndex.toString())) {
+				self.actionNotation = this.selectedIndex;
+			}
+		});
+
+		Settings.addCustomSetting(Strings.PDA_ACTION_NOTATION, select);
+
 		// console.log("[PDA] Initialized successfully");
 	}
 
@@ -39,6 +60,8 @@ export class initPDA implements Initializable {
 
 	readonly shortcutGroup = "PDA";
 	private boundShortcuts = false;
+	private actionNotation: ActionNotation = ActionNotation.Table;
+
 	private testCaseInput: HTMLInputElement;
 	private fastRecognition: HTMLImageElement;
 	private stepRecognition: HTMLImageElement;
@@ -265,50 +288,72 @@ export class initPDA implements Initializable {
 	private showActionTree(): void {
 		let controller = <PDAController> Settings.controller();
 		let actionTree = controller.getActionTree();
-		let epsilon = Keyboard.symbols.epsilon;
 
 		if (actionTree.length == 0) {
 			this.actionTreeContainer.classList.add("none");
 			this.actionTreeContainer.innerHTML = Strings.ACTION_TREE_NO_ACTIONS;
-		} else {
-			this.actionTreeContainer.classList.remove("none");
-			this.actionTreeContainer.innerHTML = "";
+			return;
 		}
+
+		this.actionTreeContainer.classList.remove("none");
+		this.actionTreeContainer.innerHTML = "";
 
 		for (let action of actionTree) {
 			let container = utils.create("div", {
 				className: "entry"
 			});
 
-			let stackCopy = utils.clone(action.currentStack);
-			let currentStack = stackCopy.reverse().join("");
-
-			let table = new Table(2);
-			let fieldValues = [
-				Strings.PDA_FIELD_INPUT, action.currentInput,
-				Strings.PDA_FIELD_STACK, currentStack,
-				Strings.PDA_FIELD_READ_INPUT, action.inputRead || epsilon,
-				Strings.PDA_FIELD_WRITE, action.stackWrite || epsilon,
-				Strings.PDA_FIELD_TARGET_STATE,	action.targetState.toString(),
-			];
-
-			for (let fieldValue of fieldValues) {
-				let fieldContainer = utils.create("span", {
-					innerHTML: fieldValue
-				});
-
-				if (fieldValue.length == 0) {
-					fieldContainer.classList.add("none");
-					fieldContainer.innerHTML = Strings.EMPTY;
-				}
-
-				table.add(fieldContainer);
-			}
-
-			container.appendChild(table.html());
+			this.showAction(container, action);
 
 			this.actionTreeContainer.appendChild(container);
 		}
+	}
+
+	private showAction(parent: HTMLElement, action: ActionInformation): void {
+		switch (this.actionNotation) {
+			case ActionNotation.Table:
+				this.showActionAsTable(parent, action);
+				break;
+			case ActionNotation.Tuple:
+				this.showActionAsTuple(parent, action);
+				break;
+			default:
+				utils.assertNever(this.actionNotation);
+		}
+	}
+
+	private showActionAsTable(parent: HTMLElement, action: ActionInformation): void {
+		let stackCopy = utils.clone(action.currentStack);
+		let currentStack = stackCopy.reverse().join("");
+		let epsilon = Keyboard.symbols.epsilon;
+
+		let table = new Table(2);
+		let fieldValues = [
+			Strings.PDA_FIELD_INPUT, action.currentInput,
+			Strings.PDA_FIELD_STACK, currentStack,
+			Strings.PDA_FIELD_READ_INPUT, action.inputRead || epsilon,
+			Strings.PDA_FIELD_WRITE, action.stackWrite || epsilon,
+			Strings.PDA_FIELD_TARGET_STATE,	action.targetState.toString(),
+		];
+
+		for (let fieldValue of fieldValues) {
+			let fieldContainer = utils.create("span", {
+				innerHTML: fieldValue
+			});
+
+			if (fieldValue.length == 0) {
+				fieldContainer.classList.add("none");
+				fieldContainer.innerHTML = Strings.EMPTY;
+			}
+
+			table.add(fieldContainer);
+		}
+
+		parent.appendChild(table.html());
+	}
+
+	private showActionAsTuple(parent: HTMLElement, action: ActionInformation): void {
+		// TODO
 	}
 
 	private clearStackContent(): void {

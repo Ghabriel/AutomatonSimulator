@@ -202,6 +202,7 @@ export class Sidebar extends Renderer {
 		let table = new Table(2);
 		this.buildLanguageSelection(table);
 		this.buildUndoMaxCountInput(table);
+		this.buildCustomSettings(table);
 		settings.add(table.html());
 	}
 
@@ -282,6 +283,15 @@ export class Sidebar extends Renderer {
 
 		table.add(utils.create("span", { innerHTML: Strings.UNDO_MAX_COUNT + ":" }));
 		table.add(undoMaxAmountInput);
+	}
+
+	private buildCustomSettings(table: Table): void {
+		let customSettings = Settings.getCustomSettings();
+
+		for (let [name, element] of customSettings) {
+			table.add(utils.create("span", { innerHTML: name + ":" }));
+			table.add(element);
+		}
 	}
 
 	private buildFileManipulation(): void {
