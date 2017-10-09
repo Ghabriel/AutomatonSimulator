@@ -59,7 +59,7 @@ $(MAINFILE): $(TSFILES)
 
 	@if [ "$(COMPRESS)" = "1" ]; then \
 		echo "[minifying] Compressing .js file"; \
-		uglifyjs $(BASEFILE) --compress --mangle > $(MAINFILE) 2> /dev/null; \
+		uglifyjs $(BASEFILE) --compress --mangle --keep-fnames > $(MAINFILE) 2> /dev/null; \
 	else\
 		mv $(BASEFILE) $(MAINFILE); \
 	fi
