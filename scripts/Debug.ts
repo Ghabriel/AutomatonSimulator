@@ -1,3 +1,8 @@
+interface DebugTraits {
+	[name: string]: ClassDebugTraits;
+	default: ClassDebugTraits;
+}
+
 interface ClassDebugTraits {
 	// The color of the class name in the console
 	color: string;
@@ -6,7 +11,7 @@ interface ClassDebugTraits {
 	restricted?: boolean;
 }
 
-const debugTraits: Map<ClassDebugTraits> = {
+const debugTraits: DebugTraits = {
 	AutomatonRenderer: {
 		color: "orange"
 	},
@@ -25,6 +30,9 @@ const debugTraits: Map<ClassDebugTraits> = {
 		color: "red",
 		restricted: true
 	},
+	default: {
+		color: ""
+	}
 };
 
 const preserveReturnValues = true;
@@ -55,10 +63,10 @@ export function debug<T>(instance: T): T {
 
 	function call(method: keyof T, value: any, ...args: any[]) {
 		let className = (<any> instance.constructor).name;
-		let traits = debugTraits[className];
+		let traits = debugTraits[className] || debugTraits["default"];
 		let temporaryDisable = preventDebugging(traits);
 
-		log(level, "%c[" + className + "]", "color: " + traits.color,
+		log(level, "%c[" + className + "]", getColor(traits),
 			method, ...args);
 		level++;
 
@@ -99,6 +107,14 @@ function preventDebugging(traits: ClassDebugTraits): boolean {
 function isDebugActive(): boolean {
 	let globalDebugMode = !!(<any> window)["debugMode"];
 	return debugRestriction === 0 && globalDebugMode;
+}
+
+function getColor(traits: ClassDebugTraits): string {
+	if (traits.color.length == 0) {
+		return "";
+	}
+
+	return "color: " + traits.color;
 }
 
 function log(level: number, ...args: any[]): void {
