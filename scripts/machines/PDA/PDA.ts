@@ -11,21 +11,19 @@ export type TransitionInformation = [State, GammaClosure];
 
 type SymbolLocation = "inputAlphabet" | "stackAlphabet";
 
-interface Action {
+interface BaseAction {
 	stepIndex: number;
 	currentInput: string;
 	currentStack: string[];
 	inputRead: string;
 	stackWrite: string;
+}
+
+interface Action extends BaseAction {
 	targetState: Index;
 }
 
-export interface ActionInformation {
-	stepIndex: number;
-	currentInput: string;
-	currentStack: string[];
-	inputRead: string;
-	stackWrite: string;
+export interface ActionInformation extends BaseAction {
 	targetState: State;
 }
 
@@ -36,7 +34,7 @@ export enum AcceptingHeuristic {
 	BOTH = ACCEPTING_STATE | EMPTY_STACK
 }
 
-let EPSILON_KEY = "";
+const EPSILON_KEY = "";
 
 export class PDA {
 	public setAcceptingHeuristic(heuristic: AcceptingHeuristic): void {
@@ -318,9 +316,7 @@ export class PDA {
 		this.halt = false;
 
 		let possibleActions = this.getPossibleActions();
-		for (let action of possibleActions) {
-			this.actionTree.push(action);
-		}
+		this.actionTree.push(...possibleActions);
 
 		let imminentBacktracking = (possibleActions.length == 0);
 		if (imminentBacktracking && this.input.length == 0 && this.accepts()) {
