@@ -27,7 +27,7 @@ export const stateInfoPrinter = (state: State) => {
 	});
 
 	let table = new Table(3);
-	table.add(utils.create("span", { innerHTML: Strings.STATE_NAME + ":" }));
+	table.add(utils.span(Strings.STATE_NAME + ":"));
 	table.add(utils.create("span", {
 		innerHTML: state.name,
 		className: "property_value",
@@ -35,7 +35,7 @@ export const stateInfoPrinter = (state: State) => {
 	}));
 	table.add(renameButton);
 
-	table.add(utils.create("span", { innerHTML: Strings.STATE_IS_INITIAL + ":" }));
+	table.add(utils.span(Strings.STATE_IS_INITIAL + ":"));
 	table.add(utils.create("span", {
 		innerHTML: state.initial ? Strings.YES : Strings.NO,
 		className: "property_value",
@@ -43,7 +43,7 @@ export const stateInfoPrinter = (state: State) => {
 	}));
 	table.add(toggleInitialButton);
 
-	table.add(utils.create("span", { innerHTML: Strings.STATE_IS_FINAL + ":" }));
+	table.add(utils.span(Strings.STATE_IS_FINAL + ":"));
 	table.add(utils.create("span", {
 		innerHTML: state.final ? Strings.YES : Strings.NO,
 		className: "property_value",

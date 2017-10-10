@@ -92,9 +92,7 @@ export class FormalDefinitionRenderer {
 
 	private addSimpleRow(table: Table, cellContents: string[]): void {
 		for (let content of cellContents) {
-			table.add(utils.create("span", {
-				innerHTML: content
-			}));
+			table.add(utils.span(content));
 		}
 	}
 

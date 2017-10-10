@@ -240,7 +240,7 @@ export class Sidebar extends Renderer {
 			}
 		});
 
-		table.add(utils.create("span", { innerHTML: Strings.SYSTEM_LANGUAGE + ":" }));
+		table.add(utils.span(Strings.SYSTEM_LANGUAGE + ":"));
 		table.add(select);
 	}
 
@@ -281,7 +281,7 @@ export class Sidebar extends Renderer {
 			}
 		});
 
-		table.add(utils.create("span", { innerHTML: Strings.UNDO_MAX_COUNT + ":" }));
+		table.add(utils.span(Strings.UNDO_MAX_COUNT + ":"));
 		table.add(undoMaxAmountInput);
 	}
 
@@ -289,7 +289,7 @@ export class Sidebar extends Renderer {
 		let customSettings = Settings.getCustomSettings();
 
 		for (let [name, element] of customSettings) {
-			table.add(utils.create("span", { innerHTML: name + ":" }));
+			table.add(utils.span(name + ":"));
 			table.add(element);
 		}
 	}

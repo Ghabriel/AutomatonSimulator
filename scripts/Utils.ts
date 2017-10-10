@@ -40,6 +40,7 @@ export namespace utils {
 		return result;
 	}
 
+	// Utility functions for commonly used tags
 	export function createSelect(options: string[]): HTMLSelectElement {
 		let result = create("select");
 
@@ -51,6 +52,17 @@ export namespace utils {
 		}
 
 		return result;
+	}
+
+	export function span(content: string): HTMLSpanElement {
+		return create("span", { innerHTML: content });
+	}
+
+	export function checkbox(checked: boolean = false): HTMLInputElement {
+		return create("input", {
+			checked: checked,
+			type: "checkbox"
+		});
 	}
 
 	// Iterates over an object, applying a callback to each property.
@@ -255,6 +267,8 @@ export namespace utils {
 		return fields.join(" x ");
 	}
 
+	// Used for type checking and throwing exceptions
+	// on code that should be unreachable
 	export function assertNever(value: never): never {
 		throw Error("Invalid value: " + value);
 	}

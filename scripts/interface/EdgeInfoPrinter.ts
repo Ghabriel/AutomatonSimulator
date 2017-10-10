@@ -47,7 +47,7 @@ export const edgeInfoPrinter = <T extends State>(edge: Edge<T>,
 	textSelector.selectedIndex = selectedIndex;
 
 	let table = new Table(3);
-	table.add(utils.create("span", { innerHTML: Strings.ORIGIN + ":" }));
+	table.add(utils.span(Strings.ORIGIN + ":"));
 	table.add(utils.create("span", {
 		innerHTML: edge.origin.name,
 		className: "property_value",
@@ -55,7 +55,7 @@ export const edgeInfoPrinter = <T extends State>(edge: Edge<T>,
 	}));
 	table.add(changeOriginButton);
 
-	table.add(utils.create("span", { innerHTML: Strings.TARGET + ":" }));
+	table.add(utils.span(Strings.TARGET + ":"));
 	table.add(utils.create("span", {
 		innerHTML: edge.target.name,
 		className: "property_value",
@@ -63,7 +63,7 @@ export const edgeInfoPrinter = <T extends State>(edge: Edge<T>,
 	}));
 	table.add(changeTargetButton);
 
-	table.add(utils.create("span", { innerHTML: Strings.TRANSITIONS + ":" }));
+	table.add(utils.span(Strings.TRANSITIONS + ":"));
 	table.add(textSelector);
 	table.add(changeTransitionButton);
 

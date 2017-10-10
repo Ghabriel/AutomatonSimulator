@@ -10,8 +10,8 @@ import {Table} from "../../interface/Table"
 import {utils} from "../../Utils"
 
 enum ActionNotation {
-	Table,
-	Tuple
+	Tuple,
+	Table
 }
 
 export class initPDA implements Initializable {
@@ -28,20 +28,7 @@ export class initPDA implements Initializable {
 
 		Settings.machines[Settings.Machine.PDA].sidebar = menuList;
 
-
-		let select = utils.createSelect([
-			Strings.PDA_TABLE_NOTATION,
-			Strings.PDA_TUPLE_NOTATION
-		]);
-
-		let self = this;
-		select.addEventListener("change", function() {
-			if (ActionNotation.hasOwnProperty(this.selectedIndex.toString())) {
-				self.actionNotation = this.selectedIndex;
-			}
-		});
-
-		Settings.addCustomSetting(Strings.PDA_ACTION_NOTATION, select);
+		this.addCustomSettings();
 
 		// console.log("[PDA] Initialized successfully");
 	}
@@ -60,7 +47,7 @@ export class initPDA implements Initializable {
 
 	readonly shortcutGroup = "PDA";
 	private boundShortcuts = false;
-	private actionNotation: ActionNotation = ActionNotation.Table;
+	private actionNotation: ActionNotation = ActionNotation.Tuple;
 
 	private testCaseInput: HTMLInputElement;
 	private fastRecognition: HTMLImageElement;
@@ -74,6 +61,24 @@ export class initPDA implements Initializable {
 	private multipleCaseArea: HTMLTextAreaElement;
 	private multipleCaseResults: HTMLDivElement;
 	private multipleCaseButton: HTMLImageElement;
+
+	private addCustomSettings(): void {
+		let select = utils.createSelect([
+			Strings.PDA_TUPLE_NOTATION,
+			Strings.PDA_TABLE_NOTATION
+		]);
+
+		select.selectedIndex = this.actionNotation;
+
+		let self = this;
+		select.addEventListener("change", function() {
+			if (ActionNotation.hasOwnProperty(this.selectedIndex.toString())) {
+				self.actionNotation = this.selectedIndex;
+			}
+		});
+
+		Settings.addCustomSetting(Strings.PDA_ACTION_NOTATION, select);
+	}
 
 	private buildRecognitionMenu(): Menu {
 		let recognitionMenu = new Menu(Strings.RECOGNITION);
@@ -178,25 +183,18 @@ export class initPDA implements Initializable {
 	}
 
 	private buildRecognitionOptions(container: HTMLElement[][]): void {
-		this.finalStateCheckbox = utils.create("input", {
-			checked: true,
-			type: "checkbox"
-		});
+		this.finalStateCheckbox = utils.checkbox(true);
+		this.emptyStackCheckbox = utils.checkbox();
 
-		let finalStateLabel = utils.create("span", {
-			innerHTML: Strings.ACCEPT_BY_FINAL_STATE
-		});
+		container.push([
+			this.finalStateCheckbox,
+			utils.span(Strings.ACCEPT_BY_FINAL_STATE)
+		]);
 
-		this.emptyStackCheckbox = utils.create("input", {
-			type: "checkbox"
-		});
-
-		let emptyStackLabel = utils.create("span", {
-			innerHTML: Strings.ACCEPT_BY_EMPTY_STACK
-		});
-
-		container.push([this.finalStateCheckbox, finalStateLabel]);
-		container.push([this.emptyStackCheckbox, emptyStackLabel]);
+		container.push([
+			this.emptyStackCheckbox,
+			utils.span(Strings.ACCEPT_BY_EMPTY_STACK)
+		]);
 	}
 
 	private buildStack(container: HTMLElement[][]): void {
@@ -273,8 +271,7 @@ export class initPDA implements Initializable {
 			this.stackContainer.classList.remove("none");
 			this.stackContainer.innerHTML = "";
 			for (let i = stackContent.length - 1; i >= 0; i--) {
-				let span = utils.create("span");
-				span.innerHTML = stackContent[i];
+				let span = utils.span(stackContent[i]);
 				this.stackContainer.appendChild(span);
 			}
 
@@ -337,9 +334,7 @@ export class initPDA implements Initializable {
 		];
 
 		for (let fieldValue of fieldValues) {
-			let fieldContainer = utils.create("span", {
-				innerHTML: fieldValue
-			});
+			let fieldContainer = utils.span(fieldValue);
 
 			if (fieldValue.length == 0) {
 				fieldContainer.classList.add("none");
@@ -353,7 +348,17 @@ export class initPDA implements Initializable {
 	}
 
 	private showActionAsTuple(parent: HTMLElement, action: ActionInformation): void {
-		// TODO
+		let stackCopy = utils.clone(action.currentStack);
+		let currentStack = stackCopy.reverse().join("");
+		let epsilon = Keyboard.symbols.epsilon;
+
+		let parts: string[] = [
+			action.targetState,
+			action.currentInput || epsilon,
+			currentStack
+		];
+
+		parent.appendChild(utils.span("(" + parts.join(", ") + ")"));
 	}
 
 	private clearStackContent(): void {
