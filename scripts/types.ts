@@ -1,4 +1,5 @@
 
+type NumericMap<T> = {[key: number]: T};
 type Map<T> = {[key: string]: T};
 
 type Generator<T> = () => T;
