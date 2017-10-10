@@ -59,7 +59,7 @@ class Tape {
 	}
 
 	public setContent(content: string[]): void {
-		let obj = {};
+		let obj: NumericMap<string> = {};
 
 		for (let i = 0; i < content.length; i++) {
 			obj[i] = content[i];
@@ -117,10 +117,6 @@ export class LBA {
 		return index;
 	}
 
-	private nextIndex(): Index {
-		return ++this.lastUsedIndex;
-	}
-
 	// Removes a state from this LBA.
 	public removeState(index: Index): void {
 		this.removeEdgesOfState(index);
@@ -133,27 +129,6 @@ export class LBA {
 
 		delete this.stateList[index];
 		delete this.transitions[index];
-	}
-
-	private removeEdgesOfState(index: Index): void {
-		utils.foreach(this.transitions, (originIndex, transitions) => {
-			let origin = parseInt(originIndex);
-
-			utils.foreach(transitions, (input, indexedByInput) => {
-				if (origin == index) {
-					this.uncheckedRemoveTransition(origin, input);
-				}
-
-				let i = 0;
-				while (i < indexedByInput.length) {
-					if (indexedByInput[i].state == index) {
-						this.uncheckedRemoveTransition(origin, input, i);
-					} else {
-						i++;
-					}
-				}
-			});
-		});
 	}
 
 	// Renames a state of this LBA.
@@ -226,37 +201,6 @@ export class LBA {
 		}
 	}
 
-	private uncheckedRemoveTransition(source: Index, input: string, index?: number): void {
-		let transitions = this.transitions[source][input];
-
-		let i = 0;
-		while (i < transitions.length) {
-			if (typeof index != "undefined" && i != index) {
-				i++;
-				continue;
-			}
-
-			if (this.isInputSymbol(input)) {
-				this.removeInputSymbol(input);
-			}
-
-			let tapeSymbol = transitions[i].tapeSymbol;
-
-			if (this.isInputSymbol(tapeSymbol)) {
-				this.removeInputSymbol(tapeSymbol);
-			}
-
-			this.removeTapeSymbol(input);
-			this.removeTapeSymbol(tapeSymbol);
-
-			transitions.splice(i, 1);
-		}
-
-		if (typeof index == "undefined") {
-			delete this.transitions[source][input];
-		}
-	}
-
 	// Sets the initial state of this LBA.
 	public setInitialState(index: Index): void {
 		if (this.stateList.hasOwnProperty(index.toString())) {
@@ -316,29 +260,25 @@ export class LBA {
 	}
 
 	// Executes a callback function for every transition of this LBA.
-	// TODO
-	// public transitionIteration(callback: (source: State,
-	// 	data: TransitionInformation, input: string) => void): void {
+	public transitionIteration(callback: (source: State,
+		data: TransitionInformation, input: string) => void): void {
 
-	// 	for (let index in this.transitions) {
-	// 		if (this.transitions.hasOwnProperty(index)) {
-	// 			let sourceState = this.stateList[index]!;
-	// 			let stateTransitions = this.transitions[index];
+		utils.foreach(this.transitions, (index, stateTransitions) => {
+			let sourceState = this.stateList[parseInt(index)];
 
-	// 			for (let input in stateTransitions) {
-	// 				if (stateTransitions.hasOwnProperty(input)) {
-	// 					let internalInfo = stateTransitions[input];
-	// 					let info: TransitionInformation = {
-	// 						state: this.stateList[internalInfo.state]!,
-	// 						tapeSymbol: internalInfo.tapeSymbol,
-	// 						direction: internalInfo.direction
-	// 					};
-	// 					callback(sourceState, info, input);
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
+			utils.foreach(stateTransitions, (input, transitions) => {
+				for (let internalInfo of transitions) {
+					let info: TransitionInformation = {
+						state: this.stateList[internalInfo.state]!,
+						tapeSymbol: internalInfo.tapeSymbol,
+						direction: internalInfo.direction
+					};
+
+					callback(sourceState, info, input);
+				}
+			});
+		});
+	}
 
 	// Returns the input alphabet of this LBA.
 	public getInputAlphabet(): string[] {
@@ -378,24 +318,26 @@ export class LBA {
 	}
 
 	// Reads a character from the tape, triggering state changes to this LBA.
-	// TODO
+	// TODO: handle non-determinism
 	public read(): void {
 		if (this.error()) {
 			return;
 		}
 
 		let error = true;
-		let input = this.tape[this.headPosition];
+		let input = this.tape.read();
 
-		if (this.transitions.hasOwnProperty(this.currentState + "")) {
-			let transitions = this.transitions[this.currentState!];
-			if (transitions.hasOwnProperty(input)) {
-				let info = transitions[input];
-				this.currentState = info.state;
-				this.tape[this.headPosition] = info.tapeSymbol;
-				this.headPosition += this.directionToOffset(info.direction);
-				this.calculationSteps++;
-				error = false;
+		if (this.currentState !== null) {
+			if (this.transitions.hasOwnProperty(this.currentState.toString())) {
+				let transitions = this.transitions[this.currentState];
+				if (transitions.hasOwnProperty(input)) {
+					let info = transitions[input][0];
+					this.currentState = info.state;
+					this.tape.write(info.tapeSymbol);
+					this.tape.moveHead(info.direction);
+					this.calculationSteps++;
+					error = false;
+				}
 			}
 		}
 
@@ -458,7 +400,7 @@ export class LBA {
 			return true;
 		}
 
-		if (this.error()) {
+		if (this.currentState === null) {
 			return false;
 		}
 
@@ -481,6 +423,63 @@ export class LBA {
 		let n = this.inputLength;
 		let g = Object.keys(this.tapeAlphabet).length;
 		return this.calculationSteps > q * n * Math.pow(g, n);
+	}
+
+
+	private nextIndex(): Index {
+		return ++this.lastUsedIndex;
+	}
+
+	private removeEdgesOfState(index: Index): void {
+		utils.foreach(this.transitions, (originIndex, transitions) => {
+			let origin = parseInt(originIndex);
+
+			utils.foreach(transitions, (input, indexedByInput) => {
+				if (origin == index) {
+					this.uncheckedRemoveTransition(origin, input);
+				}
+
+				let i = 0;
+				while (i < indexedByInput.length) {
+					if (indexedByInput[i].state == index) {
+						this.uncheckedRemoveTransition(origin, input, i);
+					} else {
+						i++;
+					}
+				}
+			});
+		});
+	}
+
+	private uncheckedRemoveTransition(source: Index, input: string, index?: number): void {
+		let transitions = this.transitions[source][input];
+
+		let i = 0;
+		while (i < transitions.length) {
+			if (typeof index != "undefined" && i != index) {
+				i++;
+				continue;
+			}
+
+			if (this.isInputSymbol(input)) {
+				this.removeInputSymbol(input);
+			}
+
+			let tapeSymbol = transitions[i].tapeSymbol;
+
+			if (this.isInputSymbol(tapeSymbol)) {
+				this.removeInputSymbol(tapeSymbol);
+			}
+
+			this.removeTapeSymbol(input);
+			this.removeTapeSymbol(tapeSymbol);
+
+			transitions.splice(i, 1);
+		}
+
+		if (typeof index == "undefined") {
+			delete this.transitions[source][input];
+		}
 	}
 
 	private isInputSymbol(symbol: string): boolean {
@@ -507,7 +506,7 @@ export class LBA {
 		this.addSymbol("tapeAlphabet", symbol);
 	}
 
-	public removeSymbol(location: SymbolLocation, symbol: string): void {
+	private removeSymbol(location: SymbolLocation, symbol: string): void {
 		this[location][symbol]--;
 
 		if (this[location][symbol] == 0) {
@@ -530,13 +529,13 @@ export class LBA {
 		[index: number]: {
 			[inputSymbol: string]: InternalTransitionInformation[]
 		}
-	} = {}; // delta (Q x gamma -> Q x gamma x {left, right})
+	} = {}; // delta (Q x gamma -> (Q x gamma x {left, right})+)
 	private initialState: Index = -1; // q0
 	private finalStates = new UnorderedSet<Index>(); // F
 
 	// Instantaneous configuration-related attributes
 	private currentState: Index|null = null;
-	private tape: Tape;
+	private tape = new Tape();
 
 	// Used to halt this LBA when a loop is detected
 	private calculationSteps: number = 0;
