@@ -806,7 +806,7 @@ export class AutomatonRenderer {
 				return false;
 			}
 
-			this.controller.onStateDrag();
+			this.controller.onStateDrag(state);
 			return true;
 		});
 	}

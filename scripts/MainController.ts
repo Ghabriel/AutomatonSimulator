@@ -337,7 +337,12 @@ export class MainController {
 	/**
 	 * Called after a state stops being dragged.
 	 */
-	public onStateDrag(): void {
+	public onStateDrag(externalState: State): void {
+		let state = this.internal(externalState);
+
+		state.x = externalState.x;
+		state.y = externalState.y;
+
 		// Saves the post-drag state to the memento
 		// to allow the user to undo it
 		this.pushState();
