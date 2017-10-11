@@ -157,6 +157,7 @@ export class MainController {
 		let state = this.internal(externalState);
 
 		delete this.stateList[state.name];
+		utils.rerouteEdges(this.edgeList, state.name, newName);
 		this.stateList[newName] = state;
 
 		state.name = newName;
