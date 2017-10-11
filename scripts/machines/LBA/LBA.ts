@@ -1,3 +1,5 @@
+/// <reference path="../../types.ts" />
+
 import {Queue} from "../../datastructures/Queue"
 import {UnorderedSet} from "../../datastructures/UnorderedSet"
 import {utils} from "../../Utils"
@@ -24,6 +26,25 @@ export interface TransitionInformation {
 	direction: Direction
 }
 
+interface BaseAction {
+	currentTapeContent: string[];
+	currentHeadPosition: number;
+	calculationSteps: number;
+	tapeWrite: string;
+	moveDirection: Direction;
+	stepIndex: number;
+}
+
+interface Action extends BaseAction {
+	targetState: Index;
+}
+
+interface ActionInformation extends BaseAction {
+	targetState: State;
+}
+
+const EPSILON_KEY = "";
+
 class Tape {
 	public moveHead(direction: Direction): void {
 		switch (direction) {
@@ -42,7 +63,7 @@ class Tape {
 		this.headPosition = 0;
 	}
 
-	public read(): string {
+	public read(): string|undefined {
 		return this.content[this.headPosition];
 	}
 
@@ -70,6 +91,10 @@ class Tape {
 
 		this.lowIndex = 0;
 		this.highIndex = content.length - 1;
+	}
+
+	public setHeadPosition(position: number): void {
+		this.headPosition = position;
 	}
 
 	public pointsAfterTape(): boolean {
@@ -306,6 +331,8 @@ export class LBA {
 		this.tape.setContent(input);
 		this.calculationSteps = 0;
 		this.inputLength = input.length;
+		this.actionTree = this.getPossibleActions();
+		this.halt = false;
 		this.accepting = false;
 	}
 
@@ -324,28 +351,30 @@ export class LBA {
 			return;
 		}
 
-		let error = true;
-		let input = this.tape.read();
+		let actionTree = this.actionTree;
+		let finished = true;
 
-		if (this.currentState !== null) {
-			if (this.transitions.hasOwnProperty(this.currentState.toString())) {
-				let transitions = this.transitions[this.currentState];
-				if (transitions.hasOwnProperty(input)) {
-					let info = transitions[input][0];
-					this.currentState = info.state;
-					this.tape.write(info.tapeSymbol);
-					this.tape.moveHead(info.direction);
-					this.calculationSteps++;
-					error = false;
-				}
-			}
+		if (actionTree.length > 0) {
+			let nextAction = actionTree[actionTree.length - 1];
+
+			this.processAction(nextAction);
+			this.actionTree.pop();
+			this.halt = false;
+
+			let possibleActions = this.getPossibleActions();
+			this.actionTree.push(...possibleActions);
+
+			let imminentBacktracking = (possibleActions.length == 0);
+			finished = (imminentBacktracking && this.accepts());
 		}
 
 		if (this.exhausted()) {
-			error = true;
+			finished = true;
 		}
 
-		if (error) {
+		if (finished) {
+			this.halt = true;
+
 			if (this.accepts()) {
 				// continues to accept if it's currently accepting
 				this.accepting = true;
@@ -353,6 +382,63 @@ export class LBA {
 
 			// goes to the error state
 			this.currentState = null;
+		}
+	}
+
+	// interface Action {
+	// 	currentTapeContent: string[];
+	// 	currentHeadPosition: number;
+	// 	calculationSteps: number;
+	// 	tapeWrite: string;
+	// 	stepIndex: number;
+	//  targetState: Index;
+	// }
+
+	private processAction(action: Action): void {
+		this.tape.setContent(action.currentTapeContent);
+		this.tape.setHeadPosition(action.currentHeadPosition);
+		this.calculationSteps = action.calculationSteps;
+		this.currentState = action.targetState;
+		this.tape.write(action.tapeWrite);
+		this.tape.moveHead(action.moveDirection);
+
+		this.calculationSteps++;
+	}
+
+	private getPossibleActions(): Action[] {
+		let result: Action[] = [];
+
+		let input = this.tape.read();
+		if (input !== undefined) {
+			this.handleInputSymbol(input, result);
+		}
+
+		this.handleInputSymbol(EPSILON_KEY, result);
+
+		return result;
+	}
+
+	private handleInputSymbol(inputSymbol: string, buffer: Action[]): void {
+		if (this.currentState === null) {
+			return;
+		}
+
+		let availableTransitions = this.transitions[this.currentState];
+		if (!availableTransitions.hasOwnProperty(inputSymbol)) {
+			return;
+		}
+
+		let transitions = availableTransitions[inputSymbol];
+		for (let transition of transitions) {
+			buffer.push({
+				currentTapeContent: this.tape.toArray(),
+				currentHeadPosition: this.tape.getHeadPosition(),
+				calculationSteps: this.calculationSteps,
+				tapeWrite: transition.tapeSymbol,
+				moveDirection: transition.direction,
+				stepIndex: this.stepIndex,
+				targetState: transition.state
+			});
 		}
 	}
 
@@ -372,6 +458,7 @@ export class LBA {
 
 		this.tape.resetHead();
 		this.calculationSteps = 0;
+		this.halt = true;
 		this.accepting = false;
 	}
 
@@ -390,15 +477,16 @@ export class LBA {
 		this.calculationSteps = 0;
 		this.inputLength = 0;
 
+		this.halt = true;
 		this.accepting = false;
 		this.lastUsedIndex = -1;
 	}
 
 	// Checks if this LBA accepts in its current state.
 	public accepts(): boolean {
-		if (this.accepting) {
-			return true;
-		}
+		// if (this.accepting) {
+		// 	return true;
+		// }
 
 		if (this.currentState === null) {
 			return false;
@@ -541,6 +629,11 @@ export class LBA {
 	private calculationSteps: number = 0;
 	private inputLength: number = 0;
 
+	private stepIndex: number;
+	private actionTree: Action[] = [];
+	private halt: boolean = true;
+
 	private accepting: boolean = false;
+
 	private lastUsedIndex: Index = -1;
 }
