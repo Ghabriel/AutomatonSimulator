@@ -7,16 +7,21 @@ interface ClassDebugTraits {
 	// The color of the class name in the console
 	color: string;
 
+	// Disables debugging for this class
+	disabled?: boolean;
+
 	// Disables debugging inside methods of this class
 	restricted?: boolean;
 }
 
 const debugTraits: DebugTraits = {
 	AutomatonRenderer: {
-		color: "orange"
+		color: "orange",
+		disabled: true
 	},
 	MainController: {
-		color: "lime"
+		color: "lime",
+		disabled: true
 	},
 	FAController: {
 		color: "red",
@@ -29,6 +34,9 @@ const debugTraits: DebugTraits = {
 	LBAController: {
 		color: "red",
 		restricted: true
+	},
+	LBA: {
+		color: "orange"
 	},
 	default: {
 		color: ""
@@ -66,6 +74,10 @@ export function debug<T>(instance: T): T {
 		let traits = debugTraits[className] || debugTraits["default"];
 		let temporaryDisable = preventDebugging(traits);
 
+		if (traits.disabled) {
+			debugRestriction++;
+		}
+
 		log(level, "%c[" + className + "]", getColor(traits),
 			method, ...args);
 		level++;
@@ -75,10 +87,6 @@ export function debug<T>(instance: T): T {
 		}
 
 		let result = value.call(proxy, ...args);
-
-		if (temporaryDisable) {
-			debugRestriction--;
-		}
 
 		level--;
 		if (typeof result != "undefined") {
@@ -92,6 +100,14 @@ export function debug<T>(instance: T): T {
 			} else {
 				log(level, "=>*", result);
 			}
+		}
+
+		if (temporaryDisable) {
+			debugRestriction--;
+		}
+
+		if (traits.disabled) {
+			debugRestriction--;
 		}
 
 		return result;
