@@ -132,10 +132,15 @@ export class MainController {
 	}
 
 	public createEdge<T extends State>(externalEdge: Edge<T>): void {
-		let edge = this.cleanup(externalEdge);
+		this.createMergedTransition(externalEdge);
+		this.renderer.createEdge(externalEdge);
+	}
 
+	// Creates a transition both internally and remotely,
+	// but does not render it
+	public createMergedTransition<T extends State>(externalEdge: Edge<T>): void {
+		let edge = this.cleanup(externalEdge);
 		this.internalCreateEdge(edge);
-		this.renderer.createEdge(edge);
 
 		let {origin, target} = edge;
 		for (let dataList of edge.dataList) {

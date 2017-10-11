@@ -967,13 +967,20 @@ export class AutomatonRenderer {
 		let sameDirectionEdge = this.getEdge(origin, target);
 		if (sameDirectionEdge) {
 			this.edgeTextPrompt(sameDirectionEdge, (data, text) => {
-				// Add the text to it instead and delete 'this.currentEdge'.
+				// Add the data and text to the this.currentEdge to use it
+				// on controller.internalCreateTransition().
+				edge.dataList.push(data);
+				edge.textList.push(text);
+
+				// Also add the text to the existing edge, which replaces
+				// 'this.currentEdge'.
 				sameDirectionEdge!.dataList.push(data);
 				sameDirectionEdge!.textList.push(text);
 				sameDirectionEdge!.render(this.canvas);
 				this.deleteCurrentEdge();
 				this.selectEdge(sameDirectionEdge!);
-				this.controller.remoteCreateTransition(origin, target, data);
+
+				this.controller.createMergedTransition(edge);
 			}, () => this.deleteCurrentEdge);
 
 			return true;
