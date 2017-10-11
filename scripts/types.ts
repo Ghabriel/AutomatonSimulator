@@ -11,6 +11,12 @@ interface Point {
 	y: number;
 }
 
+// Type-safe JSON manipulation
+interface JSONData<T> {
+	brand: T;
+	data: string;
+}
+
 type IndexedEdgeGroup<TEdge/* extends Edge<T>*/> = {
 	[origin: string]: {
 		[target: string]: TEdge

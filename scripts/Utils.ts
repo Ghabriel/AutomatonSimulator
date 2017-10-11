@@ -272,4 +272,15 @@ export namespace utils {
 	export function assertNever(value: never): never {
 		throw Error("Invalid value: " + value);
 	}
+
+	export function toJSON<T>(obj: T): JSONData<T> {
+		return {
+			brand: <T> <any> null,
+			data: JSON.stringify(obj)
+		};
+	}
+
+	export function fromJSON<T>(json: JSONData<T>): T {
+		return JSON.parse(json.data);
+	}
 }

@@ -1,8 +1,9 @@
-/// <reference path="../../types.ts" />
+/// <reference path="helpers/types.ts" />
 
 import {Queue} from "../../datastructures/Queue"
 import {UnorderedSet} from "../../datastructures/UnorderedSet"
 import {utils} from "../../Utils"
+import {Tape} from "./helpers/Tape"
 
 type State = string;
 type Index = number;
@@ -10,121 +11,36 @@ type Alphabet = {[i: string]: number};
 
 type SymbolLocation = "inputAlphabet" | "tapeAlphabet";
 
-enum Direction {
-	LEFT, RIGHT
-}
-
 interface InternalTransitionInformation {
-	state: Index,
-	tapeSymbol: string,
-	direction: Direction
+    state: Index,
+    tapeSymbol: string,
+    direction: Direction
 }
 
 export interface TransitionInformation {
-	state: State,
-	tapeSymbol: string,
-	direction: Direction
+    state: State,
+    tapeSymbol: string,
+    direction: Direction
 }
 
 interface BaseAction {
-	currentTapeContent: string[];
-	currentHeadPosition: number;
-	calculationSteps: number;
-	tapeWrite: string;
-	moveDirection: Direction;
-	stepIndex: number;
+    currentTape: JSONData<TapeJSONFields>;
+    calculationSteps: number;
+    tapeWrite: string;
+    moveDirection: Direction;
+    stepIndex: number;
 }
 
 interface Action extends BaseAction {
-	targetState: Index;
+    targetState: Index;
 }
 
 interface ActionInformation extends BaseAction {
-	targetState: State;
+    targetState: State;
 }
+
 
 const EPSILON_KEY = "";
-
-class Tape {
-	public moveHead(direction: Direction): void {
-		switch (direction) {
-			case Direction.LEFT:
-				this.headPosition--;
-				break;
-			case Direction.RIGHT:
-				this.headPosition++;
-				break;
-			default:
-				utils.assertNever(direction);
-		}
-	}
-
-	public resetHead(): void {
-		this.headPosition = 0;
-	}
-
-	public read(): string|undefined {
-		return this.content[this.headPosition];
-	}
-
-	public write(symbol: string): void {
-		this.content[this.headPosition] = symbol;
-
-		if (this.headPosition < this.lowIndex) {
-			this.lowIndex = this.headPosition;
-		}
-
-		if (this.headPosition > this.highIndex) {
-			this.highIndex = this.headPosition;
-		}
-	}
-
-	public setContent(content: string[]): void {
-		let obj: NumericMap<string> = {};
-
-		for (let i = 0; i < content.length; i++) {
-			obj[i] = content[i];
-		}
-
-		this.content = obj;
-		this.headPosition = 0;
-
-		this.lowIndex = 0;
-		this.highIndex = content.length - 1;
-	}
-
-	public setHeadPosition(position: number): void {
-		this.headPosition = position;
-	}
-
-	public pointsAfterTape(): boolean {
-		return this.headPosition > this.highIndex;
-	}
-
-	public toArray(): string[] {
-		let result: string[] = [];
-
-		for (let i = this.lowIndex; i <= this.highIndex; i++) {
-			if (this.content.hasOwnProperty(i.toString())) {
-				result.push(this.content[i]);
-			} else {
-				result.push("");
-			}
-		}
-
-		return result;
-	}
-
-	public getHeadPosition(): number {
-		return this.headPosition;
-	}
-
-	private content: NumericMap<string> = {};
-	private headPosition: number = 0;
-
-	private lowIndex: number = 0;
-	private highIndex: number = 0;
-}
 
 export class LBA {
 	// Adds a state to this LBA, marking it as the initial state
@@ -345,7 +261,6 @@ export class LBA {
 	}
 
 	// Reads a character from the tape, triggering state changes to this LBA.
-	// TODO: handle non-determinism
 	public read(): void {
 		if (this.error()) {
 			return;
@@ -386,8 +301,7 @@ export class LBA {
 	}
 
 	private processAction(action: Action): void {
-		this.tape.setContent(action.currentTapeContent);
-		this.tape.setHeadPosition(action.currentHeadPosition);
+		this.tape.load(action.currentTape);
 		this.calculationSteps = action.calculationSteps;
 		this.currentState = action.targetState;
 		this.tape.write(action.tapeWrite);
@@ -402,6 +316,8 @@ export class LBA {
 		let input = this.tape.read();
 		if (input !== undefined) {
 			this.handleInputSymbol(input, result);
+		} else {
+			this.handleInputSymbol("_", result);
 		}
 
 		this.handleInputSymbol(EPSILON_KEY, result);
@@ -414,6 +330,14 @@ export class LBA {
 			return;
 		}
 
+		// if (inputSymbol == "_" && this.tape.pointsOutsideTape()) {
+
+		// }
+
+		if (!this.transitions.hasOwnProperty(this.currentState.toString())) {
+			return;
+		}
+
 		let availableTransitions = this.transitions[this.currentState];
 		if (!availableTransitions.hasOwnProperty(inputSymbol)) {
 			return;
@@ -422,8 +346,7 @@ export class LBA {
 		let transitions = availableTransitions[inputSymbol];
 		for (let transition of transitions) {
 			buffer.push({
-				currentTapeContent: this.tape.toArray(),
-				currentHeadPosition: this.tape.getHeadPosition(),
+				currentTape: this.tape.save(),
 				calculationSteps: this.calculationSteps,
 				tapeWrite: transition.tapeSymbol,
 				moveDirection: transition.direction,
@@ -562,7 +485,7 @@ export class LBA {
 	}
 
 	private isInputSymbol(symbol: string): boolean {
-		return /[a-z]/.test(symbol);
+		return /[a-z0-9]/.test(symbol);
 	}
 
 	private plainTextToDirection(input: string): Direction {
