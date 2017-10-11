@@ -283,4 +283,21 @@ export namespace utils {
 	export function fromJSON<T>(json: JSONData<T>): T {
 		return JSON.parse(json.data);
 	}
+
+	// Re-routes every edge in an indexed edge group when a state renaming occurs
+	export function rerouteEdges<T extends State, TEdge extends Edge<T>>(
+		edgeList: IndexedEdgeGroup<TEdge>, oldName: string, newName: string): void {
+
+		if (edgeList.hasOwnProperty(oldName)) {
+			edgeList[newName] = edgeList[oldName];
+			delete edgeList[oldName];
+		}
+
+		utils.foreach(edgeList, (origin, indexedByTarget) => {
+			if (indexedByTarget.hasOwnProperty(oldName)) {
+				indexedByTarget[newName] = indexedByTarget[oldName];
+				delete indexedByTarget[oldName];
+			}
+		});
+	}
 }

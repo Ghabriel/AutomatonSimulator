@@ -155,6 +155,7 @@ export class AutomatonRenderer {
 		let state = this.internal(externalState);
 
 		delete this.stateList[state.name];
+		utils.rerouteEdges(this.edgeList, state.name, newName);
 		state.name = newName;
 		this.internalCreateState(state);
 
