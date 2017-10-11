@@ -12,31 +12,31 @@ type Alphabet = {[i: string]: number};
 type SymbolLocation = "inputAlphabet" | "tapeAlphabet";
 
 interface InternalTransitionInformation {
-    state: Index,
-    tapeSymbol: string,
-    direction: Direction
+	state: Index,
+	tapeSymbol: string,
+	direction: Direction
 }
 
 export interface TransitionInformation {
-    state: State,
-    tapeSymbol: string,
-    direction: Direction
+	state: State,
+	tapeSymbol: string,
+	direction: Direction
 }
 
 interface BaseAction {
-    currentTape: JSONData<TapeJSONFields>;
-    calculationSteps: number;
-    tapeWrite: string;
-    moveDirection: Direction;
-    stepIndex: number;
+	currentTape: JSONData<TapeJSONFields>;
+	calculationSteps: number;
+	tapeWrite: string;
+	moveDirection: Direction;
+	stepIndex: number;
 }
 
 interface Action extends BaseAction {
-    targetState: Index;
+	targetState: Index;
 }
 
 interface ActionInformation extends BaseAction {
-    targetState: State;
+	targetState: State;
 }
 
 
