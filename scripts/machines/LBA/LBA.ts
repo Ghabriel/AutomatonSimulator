@@ -385,15 +385,6 @@ export class LBA {
 		}
 	}
 
-	// interface Action {
-	// 	currentTapeContent: string[];
-	// 	currentHeadPosition: number;
-	// 	calculationSteps: number;
-	// 	tapeWrite: string;
-	// 	stepIndex: number;
-	//  targetState: Index;
-	// }
-
 	private processAction(action: Action): void {
 		this.tape.setContent(action.currentTapeContent);
 		this.tape.setHeadPosition(action.currentHeadPosition);
@@ -484,9 +475,9 @@ export class LBA {
 
 	// Checks if this LBA accepts in its current state.
 	public accepts(): boolean {
-		// if (this.accepting) {
-		// 	return true;
-		// }
+		if (this.accepting) {
+			return true;
+		}
 
 		if (this.currentState === null) {
 			return false;
