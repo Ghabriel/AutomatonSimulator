@@ -9,6 +9,7 @@ interface TapeJSONFields {
     headPosition: number;
     lowIndex: number;
     highIndex: number;
+    boundarySymbols: string[];
 }
 
 type TapeJSON = JSONData<TapeJSONFields>;

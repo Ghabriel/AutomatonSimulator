@@ -8,8 +8,8 @@ const moveOffsets = {
 };
 
 export class Tape {
-	public setBoundarySymbols(...symbols: string[]): void {
-		this.boundarySymbols = symbols;
+	constructor(...boundarySymbols: string[]) {
+		this.boundarySymbols = boundarySymbols;
 	}
 
 	public moveHead(direction: Direction): void {
@@ -96,7 +96,8 @@ export class Tape {
 			content: this.content,
 			headPosition: this.headPosition,
 			lowIndex: this.lowIndex,
-			highIndex: this.highIndex
+			highIndex: this.highIndex,
+			boundarySymbols: this.boundarySymbols
 		});
 	}
 
@@ -106,6 +107,7 @@ export class Tape {
 		this.headPosition = data.headPosition;
 		this.lowIndex = data.lowIndex;
 		this.highIndex = data.highIndex;
+		this.boundarySymbols = data.boundarySymbols;
 	}
 
 	private isBeyondBoundaryMove(direction: Direction): boolean {

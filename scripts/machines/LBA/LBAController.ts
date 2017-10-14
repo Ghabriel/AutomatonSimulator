@@ -2,7 +2,7 @@
 
 import {Controller, FormalDefinition, Operation, TransitionTable} from "../../Controller"
 import {Keyboard} from "../../Keyboard"
-import {LBA, TransitionInformation} from "./LBA"
+import {ActionInformation, LBA, TransitionInformation} from "./LBA"
 import {Prompt} from "../../Prompt"
 import {Strings} from "../../Settings"
 import {utils} from "../../Utils"
@@ -190,6 +190,10 @@ export class LBAController implements Controller {
 	public getHeadPosition(): number {
 		// return 0;
 		return this.machine.getHeadPosition();
+	}
+
+	public getActionTree(): ActionInformation[] {
+		return this.machine.getActionTree();
 	}
 
 	public currentStates(): string[] {
