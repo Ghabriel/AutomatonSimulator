@@ -241,6 +241,10 @@ div.row {
 	background-color: #FFFF80;
 }
 
+.tape_pointer {
+	text-decoration: underline;
+}
+
 .none {
 	color: #888;
 	font-style: italic;
