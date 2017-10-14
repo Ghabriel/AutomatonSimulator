@@ -24,7 +24,6 @@ export interface TransitionInformation {
 }
 
 interface BaseAction {
-	currentTape: JSONData<TapeJSONFields>;
 	calculationSteps: number;
 	tapeWrite: string;
 	moveDirection: Direction;
@@ -32,10 +31,12 @@ interface BaseAction {
 }
 
 interface Action extends BaseAction {
+	currentTape: JSONData<TapeJSONFields>;
 	targetState: Index;
 }
 
-interface ActionInformation extends BaseAction {
+export interface ActionInformation extends BaseAction {
+	currentTape: Tape;
 	targetState: State;
 }
 
@@ -43,6 +44,10 @@ interface ActionInformation extends BaseAction {
 const EPSILON_KEY = "";
 
 export class LBA {
+	constructor() {
+		this.tape = new Tape("_");
+	}
+
 	// Adds a state to this LBA, marking it as the initial state
 	// if there are no other states in this LBA.
 	public addState(name: State): Index {
@@ -260,9 +265,29 @@ export class LBA {
 		return this.tape.getHeadPosition();
 	}
 
+	public getActionTree(): ActionInformation[] {
+		let result: ActionInformation[] = [];
+
+		for (let action of this.actionTree) {
+			let tape = new Tape();
+			tape.load(action.currentTape);
+
+			result.push({
+				currentTape: tape,
+				calculationSteps: action.calculationSteps,
+				tapeWrite: action.tapeWrite,
+				moveDirection: action.moveDirection,
+				stepIndex: action.stepIndex,
+				targetState: this.stateList[action.targetState]
+			});
+		}
+
+		return result;
+	}
+
 	// Reads a character from the tape, triggering state changes to this LBA.
 	public read(): void {
-		if (this.error()) {
+		if (this.halted()) {
 			return;
 		}
 
@@ -293,72 +318,15 @@ export class LBA {
 			if (this.accepts()) {
 				// continues to accept if it's currently accepting
 				this.accepting = true;
+			} else {
+				// goes to the error state
+				this.currentState = null;
 			}
-
-			// goes to the error state
-			this.currentState = null;
-		}
-	}
-
-	private processAction(action: Action): void {
-		this.tape.load(action.currentTape);
-		this.calculationSteps = action.calculationSteps;
-		this.currentState = action.targetState;
-		this.tape.write(action.tapeWrite);
-		this.tape.moveHead(action.moveDirection);
-
-		this.calculationSteps++;
-	}
-
-	private getPossibleActions(): Action[] {
-		let result: Action[] = [];
-
-		let input = this.tape.read();
-		if (input !== undefined) {
-			this.handleInputSymbol(input, result);
-		} else {
-			this.handleInputSymbol("_", result);
-		}
-
-		this.handleInputSymbol(EPSILON_KEY, result);
-
-		return result;
-	}
-
-	private handleInputSymbol(inputSymbol: string, buffer: Action[]): void {
-		if (this.currentState === null) {
-			return;
-		}
-
-		// if (inputSymbol == "_" && this.tape.pointsOutsideTape()) {
-
-		// }
-
-		if (!this.transitions.hasOwnProperty(this.currentState.toString())) {
-			return;
-		}
-
-		let availableTransitions = this.transitions[this.currentState];
-		if (!availableTransitions.hasOwnProperty(inputSymbol)) {
-			return;
-		}
-
-		let transitions = availableTransitions[inputSymbol];
-		for (let transition of transitions) {
-			buffer.push({
-				currentTape: this.tape.save(),
-				calculationSteps: this.calculationSteps,
-				tapeWrite: transition.tapeSymbol,
-				moveDirection: transition.direction,
-				stepIndex: this.stepIndex,
-				targetState: transition.state
-			});
 		}
 	}
 
 	public halted(): boolean {
-		// TODO
-		return this.error();
+		return this.halt;
 	}
 
 	// Resets this LBA, making it return to its initial state and
@@ -484,6 +452,62 @@ export class LBA {
 		}
 	}
 
+	private processAction(action: Action): void {
+		this.tape.load(action.currentTape);
+		this.calculationSteps = action.calculationSteps;
+		this.currentState = action.targetState;
+		this.tape.write(action.tapeWrite);
+		this.tape.moveHead(action.moveDirection);
+
+		this.calculationSteps++;
+	}
+
+	private getPossibleActions(): Action[] {
+		let result: Action[] = [];
+
+		let input = this.tape.read();
+		if (input !== undefined) {
+			this.handleInputSymbol(input, result);
+		} else {
+			this.handleInputSymbol("_", result);
+		}
+
+		this.handleInputSymbol(EPSILON_KEY, result);
+
+		return result;
+	}
+
+	private handleInputSymbol(inputSymbol: string, buffer: Action[]): void {
+		if (this.currentState === null) {
+			return;
+		}
+
+		// if (inputSymbol == "_" && this.tape.pointsOutsideTape()) {
+
+		// }
+
+		if (!this.transitions.hasOwnProperty(this.currentState.toString())) {
+			return;
+		}
+
+		let availableTransitions = this.transitions[this.currentState];
+		if (!availableTransitions.hasOwnProperty(inputSymbol)) {
+			return;
+		}
+
+		let transitions = availableTransitions[inputSymbol];
+		for (let transition of transitions) {
+			buffer.push({
+				currentTape: this.tape.save(),
+				calculationSteps: this.calculationSteps,
+				tapeWrite: transition.tapeSymbol,
+				moveDirection: transition.direction,
+				stepIndex: this.stepIndex,
+				targetState: transition.state
+			});
+		}
+	}
+
 	private isInputSymbol(symbol: string): boolean {
 		return /[a-z0-9]/.test(symbol);
 	}
@@ -537,7 +561,7 @@ export class LBA {
 
 	// Instantaneous configuration-related attributes
 	private currentState: Index|null = null;
-	private tape = new Tape();
+	private tape: Tape;
 
 	// Used to halt this LBA when a loop is detected
 	private calculationSteps: number = 0;

@@ -2,18 +2,22 @@
 
 import {utils} from "../../../Utils"
 
+const moveOffsets = {
+	[Direction.LEFT]: -1,
+	[Direction.RIGHT]: 1
+};
+
 export class Tape {
+	constructor(...boundarySymbols: string[]) {
+		this.boundarySymbols = boundarySymbols;
+	}
+
 	public moveHead(direction: Direction): void {
-		switch (direction) {
-			case Direction.LEFT:
-				this.headPosition--;
-				break;
-			case Direction.RIGHT:
-				this.headPosition++;
-				break;
-			default:
-				utils.assertNever(direction);
+		if (this.isBeyondBoundaryMove(direction)) {
+			return;
 		}
+
+		this.headPosition += moveOffsets[direction];
 	}
 
 	public resetHead(): void {
@@ -25,6 +29,11 @@ export class Tape {
 	}
 
 	public write(symbol: string): void {
+		if (this.isBoundarySymbol(symbol)) {
+			// Cannot overwrite a boundary symbol
+			return;
+		}
+
 		this.content[this.headPosition] = symbol;
 
 		if (this.headPosition < this.lowIndex) {
@@ -87,7 +96,8 @@ export class Tape {
 			content: this.content,
 			headPosition: this.headPosition,
 			lowIndex: this.lowIndex,
-			highIndex: this.highIndex
+			highIndex: this.highIndex,
+			boundarySymbols: this.boundarySymbols
 		});
 	}
 
@@ -97,6 +107,23 @@ export class Tape {
 		this.headPosition = data.headPosition;
 		this.lowIndex = data.lowIndex;
 		this.highIndex = data.highIndex;
+		this.boundarySymbols = data.boundarySymbols;
+	}
+
+	private isBeyondBoundaryMove(direction: Direction): boolean {
+		let nextHeadPosition = this.headPosition + moveOffsets[direction];
+		return (nextHeadPosition < this.lowIndex - 1
+			|| nextHeadPosition > this.highIndex + 1);
+	}
+
+	private isBoundarySymbol(symbol: string): boolean {
+		for (let boundarySymbol of this.boundarySymbols) {
+			if (symbol == boundarySymbol) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private content: NumericMap<string> = {};
@@ -104,4 +131,6 @@ export class Tape {
 
 	private lowIndex: number = 0;
 	private highIndex: number = 0;
+
+	private boundarySymbols: string[] = [];
 }

@@ -1,18 +1,31 @@
 import {Initializable} from "../../Initializer"
 import {Keyboard} from "../../Keyboard"
+import {ActionInformation} from "./LBA"
 import {LBAController} from "./LBAController"
 import {Menu} from "../../interface/Menu"
 import {Settings, Strings} from "../../Settings"
 import {SignalEmitter} from "../../SignalEmitter"
 import {System} from "../../System"
 import {Table} from "../../interface/Table"
+import {Tape} from "./helpers/Tape"
 import {utils} from "../../Utils"
 
 export class initLBA implements Initializable {
 	public init(): void {
 		// console.log("[LBA] Initializing...");
-		let menuList: Menu[] = [];
+		let menuList: Menu[] = [
+			this.buildRecognitionMenu(),
+			this.buildActionTreeMenu(),
+			this.buildMultipleRecognitionMenu()
+		];
 
+		this.bindRecognitionEvents();
+
+		Settings.machines[Settings.Machine.LBA].sidebar = menuList;
+		// console.log("[LBA] Initialized successfully");
+	}
+
+	private buildRecognitionMenu(): Menu {
 		let recognitionMenu = new Menu(Strings.RECOGNITION);
 		let rows: HTMLElement[][] = [];
 
@@ -20,22 +33,29 @@ export class initLBA implements Initializable {
 		this.buildRecognitionControls(rows);
 		this.buildTape(rows);
 		this.buildRecognitionProgress(rows);
-
 		this.addRows(rows, recognitionMenu);
-		menuList.push(recognitionMenu);
 
+		return recognitionMenu;
+	}
+
+	private buildActionTreeMenu(): Menu {
+		let actionTreeMenu = new Menu(Strings.ACTION_TREE_MENUBAR);
+		let rows: HTMLElement[][] = [];
+
+		this.buildActionTree(rows);
+		this.addRows(rows, actionTreeMenu);
+
+		return actionTreeMenu;
+	}
+
+	private buildMultipleRecognitionMenu(): Menu {
 		let multipleRecognitionMenu = new Menu(Strings.MULTIPLE_RECOGNITION);
-		rows = [];
+		let rows: HTMLElement[][] = [];
 
 		this.buildMultipleRecognition(rows);
-
 		this.addRows(rows, multipleRecognitionMenu);
-		menuList.push(multipleRecognitionMenu);
 
-		this.bindRecognitionEvents();
-
-		Settings.machines[Settings.Machine.LBA].sidebar = menuList;
-		// console.log("[LBA] Initialized successfully");
+		return multipleRecognitionMenu;
 	}
 
 	public onEnter(): void {
@@ -58,6 +78,7 @@ export class initLBA implements Initializable {
 	private stopRecognition: HTMLImageElement;
 	private progressContainer: HTMLDivElement;
 	private tapeContainer: HTMLDivElement;
+	private actionTreeContainer: HTMLDivElement;
 	private multipleCaseArea: HTMLTextAreaElement;
 	private multipleCaseResults: HTMLDivElement;
 	private multipleCaseButton: HTMLImageElement;
@@ -143,6 +164,17 @@ export class initLBA implements Initializable {
 		container.push([this.tapeContainer]);
 	}
 
+	private buildActionTree(container: HTMLElement[][]): void {
+		this.actionTreeContainer = utils.create("div", {
+			className: "none",
+			id: "action_tree"
+		});
+
+		this.actionTreeContainer.innerHTML = Strings.NO_RECOGNITION_IN_PROGRESS;
+
+		container.push([this.actionTreeContainer]);
+	}
+
 	private buildRecognitionProgress(container: HTMLElement[][]): void {
 		this.progressContainer = utils.create("div", {
 			id: "recognition_progress"
@@ -174,7 +206,6 @@ export class initLBA implements Initializable {
 		});
 		container.push([this.multipleCaseButton]);
 	}
-
 
 	private showAcceptanceStatus(): void {
 		let controller = <LBAController> Settings.controller();
@@ -228,6 +259,67 @@ export class initLBA implements Initializable {
 		}
 	}
 
+	private showActionTree(): void {
+		let controller = <LBAController> Settings.controller();
+		let actionTree = controller.getActionTree();
+
+		if (actionTree.length == 0) {
+			this.actionTreeContainer.classList.add("none");
+			this.actionTreeContainer.innerHTML = Strings.ACTION_TREE_NO_ACTIONS;
+			return;
+		}
+
+		this.actionTreeContainer.classList.remove("none");
+		this.actionTreeContainer.innerHTML = "";
+
+		for (let action of actionTree) {
+			let container = utils.create("div", {
+				className: "entry"
+			});
+
+			this.showAction(container, action);
+
+			this.actionTreeContainer.appendChild(container);
+		}
+	}
+
+	private showAction(parent: HTMLElement, action: ActionInformation): void {
+		// Shows the updated tape instead of the current one
+		let tape = action.currentTape;
+		tape.write(action.tapeWrite);
+		tape.moveHead(action.moveDirection);
+
+		let parts: string[] = [
+			action.targetState,
+			this.tapeToHTML(tape)
+		];
+
+		parent.appendChild(utils.span("(" + parts.join(", ") + ")"));
+	}
+
+	private tapeToHTML(tape: Tape): string {
+		let content = tape.toArray();
+		let headPosition = tape.getHeadPosition();
+		let isValidIndex = (headPosition >= 0 && headPosition < content.length);
+
+		let before = (headPosition >= 0)
+			? content.slice(0, headPosition).join("")
+			: "";
+
+		let headSymbol = (isValidIndex)
+			? content[headPosition]
+			: "_";
+
+		return before
+			+ "<span class='tape_pointer'>" + headSymbol + "</span>"
+			+ content.slice(headPosition + 1).join("");
+	}
+
+	private clearActionTree(): void {
+		this.actionTreeContainer.classList.add("none");
+		this.actionTreeContainer.innerHTML = Strings.NO_RECOGNITION_IN_PROGRESS;
+	}
+
 	private bindRecognitionEvents(): void {
 		const disabledClass = Settings.disabledButtonClass;
 		let fastForwardEnabled = true;
@@ -267,6 +359,7 @@ export class initLBA implements Initializable {
 
 				self.tapeContainer.style.display = "";
 				self.showTapeContent();
+				self.showActionTree();
 
 				fastForwardStatus(false);
 				stepStatus(false);
@@ -294,6 +387,7 @@ export class initLBA implements Initializable {
 				self.progressContainer.style.display = "none";
 
 				self.tapeContainer.style.display = "none";
+				self.clearActionTree();
 
 				fastForwardStatus(true);
 				stepStatus(true);
@@ -330,6 +424,7 @@ export class initLBA implements Initializable {
 					finished = controller.finished(input);
 
 					self.showTapeContent();
+					self.showActionTree();
 				}
 
 				if (finished) {
