@@ -43,6 +43,11 @@ interface ActionInformation extends BaseAction {
 const EPSILON_KEY = "";
 
 export class LBA {
+	constructor() {
+		this.tape = new Tape();
+		this.tape.setBoundarySymbols("_");
+	}
+
 	// Adds a state to this LBA, marking it as the initial state
 	// if there are no other states in this LBA.
 	public addState(name: State): Index {
@@ -262,7 +267,7 @@ export class LBA {
 
 	// Reads a character from the tape, triggering state changes to this LBA.
 	public read(): void {
-		if (this.error()) {
+		if (this.halted()) {
 			return;
 		}
 
@@ -293,10 +298,10 @@ export class LBA {
 			if (this.accepts()) {
 				// continues to accept if it's currently accepting
 				this.accepting = true;
+			} else {
+				// goes to the error state
+				this.currentState = null;
 			}
-
-			// goes to the error state
-			this.currentState = null;
 		}
 	}
 
@@ -357,8 +362,7 @@ export class LBA {
 	}
 
 	public halted(): boolean {
-		// TODO
-		return this.error();
+		return this.halt;
 	}
 
 	// Resets this LBA, making it return to its initial state and
@@ -537,7 +541,7 @@ export class LBA {
 
 	// Instantaneous configuration-related attributes
 	private currentState: Index|null = null;
-	private tape = new Tape();
+	private tape: Tape;
 
 	// Used to halt this LBA when a loop is detected
 	private calculationSteps: number = 0;

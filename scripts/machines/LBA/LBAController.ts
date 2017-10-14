@@ -171,7 +171,7 @@ export class LBAController implements Controller {
 	}
 
 	public finished(input: string): boolean {
-		return this.machine.halted();
+		return this.stepIndex >= 0 && this.machine.halted();
 	}
 
 	public isStopped(): boolean {
