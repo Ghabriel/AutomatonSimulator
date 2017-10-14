@@ -300,10 +300,7 @@ export class initLBA implements Initializable {
 	private tapeToHTML(tape: Tape): string {
 		let content = tape.toArray();
 		let headPosition = tape.getHeadPosition();
-
 		let isValidIndex = (headPosition >= 0 && headPosition < content.length);
-		console.log("[CONTENT]", content);
-		console.log("[HEAD POSITION]", headPosition);
 
 		let before = (headPosition >= 0)
 			? content.slice(0, headPosition).join("")
