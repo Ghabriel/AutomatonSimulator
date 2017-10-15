@@ -414,6 +414,8 @@ export class MainController {
 		// Blocks changes to the memento until the load process is complete
 		this.frozenMemento = true;
 
+		Settings.controller().clear();
+
 		let loadedData = this.persistenceHandler.load(content);
 		if (loadedData.error) {
 			alert(Strings.INVALID_FILE);
