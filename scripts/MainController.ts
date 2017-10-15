@@ -484,8 +484,8 @@ export class MainController {
 			};
 		} else {
 			return {
-				origin: this.cleanup(entity.origin),
-				target: this.cleanup(entity.target),
+				origin: this.internal(entity.origin),
+				target: this.internal(entity.target),
 				textList: utils.clone(entity.textList),
 				dataList: utils.clone(entity.dataList),
 				type: entity.type
