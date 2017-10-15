@@ -142,7 +142,7 @@ export class LBAController implements Controller {
 	public fastForward(input: string): void {
 		this.machine.reset();
 		this.machine.setTapeContent(input.split(""));
-		while (!this.finished(input)) {
+		while (!this.machine.halted()) {
 			this.machine.read();
 		}
 	}
