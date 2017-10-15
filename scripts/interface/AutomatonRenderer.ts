@@ -848,6 +848,9 @@ export class AutomatonRenderer {
 			if (oppositeEdge) {
 				edge.setCurveFlag(true);
 				oppositeEdge.setCurveFlag(true);
+
+				edge.render(this.canvas);
+				oppositeEdge.render(this.canvas);
 			}
 		});
 	}
