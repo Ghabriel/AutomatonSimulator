@@ -965,28 +965,32 @@ export class AutomatonRenderer {
 	private mergeWithParallel(edge: UIEdge): boolean {
 		let {origin, target} = edge;
 		let sameDirectionEdge = this.getEdge(origin, target);
-		if (sameDirectionEdge) {
-			this.edgeTextPrompt(sameDirectionEdge, (data, text) => {
-				// Add the data and text to the this.currentEdge to use it
-				// on controller.internalCreateTransition().
-				edge.dataList.push(data);
-				edge.textList.push(text);
-
-				// Also add the text to the existing edge, which replaces
-				// 'this.currentEdge'.
-				sameDirectionEdge!.dataList.push(data);
-				sameDirectionEdge!.textList.push(text);
-				sameDirectionEdge!.render(this.canvas);
-				this.deleteCurrentEdge();
-				this.selectEdge(sameDirectionEdge!);
-
-				this.controller.createMergedTransition(edge);
-			}, () => this.deleteCurrentEdge);
-
-			return true;
+		if (!sameDirectionEdge) {
+			return false;
 		}
 
-		return false;
+		edge.remove();
+		this.selectEdge(sameDirectionEdge);
+
+		this.edgeTextPrompt(sameDirectionEdge, (data, text) => {
+			// Add the data and text to the this.currentEdge to use it
+			// on controller.internalCreateTransition().
+			edge.dataList.push(data);
+			edge.textList.push(text);
+
+			// Also add the text to the existing edge, which replaces
+			// 'this.currentEdge'.
+			sameDirectionEdge!.dataList.push(data);
+			sameDirectionEdge!.textList.push(text);
+			sameDirectionEdge!.render(this.canvas);
+			this.deleteCurrentEdge();
+
+			this.controller.createMergedTransition(edge);
+		}, () => {
+			this.deleteCurrentEdge();
+		});
+
+		return true;
 	}
 
 	private newStateAt(x: number, y: number): void {

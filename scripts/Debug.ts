@@ -17,11 +17,11 @@ interface ClassDebugTraits {
 const debugTraits: DebugTraits = {
 	AutomatonRenderer: {
 		color: "orange",
-		disabled: true
+		// disabled: true
 	},
 	MainController: {
 		color: "lime",
-		disabled: true
+		// disabled: true
 	},
 	FAController: {
 		color: "red",
@@ -34,9 +34,6 @@ const debugTraits: DebugTraits = {
 	LBAController: {
 		color: "red",
 		restricted: true
-	},
-	LBA: {
-		color: "orange"
 	},
 	default: {
 		color: ""

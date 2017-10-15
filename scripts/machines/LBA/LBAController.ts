@@ -7,11 +7,9 @@ import {Prompt} from "../../Prompt"
 import {Strings} from "../../Settings"
 import {utils} from "../../Utils"
 
-import {debug} from "../../Debug"
-
 export class LBAController implements Controller {
 	constructor() {
-		this.machine = debug(new LBA());
+		this.machine = new LBA();
 	}
 
 	public edgePrompt(callback: (data: string[], text: string) => void,
