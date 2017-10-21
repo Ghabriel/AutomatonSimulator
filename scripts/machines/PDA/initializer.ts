@@ -309,16 +309,36 @@ export class initPDA implements Initializable {
 	}
 
 	private showAction(parent: HTMLElement, action: ActionInformation): void {
+		// Shows the updated input/stack instead of the current one
+		let updatedAction = this.updateAction(action);
+
 		switch (this.actionNotation) {
 			case ActionNotation.Table:
-				this.showActionAsTable(parent, action);
+				this.showActionAsTable(parent, updatedAction);
 				break;
 			case ActionNotation.Tuple:
-				this.showActionAsTuple(parent, action);
+				this.showActionAsTuple(parent, updatedAction);
 				break;
 			default:
 				utils.assertNever(this.actionNotation);
 		}
+	}
+
+	private updateAction(action: ActionInformation): ActionInformation {
+		let result = utils.clone(action);
+
+		const EPSILON_KEY = "";
+		if (action.inputRead != EPSILON_KEY) {
+			result.currentInput = result.currentInput.slice(1);
+		}
+
+		result.currentStack.pop();
+
+		for (let i = 0; i < action.stackWrite.length; i++) {
+			result.currentStack.push(action.stackWrite[i]);
+		}
+
+		return result;
 	}
 
 	private showActionAsTable(parent: HTMLElement, action: ActionInformation): void {

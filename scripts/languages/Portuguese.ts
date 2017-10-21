@@ -86,7 +86,7 @@ export namespace portuguese {
 		ACCEPT_BY_EMPTY_STACK: "Aceitar por pilha vazia",
 		NO_RECOGNITION_IN_PROGRESS: "nenhum reconhecimento em andamento",
 		STACK_MENUBAR: "Conteúdo da pilha",
-		ACTION_TREE_MENUBAR: "Possíveis próximas ações",
+		ACTION_TREE_MENUBAR: "Possíveis próximas configurações",
 		ACTION_TREE_NO_ACTIONS: "nenhuma ação possível",
 		PDA_FIELD_INPUT: "Entrada",
 		PDA_FIELD_STACK: "Pilha",

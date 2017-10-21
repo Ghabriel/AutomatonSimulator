@@ -86,7 +86,7 @@ export namespace english {
 		ACCEPT_BY_EMPTY_STACK: "Accept by empty stack",
 		NO_RECOGNITION_IN_PROGRESS: "no recognition in progress",
 		STACK_MENUBAR: "Stack content",
-		ACTION_TREE_MENUBAR: "Possible next actions",
+		ACTION_TREE_MENUBAR: "Possible next configurations",
 		ACTION_TREE_NO_ACTIONS: "no possible actions",
 		PDA_FIELD_INPUT: "Input",
 		PDA_FIELD_STACK: "Stack",
