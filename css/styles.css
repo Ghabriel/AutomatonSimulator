@@ -66,6 +66,7 @@ svg {
 	border-bottom: 1px solid #2070a0;
 	color: white;
 	padding: 5px;
+	padding-right: 10px;
 }
 
 .menu .title:hover {
@@ -186,6 +187,11 @@ div.row {
 
 #recognition_progress .parsed_input {
 	color: green;
+}
+
+#recognition_progress .acceptance_status_suffix {
+	display: block;
+	font-size: 50%;
 }
 
 #stack, #action_tree {

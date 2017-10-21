@@ -183,6 +183,10 @@ export class PDAController implements Controller {
 		this.machine.setAcceptingHeuristic(heuristic);
 	}
 
+	public getAcceptingHeuristic(): AcceptingHeuristic {
+		return this.machine.getAcceptingHeuristic();
+	}
+
 	public currentStates(): string[] {
 		let state = this.machine.getCurrentState();
 		let result: string[] = [];
@@ -196,6 +200,10 @@ export class PDAController implements Controller {
 
 	public accepts(): boolean {
 		return this.machine.accepts();
+	}
+
+	public acceptedHeuristic(): AcceptingHeuristic|null {
+		return this.machine.acceptedHeuristic();
 	}
 
 	public formalDefinition(): FormalDefinition {

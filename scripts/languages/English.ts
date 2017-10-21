@@ -80,6 +80,8 @@ export namespace english {
 		INPUT_ACCEPTED: "accepted",
 		INPUT_REJECTED: "rejected",
 		INPUT_LOOPING: "rejected<br>(looping)",
+		INPUT_ACCEPTING_STATE_SUFFIX: "(final state)",
+		INPUT_EMPTY_STACK_SUFFIX: "(empty stack)",
 		EMPTY: "empty",
 		EMPTY_STACK: "empty stack",
 		ACCEPT_BY_FINAL_STATE: "Accept by final state",

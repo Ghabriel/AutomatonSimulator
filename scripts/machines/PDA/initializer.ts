@@ -256,13 +256,44 @@ export class initPDA implements Initializable {
 	}
 
 	private showAcceptanceStatus(): void {
-		if (Settings.controller().accepts()) {
-			this.progressContainer.style.color = Settings.acceptedTestCaseColor;
-			this.progressContainer.innerHTML = Strings.INPUT_ACCEPTED;
-		} else {
+		let controller = <PDAController> Settings.controller();
+		if (!controller.accepts()) {
 			this.progressContainer.style.color = Settings.rejectedTestCaseColor;
 			this.progressContainer.innerHTML = Strings.INPUT_REJECTED;
+			return;
 		}
+
+		if (controller.getAcceptingHeuristic() != AcceptingHeuristic.BOTH) {
+			this.progressContainer.style.color = Settings.acceptedTestCaseColor;
+			this.progressContainer.innerHTML = Strings.INPUT_ACCEPTED;
+			return;
+		}
+
+		let heuristic = controller.acceptedHeuristic();
+		if (heuristic === null) {
+			throw Error("Inconsistent accepting status");
+		}
+
+		const suffixClass = "acceptance_status_suffix";
+
+		let output = utils.create("div");
+		output.appendChild(utils.span(Strings.INPUT_ACCEPTED));
+
+		if (heuristic & AcceptingHeuristic.ACCEPTING_STATE) {
+			let span = utils.span(Strings.INPUT_ACCEPTING_STATE_SUFFIX);
+			span.className = suffixClass;
+			output.appendChild(span);
+		}
+
+		if (heuristic & AcceptingHeuristic.EMPTY_STACK) {
+			let span = utils.span(Strings.INPUT_EMPTY_STACK_SUFFIX);
+			span.className = suffixClass;
+			output.appendChild(span);
+		}
+
+		this.progressContainer.style.color = Settings.acceptedTestCaseColor;
+		this.progressContainer.innerHTML = "";
+		this.progressContainer.appendChild(output);
 	}
 
 	private showStackContent(): void {

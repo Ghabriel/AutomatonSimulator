@@ -80,6 +80,8 @@ export namespace portuguese {
 		INPUT_ACCEPTED: "aceito",
 		INPUT_REJECTED: "rejeitado",
 		INPUT_LOOPING: "rejeitado<br>(looping)",
+		INPUT_ACCEPTING_STATE_SUFFIX: "(estado final)",
+		INPUT_EMPTY_STACK_SUFFIX: "(pilha vazia)",
 		EMPTY: "vazio",
 		EMPTY_STACK: "pilha vazia",
 		ACCEPT_BY_FINAL_STATE: "Aceitar por estado final",

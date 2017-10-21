@@ -41,6 +41,10 @@ export class PDA {
 		this.acceptingHeuristic = heuristic;
 	}
 
+	public getAcceptingHeuristic(): AcceptingHeuristic {
+		return this.acceptingHeuristic;
+	}
+
 	// Adds a state to this PDA, marking it as the initial state
 	// if there are no other states in this PDA.
 	public addState(name: State): Index {
@@ -138,23 +142,6 @@ export class PDA {
 			}
 		}
 	}
-
-	// private uncheckedRemoveTransition(source: Index, input: string): void {
-	// 	let transitions = this.transitions[source];
-	// 	let tapeSymbol = transitions[input].tapeSymbol;
-	// 	delete transitions[input];
-
-	// 	if (this.isInputSymbol(input)) {
-	// 		this.removeInputSymbol(input);
-	// 	}
-
-	// 	if (this.isInputSymbol(tapeSymbol)) {
-	// 		this.removeInputSymbol(tapeSymbol);
-	// 	}
-
-	// 	this.removeTapeSymbol(input);
-	// 	this.removeTapeSymbol(tapeSymbol);
-	// }
 
 	// Sets the initial state of this PDA.
 	public setInitialState(index: Index): void {
@@ -326,22 +313,6 @@ export class PDA {
 		}
 	}
 
-	// private printActionTree(actionTree: Action[]): string {
-	// 	let result: string[] = [];
-
-	// 	for (let action of actionTree) {
-	// 		let content: string[] = [];
-	// 		content.push(action.currentInput);
-	// 		content.push(action.currentStack.join(""));
-	// 		content.push(action.consumesInput ? "YES" : "NO");
-	// 		content.push(action.stackWrite);
-	// 		content.push(this.stateList[action.targetState]);
-	// 		result.push(content.join(", "));
-	// 	}
-
-	// 	return "[\n" + result.join("\n") + "\n]";
-	// }
-
 	public halted(): boolean {
 		return this.halt;
 	}
@@ -393,6 +364,27 @@ export class PDA {
 		}
 
 		return result;
+	}
+
+	public acceptedHeuristic(): AcceptingHeuristic|null {
+		if (this.currentState === null) {
+			return null;
+		}
+
+		let result: AcceptingHeuristic = AcceptingHeuristic.NEVER;
+		if (this.acceptingHeuristic & AcceptingHeuristic.ACCEPTING_STATE) {
+			if (this.finalStates.contains(this.currentState)) {
+				result |= AcceptingHeuristic.ACCEPTING_STATE;
+			}
+		}
+
+		if (this.acceptingHeuristic & AcceptingHeuristic.EMPTY_STACK) {
+			if (this.stack.length == 0) {
+				result |= AcceptingHeuristic.EMPTY_STACK;
+			}
+		}
+
+		return result == AcceptingHeuristic.NEVER ? null : result;
 	}
 
 	// Checks if this PDA is in an error state, i.e. isn't in any state.
