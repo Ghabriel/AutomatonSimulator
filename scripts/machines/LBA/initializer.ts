@@ -291,7 +291,7 @@ export class initLBA implements Initializable {
 		tape.moveHead(action.moveDirection);
 
 		let parts: string[] = [
-			action.targetState,
+			utils.sanitize(action.targetState),
 			this.tapeToHTML(tape)
 		];
 
