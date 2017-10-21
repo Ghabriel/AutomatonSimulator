@@ -6,6 +6,8 @@ import {SignalEmitter} from "../../SignalEmitter"
 import {System} from "../../System"
 import {utils} from "../../Utils"
 
+const sanitize = utils.sanitize;
+
 export class initFA implements Initializable {
 	public init(): void {
 		// console.log("[FA] Initializing...");
@@ -282,8 +284,8 @@ export class initFA implements Initializable {
 						appended = true;
 					}
 
-					parsedInput.innerHTML = input.substr(0, position);
-					remainingInput.innerHTML = input.substr(position);
+					parsedInput.innerHTML = sanitize(input.substr(0, position));
+					remainingInput.innerHTML = sanitize(input.substr(position));
 				}
 			}
 		});

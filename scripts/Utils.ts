@@ -300,4 +300,17 @@ export namespace utils {
 			}
 		});
 	}
+
+	/**
+	 * Sanitizes a string to show it in the interface.
+	 * This basically replaces < with &lt; and > with &gt;.
+	 * If the parameter is not a string, nothing happens.
+	 */
+	export function sanitize(value: any): any {
+		if (typeof value == "string") {
+			value = value.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+		}
+
+		return value;
+	}
 }

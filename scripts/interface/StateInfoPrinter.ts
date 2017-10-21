@@ -29,7 +29,7 @@ export const stateInfoPrinter = (state: State) => {
 	let table = new Table(3);
 	table.add(utils.span(Strings.STATE_NAME + ":"));
 	table.add(utils.create("span", {
-		innerHTML: state.name,
+		innerHTML: utils.sanitize(state.name),
 		className: "property_value",
 		id: "entity_name"
 	}));

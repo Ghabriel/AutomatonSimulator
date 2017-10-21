@@ -21,6 +21,8 @@ interface MouseEvent {
 	pageY: number;
 }
 
+const sanitize = utils.sanitize;
+
 /**
  * Manages the UI representation of the automaton being manipulated, including
  * all related interactions.
@@ -638,7 +640,7 @@ export class AutomatonRenderer {
 					return;
 				}
 
-				$("#entity_name").html(newName);
+				$("#entity_name").html(sanitize(newName));
 			});
 
 			prompt.show();

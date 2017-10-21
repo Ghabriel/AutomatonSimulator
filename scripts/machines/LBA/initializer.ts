@@ -255,6 +255,7 @@ export class initLBA implements Initializable {
 		let displayedContent = tapeContent.slice(startIndex, startIndex + displayedChars);
 
 		for (let i = 0; i < displayedChars; i++) {
+			// No need to sanitize here since it's only one character.
 			this.tapeContainer.children[i].innerHTML = displayedContent[i];
 		}
 	}
@@ -302,8 +303,10 @@ export class initLBA implements Initializable {
 		let headPosition = tape.getHeadPosition();
 		let isValidIndex = (headPosition >= 0 && headPosition < content.length);
 
+		const sanitize = utils.sanitize;
+
 		let before = (headPosition >= 0)
-			? content.slice(0, headPosition).join("")
+			? sanitize(content.slice(0, headPosition).join(""))
 			: "";
 
 		let headSymbol = (isValidIndex)
@@ -312,7 +315,7 @@ export class initLBA implements Initializable {
 
 		return before
 			+ "<span class='tape_pointer'>" + headSymbol + "</span>"
-			+ content.slice(headPosition + 1).join("");
+			+ sanitize(content.slice(headPosition + 1).join(""));
 	}
 
 	private clearActionTree(): void {

@@ -10,6 +10,8 @@ import {utils} from "../Utils"
 type TransitionMetadata = [string, string, string[]];
 type Metadata = TransitionMetadata[];
 
+const sanitize = utils.sanitize;
+
 export class FormalDefinitionRenderer {
 	constructor(automatonRenderer: AutomatonRenderer) {
 		this.automatonRenderer = automatonRenderer;
@@ -35,10 +37,10 @@ export class FormalDefinitionRenderer {
 		let type = typeof value;
 
 		if (type == "number" || type == "string") {
-			container.innerHTML += parameter + " = " + value;
+			container.innerHTML += parameter + " = " + sanitize(value);
 		} else if (value instanceof Array) {
 			container.innerHTML += parameter + " = ";
-			container.innerHTML += "{" + value.join(", ") + "}";
+			container.innerHTML += "{" + sanitize(value.join(", ")) + "}";
 		} else if (type == "undefined") {
 			let content: string = "";
 			content += parameter + " = ";
@@ -103,7 +105,7 @@ export class FormalDefinitionRenderer {
 			let row = utils.create("tr");
 			for (let j = 0; j < contentMatrix[i].length; j++) {
 				let cell = utils.create("td");
-				cell.innerHTML = contentMatrix[i][j];
+				cell.innerHTML = sanitize(contentMatrix[i][j]);
 				row.appendChild(cell);
 			}
 

@@ -9,6 +9,8 @@ import {System} from "../../System"
 import {Table} from "../../interface/Table"
 import {utils} from "../../Utils"
 
+const sanitize = utils.sanitize;
+
 enum ActionNotation {
 	Tuple,
 	Table
@@ -334,7 +336,7 @@ export class initPDA implements Initializable {
 		];
 
 		for (let fieldValue of fieldValues) {
-			let fieldContainer = utils.span(fieldValue);
+			let fieldContainer = utils.span(sanitize(fieldValue));
 
 			if (fieldValue.length == 0) {
 				fieldContainer.classList.add("none");
@@ -358,7 +360,7 @@ export class initPDA implements Initializable {
 			currentStack
 		];
 
-		parent.appendChild(utils.span("(" + parts.join(", ") + ")"));
+		parent.appendChild(utils.span("(" + sanitize(parts.join(", ")) + ")"));
 	}
 
 	private clearStackContent(): void {
@@ -523,8 +525,8 @@ export class initPDA implements Initializable {
 						appended = true;
 					}
 
-					parsedInput.innerHTML = input.substr(0, position);
-					remainingInput.innerHTML = input.substr(position);
+					parsedInput.innerHTML = sanitize(input.substr(0, position));
+					remainingInput.innerHTML = sanitize(input.substr(position));
 				}
 			}
 		});

@@ -49,7 +49,7 @@ export const edgeInfoPrinter = <T extends State>(edge: Edge<T>,
 	let table = new Table(3);
 	table.add(utils.span(Strings.ORIGIN + ":"));
 	table.add(utils.create("span", {
-		innerHTML: edge.origin.name,
+		innerHTML: utils.sanitize(edge.origin.name),
 		className: "property_value",
 		id: "entity_origin"
 	}));
@@ -57,7 +57,7 @@ export const edgeInfoPrinter = <T extends State>(edge: Edge<T>,
 
 	table.add(utils.span(Strings.TARGET + ":"));
 	table.add(utils.create("span", {
-		innerHTML: edge.target.name,
+		innerHTML: utils.sanitize(edge.target.name),
 		className: "property_value",
 		id: "entity_target"
 	}));
