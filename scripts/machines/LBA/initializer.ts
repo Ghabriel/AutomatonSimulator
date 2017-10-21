@@ -367,7 +367,7 @@ export class initLBA implements Initializable {
 				fastForwardStatus(false);
 				stepStatus(false);
 				stopStatus(true);
-				self.testCaseInput.disabled = true;
+				self.testCaseInput.readOnly = true;
 			}
 		});
 
@@ -395,7 +395,7 @@ export class initLBA implements Initializable {
 				fastForwardStatus(true);
 				stepStatus(true);
 				stopStatus(false);
-				self.testCaseInput.disabled = false;
+				self.testCaseInput.readOnly = false;
 			}
 		});
 
@@ -403,7 +403,7 @@ export class initLBA implements Initializable {
 			if (stepEnabled) {
 				fastForwardStatus(false);
 				stopStatus(true);
-				self.testCaseInput.disabled = true;
+				self.testCaseInput.readOnly = true;
 
 				let input = self.testCase();
 				let controller = Settings.controller();
@@ -461,6 +461,13 @@ export class initLBA implements Initializable {
 					}
 				}
 				self.multipleCaseResults.appendChild(result);
+			}
+		});
+
+		this.testCaseInput.addEventListener("click", function() {
+			if (this.readOnly) {
+				self.stopRecognition.click();
+				this.focus();
 			}
 		});
 	}
