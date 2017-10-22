@@ -1,4 +1,3 @@
-import {UIState} from "./UIState"
 import {Strings} from "../Settings"
 import {Table} from "./Table"
 import {utils} from "../Utils"

@@ -1,4 +1,3 @@
-import {UIEdge} from "./UIEdge"
 import {Settings, Strings} from "../Settings"
 import {Table} from "./Table"
 import {utils} from "../Utils"

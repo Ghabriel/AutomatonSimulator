@@ -6,7 +6,6 @@ import {Menu} from "../../interface/Menu"
 import {Settings, Strings} from "../../Settings"
 import {SignalEmitter} from "../../SignalEmitter"
 import {System} from "../../System"
-import {Table} from "../../interface/Table"
 import {Tape} from "./helpers/Tape"
 import {utils} from "../../Utils"
 

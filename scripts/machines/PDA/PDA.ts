@@ -1,4 +1,3 @@
-import {Queue} from "../../datastructures/Queue"
 import {UnorderedSet} from "../../datastructures/UnorderedSet"
 import {utils} from "../../Utils"
 
@@ -62,25 +61,7 @@ export class PDA {
 
 	// Removes a state from this PDA.
 	public removeState(index: Index): void {
-		let self = this;
-		utils.foreach(this.transitions, function(originIndex, transitions) {
-			let origin = parseInt(originIndex);
-			utils.foreach(transitions, function(input, indexedByStack) {
-				utils.foreach(indexedByStack, function(stackRead, group) {
-					let i = 0;
-					while (i < group.length) {
-						if (origin == index || group[i][0] == index) {
-							// self.uncheckedRemoveTransition(origin, input, stackRead, i);
-							group.splice(i, 1);
-						} else {
-							i++;
-						}
-					}
-				});
-			});
-		});
-
-		delete this.transitions[index];
+		this.removeEdgesOfState(index);
 
 		if (this.initialState == index) {
 			this.unsetInitialState();
@@ -89,6 +70,7 @@ export class PDA {
 		this.finalStates.erase(index);
 
 		this.stateList[index] = undefined;
+		delete this.transitions[index];
 		this.numRemovedStates++;
 	}
 
@@ -129,16 +111,21 @@ export class PDA {
 		let stackRead = data[1];
 		let stackWrite = data[2].split("").reverse().join("");
 
-		if (transitions.hasOwnProperty(input)) {
-			if (transitions[input].hasOwnProperty(stackRead)) {
-				let properties = transitions[input][stackRead];
-				for (let i = 0; i < properties.length; i++) {
-					let group = properties[i];
-					if (group[0] == target && group[1] == stackWrite) {
-						properties.splice(i, 1);
-						break;
-					}
-				}
+		if (!transitions.hasOwnProperty(input)) {
+			return;
+		}
+
+		if (!transitions[input].hasOwnProperty(stackRead)) {
+			return;
+		}
+
+		let properties = transitions[input][stackRead];
+		for (let i = 0; i < properties.length; i++) {
+			let group = properties[i];
+			if (group[0] == target && group[1] == stackWrite) {
+				// properties.splice(i, 1);
+				this.uncheckedRemoveTransition(source, input, stackRead, i);
+				break;
 			}
 		}
 	}
@@ -395,6 +382,42 @@ export class PDA {
 	// Returns the number of states of this PDA.
 	public numStates(): number {
 		return this.stateList.length - this.numRemovedStates;
+	}
+
+	private uncheckedRemoveTransition(source: Index, input: string,
+		stackRead: string, index: number): void {
+
+		let groups = this.transitions[source][input][stackRead];
+		let stackWrite = groups[index][1];
+
+		this.removeInputSymbol(input);
+		this.removeStackSymbol(stackRead);
+
+		for (let i = 0; i < stackWrite.length; i++) {
+			this.removeStackSymbol(stackWrite[i]);
+		}
+
+		groups.splice(index, 1);
+	}
+
+	private removeEdgesOfState(index: Index): void {
+		utils.foreach(this.transitions, (originIndex, transitions) => {
+			let origin = parseInt(originIndex);
+
+			utils.foreach(transitions, (input, indexedByStack) => {
+				utils.foreach(indexedByStack, (stackRead, group) => {
+					let i = 0;
+					while (i < group.length) {
+						if (origin == index || group[i][0] == index) {
+							this.uncheckedRemoveTransition(origin, input, stackRead, i);
+							// group.splice(i, 1);
+						} else {
+							i++;
+						}
+					}
+				});
+			});
+		});
 	}
 
 	private getPossibleActions(): Action[] {

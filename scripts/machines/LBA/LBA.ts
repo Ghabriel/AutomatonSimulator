@@ -1,6 +1,5 @@
 /// <reference path="helpers/types.ts" />
 
-import {Queue} from "../../datastructures/Queue"
 import {UnorderedSet} from "../../datastructures/UnorderedSet"
 import {utils} from "../../Utils"
 import {Tape} from "./helpers/Tape"

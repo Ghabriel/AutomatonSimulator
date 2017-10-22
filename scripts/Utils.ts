@@ -23,7 +23,7 @@ export namespace utils {
 	}
 
 	// Creates a tag with a given name and optionally given properties.
-	export function create<T extends keyof HTMLElementTagNameMap, V>(tag: T,
+	export function create<T extends keyof HTMLElementTagNameMap>(tag: T,
 		props?: ArbitraryMap): HTMLElementTagNameMap[T] {
 
 		let result = document.createElement(tag);

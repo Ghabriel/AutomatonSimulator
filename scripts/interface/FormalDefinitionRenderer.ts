@@ -1,6 +1,5 @@
 import {AutomatonRenderer} from "./AutomatonRenderer"
 import {FormalDefinition, TransitionTable} from "../Controller"
-import {EdgeUtils} from "../EdgeUtils"
 import {UIEdge} from "./UIEdge"
 import {Keyboard} from "../Keyboard"
 import {Settings, Strings} from "../Settings"
@@ -85,7 +84,7 @@ export class FormalDefinitionRenderer {
 	private renderFunctionSignature(container: HTMLElement,
 		parameter: string, table: TransitionTable): void {
 
-		let {domain, codomain, header, list, metadata} = table;
+		let {domain, codomain} = table;
 		let arrow = Keyboard.symbols.rightArrow;
 
 		container.innerHTML += parameter + ": ";

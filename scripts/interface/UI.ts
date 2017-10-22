@@ -2,7 +2,6 @@ import {Mainbar} from "./Mainbar"
 import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
 import {Sidebar} from "./Sidebar"
-import {System} from "../System"
 import {utils} from "../Utils"
 
 /**

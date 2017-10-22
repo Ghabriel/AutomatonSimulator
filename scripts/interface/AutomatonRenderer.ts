@@ -6,14 +6,12 @@ import {FormalDefinitionRenderer} from "./FormalDefinitionRenderer"
 import {GUI} from "./GUI"
 import {PartialUIEdge, UIEdge} from "./UIEdge"
 import {UIState} from "./UIState"
-import {Keyboard} from "../Keyboard"
 import {MainController} from "../MainController"
-import {Prompt, ValuedHTMLElement} from "../Prompt"
+import {Prompt} from "../Prompt"
 import {Settings, Strings} from "../Settings"
 import {SignalEmitter} from "../SignalEmitter"
 import {stateInfoPrinter} from "./StateInfoPrinter"
 import {System} from "../System"
-import {Table} from "./Table"
 import {utils} from "../Utils"
 
 interface MouseEvent {
@@ -617,7 +615,6 @@ export class AutomatonRenderer {
 	}
 
 	private showEditableState(state: UIState): HTMLDivElement {
-		let canvas = this.canvas;
 		let controller = this.controller;
 		let self = this;
 
@@ -673,7 +670,6 @@ export class AutomatonRenderer {
 	}
 
 	private showEditableEdge(edge: UIEdge, selectedIndex: number = 0): HTMLDivElement {
-		let canvas = this.canvas;
 		let controller = this.controller;
 		let self = this;
 

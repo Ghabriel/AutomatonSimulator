@@ -149,7 +149,6 @@ export class MainController {
 	}
 
 	public remoteCreateTransition(origin: State, target: State, data: string[]): void {
-		let controller = Settings.controller();
 		Settings.controller().createTransition(origin, target, data);
 	}
 

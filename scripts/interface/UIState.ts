@@ -3,7 +3,6 @@
 
 import {Browser} from "../Browser"
 import {GUI} from "./GUI"
-import {Renderer} from "./Renderer"
 import {Settings} from "../Settings"
 import {StatePalette} from "../Palette"
 import {utils} from "../Utils"
