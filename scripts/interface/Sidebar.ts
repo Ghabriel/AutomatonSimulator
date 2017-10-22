@@ -77,6 +77,9 @@ export class Sidebar extends Renderer {
 			id: "sidebar_content"
 		});
 
+		// Prevents duplicate events
+		this.shouldBindShortcuts = false;
+
 		// Re-binds all menus when the system language is changed
 		if (this.node) {
 			this.onBind();
@@ -312,9 +315,13 @@ export class Sidebar extends Renderer {
 				saveAs(blob, "file.txt");
 			}
 		});
-		System.bindShortcut(Settings.shortcuts.save, function() {
-			save.click();
-		});
+
+		if (this.shouldBindShortcuts) {
+			System.bindShortcut(Settings.shortcuts.save, function() {
+				save.click();
+			});
+		}
+
 		fileManipulation.add(save);
 
 
@@ -349,9 +356,13 @@ export class Sidebar extends Renderer {
 				this.blur();
 			}
 		});
-		System.bindShortcut(Settings.shortcuts.open, function() {
-			open.click();
-		});
+
+		if (this.shouldBindShortcuts) {
+			System.bindShortcut(Settings.shortcuts.open, function() {
+				open.click();
+			});
+		}
+
 		fileManipulation.add(open);
 	}
 
@@ -389,16 +400,18 @@ export class Sidebar extends Renderer {
 			self.machineButtonMapping[type] = button;
 		});
 
-		System.bindShortcut(["M"], function() {
-			let buttons = document.querySelectorAll(".machine_selection_btn");
-			for (let i = 0; i < buttons.length; i++) {
-				let button = <HTMLInputElement> buttons[i];
-				if (!button.disabled) {
-					button.focus();
-					break;
+		if (this.shouldBindShortcuts) {
+			System.bindShortcut(["M"], function() {
+				let buttons = document.querySelectorAll(".machine_selection_btn");
+				for (let i = 0; i < buttons.length; i++) {
+					let button = <HTMLInputElement> buttons[i];
+					if (!button.disabled) {
+						button.focus();
+						break;
+					}
 				}
-			}
-		});
+			});
+		}
 
 		let machineSelection = this.mainMenus.machineSelection;
 		machineSelection.clear();
@@ -507,6 +520,7 @@ export class Sidebar extends Renderer {
 	// 	this.mainMenus.operationMenu.add(tableElement);
 	// }
 
+	private shouldBindShortcuts = true;
 	private contentWrapper: HTMLDivElement;
 	private mainMenus: SidebarMenus;
 	private otherMenus: Menu[] = [];

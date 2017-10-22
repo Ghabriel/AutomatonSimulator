@@ -40,8 +40,10 @@ function propertyName(type: string) {
  * and machine-change).
  */
 export class System {
-	// Changes the system language and then notifies all
-	// the language change observers.
+	/**
+	 * Changes the system language and then notifies all
+	 * the language change observers.
+	 */
 	static changeLanguage(language: Settings.Language): void {
 		Settings.changeLanguage(language);
 		for (let listener of this.languageChangeObservers) {
@@ -49,8 +51,10 @@ export class System {
 		}
 	}
 
-	// Changes the current machine and then notifies all
-	// the machine change observers.
+	/**
+	 * Changes the current machine and then notifies all
+	 * the machine change observers.
+	 */
 	static changeMachine(type: number): void {
 		Settings.changeMachine(type);
 		for (let listener of this.machineChangeObservers) {
@@ -58,20 +62,26 @@ export class System {
 		}
 	}
 
-	// Registers a new language change observer, which will be notified
-	// when the system language changes.
+	/**
+	 * Registers a new language change observer, which will be notified
+	 * when the system language changes.
+	 */
 	static addLanguageChangeObserver(observer: LanguageChangeObserver): void {
 		this.languageChangeObservers.push(observer);
 	}
 
-	// Registers a new machine change observer, which will be notified
-	// when the system machine changes.
+	/**
+	 * Registers a new machine change observer, which will be notified
+	 * when the system machine changes.
+	 */
 	static addMachineChangeObserver(observer: MachineChangeObserver): void {
 		this.machineChangeObservers.push(observer);
 	}
 
-	// Triggers a key event as if the user himself
-	// had pressed the corresponding keys.
+	/**
+	 * Triggers a key event as if the user himself
+	 * had pressed the corresponding keys.
+	 */
 	static emitKeyEvent(keys: string[]): void {
 		let event: Partial<KeyboardKeyPress> = {
 			preventDefault: function() {}
@@ -92,8 +102,10 @@ export class System {
 		this.keyEvent(<KeyboardKeyPress> event);
 	}
 
-	// Notifies every non-locked keyboard observer that is 'interested'
-	// in the triggered keyboard event.
+	/**
+	 * Notifies every non-locked keyboard observer that is 'interested'
+	 * in the triggered keyboard event.
+	 */
 	static keyEvent(event: KeyboardKeyPress): boolean {
 		let triggered = false;
 		for (let observer of this.keyboardObservers) {
@@ -111,7 +123,12 @@ export class System {
 		return true;
 	}
 
-	// Binds a keyboard shortcut to the page.
+	/**
+	 * Binds a keyboard shortcut to the page.
+	 * @param {string[]} keys  the keys that compose the new shortcut
+	 * @param {() => void} callback a function to be called when the shortcut is activated
+	 * @param {string}   group the group that this shortcut belongs to
+	 */
 	static bindShortcut(keys: string[], callback: () => void, group?: string): void {
 		this.keyboardObservers.push({
 			keys: keys,
@@ -120,22 +137,32 @@ export class System {
 		});
 	}
 
-	// Disables all shortcuts in a given shortcut group.
+	/**
+	 * Disables all shortcuts in a given shortcut group.
+	 * @param {string} group the name of the shortcut group
+	 */
 	static lockShortcutGroup(group: string): void {
 		this.lockedGroups[group] = true;
 	}
 
-	// Enables all shortcuts in a given shortcut group.
+	/**
+	 * Enables all shortcuts in a given shortcut group.
+	 * @param {string} group the name of the shortcut group
+	 */
 	static unlockShortcutGroup(group: string): void {
 		delete this.lockedGroups[group];
 	}
 
-	// Sets a global lock for keyboard shortcuts.
+	/**
+	 * Sets a global lock for keyboard shortcuts.
+	 */
 	static blockEvents(): void {
 		this.eventBlock = true;
 	}
 
-	// Unsets the keyboard shortcuts global lock.
+	/**
+	 * Unsets the keyboard shortcuts global lock.
+	 */
 	static unblockEvents(): void {
 		this.eventBlock = false;
 	}

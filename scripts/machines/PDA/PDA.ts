@@ -260,6 +260,7 @@ export class PDA {
 	// Reads a character from the input, triggering state changes to this PDA.
 	public read(): void {
 		if (this.error()) {
+			this.halt = true;
 			return;
 		}
 
